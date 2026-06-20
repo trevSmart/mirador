@@ -21,22 +21,13 @@ export function WorkPanel({ api }: IDockviewPanelProps) {
 
   return (
     <PanelState
+      panelType="work"
       title={api.title}
       isLoading={isLoading}
       error={error}
       onRetry={refresh}
       isEmpty={work.length === 0}
       emptyMessage="No hi ha treball assignat ni en cua."
-      actions={
-        <button
-          type="button"
-          className="panel-shell__action"
-          onClick={() => void refresh()}
-          disabled={isLoading}
-        >
-          Actualitza
-        </button>
-      }
     >
       <p className="panel-summary">
         {work.length} treballs · {statusCounts.assigned} assignats · {statusCounts.queued}{' '}

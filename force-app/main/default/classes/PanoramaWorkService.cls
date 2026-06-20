@@ -8,6 +8,12 @@
 public with sharing class PanoramaWorkService {
     public class WorkItemDto {
         public String id;
+        public String workItemId;
+        public String objectApiName;
+        /** Lightning icon name, e.g. standard:case or custom:custom78 */
+        public String iconName;
+        public String iconSprite;
+        public String iconSymbol;
         public String subject;
         public String channelKey;
         public String queueId;
@@ -63,9 +69,31 @@ public with sharing class PanoramaWorkService {
             ? new Map<Id, Case>()
             : new Map<Id, Case>([SELECT Id, CaseNumber, Subject FROM Case WHERE Id IN :caseIds]);
 
-        response.work.addAll(buildAssignedItems(assigned, caseById, nowDt));
-        response.work.addAll(buildQueuedItems(pending, caseById, nowDt));
+        Set<Id> workItemIds = collectWorkItemIds(assigned, pending);
+        Map<String, PanoramaObjectIconUtil.IconDescriptor> iconsByApiName =
+            PanoramaObjectIconUtil.forWorkItemIds(workItemIds);
+
+        response.work.addAll(buildAssignedItems(assigned, caseById, nowDt, iconsByApiName));
+        response.work.addAll(buildQueuedItems(pending, caseById, nowDt, iconsByApiName));
         return response;
+    }
+
+    @TestVisible
+    private static Set<Id> collectWorkItemIds(
+        List<AgentWork> assigned, List<PendingServiceRouting> pending
+    ) {
+        Set<Id> workItemIds = new Set<Id>();
+        for (AgentWork aw : assigned) {
+            if (aw.WorkItemId != null) {
+                workItemIds.add(aw.WorkItemId);
+            }
+        }
+        for (PendingServiceRouting psr : pending) {
+            if (psr.WorkItemId != null) {
+                workItemIds.add(psr.WorkItemId);
+            }
+        }
+        return workItemIds;
     }
 
     /**
@@ -74,7 +102,10 @@ public with sharing class PanoramaWorkService {
      */
     @TestVisible
     private static List<WorkItemDto> buildAssignedItems(
-        List<AgentWork> assigned, Map<Id, Case> caseById, Datetime nowDt
+        List<AgentWork> assigned,
+        Map<Id, Case> caseById,
+        Datetime nowDt,
+        Map<String, PanoramaObjectIconUtil.IconDescriptor> iconsByApiName
     ) {
         List<WorkItemDto> items = new List<WorkItemDto>();
         for (AgentWork aw : assigned) {
@@ -86,6 +117,8 @@ public with sharing class PanoramaWorkService {
             dto.agentId = aw.UserId == null ? null : String.valueOf(aw.UserId);
             dto.status = 'assigned';
             dto.ageSec = secondsSince(nowDt, aw.RequestDateTime);
+            dto.workItemId = aw.WorkItemId == null ? null : String.valueOf(aw.WorkItemId);
+            applyObjectIcon(dto, aw.WorkItemId, iconsByApiName);
             dto.subject = subjectFor(aw.WorkItemId, caseById, aw.ServiceChannel?.MasterLabel);
             items.add(dto);
         }
@@ -99,7 +132,10 @@ public with sharing class PanoramaWorkService {
      */
     @TestVisible
     private static List<WorkItemDto> buildQueuedItems(
-        List<PendingServiceRouting> pending, Map<Id, Case> caseById, Datetime nowDt
+        List<PendingServiceRouting> pending,
+        Map<Id, Case> caseById,
+        Datetime nowDt,
+        Map<String, PanoramaObjectIconUtil.IconDescriptor> iconsByApiName
     ) {
         List<WorkItemDto> items = new List<WorkItemDto>();
         for (PendingServiceRouting psr : pending) {
@@ -111,10 +147,34 @@ public with sharing class PanoramaWorkService {
             dto.agentId = null;
             dto.status = 'queued';
             dto.ageSec = secondsSince(nowDt, psr.CreatedDate);
+            dto.workItemId = psr.WorkItemId == null ? null : String.valueOf(psr.WorkItemId);
+            applyObjectIcon(dto, psr.WorkItemId, iconsByApiName);
             dto.subject = subjectFor(psr.WorkItemId, caseById, psr.ServiceChannel?.MasterLabel);
             items.add(dto);
         }
         return items;
+    }
+
+    @TestVisible
+    private static void applyObjectIcon(
+        WorkItemDto dto,
+        Id workItemId,
+        Map<String, PanoramaObjectIconUtil.IconDescriptor> iconsByApiName
+    ) {
+        PanoramaObjectIconUtil.IconDescriptor icon;
+        if (workItemId == null) {
+            icon = PanoramaObjectIconUtil.forRecord(null);
+        } else {
+            Schema.SObjectType soType = workItemId.getSObjectType();
+            String apiName = soType == null ? null : soType.getDescribe().getName();
+            icon = apiName != null && iconsByApiName.containsKey(apiName)
+                ? iconsByApiName.get(apiName)
+                : PanoramaObjectIconUtil.forRecord(workItemId);
+        }
+        dto.objectApiName = icon.objectApiName;
+        dto.iconName = icon.iconName;
+        dto.iconSprite = icon.sprite;
+        dto.iconSymbol = icon.symbol;
     }
 
     @TestVisible

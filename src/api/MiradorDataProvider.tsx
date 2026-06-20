@@ -25,6 +25,7 @@ interface MiradorDataContextValue {
   skills: Skill[]
   work: WorkItem[]
   isLoading: boolean
+  isRefreshing: boolean
   error: string | null
   refresh: (options?: RefreshOptions) => Promise<void>
 }
@@ -39,6 +40,7 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
   const [skills, setSkills] = useState<Skill[]>([])
   const [work, setWork] = useState<WorkItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const isRefreshingRef = useRef(false)
 
@@ -64,6 +66,7 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
     }
 
     isRefreshingRef.current = true
+    setIsRefreshing(true)
 
     if (!silent) {
       setIsLoading(true)
@@ -96,6 +99,7 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
       }
     } finally {
       isRefreshingRef.current = false
+      setIsRefreshing(false)
       if (!silent) {
         setIsLoading(false)
       }
@@ -134,10 +138,11 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
       skills,
       work,
       isLoading,
+      isRefreshing,
       error,
       refresh,
     }),
-    [agents, error, isLoading, queues, refresh, skills, work],
+    [agents, error, isLoading, isRefreshing, queues, refresh, skills, work],
   )
 
   return (

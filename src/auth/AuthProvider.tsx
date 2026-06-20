@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
@@ -16,14 +17,24 @@ import {
   startLogin,
 } from './salesforce-oauth'
 import { initOAuthSessionStorage } from './oauth-session-storage'
+import { MOCK_USER_INFO } from '../api/mock/mock-user'
+import { isMockMode } from '../config/data-source'
 import type { OAuthSession, PublicOAuthConfig, SalesforceUserInfo } from './types'
 import { OAuthError } from './types'
+
+const MOCK_SESSION: OAuthSession = {
+  accessToken: 'mock-access-token',
+  refreshToken: '',
+  instanceUrl: 'https://mock.local',
+  expiresAt: Number.MAX_SAFE_INTEGER,
+}
 
 interface AuthContextValue {
   config: PublicOAuthConfig | null
   session: OAuthSession | null
   userInfo: SalesforceUserInfo | null
   isAuthenticated: boolean
+  isMockMode: boolean
   isSalesforceEnabled: boolean
   isLoading: boolean
   authError: string | null
@@ -62,11 +73,16 @@ export function AuthProvider({
         if (cancelled) return
         setConfig(publicConfig)
 
-        await initOAuthSessionStorage()
+        if (isMockMode(publicConfig)) {
+          setSession(MOCK_SESSION)
+          setUserInfo(MOCK_USER_INFO)
+        } else {
+          await initOAuthSessionStorage()
 
-        const existingSession = await getValidAccessSession()
-        if (cancelled) return
-        setSession(existingSession)
+          const existingSession = await getValidAccessSession()
+          if (cancelled) return
+          setSession(existingSession)
+        }
       } catch (error) {
         if (cancelled) return
         if (error instanceof OAuthError) {
@@ -88,8 +104,10 @@ export function AuthProvider({
   }, [])
 
   useEffect(() => {
-    if (!session) {
-      setUserInfo(null)
+    if (!session || isMockMode(config)) {
+      if (!isMockMode(config)) {
+        setUserInfo(null)
+      }
       return
     }
 
@@ -109,9 +127,12 @@ export function AuthProvider({
     return () => {
       cancelled = true
     }
-  }, [session])
+  }, [config, session])
 
   const login = useCallback(async () => {
+    if (isMockMode(config)) {
+      return
+    }
     setAuthError(null)
     try {
       await startLogin(config ?? undefined)
@@ -119,6 +140,21 @@ export function AuthProvider({
       setAuthError(error instanceof Error ? error.message : 'Login failed')
     }
   }, [config])
+
+  // Auto-login on startup: once bootstrap has settled, if Salesforce is
+  // configured but there's no session, kick off the OAuth redirect. Skipped
+  // when an auth error is present (e.g. we just bounced back from a failed or
+  // cancelled login) so we never loop redirect → error → redirect. Guarded to
+  // fire at most once per mount.
+  const autoLoginAttempted = useRef(false)
+  useEffect(() => {
+    if (autoLoginAttempted.current) return
+    if (isLoading || session || authError) return
+    if (!config || isMockMode(config) || !isSalesforceConfigured(config)) return
+
+    autoLoginAttempted.current = true
+    void login()
+  }, [authError, config, isLoading, login, session])
 
   const logout = useCallback(() => {
     oauthLogout()
@@ -130,6 +166,7 @@ export function AuthProvider({
       session,
       userInfo,
       isAuthenticated: Boolean(session),
+      isMockMode: isMockMode(config),
       isSalesforceEnabled: config ? isSalesforceConfigured(config) : false,
       isLoading,
       authError,

@@ -19,22 +19,13 @@ export function HomePanel({ api }: IDockviewPanelProps) {
 
   return (
     <PanelState
+      panelType="home"
       title={api.title}
       isLoading={isLoading}
       error={error}
       onRetry={refresh}
       isEmpty={agents.length === 0 && queues.length === 0}
       emptyMessage="No hi ha agents ni cues disponibles."
-      actions={
-        <button
-          type="button"
-          className="panel-shell__action"
-          onClick={() => void refresh()}
-          disabled={isLoading}
-        >
-          Actualitza
-        </button>
-      }
     >
       <div className="summary-grid">
         <section className="summary-card">

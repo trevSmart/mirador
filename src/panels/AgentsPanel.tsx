@@ -11,22 +11,13 @@ export function AgentsPanel({ api }: IDockviewPanelProps) {
 
   return (
     <PanelState
+      panelType="agents"
       title={api.title}
       isLoading={isLoading}
       error={error}
       onRetry={refresh}
       isEmpty={agents.length === 0}
       emptyMessage="No hi ha agents Omni disponibles."
-      actions={
-        <button
-          type="button"
-          className="panel-shell__action"
-          onClick={() => void refresh()}
-          disabled={isLoading}
-        >
-          Actualitza
-        </button>
-      }
     >
       <p className="panel-summary">
         {agents.length} agents · {statusCounts.online} en línia · {statusCounts.busy} ocupats ·{' '}

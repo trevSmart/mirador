@@ -9,6 +9,7 @@ export interface PublicOAuthConfig {
   sfClientId: string
   sfLoginUrl: string
   sfRedirectUri: string
+  dataSource?: 'mock' | 'salesforce'
 }
 
 export interface SalesforceUserInfo {

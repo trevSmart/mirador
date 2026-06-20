@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { IDockviewDefaultTabProps } from 'dockview'
 import { getPanelTypeFromComponent } from '../panels/panel-actions'
-import { getPanelDefinition } from '../panels/registry'
+import { PanelIcon } from '../panels/PanelIcon'
+import { scrollPanelToTop } from '../hooks/useSmoothScroll'
 
 function TabCloseButton() {
   return (
@@ -32,9 +33,12 @@ export function MiradorTab({
 }: IDockviewDefaultTabProps) {
   const [title, setTitle] = useState(api.title)
   const isMiddleMouseButton = useRef(false)
+  // Whether this tab's panel was already the active one when the press started.
+  // Captured on pointerdown (before dockview processes the activation) so the
+  // click handler can tell a re-click of the visible tab from a tab switch.
+  const wasActiveOnPress = useRef(false)
   const panel = containerApi.panels.find((item) => item.id === api.id)
   const panelType = getPanelTypeFromComponent(panel?.view.contentComponent)
-  const Icon = panelType ? getPanelDefinition(panelType).icon : null
 
   useEffect(() => {
     const disposable = api.onDidTitleChange((event) => {
@@ -69,9 +73,33 @@ export function MiradorTab({
   const handlePointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
       isMiddleMouseButton.current = event.button === 1
+      wasActiveOnPress.current = api.isActive
       onPointerDown?.(event)
     },
-    [onPointerDown],
+    [api, onPointerDown],
+  )
+
+  const handleClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      // Clicking the already-visible tab scrolls its panel content to the top.
+      // The handler only runs when this tab was already active, so its panel is
+      // the group's active panel. A group can hold several panels' content in
+      // the DOM at once (inactive ones hidden), so pick the visible shell —
+      // the one whose content container isn't display:none — rather than the
+      // first in document order.
+      if (event.button !== 0 || !wasActiveOnPress.current) {
+        return
+      }
+      const group = event.currentTarget.closest('.dv-groupview')
+      if (!group) {
+        return
+      }
+      const shells = Array.from(group.querySelectorAll<HTMLElement>('.panel-shell'))
+      const visibleShell =
+        shells.find((shell) => shell.offsetParent !== null) ?? shells[0] ?? null
+      scrollPanelToTop(visibleShell)
+    },
+    [],
   )
 
   const handlePointerUp = useCallback(
@@ -100,12 +128,13 @@ export function MiradorTab({
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerLeave}
+      onClick={handleClick}
       className="dv-default-tab"
     >
       <span className="dv-default-tab-content mirador-tab__content">
-        {Icon ? (
+        {panelType ? (
           <span className="mirador-tab__icon">
-            <Icon />
+            <PanelIcon type={panelType} size={18} />
           </span>
         ) : null}
         {title}

@@ -10,22 +10,13 @@ export function QueuesPanel({ api }: IDockviewPanelProps) {
 
   return (
     <PanelState
+      panelType="queues"
       title={api.title}
       isLoading={isLoading}
       error={error}
       onRetry={refresh}
       isEmpty={queues.length === 0}
       emptyMessage="No hi ha cues configurades."
-      actions={
-        <button
-          type="button"
-          className="panel-shell__action"
-          onClick={() => void refresh()}
-          disabled={isLoading}
-        >
-          Actualitza
-        </button>
-      }
     >
       <p className="panel-summary">
         {queues.length} cues · {totalQueueBacklog(queues)} treballs en cua

@@ -15,6 +15,9 @@ export default defineConfig(({ mode }) => {
   if (env.SF_REDIRECT_URI) {
     process.env.SF_REDIRECT_URI = env.SF_REDIRECT_URI
   }
+  if (env.MIRADOR_DATA_SOURCE) {
+    process.env.MIRADOR_DATA_SOURCE = env.MIRADOR_DATA_SOURCE
+  }
 
   return {
     plugins: [

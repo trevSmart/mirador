@@ -77,6 +77,11 @@ export interface WorkItem {
   agentId: string | null
   status: WorkStatus
   ageSec: number
+  workItemId?: string | null
+  objectApiName?: string | null
+  iconName?: string | null
+  iconSprite?: string | null
+  iconSymbol?: string | null
 }
 
 export interface Capabilities {
