@@ -8,10 +8,12 @@ import { DockviewShell } from './components/DockviewShell'
 function AppContent() {
   return (
     <div className="app">
-      <AppHeader />
-      <main className="dockview-container">
-        <DockviewShell />
-      </main>
+      <div className="app-chrome">
+        <AppHeader />
+        <main className="dockview-container">
+          <DockviewShell />
+        </main>
+      </div>
     </div>
   )
 }

@@ -1,13 +1,32 @@
 import type { Agent } from '../api/types'
+import { useSalesforcePhoto } from '../hooks/useSalesforcePhoto'
 import { agentInitials, formatMinutes } from '../utils/format'
 import { StatusBadge } from './StatusBadge'
 
 interface AgentAvatarProps {
   name: string
+  photo?: string | null
 }
 
-export function AgentAvatar({ name }: AgentAvatarProps) {
-  return <span className="agent-avatar">{agentInitials(name)}</span>
+export function AgentAvatar({ name, photo = null }: AgentAvatarProps) {
+  const photoSrc = useSalesforcePhoto(photo)
+
+  if (photoSrc) {
+    return (
+      <img
+        className="agent-avatar agent-avatar--photo"
+        src={photoSrc}
+        alt=""
+        aria-hidden="true"
+      />
+    )
+  }
+
+  return (
+    <span className="agent-avatar" aria-hidden="true">
+      {agentInitials(name)}
+    </span>
+  )
 }
 
 interface AgentRowProps {
@@ -22,7 +41,7 @@ export function AgentRow({ agent, showSkills = false }: AgentRowProps) {
   return (
     <article className="agent-row">
       <div className="agent-row__main">
-        <AgentAvatar name={agent.name} />
+        <AgentAvatar name={agent.name} photo={agent.photo} />
         <div className="agent-row__info">
           <div className="agent-row__title">
             {agent.recordUrl ? (

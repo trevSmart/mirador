@@ -1,7 +1,43 @@
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+
 *,
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+:root {
+  --bg: #F6F5F2;
+  --bg-tint: #FBFAF8;
+  --surface: #FFFFFF;
+  --surface-2: #F2F1ED;
+  --ink: #1B1924;
+  --dim: #65616F;
+  --faint: #9C98A6;
+  --line: rgba(27, 25, 36, .09);
+  --line-2: rgba(27, 25, 36, .16);
+  --accent: #0080BE;
+  --accent-soft: rgba(0, 128, 190, .10);
+  --accent-30: rgba(0, 128, 190, .3);
+  --ok: #15A06A;
+  --ok-soft: rgba(21, 160, 106, .10);
+  --watch: #D9981F;
+  --watch-soft: rgba(217, 152, 31, .12);
+  --alert: #E05641;
+  --alert-soft: rgba(224, 86, 65, .10);
+  --off: #B7B3C0;
+  --r: 16px;
+  --r-sm: 10px;
+  --ease: cubic-bezier(.22, .61, .36, 1);
+  --shadow: 0 1px 2px rgba(27, 25, 36, .04), 0 4px 16px rgba(27, 25, 36, .05);
+  --shadow-lift: 0 8px 30px rgba(27, 25, 36, .10);
+  --topbar-h: 58px;
+  --tabbar-h: 38px;
+  --chrome-h: calc(var(--topbar-h) + var(--tabbar-h));
+  --dev-console-height: 0px;
 }
 
 html,
@@ -12,9 +48,14 @@ body,
 }
 
 body {
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  background: #f1f5f9;
-  color: #0f172a;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  background-image: radial-gradient(1100px 600px at 75% -15%, rgba(0, 128, 190, .05), transparent 60%);
+  background-attachment: fixed;
 }
 
 .app {
@@ -23,14 +64,23 @@ body {
   height: 100%;
 }
 
+.app-chrome {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
 .app-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 16px;
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  height: var(--topbar-h);
+  padding: 0 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
 }
 
 .app-header__left,
@@ -48,7 +98,7 @@ body {
 
 .app-header span {
   font-size: 13px;
-  color: #64748b;
+  color: var(--dim);
 }
 
 .app-header__warning,
@@ -156,7 +206,62 @@ body {
 .dockview-container {
   flex: 1;
   min-height: 0;
-  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  --dv-spacing-padding: 0;
+  --dv-tabs-and-actions-container-height: var(--tabbar-h);
+  --dv-tabs-and-actions-container-font-size: 13px;
+  --dv-tabs-and-actions-container-background-color: var(--surface);
+  --dv-group-view-background-color: var(--bg);
+  --dv-activegroup-visiblepanel-tab-background-color: var(--accent-soft);
+  --dv-activegroup-hiddenpanel-tab-background-color: var(--surface-2);
+  --dv-inactivegroup-visiblepanel-tab-background-color: var(--accent-soft);
+  --dv-inactivegroup-hiddenpanel-tab-background-color: var(--surface-2);
+  --dv-activegroup-visiblepanel-tab-color: var(--ink);
+  --dv-activegroup-hiddenpanel-tab-color: var(--dim);
+  --dv-inactivegroup-visiblepanel-tab-color: var(--ink);
+  --dv-inactivegroup-hiddenpanel-tab-color: var(--dim);
+  --dv-tab-divider-color: transparent;
+  --dv-separator-border: var(--line);
+  --dv-icon-hover-background-color: var(--accent-soft);
+  --dv-active-sash-color: var(--accent-30);
+  --dv-border-radius: var(--r-sm);
+  --dv-tab-border-radius: var(--r-sm);
+  --dv-tab-margin: 4px 2px 0;
+  --dv-floating-group-border: 1px solid var(--line);
+}
+
+.dockview-container > div {
+  flex: 1;
+  min-height: 0;
+}
+
+/* light-spaced adds shell padding; flush tabs under the app header instead */
+.app-chrome .dockview-container .dv-shell.dockview-theme-light-spaced {
+  padding: 0;
+  background-color: transparent;
+}
+
+.app-chrome .dockview-container .dv-groupview > .dv-tabs-and-actions-container {
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.app-chrome .dockview-container .dv-groupview > .dv-tabs-and-actions-container.dv-groupview-header-vertical {
+  padding: 12px 0;
+  border-bottom: none;
+  border-right: 1px solid var(--line);
+}
+
+.app-chrome .dockview-container .dv-dockview > .dv-grid-view > :first-child .dv-groupview,
+.app-chrome .dockview-container .dv-dockview > .dv-grid-view > .dv-groupview {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.app-chrome .dockview-container .dv-dockview > .dv-grid-view > :first-child .dv-groupview > .dv-tabs-and-actions-container,
+.app-chrome .dockview-container .dv-dockview > .dv-grid-view > .dv-groupview > .dv-tabs-and-actions-container {
+  padding-top: 0;
 }
 
 .dockview-container > .dockview-theme-light-spaced {
@@ -402,6 +507,11 @@ body {
   font-size: 12px;
   font-weight: 600;
   flex-shrink: 0;
+}
+
+.agent-avatar--photo {
+  object-fit: cover;
+  background: #e2e8f0;
 }
 
 .queue-row__color {
