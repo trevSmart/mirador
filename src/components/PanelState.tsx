@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 
 interface PanelShellProps {
-  title: string
+  title?: string
   children: ReactNode
   actions?: ReactNode
 }
@@ -11,7 +11,7 @@ export function PanelShell({ title, children, actions }: PanelShellProps) {
   return (
     <div className="panel-shell">
       <div className="panel-shell__header">
-        <h2 className="panel-shell__title">{title}</h2>
+        <h2 className="panel-shell__title">{title ?? 'Panell'}</h2>
         {actions}
       </div>
       {children}
@@ -20,7 +20,7 @@ export function PanelShell({ title, children, actions }: PanelShellProps) {
 }
 
 interface PanelStateProps {
-  title: string
+  title?: string
   isLoading: boolean
   error: string | null
   onRetry?: () => void
