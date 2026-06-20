@@ -1,17 +1,26 @@
 import type { ReactNode } from 'react'
 import { useAuth } from '../auth/AuthProvider'
+import { useSmoothScroll } from '../hooks/useSmoothScroll'
+import { PanelIcon } from '../panels/PanelIcon'
+import type { PanelType } from '../panels/registry'
 
 interface PanelShellProps {
   title?: string
+  icon?: ReactNode
   children: ReactNode
   actions?: ReactNode
 }
 
-export function PanelShell({ title, children, actions }: PanelShellProps) {
+export function PanelShell({ title, icon, children, actions }: PanelShellProps) {
+  const scrollRef = useSmoothScroll<HTMLDivElement>()
+
   return (
-    <div className="panel-shell">
+    <div className="panel-shell" ref={scrollRef}>
       <div className="panel-shell__header">
-        <h2 className="panel-shell__title">{title ?? 'Panell'}</h2>
+        <div className="panel-shell__heading">
+          {icon}
+          <h2 className="panel-shell__title">{title ?? 'Panell'}</h2>
+        </div>
         {actions}
       </div>
       {children}
@@ -20,6 +29,7 @@ export function PanelShell({ title, children, actions }: PanelShellProps) {
 }
 
 interface PanelStateProps {
+  panelType?: PanelType
   title?: string
   isLoading: boolean
   error: string | null
@@ -31,6 +41,7 @@ interface PanelStateProps {
 }
 
 export function PanelState({
+  panelType,
   title,
   isLoading,
   error,
@@ -40,23 +51,21 @@ export function PanelState({
   children,
   actions,
 }: PanelStateProps) {
-  const { isAuthenticated, isSalesforceEnabled, login } = useAuth()
+  const { isAuthenticated, isMockMode, isSalesforceEnabled } = useAuth()
+  const icon = panelType ? <PanelIcon type={panelType} size={28} /> : undefined
 
   return (
-    <PanelShell title={title} actions={actions}>
-      {!isSalesforceEnabled ? (
+    <PanelShell title={title} icon={icon} actions={actions}>
+      {!isMockMode && !isSalesforceEnabled ? (
         <p className="panel-state panel-state--muted">
           Configura SF_CLIENT_ID per connectar a Salesforce.
         </p>
-      ) : !isAuthenticated ? (
-        <div className="panel-state">
-          <p className="panel-state--muted">Inicia sessió per veure les dades d&apos;Omni.</p>
-          <button type="button" className="panel-state__button" onClick={() => void login()}>
-            Login
-          </button>
-        </div>
+      ) : !isMockMode && !isAuthenticated ? (
+        <p className="panel-state panel-state--muted">Redirigint a Salesforce…</p>
       ) : isLoading ? (
-        <p className="panel-state panel-state--muted">Carregant dades de Salesforce…</p>
+        <p className="panel-state panel-state--muted">
+          {isMockMode ? 'Carregant dades simulades…' : 'Carregant dades de Salesforce…'}
+        </p>
       ) : error ? (
         <div className="panel-state">
           <p className="panel-state--error">{error}</p>

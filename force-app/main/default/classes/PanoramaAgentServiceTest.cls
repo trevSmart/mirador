@@ -404,6 +404,8 @@ private class PanoramaAgentServiceTest {
             Case.class
         );
         Map<Id, Case> caseById = new Map<Id, Case>{ caseId => c };
+        Map<String, PanoramaObjectIconUtil.IconDescriptor> iconsByApiName =
+            PanoramaObjectIconUtil.forObjectApiNames(new Set<String>{ 'Case' });
 
         List<AgentWork> assigned = new List<AgentWork>{
             buildAgentWork(caseId, userId, queueId, nowDt.addSeconds(-120))
@@ -411,7 +413,7 @@ private class PanoramaAgentServiceTest {
 
         Test.startTest();
         List<PanoramaWorkService.WorkItemDto> items =
-            PanoramaWorkService.buildAssignedItems(assigned, caseById, nowDt);
+            PanoramaWorkService.buildAssignedItems(assigned, caseById, nowDt, iconsByApiName);
         Test.stopTest();
 
         System.assertEquals(1, items.size());
@@ -420,6 +422,11 @@ private class PanoramaAgentServiceTest {
         System.assertEquals(String.valueOf(userId), dto.agentId);
         System.assertEquals(String.valueOf(queueId), dto.queueId);
         System.assertEquals('Down', dto.subject);
+        System.assertEquals(String.valueOf(caseId), dto.workItemId);
+        System.assertEquals('Case', dto.objectApiName);
+        System.assertNotEquals(null, dto.iconName);
+        System.assertEquals('standard', dto.iconSprite);
+        System.assertEquals('case', dto.iconSymbol);
         System.assert(dto.ageSec >= 119 && dto.ageSec <= 121, 'Expected ~120s, got ' + dto.ageSec);
     }
 
@@ -431,10 +438,11 @@ private class PanoramaAgentServiceTest {
         List<PendingServiceRouting> pending = new List<PendingServiceRouting>{
             buildPendingRouting(null, queueId, nowDt.addSeconds(-45))
         };
+        Map<String, PanoramaObjectIconUtil.IconDescriptor> iconsByApiName = new Map<String, PanoramaObjectIconUtil.IconDescriptor>();
 
         Test.startTest();
         List<PanoramaWorkService.WorkItemDto> items =
-            PanoramaWorkService.buildQueuedItems(pending, new Map<Id, Case>(), nowDt);
+            PanoramaWorkService.buildQueuedItems(pending, new Map<Id, Case>(), nowDt, iconsByApiName);
         Test.stopTest();
 
         System.assertEquals(1, items.size());
@@ -443,7 +451,46 @@ private class PanoramaAgentServiceTest {
         System.assertEquals(null, dto.agentId);
         System.assertEquals(String.valueOf(queueId), dto.queueId);
         System.assertEquals('Work item', dto.subject, 'No case and no channel label falls back to Work item');
+        System.assertEquals('standard:case', dto.iconName);
+        System.assertEquals('standard', dto.iconSprite);
+        System.assertEquals('case', dto.iconSymbol);
         System.assert(dto.ageSec >= 44 && dto.ageSec <= 46, 'Expected ~45s, got ' + dto.ageSec);
+    }
+
+    @IsTest
+    static void objectIconUtilParsesTabIconUrls() {
+        PanoramaObjectIconUtil.IconDescriptor caseIcon = PanoramaObjectIconUtil.fromIconUrl(
+            'https://example.com/img/icon/t4v35/standard/case.svg', 'Case'
+        );
+        System.assertEquals('Case', caseIcon.objectApiName);
+        System.assertEquals('standard:case', caseIcon.iconName);
+        System.assertEquals('standard', caseIcon.sprite);
+        System.assertEquals('case', caseIcon.symbol);
+
+        PanoramaObjectIconUtil.IconDescriptor customIcon = PanoramaObjectIconUtil.fromIconUrl(
+            'https://example.com/img/icon/t4v35/custom/custom78.svg', 'MyObject__c'
+        );
+        System.assertEquals('custom:custom78', customIcon.iconName);
+        System.assertEquals('custom', customIcon.sprite);
+        System.assertEquals('custom78', customIcon.symbol);
+
+        PanoramaObjectIconUtil.IconDescriptor voiceIcon = PanoramaObjectIconUtil.fromIconUrl(
+            'https://example.com/img/icon/t4v35/standard/call.svg', 'VoiceCall'
+        );
+        System.assertEquals('standard:call', voiceIcon.iconName);
+    }
+
+    @IsTest
+    static void objectIconUtilFallbackForCustomWithoutTab() {
+        PanoramaObjectIconUtil.IconDescriptor icon =
+            PanoramaObjectIconUtil.fallbackForApiName('MyObject__c');
+        System.assertEquals('custom:custom63', icon.iconName);
+    }
+
+    @IsTest
+    static void objectIconUtilCamelToSnake() {
+        System.assertEquals('live_chat', PanoramaObjectIconUtil.camelToSnake('LiveChat'));
+        System.assertEquals('voice_call', PanoramaObjectIconUtil.camelToSnake('VoiceCall'));
     }
 
     /* ───────── Skills service ───────── */

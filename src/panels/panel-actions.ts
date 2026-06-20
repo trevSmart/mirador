@@ -20,8 +20,13 @@ export function getOpenPanelTypes(api: DockviewApi): PanelType[] {
 }
 
 export function addPanelByType(api: DockviewApi, type: PanelType): void {
-  const open = getOpenPanelTypes(api)
-  if (open.includes(type)) {
+  // If a panel of this type is already open, reveal it instead of opening a
+  // duplicate (or doing nothing).
+  const existing = api.panels.find(
+    (panel) => getPanelTypeFromComponent(panel.view.contentComponent) === type,
+  )
+  if (existing) {
+    existing.api.setActive()
     return
   }
 

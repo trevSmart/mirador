@@ -10,22 +10,13 @@ export function SkillsPanel({ api }: IDockviewPanelProps) {
 
   return (
     <PanelState
+      panelType="skills"
       title={api.title}
       isLoading={isLoading}
       error={error}
       onRetry={refresh}
       isEmpty={skills.length === 0}
       emptyMessage="No hi ha skills configurades."
-      actions={
-        <button
-          type="button"
-          className="panel-shell__action"
-          onClick={() => void refresh()}
-          disabled={isLoading}
-        >
-          Actualitza
-        </button>
-      }
     >
       <p className="panel-summary">
         {skills.length} skills · {totalSkillBacklog(skills)} treballs en cua

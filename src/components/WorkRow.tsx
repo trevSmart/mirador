@@ -1,5 +1,7 @@
 import type { WorkItem } from '../api/types'
 import { channelLabel, formatSeconds, workStatusLabel } from '../utils/format'
+import { resolveWorkItemIcon } from '../utils/salesforce-object-icon'
+import { SfIcon } from './ds'
 
 interface WorkRowProps {
   item: WorkItem
@@ -8,6 +10,7 @@ interface WorkRowProps {
 }
 
 export function WorkRow({ item, agentName, queueName }: WorkRowProps) {
+  const icon = resolveWorkItemIcon(item)
   const metaParts = [
     channelLabel(item.channelKey),
     workStatusLabel(item.status),
@@ -25,7 +28,8 @@ export function WorkRow({ item, agentName, queueName }: WorkRowProps) {
   return (
     <article className="work-row">
       <div className="work-row__main">
-        <div>
+        <SfIcon sprite={icon.sprite} symbol={icon.symbol} size={32} bg={icon.tint} />
+        <div className="work-row__body">
           <h3 className="work-row__subject">{item.subject}</h3>
           <p className="work-row__meta">{metaParts.join(' · ')}</p>
         </div>
