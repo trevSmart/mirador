@@ -164,6 +164,26 @@ body {
   height: 100%;
 }
 
+.mirador-tab__content {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mirador-tab__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: #64748b;
+}
+
+.dv-tab-group-chip {
+  font-size: 11px;
+}
+
+.dv-context-menu {
+  min-width: 180px;
+}
+
 .panel-shell {
   height: 100%;
   padding: 16px;
