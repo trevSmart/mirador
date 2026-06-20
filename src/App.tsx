@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import 'dockview/dist/styles/dockview.css'
 import { AuthProvider } from './auth/AuthProvider'
 import { MiradorApiProvider } from './api/MiradorApiProvider'
+import { MiradorDataProvider } from './api/MiradorDataProvider'
 import { AppHeader } from './components/AppHeader'
 import { DockviewShell, type DockviewShellHandle } from './components/DockviewShell'
 
@@ -22,7 +23,9 @@ function App() {
   return (
     <AuthProvider>
       <MiradorApiProvider>
-        <AppContent />
+        <MiradorDataProvider>
+          <AppContent />
+        </MiradorDataProvider>
       </MiradorApiProvider>
     </AuthProvider>
   )

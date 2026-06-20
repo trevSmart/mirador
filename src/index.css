@@ -145,15 +145,275 @@ body {
 .panel-shell {
   height: 100%;
   padding: 16px;
+  overflow: auto;
+}
+
+.panel-shell__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .panel-shell__title {
-  margin: 0 0 8px;
+  margin: 0;
   font-size: 16px;
   font-weight: 600;
+}
+
+.panel-shell__action {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.panel-shell__action:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.panel-shell__action:disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
 }
 
 .panel-shell__description {
   margin: 0;
   color: #64748b;
+}
+
+.panel-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.panel-state--muted {
+  margin: 0;
+  color: #64748b;
+}
+
+.panel-state--error {
+  margin: 0;
+  color: #b91c1c;
+}
+
+.panel-state__button {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.panel-state__button:hover {
+  background: #f8fafc;
+}
+
+.panel-summary {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.summary-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 14px;
+}
+
+.summary-card__label {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.summary-card__value {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.summary-card__detail {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.panel-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.panel-section__title {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.panel-section__empty {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.entity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.agent-row,
+.queue-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.agent-row__main,
+.queue-row__main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.agent-row__info {
+  min-width: 0;
+  flex: 1;
+}
+
+.agent-row__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.agent-row__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  text-decoration: none;
+}
+
+.agent-row__name:hover {
+  text-decoration: underline;
+}
+
+.agent-row__meta,
+.queue-row__meta {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.agent-row__metrics,
+.queue-row__metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.agent-row__skills {
+  margin: 0;
+  font-size: 12px;
+  color: #475569;
+}
+
+.agent-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.queue-row__color {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.queue-row__name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.metric-pill {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 72px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 6px 8px;
+}
+
+.metric-pill__label {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.metric-pill__value {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.status-badge--online {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-badge--busy {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-badge--away {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge--offline {
+  background: #e2e8f0;
+  color: #475569;
 }
