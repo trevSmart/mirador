@@ -267,3 +267,8 @@ export function buildPhotoProxyUrl(instanceUrl: string, photoPath: string): stri
   const host = new URL(instanceUrl).host
   return `/api/salesforce/photo?host=${encodeURIComponent(host)}&path=${encodeURIComponent(photoPath)}`
 }
+
+export function buildPhotoProxyUrlFromAbsoluteUrl(photoUrl: string): string {
+  const parsed = new URL(photoUrl)
+  return `/api/salesforce/photo?host=${encodeURIComponent(parsed.host)}&path=${encodeURIComponent(parsed.pathname)}`
+}
