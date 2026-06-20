@@ -1,13 +1,6 @@
-import type { RefObject } from 'react'
 import { useAuth } from '../auth/AuthProvider'
-import { AddPanelMenu } from './AddPanelMenu'
-import type { DockviewShellHandle } from './DockviewShell'
 
-interface AppHeaderProps {
-  dockviewRef: RefObject<DockviewShellHandle | null>
-}
-
-export function AppHeader({ dockviewRef }: AppHeaderProps) {
+export function AppHeader() {
   const {
     authError,
     isAuthenticated,
@@ -26,8 +19,6 @@ export function AppHeader({ dockviewRef }: AppHeaderProps) {
       </div>
 
       <div className="app-header__right">
-        <AddPanelMenu dockviewRef={dockviewRef} />
-
         {!isSalesforceEnabled ? (
           <span className="app-header__warning">
             Configura SF_CLIENT_ID per connectar a Salesforce
@@ -36,7 +27,7 @@ export function AppHeader({ dockviewRef }: AppHeaderProps) {
 
         {authError ? (
           <span className="app-header__error" title={authError}>
-            Error d&apos;autenticació
+            {authError}
           </span>
         ) : null}
 

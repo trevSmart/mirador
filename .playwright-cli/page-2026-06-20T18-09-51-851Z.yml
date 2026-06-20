@@ -1,0 +1,36 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e5]:
+      - generic [ref=e7]:
+        - img [ref=e8]
+        - generic [ref=e9]: Salesforce login
+      - generic [ref=e11]:
+        - generic [ref=e12]:
+          - heading "Salesforce login" [level=1] [ref=e13]
+          - generic [ref=e14]:
+            - text: Username
+            - textbox "Username" [active] [ref=e16]
+          - text: Password
+          - textbox "Password" [ref=e17]
+          - button "Log In" [ref=e18] [cursor=pointer]
+          - generic [ref=e19]:
+            - checkbox "Remember me" [ref=e20]
+            - generic [ref=e21]: Remember me
+        - generic [ref=e22]:
+          - link "Forgot Your Password?" [ref=e23] [cursor=pointer]:
+            - /url: /secur/forgotpassword.jsp?locale=us&lqs=startURL%3D%252Fsetup%252Fsecur%252FRemoteAccessAuthorizationPage.apexp%253Fsource%253DCAAAAZ7rX-YMMDAwMDAwMDAwMDAwMDAwAAABBsZk2WioDFpsCx3fqKRVxGRXz2kCWqEOiSoohZsxzmMQW8MliIZKmOeXl_G7ovRtDR6rpG0ZLEeCxtcDYzF7j-uu6XsEu-0XBBmBYmeuZv4pf6Mr4viiSecJwz_n5QsCtujAYeXJcG08MifSbNFUm0NoR00RgDcf5xZKKN66LH2Wqmu8IIdY8na7pkxRs3VTpVEA6SgtUAn4JRmyvr4871MjngJ87MEOTaKNAZgfBxWL3IomBGoaf9ouUaTz1-xaBa2aIHZolKwMb65CFYHsoXsZO1FFHV3r0y8naMWxwdKO7lxXQwTC50FPZW3NBWAa8Ud35qwecKSjJUdBKEuZztjpoVS2hq3575ipZmNra9ggI60Si_0lvg6eY6nNcNHpKY-ASTCjk2dpey7G8j86IIKb5p6xnhz2gRFgKK0BS7cLg4jzQHDcngaYwB8trHfnN4jWPGpvT3bQVE5NYdjEQyPTxp7ouTKT0ZtArJbTM87WHv_bzKITqJYdomNLsMGWznc_xWqPDxP0_08ViRPXJTMNbiFAPsvomRNIw-9NPy5r94QXSviqg59Kjy5BJu4IGx2e7TL8G46UWCKVMexmg3faiHrFCudGA56vk-39ZFBm-pHmxcPbUVP91YT7a6RT57WSwnuHAWlu_px2XYeujm2hWneXCKFbnlPvdwy3spekwkrqvrpKtf_0Mm6__DHJcRunNF9uLk6RRAM1g1GjqUG8bIZ4bnwSy4sE3k_UjvU_MF8GsQrPHqix_AaDBq97AK_ZtS8r8lcNyIwVJHLEWKEynf3S6bwCn29qUN2MFfnN%26ec%3D302
+          - link "Use Custom Domain" [ref=e24] [cursor=pointer]:
+            - /url: javascript:void(0);
+      - generic [ref=e25]:
+        - paragraph [ref=e26]: Not a customer?
+        - link "Try for Free" [ref=e27] [cursor=pointer]:
+          - /url: https://www.salesforce.com/form/trial/freetrial.jsp
+    - generic [ref=e28]:
+      - text: © 2026 Salesforce, Inc. All rights reserved. |
+      - link "Privacy" [ref=e29] [cursor=pointer]:
+        - /url: https://www.salesforce.com/us/company/privacy
+  - iframe [ref=e31]:
+    - img [ref=f1e2]
+  - generic: Login
+  - iframe [ref=e32]:
+    

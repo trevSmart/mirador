@@ -1,4 +1,25 @@
-import type { PresenceStatus } from '../api/types'
+import type { ChannelKey, PresenceStatus, WorkStatus } from '../api/types'
+
+const CHANNEL_LABELS: Record<ChannelKey, string> = {
+  veu: 'Veu',
+  chat: 'Chat',
+  email: 'Email',
+  wa: 'WhatsApp',
+  cas: 'Cas',
+}
+
+const WORK_STATUS_LABELS: Record<WorkStatus, string> = {
+  assigned: 'Assignat',
+  queued: 'En cua',
+}
+
+export function channelLabel(channelKey: ChannelKey): string {
+  return CHANNEL_LABELS[channelKey]
+}
+
+export function workStatusLabel(status: WorkStatus): string {
+  return WORK_STATUS_LABELS[status]
+}
 
 const PRESENCE_LABELS: Record<PresenceStatus, string> = {
   online: 'En línia',

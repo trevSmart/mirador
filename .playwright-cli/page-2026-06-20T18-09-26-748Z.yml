@@ -1,0 +1,20 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - heading "Mirador" [level=1] [ref=e6]
+      - generic [ref=e7]: Omni Supervisor
+    - generic [ref=e8]:
+      - button "+ Afegir panell" [ref=e10] [cursor=pointer]
+      - button "Login" [ref=e11] [cursor=pointer]
+  - main [ref=e12]:
+    - generic [ref=e31]:
+      - generic [ref=e36] [cursor=pointer]:
+        - generic [ref=e37]: Home
+        - img [ref=e39]
+      - generic [ref=e44]:
+        - generic [ref=e45]:
+          - heading "Home" [level=2] [ref=e46]
+          - button "Actualitza" [ref=e47] [cursor=pointer]
+        - generic [ref=e48]:
+          - paragraph [ref=e49]: Inicia sessió per veure les dades d'Omni.
+          - button "Login" [ref=e50] [cursor=pointer]

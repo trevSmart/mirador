@@ -180,6 +180,20 @@ export async function ensureAuthenticated(): Promise<OAuthSession> {
 }
 
 export async function handleOAuthCallback(): Promise<OAuthSession> {
+  if (pendingOAuthCallback) {
+    return pendingOAuthCallback
+  }
+
+  pendingOAuthCallback = completeOAuthCallback().finally(() => {
+    pendingOAuthCallback = null
+  })
+
+  return pendingOAuthCallback
+}
+
+let pendingOAuthCallback: Promise<OAuthSession> | null = null
+
+async function completeOAuthCallback(): Promise<OAuthSession> {
   const params = new URLSearchParams(window.location.search)
   const error = params.get('error')
   const errorDescription = params.get('error_description')
@@ -197,13 +211,22 @@ export async function handleOAuthCallback(): Promise<OAuthSession> {
   const storedState = localStorage.getItem(PKCE_STATE_KEY)
   const verifier = localStorage.getItem(PKCE_VERIFIER_KEY)
 
-  localStorage.removeItem(PKCE_STATE_KEY)
-  localStorage.removeItem(PKCE_VERIFIER_KEY)
-
-  if (!code || !state || !verifier || state !== storedState) {
+  if (!code || !state) {
     clearOAuthSession()
     throw new OAuthError('Invalid OAuth callback state')
   }
+
+  if (!verifier || state !== storedState) {
+    const existingSession = await getValidAccessSession()
+    if (existingSession) {
+      return existingSession
+    }
+    clearOAuthSession()
+    throw new OAuthError('Invalid OAuth callback state')
+  }
+
+  localStorage.removeItem(PKCE_STATE_KEY)
+  localStorage.removeItem(PKCE_VERIFIER_KEY)
 
   const config = await fetchPublicConfig()
   const data = await postTokenProxy({

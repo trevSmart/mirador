@@ -11,7 +11,6 @@ import {
   fetchPublicConfig,
   fetchUserInfo,
   getValidAccessSession,
-  handleOAuthCallback,
   isSalesforceConfigured,
   logout as oauthLogout,
   startLogin,
@@ -35,12 +34,18 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({
+  children,
+  initialAuthError = null,
+}: {
+  children: ReactNode
+  initialAuthError?: string | null
+}) {
   const [config, setConfig] = useState<PublicOAuthConfig | null>(null)
   const [session, setSession] = useState<OAuthSession | null>(null)
   const [userInfo, setUserInfo] = useState<SalesforceUserInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [authError, setAuthError] = useState<string | null>(null)
+  const [authError, setAuthError] = useState<string | null>(initialAuthError)
 
   const refreshSession = useCallback(async () => {
     const nextSession = await getValidAccessSession()
@@ -59,15 +64,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         await initOAuthSessionStorage()
 
-        if (window.location.pathname === '/oauth/callback') {
-          const callbackSession = await handleOAuthCallback()
-          if (cancelled) return
-          setSession(callbackSession)
-          window.history.replaceState({}, '', '/')
-          setIsLoading(false)
-          return
-        }
-
         const existingSession = await getValidAccessSession()
         if (cancelled) return
         setSession(existingSession)
@@ -77,9 +73,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setAuthError(error.message)
         } else {
           setAuthError('Failed to initialize authentication')
-        }
-        if (window.location.pathname === '/oauth/callback') {
-          window.history.replaceState({}, '', '/')
         }
       } finally {
         if (!cancelled) {

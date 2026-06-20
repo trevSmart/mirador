@@ -10,11 +10,13 @@ import {
 import { useAuth } from '../auth/AuthProvider'
 import { MiradorApiError } from './mirador-client'
 import { useMiradorApi } from './MiradorApiProvider'
-import type { Agent, Queue } from './types'
+import type { Agent, Queue, Skill, WorkItem } from './types'
 
 interface MiradorDataContextValue {
   agents: Agent[]
   queues: Queue[]
+  skills: Skill[]
+  work: WorkItem[]
   isLoading: boolean
   error: string | null
   refresh: () => Promise<void>
@@ -27,13 +29,21 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
   const client = useMiradorApi()
   const [agents, setAgents] = useState<Agent[]>([])
   const [queues, setQueues] = useState<Queue[]>([])
+  const [skills, setSkills] = useState<Skill[]>([])
+  const [work, setWork] = useState<WorkItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const clearData = useCallback(() => {
+    setAgents([])
+    setQueues([])
+    setSkills([])
+    setWork([])
+  }, [])
+
   const refresh = useCallback(async () => {
     if (!client) {
-      setAgents([])
-      setQueues([])
+      clearData()
       setError(null)
       setIsLoading(false)
       return
@@ -43,15 +53,19 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
     setError(null)
 
     try {
-      const [agentsResponse, queuesResponse] = await Promise.all([
-        client.getAgents('all'),
-        client.getQueues(),
-      ])
+      const [agentsResponse, queuesResponse, skillsResponse, workResponse] =
+        await Promise.all([
+          client.getAgents('all'),
+          client.getQueues(),
+          client.getSkills(),
+          client.getWork(),
+        ])
       setAgents(agentsResponse.agents)
       setQueues(queuesResponse.queues)
+      setSkills(skillsResponse.skills)
+      setWork(workResponse.work)
     } catch (fetchError) {
-      setAgents([])
-      setQueues([])
+      clearData()
       setError(
         fetchError instanceof MiradorApiError
           ? fetchError.message
@@ -60,29 +74,30 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false)
     }
-  }, [client])
+  }, [clearData, client])
 
   useEffect(() => {
     if (!isAuthenticated || !client) {
-      setAgents([])
-      setQueues([])
+      clearData()
       setError(null)
       setIsLoading(false)
       return
     }
 
     void refresh()
-  }, [client, isAuthenticated, refresh])
+  }, [clearData, client, isAuthenticated, refresh])
 
   const value = useMemo<MiradorDataContextValue>(
     () => ({
       agents,
       queues,
+      skills,
+      work,
       isLoading,
       error,
       refresh,
     }),
-    [agents, error, isLoading, queues, refresh],
+    [agents, error, isLoading, queues, refresh, skills, work],
   )
 
   return (
