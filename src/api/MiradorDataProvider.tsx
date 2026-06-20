@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
@@ -12,6 +13,12 @@ import { MiradorApiError } from './mirador-client'
 import { useMiradorApi } from './MiradorApiProvider'
 import type { Agent, Queue, Skill, WorkItem } from './types'
 
+const POLL_INTERVAL_MS = 15_000
+
+interface RefreshOptions {
+  silent?: boolean
+}
+
 interface MiradorDataContextValue {
   agents: Agent[]
   queues: Queue[]
@@ -19,7 +26,7 @@ interface MiradorDataContextValue {
   work: WorkItem[]
   isLoading: boolean
   error: string | null
-  refresh: () => Promise<void>
+  refresh: (options?: RefreshOptions) => Promise<void>
 }
 
 const MiradorDataContext = createContext<MiradorDataContextValue | null>(null)
@@ -33,6 +40,7 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
   const [work, setWork] = useState<WorkItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const isRefreshingRef = useRef(false)
 
   const clearData = useCallback(() => {
     setAgents([])
@@ -41,7 +49,9 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
     setWork([])
   }, [])
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (options?: RefreshOptions) => {
+    const silent = options?.silent ?? false
+
     if (!client) {
       clearData()
       setError(null)
@@ -49,8 +59,16 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    setIsLoading(true)
-    setError(null)
+    if (isRefreshingRef.current) {
+      return
+    }
+
+    isRefreshingRef.current = true
+
+    if (!silent) {
+      setIsLoading(true)
+      setError(null)
+    }
 
     try {
       const [agentsResponse, queuesResponse, skillsResponse, workResponse] =
@@ -64,15 +82,23 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
       setQueues(queuesResponse.queues)
       setSkills(skillsResponse.skills)
       setWork(workResponse.work)
+      if (silent) {
+        setError(null)
+      }
     } catch (fetchError) {
-      clearData()
-      setError(
-        fetchError instanceof MiradorApiError
-          ? fetchError.message
-          : 'No s\'han pogut carregar les dades de Salesforce',
-      )
+      if (!silent) {
+        clearData()
+        setError(
+          fetchError instanceof MiradorApiError
+            ? fetchError.message
+            : 'No s\'han pogut carregar les dades de Salesforce',
+        )
+      }
     } finally {
-      setIsLoading(false)
+      isRefreshingRef.current = false
+      if (!silent) {
+        setIsLoading(false)
+      }
     }
   }, [clearData, client])
 
@@ -86,6 +112,20 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
 
     void refresh()
   }, [clearData, client, isAuthenticated, refresh])
+
+  useEffect(() => {
+    if (!isAuthenticated || !client) {
+      return
+    }
+
+    const intervalId = window.setInterval(() => {
+      void refresh({ silent: true })
+    }, POLL_INTERVAL_MS)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [client, isAuthenticated, refresh])
 
   const value = useMemo<MiradorDataContextValue>(
     () => ({

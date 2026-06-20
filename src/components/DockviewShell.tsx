@@ -5,10 +5,16 @@ import {
   useRef,
   useState,
 } from 'react'
-import { DockviewReact, themeLightSpaced } from 'dockview'
+import { DockviewReact } from 'dockview'
 import type { DockviewApi, DockviewReadyEvent } from 'dockview'
 import { AddPanelHeaderActions } from './AddPanelHeaderActions'
+import { MiradorTab } from './MiradorTab'
+import {
+  getMiradorTabContextMenuItems,
+  getMiradorTabGroupChipContextMenuItems,
+} from '../dockview/context-menus'
 import { loadDockviewLayout, saveDockviewLayout } from '../dockview/layout-storage'
+import { miradorDockviewTheme } from '../dockview/theme'
 import { PANEL_COMPONENTS, getPanelDefinition, type PanelType } from '../panels/registry'
 import {
   addPanelByType,
@@ -83,10 +89,13 @@ export const DockviewShell = forwardRef<DockviewShellHandle>(function DockviewSh
 
   return (
     <DockviewReact
-      theme={themeLightSpaced}
+      theme={miradorDockviewTheme}
       onReady={onReady}
       components={PANEL_COMPONENTS}
+      defaultTabComponent={MiradorTab}
       leftHeaderActionsComponent={AddPanelHeaderActions}
+      getTabContextMenuItems={getMiradorTabContextMenuItems}
+      getTabGroupChipContextMenuItems={getMiradorTabGroupChipContextMenuItems}
     />
   )
 })
