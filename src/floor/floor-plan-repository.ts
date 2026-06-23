@@ -14,6 +14,23 @@ export interface FloorPlanRepository {
 
 const STORAGE_KEY = 'mirador.floorPlan.v1'
 
+/* Lightweight pub/sub so the live supervision view reloads the moment the editor
+   saves, within the same app instance. Cross-tab updates are handled separately
+   by listening to the window `storage` event (see useFloorPlanData). */
+type Listener = () => void
+const listeners = new Set<Listener>()
+
+export function subscribeFloorPlan(listener: Listener): () => void {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
+
+function notify(): void {
+  for (const listener of listeners) listener()
+}
+
+export { STORAGE_KEY as FLOOR_PLAN_STORAGE_KEY }
+
 class LocalStorageFloorPlanRepository implements FloorPlanRepository {
   load(): Promise<FloorPlanData | null> {
     try {
@@ -29,6 +46,7 @@ class LocalStorageFloorPlanRepository implements FloorPlanRepository {
     try {
       const clean = sanitizeFloorPlan(data) ?? data
       localStorage.setItem(STORAGE_KEY, JSON.stringify(clean))
+      notify()
     } catch {
       /* ignore quota / private-mode storage errors */
     }
