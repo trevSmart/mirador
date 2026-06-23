@@ -133,6 +133,7 @@ export function DadesSection({ draft, patch }: SectionProps) {
         <SettingsRow
           title="Temps màxim d'espera"
           hint="Llindar per marcar una cua en alerta"
+          comingSoon
           control={
             <NumberField
               label="Temps màxim d'espera"
@@ -141,12 +142,14 @@ export function DadesSection({ draft, patch }: SectionProps) {
               min={30}
               max={3600}
               suffix="s"
+              disabled
             />
           }
         />
         <SettingsRow
           title="SLA objectiu"
           hint="Percentatge d'objectiu de nivell de servei"
+          comingSoon
           control={
             <NumberField
               label="SLA objectiu"
@@ -155,12 +158,14 @@ export function DadesSection({ draft, patch }: SectionProps) {
               min={50}
               max={100}
               suffix="%"
+              disabled
             />
           }
         />
         <SettingsRow
           title="Agents en alerta"
           hint="Proporció d'agents en alerta per activar l'avís global"
+          comingSoon
           control={
             <NumberField
               label="Agents en alerta"
@@ -169,6 +174,7 @@ export function DadesSection({ draft, patch }: SectionProps) {
               min={5}
               max={100}
               suffix="%"
+              disabled
             />
           }
         />
@@ -223,6 +229,7 @@ export function AparencaSection({ draft, patch }: SectionProps) {
       <SettingsGroup label="Idioma i format">
         <SettingsRow
           title="Idioma de la interfície"
+          comingSoon
           control={
             <SelectField<Lang>
               label="Idioma de la interfície"
@@ -233,6 +240,7 @@ export function AparencaSection({ draft, patch }: SectionProps) {
                 { value: 'es', label: 'Castellà' },
                 { value: 'en', label: 'English' },
               ]}
+              disabled
             />
           }
         />
@@ -261,44 +269,52 @@ export function NotificacionsSection({ draft, patch }: SectionProps) {
       <SettingsRow
         title="Notificacions del navegador"
         hint="Permetre notificacions push quan la pestanya no és visible"
+        comingSoon
         control={
           <ToggleField
             label="Notificacions del navegador"
             checked={draft.browserNotifs}
             onChange={(v) => patch({ browserNotifs: v })}
+            disabled
           />
         }
       />
       <SettingsRow
         title="Alerta de cua crítica"
         hint="Notificar quan una cua supera el temps màxim d'espera"
+        comingSoon
         control={
           <ToggleField
             label="Alerta de cua crítica"
             checked={draft.queueAlert}
             onChange={(v) => patch({ queueAlert: v })}
+            disabled
           />
         }
       />
       <SettingsRow
         title="Alerta d'agent desconnectat"
         hint="Notificar quan un agent passa a offline inesperat"
+        comingSoon
         control={
           <ToggleField
             label="Alerta d'agent desconnectat"
             checked={draft.agentOfflineAlert}
             onChange={(v) => patch({ agentOfflineAlert: v })}
+            disabled
           />
         }
       />
       <SettingsRow
         title="So d'alerta"
         hint="Reproduir un so en una notificació crítica"
+        comingSoon
         control={
           <ToggleField
             label="So d'alerta"
             checked={draft.soundAlert}
             onChange={(v) => patch({ soundAlert: v })}
+            disabled
           />
         }
       />

@@ -45,10 +45,17 @@ export function FloorPanel() {
   const [placeId, setPlaceId] = useState<string | null>(null)
   const [floorIndex, setFloorIndex] = useState(0)
 
-  // The view opens on the user's default (Settings → Aparença); the seat style
-  // is remembered per use. Once the user toggles the view here it stays put,
-  // even if the default preference changes later.
+  // The view follows the user's default (Settings → Aparença). Changing the
+  // preference re-syncs the live view, even though Dockview keeps this panel
+  // mounted — handled by adjusting state during render when the default changes.
+  // A manual toggle here still wins until the default preference changes again.
   const [view, setView] = useState<ViewMode>(prefs.defaultFloorView)
+  const [prevDefault, setPrevDefault] = useState<ViewMode>(prefs.defaultFloorView)
+  if (prevDefault !== prefs.defaultFloorView) {
+    setPrevDefault(prefs.defaultFloorView)
+    setView(prefs.defaultFloorView)
+  }
+
   const [seatStyle, setSeatStyle] = useState<SeatStyle>(loadSeatStyle)
   const [dir, setDir] = useState<Dir>(0)
 
@@ -224,10 +231,18 @@ export function FloorPanel() {
               agentsById={agentsById}
               dir={dir}
               seatStyle={seatStyle}
+              showAvatars={prefs.showAvatars}
+              animations={prefs.animations}
               onSelectAgent={handleSelectAgent}
             />
           ) : (
-            <FloorView floor={activeFloor} agentsById={agentsById} onSelectAgent={handleSelectAgent} />
+            <FloorView
+              floor={activeFloor}
+              agentsById={agentsById}
+              showAvatars={prefs.showAvatars}
+              animations={prefs.animations}
+              onSelectAgent={handleSelectAgent}
+            />
           )}
         </div>
       </div>

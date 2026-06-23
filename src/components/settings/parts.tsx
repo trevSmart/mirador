@@ -18,15 +18,21 @@ export function SettingsRow({
   title,
   hint,
   control,
+  comingSoon = false,
 }: {
   title: string
   hint?: ReactNode
   control: ReactNode
+  /** Mark the row as not-yet-functional: dimmed + a "Pròximament" tag. */
+  comingSoon?: boolean
 }) {
   return (
-    <div className="settings-row">
+    <div className={`settings-row${comingSoon ? ' settings-row--soon' : ''}`}>
       <div className="settings-row__label">
-        <strong>{title}</strong>
+        <strong>
+          {title}
+          {comingSoon ? <span className="settings-soon-tag">Pròximament</span> : null}
+        </strong>
         {hint ? <span>{hint}</span> : null}
       </div>
       <div className="settings-row__control">{control}</div>
@@ -44,10 +50,12 @@ export function ToggleField({
   checked,
   onChange,
   label,
+  disabled = false,
 }: {
   checked: boolean
   onChange: (value: boolean) => void
   label: string
+  disabled?: boolean
 }) {
   return (
     <label className="settings-toggle">
@@ -56,6 +64,7 @@ export function ToggleField({
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
         aria-label={label}
+        disabled={disabled}
       />
       <span className="settings-toggle__track" />
     </label>
@@ -67,11 +76,13 @@ export function SelectField<T extends string | number>({
   onChange,
   options,
   label,
+  disabled = false,
 }: {
   value: T
   onChange: (value: T) => void
   options: Array<{ value: T; label: string }>
   label: string
+  disabled?: boolean
 }) {
   return (
     <select
@@ -83,6 +94,7 @@ export function SelectField<T extends string | number>({
         if (match) onChange(match.value)
       }}
       aria-label={label}
+      disabled={disabled}
     >
       {options.map((o) => (
         <option key={String(o.value)} value={String(o.value)}>
@@ -100,6 +112,7 @@ export function NumberField({
   max,
   label,
   suffix,
+  disabled = false,
 }: {
   value: number
   onChange: (value: number) => void
@@ -107,6 +120,7 @@ export function NumberField({
   max: number
   label: string
   suffix?: string
+  disabled?: boolean
 }) {
   const id = useId()
   return (
@@ -123,6 +137,7 @@ export function NumberField({
           if (Number.isFinite(n)) onChange(n)
         }}
         aria-label={label}
+        disabled={disabled}
       />
       {suffix ? <span className="settings-number__suffix">{suffix}</span> : null}
     </span>

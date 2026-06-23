@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { usePreferences } from '../settings/preferences-context'
 
 const LOCALE = 'ca'
 
@@ -8,24 +9,24 @@ const dateFormatter = new Intl.DateTimeFormat(LOCALE, {
   month: 'long',
 })
 
-const timeFormatter = new Intl.DateTimeFormat(LOCALE, {
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: false,
-})
-
 function capitalizeFirst(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
-function formatLocalDateTime(date: Date): string {
-  const datePart = capitalizeFirst(dateFormatter.format(date))
-  const timePart = timeFormatter.format(date)
-  return `${datePart} · ${timePart}`
-}
-
 export function HeaderClock() {
+  const { prefs } = usePreferences()
   const [now, setNow] = useState(() => new Date())
+
+  // Time format follows the user's preference (Settings → Aparença).
+  const timeFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(LOCALE, {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: prefs.timeFormat === '12h',
+      }),
+    [prefs.timeFormat],
+  )
 
   useEffect(() => {
     const tick = () => setNow(new Date())
@@ -44,9 +45,12 @@ export function HeaderClock() {
     return () => window.clearTimeout(timeoutId)
   }, [])
 
+  const datePart = capitalizeFirst(dateFormatter.format(now))
+  const timePart = timeFormatter.format(now)
+
   return (
     <time className="app-header__clock" dateTime={now.toISOString()}>
-      {formatLocalDateTime(now)}
+      {`${datePart} · ${timePart}`}
     </time>
   )
 }
