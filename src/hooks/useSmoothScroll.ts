@@ -49,9 +49,9 @@ export function useSmoothScroll<T extends HTMLElement>() {
     const lenis = new Lenis({
       wrapper: element,
       content: element,
-      lerp: 0.12,
+      lerp: 0.18,
       smoothWheel: true,
-      wheelMultiplier: 1.8,
+      wheelMultiplier: 2.6,
     })
     lenisByElement.set(element, lenis)
 
