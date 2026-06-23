@@ -194,6 +194,20 @@
   --blur-glass: blur(10px);
   --blur-scrim: blur(2px);
 
+  /* ── Dropdown / popover (shared by every menu) ──────────── */
+  --dropdown-radius: 11px;
+  --dropdown-dur: .18s;
+  --dropdown-ease: var(--ease);
+  --dropdown-blur: var(--blur-glass);
+  --dropdown-bg: color-mix(in srgb, var(--surface-card) 80%, transparent);
+  --dropdown-shadow: var(--shadow-lift);
+  --dropdown-offset: .5rem;
+
+  /* ── Scrim (reusable: dropdowns, modals, toasts) ────── */
+  --scrim-bg: rgba(27, 25, 36, .28);
+  --scrim-blur: var(--blur-scrim);
+  --z-scrim: 290;
+
   /* ── App chrome layout (Mirador) ────────────────────── */
   --topbar-h: var(--h-topbar);
   --tabbar-h: var(--h-tabbar);
@@ -384,20 +398,50 @@ body {
   }
 }
 
-/* ── Header dropdown animation ── */
+/* ── Shared dropdown / popover panel (single source of truth) ── */
 .dropdown-panel {
   opacity: 0;
   visibility: hidden;
-  transform: translateY(-0.5rem);
-  transition: opacity .18s ease, transform .18s ease, visibility 0s linear .18s;
+  transform: translateY(calc(var(--dropdown-offset) * -1));
+  transition: opacity var(--dropdown-dur) var(--dropdown-ease),
+              transform var(--dropdown-dur) var(--dropdown-ease),
+              visibility 0s linear var(--dropdown-dur);
   pointer-events: none;
+  border-radius: var(--dropdown-radius);
+  background: var(--dropdown-bg);
+  backdrop-filter: var(--dropdown-blur);
+  -webkit-backdrop-filter: var(--dropdown-blur);
+  box-shadow: var(--dropdown-shadow);
 }
 
 .dropdown-panel.is-open {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
-  transition: opacity .18s ease, transform .18s ease, visibility 0s linear 0s;
+  transition: opacity var(--dropdown-dur) var(--dropdown-ease),
+              transform var(--dropdown-dur) var(--dropdown-ease),
+              visibility 0s linear 0s;
+  pointer-events: auto;
+}
+
+/* ── Reusable scrim (add the element + `is-open`; not coupled to dropdowns) ── */
+.ui-scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim-bg);
+  backdrop-filter: var(--scrim-blur);
+  -webkit-backdrop-filter: var(--scrim-blur);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--dur-base) var(--ease), visibility 0s linear var(--dur-base);
+  z-index: var(--z-scrim);
+  pointer-events: none;
+}
+
+.ui-scrim.is-open {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--dur-base) var(--ease), visibility 0s linear 0s;
   pointer-events: auto;
 }
 
