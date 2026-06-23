@@ -2,13 +2,14 @@ import type { FunctionComponent } from 'react'
 import type { IDockviewPanelProps } from 'dockview'
 import type { SfIconName } from '../components/ds/SfIcon'
 import { AgentsPanel } from './AgentsPanel'
+import { FloorEditorPanel } from './FloorEditorPanel'
 import { HomePanel } from './HomePanel'
 import { InsightsPanel } from './InsightsPanel'
 import { QueuesPanel } from './QueuesPanel'
 import { SkillsPanel } from './SkillsPanel'
 import { WorkPanel } from './WorkPanel'
 
-export type PanelType = 'home' | 'insights' | 'agents' | 'queues' | 'skills' | 'work'
+export type PanelType = 'home' | 'insights' | 'agents' | 'queues' | 'skills' | 'work' | 'floor'
 
 export interface PanelDefinition {
   type: PanelType
@@ -24,6 +25,7 @@ export const PANEL_DEFINITIONS: PanelDefinition[] = [
   { type: 'queues', title: 'Queues', iconName: 'queue', component: QueuesPanel },
   { type: 'skills', title: 'Skills', iconName: 'skill', component: SkillsPanel },
   { type: 'work', title: 'Work', iconName: 'work', component: WorkPanel },
+  { type: 'floor', title: 'Floor', iconName: 'floor', component: FloorEditorPanel },
 ]
 
 export const PANEL_COMPONENTS = Object.fromEntries(

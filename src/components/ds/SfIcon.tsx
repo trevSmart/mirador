@@ -38,6 +38,7 @@ export type SfIconName =
   | 'user'
   | 'work'
   | 'agent'
+  | 'floor'
 
 interface NamedIcon {
   sprite: SfSprite
@@ -58,6 +59,7 @@ const NAMED: Record<SfIconName, NamedIcon> = {
   user: { sprite: 'standard', symbol: 'user', tint: 'var(--pa-ic-user)' },
   work: { sprite: 'standard', symbol: 'work_order_item', tint: 'var(--pa-ic-work)' },
   agent: { sprite: 'custom', symbol: 'custom103', tint: 'var(--pa-ic-user)' },
+  floor: { sprite: 'standard', symbol: 'service_territory', tint: 'var(--pa-ic-queue)' },
 }
 
 /** Omni-channel key → named icon */
