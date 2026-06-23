@@ -1,15 +1,14 @@
 import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import type { Agent, PresenceStatus } from '../../api/types'
+import { CELL_SIZE, edgeStyle } from '../../floor/floor-geometry'
 import { GRID_C, GRID_R, cellKey } from '../../floor/floor-plan-model'
 import type { Cell, Edge, Floor, FloorTool } from '../../floor/types'
 import type { SeatRef } from '../../floor/useFloorPlan'
 import { colorFromString } from '../../utils/color-from-string'
 import { AgentAvatar } from '../AgentRow'
 
-const CELL_SIZE = 30
 /** How close (fraction of a cell) to a border counts as an edge hit. */
 const EDGE_MARGIN = 0.26
-const EDGE_THICKNESS = 6
 
 const STATUS_COLOR: Record<PresenceStatus, string> = {
   online: 'var(--status-ok)',
@@ -57,24 +56,6 @@ function nearestEdge(fx: number, fy: number): Edge | null {
   ]
   dists.sort((a, b) => a[1] - b[1])
   return dists[0][1] <= EDGE_MARGIN ? dists[0][0] : null
-}
-
-function edgeStyle(c: number, r: number, edge: Edge) {
-  const horizontal = edge === 'N' || edge === 'S'
-  if (horizontal) {
-    return {
-      left: c * CELL_SIZE,
-      top: (edge === 'N' ? r : r + 1) * CELL_SIZE - EDGE_THICKNESS / 2,
-      width: CELL_SIZE,
-      height: EDGE_THICKNESS,
-    }
-  }
-  return {
-    left: (edge === 'E' ? c + 1 : c) * CELL_SIZE - EDGE_THICKNESS / 2,
-    top: r * CELL_SIZE,
-    width: EDGE_THICKNESS,
-    height: CELL_SIZE,
-  }
 }
 
 interface SeatMarkerProps {
