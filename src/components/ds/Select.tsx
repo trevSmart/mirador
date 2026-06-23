@@ -99,6 +99,7 @@ export function Select<T extends string | number>({
         style={style}
         aria-haspopup="listbox"
         aria-expanded={open}
+        aria-controls={listId}
         aria-label={ariaLabel}
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
