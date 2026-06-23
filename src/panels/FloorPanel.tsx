@@ -4,6 +4,7 @@ import type { Agent, PresenceStatus } from '../api/types'
 import { FloorView } from '../components/floor/FloorView'
 import { FloorView3D, type SeatStyle } from '../components/floor/FloorView3D'
 import { PanelShell } from '../components/PanelState'
+import { Select } from '../components/ds/Select'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
 import type { Dir } from '../floor/floor-iso'
 import { useFloorPlanData } from '../floor/useFloorPlanData'
@@ -118,38 +119,28 @@ export function FloorPanel() {
         <header className="fv-bar">
           <div className="fv-selectors">
             {data.places.length > 1 ? (
-              <select
+              <Select
                 className="fv-select"
+                ariaLabel="Lloc"
                 value={activePlace.id}
-                onChange={(e) => {
-                  setPlaceId(e.target.value)
+                options={data.places.map((place) => ({ value: place.id, label: place.name }))}
+                onChange={(id) => {
+                  setPlaceId(id)
                   setFloorIndex(0)
                 }}
-                aria-label="Lloc"
-              >
-                {data.places.map((place) => (
-                  <option key={place.id} value={place.id}>
-                    {place.name}
-                  </option>
-                ))}
-              </select>
+              />
             ) : (
               <span className="fv-place-name">{activePlace.name}</span>
             )}
 
             {activePlace.floors.length > 1 ? (
-              <select
+              <Select
                 className="fv-select"
+                ariaLabel="Planta"
                 value={safeFloorIndex}
-                onChange={(e) => setFloorIndex(Number(e.target.value))}
-                aria-label="Planta"
-              >
-                {activePlace.floors.map((floor, index) => (
-                  <option key={floor.id} value={index}>
-                    {floor.name}
-                  </option>
-                ))}
-              </select>
+                options={activePlace.floors.map((floor, index) => ({ value: index, label: floor.name }))}
+                onChange={(index) => setFloorIndex(index)}
+              />
             ) : (
               <span className="fv-floor-name">{activeFloor.name}</span>
             )}
@@ -170,18 +161,13 @@ export function FloorPanel() {
 
             {view === '3d' ? (
               <>
-                <select
+                <Select
                   className="fv-select"
+                  ariaLabel="Estil de seient"
                   value={seatStyle}
-                  onChange={(e) => setSeatStyle(e.target.value as SeatStyle)}
-                  aria-label="Estil de seient"
-                >
-                  {SEAT_STYLES.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
+                  options={SEAT_STYLES}
+                  onChange={(s) => setSeatStyle(s)}
+                />
                 <div className="fv-rotate">
                   <button
                     type="button"
