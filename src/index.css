@@ -3013,3 +3013,79 @@ body {
 .settings-badge--off {
   color: var(--text-muted);
 }
+
+/* ── Shared custom select (design system) ── */
+.ds-select {
+  position: relative;
+  display: inline-flex;
+}
+
+.ds-select__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  background: var(--surface-card);
+  color: var(--text-strong);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+
+.ds-select__trigger:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--ring-focus);
+}
+
+.ds-select__trigger:disabled {
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+.ds-select__caret {
+  font-size: 10px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.ds-select__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 100;
+  min-width: 100%;
+  max-height: min(320px, 60vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--border-subtle);
+  padding: var(--sp-1);
+}
+
+.ds-select__option {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-radius: var(--r-xs);
+  background: transparent;
+  padding: var(--sp-2) var(--sp-3);
+  text-align: left;
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--text-body);
+  cursor: pointer;
+}
+
+.ds-select__option.is-active,
+.ds-select__option:hover {
+  background: var(--accent-tint);
+  color: var(--text-strong);
+}
+
+.ds-select__option[aria-selected='true'] {
+  font-weight: var(--fw-semibold);
+}
