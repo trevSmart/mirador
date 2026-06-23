@@ -199,7 +199,7 @@
   --dropdown-dur: .18s;
   --dropdown-ease: var(--ease);
   --dropdown-blur: var(--blur-glass);
-  --dropdown-bg: color-mix(in srgb, var(--surface-card) 80%, transparent);
+  --dropdown-bg: color-mix(in srgb, var(--surface-card) 92%, transparent);
   --dropdown-shadow: var(--shadow-lift);
   --dropdown-offset: .5rem;
 
