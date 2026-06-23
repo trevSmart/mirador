@@ -3,6 +3,7 @@ import { useMiradorData } from '../api/mirador-data-context'
 import type { Agent, PresenceStatus } from '../api/types'
 import { FloorView } from '../components/floor/FloorView'
 import { FloorView3D, type SeatStyle } from '../components/floor/FloorView3D'
+import { RotateIcon } from '../components/floor/RotateIcon'
 import { PanelShell } from '../components/PanelState'
 import { Select } from '../components/ds/Select'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
@@ -176,7 +177,7 @@ export function FloorPanel() {
                     aria-label="Gira a l'esquerra"
                     onClick={() => setDir((d) => (((d + 3) % 4) as Dir))}
                   >
-                    ⟲
+                    <RotateIcon direction="left" />
                   </button>
                   <button
                     type="button"
@@ -185,7 +186,7 @@ export function FloorPanel() {
                     aria-label="Gira a la dreta"
                     onClick={() => setDir((d) => (((d + 1) % 4) as Dir))}
                   >
-                    ⟳
+                    <RotateIcon direction="right" />
                   </button>
                 </div>
               </>
