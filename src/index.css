@@ -902,12 +902,11 @@ body {
   background: var(--surface-card);
   padding: var(--sp-5);
   box-shadow: var(--shadow);
-  transition: box-shadow var(--dur-base) var(--ease), transform var(--dur-base) var(--ease);
+  transition: box-shadow var(--dur-base) var(--ease);
 }
 
 .summary-card:hover {
   box-shadow: var(--shadow-lift);
-  transform: translateY(-1px);
 }
 
 .summary-card__label {
