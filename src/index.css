@@ -2055,3 +2055,76 @@ body {
   border: 2px dashed var(--border-strong);
   cursor: default;
 }
+
+/* ── Floor view controls (2D/3D toggle, rotation, seat style) ───────────── */
+.fv-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.fv-toggle {
+  display: inline-flex;
+  background: var(--surface-well);
+  border-radius: var(--r-md);
+  padding: 2px;
+}
+
+.fv-toggle__btn {
+  border: 0;
+  background: transparent;
+  color: var(--text-body);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+
+.fv-toggle__btn--on {
+  background: var(--surface-card);
+  color: var(--accent);
+  box-shadow: var(--shadow);
+}
+
+.fv-rotate {
+  display: inline-flex;
+  gap: var(--sp-1);
+}
+
+.fv-icon-btn {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  background: var(--surface-card);
+  color: var(--text-body);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.fv-icon-btn:hover {
+  border-color: var(--border-strong);
+}
+
+/* Isometric 3D view */
+.fv3d-svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.fv3d-seat {
+  cursor: pointer;
+}
+
+.fv3d-seat:hover {
+  filter: brightness(1.06);
+}
+
+.fv3d-beacon {
+  animation: pa-throb 1.6s infinite;
+}
