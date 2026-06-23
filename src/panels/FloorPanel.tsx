@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMiradorData } from '../api/MiradorDataProvider'
 import type { Agent, PresenceStatus } from '../api/types'
 import { FloorView } from '../components/floor/FloorView'
+import { FloorView3D, type SeatStyle } from '../components/floor/FloorView3D'
 import { PanelShell } from '../components/PanelState'
+import type { Dir } from '../floor/floor-iso'
 import { useFloorPlanData } from '../floor/useFloorPlanData'
 import { presenceLabel } from '../utils/format'
 import { recordDetailOpen } from '../utils/detail-recent-store'
@@ -15,11 +17,54 @@ const STATUS_DOT: Record<PresenceStatus, string> = {
   offline: 'var(--text-disabled)',
 }
 
+const SEAT_STYLES: Array<{ value: SeatStyle; label: string }> = [
+  { value: 'tower', label: 'Torre + avatar' },
+  { value: 'avatar', label: 'Només avatar' },
+  { value: 'cube', label: 'Cub per equip' },
+]
+
+type ViewMode = '2d' | '3d'
+const PREFS_KEY = 'mirador.floor.viewPrefs'
+
+interface ViewPrefs {
+  view: ViewMode
+  seatStyle: SeatStyle
+}
+
+function loadPrefs(): ViewPrefs {
+  try {
+    const raw = localStorage.getItem(PREFS_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<ViewPrefs>
+      return {
+        view: parsed.view === '3d' ? '3d' : '2d',
+        seatStyle:
+          parsed.seatStyle === 'avatar' || parsed.seatStyle === 'cube' ? parsed.seatStyle : 'tower',
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return { view: '2d', seatStyle: 'tower' }
+}
+
 export function FloorPanel() {
   const { data, loaded } = useFloorPlanData()
   const { agents } = useMiradorData()
   const [placeId, setPlaceId] = useState<string | null>(null)
   const [floorIndex, setFloorIndex] = useState(0)
+
+  const [view, setView] = useState<ViewMode>(() => loadPrefs().view)
+  const [seatStyle, setSeatStyle] = useState<SeatStyle>(() => loadPrefs().seatStyle)
+  const [dir, setDir] = useState<Dir>(0)
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(PREFS_KEY, JSON.stringify({ view, seatStyle }))
+    } catch {
+      /* ignore */
+    }
+  }, [view, seatStyle])
 
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents])
 
@@ -110,21 +155,87 @@ export function FloorPanel() {
             )}
           </div>
 
-          <div className="fv-summary">
-            {STATUS_ORDER.map((status) => (
-              <span key={status} className="fv-stat" title={presenceLabel(status)}>
-                <span className="fv-stat__dot" style={{ background: STATUS_DOT[status] }} />
-                {summary.counts[status]}
+          <div className="fv-controls">
+            <div className="fv-summary">
+              {STATUS_ORDER.map((status) => (
+                <span key={status} className="fv-stat" title={presenceLabel(status)}>
+                  <span className="fv-stat__dot" style={{ background: STATUS_DOT[status] }} />
+                  {summary.counts[status]}
+                </span>
+              ))}
+              <span className="fv-stat fv-stat--vacant" title="Seients lliures">
+                {summary.vacant} lliures
               </span>
-            ))}
-            <span className="fv-stat fv-stat--vacant" title="Seients lliures">
-              {summary.vacant} lliures
-            </span>
+            </div>
+
+            {view === '3d' ? (
+              <>
+                <select
+                  className="fv-select"
+                  value={seatStyle}
+                  onChange={(e) => setSeatStyle(e.target.value as SeatStyle)}
+                  aria-label="Estil de seient"
+                >
+                  {SEAT_STYLES.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="fv-rotate">
+                  <button
+                    type="button"
+                    className="fv-icon-btn"
+                    title="Gira a l'esquerra"
+                    aria-label="Gira a l'esquerra"
+                    onClick={() => setDir((d) => (((d + 3) % 4) as Dir))}
+                  >
+                    ⟲
+                  </button>
+                  <button
+                    type="button"
+                    className="fv-icon-btn"
+                    title="Gira a la dreta"
+                    aria-label="Gira a la dreta"
+                    onClick={() => setDir((d) => (((d + 1) % 4) as Dir))}
+                  >
+                    ⟳
+                  </button>
+                </div>
+              </>
+            ) : null}
+
+            <div className="fv-toggle" role="group" aria-label="Vista">
+              <button
+                type="button"
+                className={`fv-toggle__btn${view === '2d' ? ' fv-toggle__btn--on' : ''}`}
+                onClick={() => setView('2d')}
+              >
+                2D
+              </button>
+              <button
+                type="button"
+                className={`fv-toggle__btn${view === '3d' ? ' fv-toggle__btn--on' : ''}`}
+                onClick={() => setView('3d')}
+              >
+                3D
+              </button>
+            </div>
           </div>
         </header>
 
         <div className="fv-canvas">
-          <FloorView floor={activeFloor} agentsById={agentsById} onSelectAgent={handleSelectAgent} />
+          {view === '3d' ? (
+            <FloorView3D
+              floor={activeFloor}
+              agentsById={agentsById}
+              dir={dir}
+              seatStyle={seatStyle}
+              onSelectAgent={handleSelectAgent}
+            />
+          ) : (
+            <FloorView floor={activeFloor} agentsById={agentsById} onSelectAgent={handleSelectAgent} />
+          )}
         </div>
       </div>
     </PanelShell>
