@@ -43,10 +43,11 @@ export function Select<T extends string | number>({
     })
   }, [open])
 
-  // When opening, highlight the current value.
-  useEffect(() => {
-    if (open) setActiveIndex(selectedIndex >= 0 ? selectedIndex : 0)
-  }, [open, selectedIndex])
+  // Helper: set highlight to current value then open.
+  const openMenu = () => {
+    setActiveIndex(selectedIndex >= 0 ? selectedIndex : 0)
+    setOpen(true)
+  }
 
   // Close on outside click.
   useEffect(() => {
@@ -73,11 +74,11 @@ export function Select<T extends string | number>({
       case ' ':
         event.preventDefault()
         if (open) commit(activeIndex)
-        else setOpen(true)
+        else openMenu()
         break
       case 'ArrowDown':
         event.preventDefault()
-        if (!open) setOpen(true)
+        if (!open) openMenu()
         else setActiveIndex((i) => Math.min(i + 1, options.length - 1))
         break
       case 'ArrowUp':
@@ -102,7 +103,7 @@ export function Select<T extends string | number>({
         aria-controls={listId}
         aria-label={ariaLabel}
         disabled={disabled}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => (open ? setOpen(false) : openMenu())}
         onKeyDown={onKeyDown}
       >
         <span className="ds-select__value">{selected?.label ?? ''}</span>
@@ -114,12 +115,14 @@ export function Select<T extends string | number>({
         className="ds-select__panel dropdown-panel"
         role="listbox"
         aria-label={ariaLabel}
+        aria-activedescendant={open ? `${listId}-opt-${activeIndex}` : undefined}
         style={style}
         hidden
       >
         {options.map((opt, index) => (
           <button
             key={String(opt.value)}
+            id={`${listId}-opt-${index}`}
             type="button"
             role="option"
             aria-selected={opt.value === value}
