@@ -451,7 +451,7 @@ body {
 }
 
 .qsearch input {
-  width: 200px;
+  width: 140px;
   background: var(--surface-card);
   border: 1px solid var(--border-subtle);
   border-radius: 9px;
