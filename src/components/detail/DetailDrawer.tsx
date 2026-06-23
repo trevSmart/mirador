@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { useMiradorData } from '../../api/MiradorDataProvider'
-import { useDetailDrawer, type DetailTarget } from '../../detail/DetailDrawerContext'
+import { useMiradorData } from '../../api/mirador-data-context'
+import { useDetailDrawer, type DetailTarget } from '../../detail/detail-drawer-context'
 import { SfIcon } from '../ds'
 import { AgentDetail } from './AgentDetail'
 import { QueueDetail } from './QueueDetail'

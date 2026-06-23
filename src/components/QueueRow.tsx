@@ -1,5 +1,5 @@
 import type { Queue } from '../api/types'
-import { useDetailDrawer } from '../detail/DetailDrawerContext'
+import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { formatSeconds } from '../utils/format'
 import { PressureBar, SfIcon } from './ds'
 

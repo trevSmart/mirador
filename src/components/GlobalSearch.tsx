@@ -7,9 +7,9 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent,
 } from 'react'
-import { useMiradorData } from '../api/MiradorDataProvider'
+import { useMiradorData } from '../api/mirador-data-context'
 import type { Agent, PresenceStatus, Queue, Skill } from '../api/types'
-import { useDetailDrawer } from '../detail/DetailDrawerContext'
+import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { colorFromString } from '../utils/color-from-string'
 import {
   getDetailRecents,
@@ -235,6 +235,9 @@ export function GlobalSearch() {
     if (normalizedQuery) {
       return flattenSearchResults(searchResults)
     }
+    // recentsVersion is the cache-bust key: re-read the (external) recents store
+    // whenever a detail is opened.
+    void recentsVersion
     const recents = getDetailRecents()
     return recents.map((entry) => ({ kind: entry.kind, id: entry.id }))
   }, [normalizedQuery, recentsVersion, searchResults])

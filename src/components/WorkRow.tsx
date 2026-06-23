@@ -1,6 +1,6 @@
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
 import type { WorkItem } from '../api/types'
-import { useDetailDrawer } from '../detail/DetailDrawerContext'
+import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { channelLabel, formatSeconds, workStatusLabel } from '../utils/format'
 import { resolveWorkItemIcon } from '../utils/salesforce-object-icon'
 import { SfIcon } from './ds'

@@ -1,16 +1,10 @@
-import {
-  createContext,
-  useContext,
-  useMemo,
-  type ReactNode,
-} from 'react'
-import { useAuth } from '../auth/AuthProvider'
+import { useMemo, type ReactNode } from 'react'
+import { useAuth } from '../auth/auth-context'
 import { isMockMode } from '../config/data-source'
 import { getValidAccessSession } from '../auth/salesforce-oauth'
-import { createMiradorClient, type MiradorClient } from './mirador-client'
+import { createMiradorClient } from './mirador-client'
 import { createMockMiradorClient } from './mock/mock-client'
-
-const MiradorApiContext = createContext<MiradorClient | null>(null)
+import { MiradorApiContext } from './mirador-api-context'
 
 export function MiradorApiProvider({ children }: { children: ReactNode }) {
   const { config, session } = useAuth()
@@ -32,8 +26,4 @@ export function MiradorApiProvider({ children }: { children: ReactNode }) {
       {children}
     </MiradorApiContext.Provider>
   )
-}
-
-export function useMiradorApi(): MiradorClient | null {
-  return useContext(MiradorApiContext)
 }

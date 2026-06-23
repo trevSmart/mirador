@@ -1,5 +1,5 @@
-import { useMiradorData } from '../api/MiradorDataProvider'
-import { useAuth } from '../auth/AuthProvider'
+import { useMiradorData } from '../api/mirador-data-context'
+import { useAuth } from '../auth/auth-context'
 import panoramaLogo from '../assets/panorama/logo/panorama-logo.png'
 import { useDeveloperMode } from '../hooks/useDeveloperMode'
 import { SfIcon } from './ds/SfIcon'

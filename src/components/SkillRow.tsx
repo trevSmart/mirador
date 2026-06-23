@@ -1,5 +1,5 @@
 import type { Skill } from '../api/types'
-import { useDetailDrawer } from '../detail/DetailDrawerContext'
+import { useDetailDrawer } from '../detail/detail-drawer-context'
 
 interface SkillRowProps {
   skill: Skill

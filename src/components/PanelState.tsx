@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useAuth } from '../auth/AuthProvider'
+import { useAuth } from '../auth/auth-context'
 import { useSmoothScroll } from '../hooks/useSmoothScroll'
 import { PanelIcon } from '../panels/PanelIcon'
 import type { PanelType } from '../panels/registry'

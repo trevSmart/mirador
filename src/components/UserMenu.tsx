@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useAuth } from '../auth/AuthProvider'
+import { useAuth } from '../auth/auth-context'
 import { useDeveloperMode } from '../hooks/useDeveloperMode'
+import { useSettingsModal } from '../settings/settings-modal-context'
 import { syncDropdownPanel } from '../utils/sync-dropdown-panel'
 import { AgentAvatar } from './AgentRow'
 import { SfIcon } from './ds/SfIcon'
@@ -8,6 +9,7 @@ import { SfIcon } from './ds/SfIcon'
 export function UserMenu() {
   const { userInfo, session, isMockMode, logout } = useAuth()
   const dev = useDeveloperMode()
+  const settings = useSettingsModal()
   const [open, setOpen] = useState(false)
 
   const rootRef = useRef<HTMLDivElement>(null)
@@ -93,6 +95,20 @@ export function UserMenu() {
             </button>
           </>
         ) : null}
+
+        <div className="user-menu__sep" />
+        <button
+          type="button"
+          role="menuitem"
+          className="user-menu__item"
+          onClick={() => {
+            setOpen(false)
+            settings.open()
+          }}
+        >
+          <SfIcon sprite="utility" symbol="settings" size={16} />
+          Configuració
+        </button>
 
         <div className="user-menu__sep" />
         <button

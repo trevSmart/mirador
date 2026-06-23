@@ -1,5 +1,5 @@
 import type { Agent, ChannelKey, PresenceStatus } from '../api/types'
-import { useDetailDrawer } from '../detail/DetailDrawerContext'
+import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { useSalesforcePhoto } from '../hooks/useSalesforcePhoto'
 import { agentInitials, formatMinutes } from '../utils/format'
 import { CapacityBar, Ring, SfIcon } from './ds'
