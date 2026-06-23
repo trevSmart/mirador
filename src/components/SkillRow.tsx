@@ -1,12 +1,26 @@
 import type { Skill } from '../api/types'
+import { useDetailDrawer } from '../detail/DetailDrawerContext'
 
 interface SkillRowProps {
   skill: Skill
 }
 
 export function SkillRow({ skill }: SkillRowProps) {
+  const { openSkill } = useDetailDrawer()
+
   return (
-    <article className="skill-row">
+    <article
+      className="skill-row skill-row--clickable"
+      role="button"
+      tabIndex={0}
+      onClick={() => openSkill(skill.id)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          openSkill(skill.id)
+        }
+      }}
+    >
       <div className="skill-row__main">
         <div>
           <h3 className="skill-row__name">{skill.name}</h3>
