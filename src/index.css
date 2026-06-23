@@ -2078,14 +2078,8 @@ body {
 }
 
 .fv-select {
-  font-family: var(--font-body);
+  /* Sizing tweaks layered on .ds-select__trigger for the floor bar. */
   font-size: var(--fs-sm);
-  padding: var(--sp-2) var(--sp-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-sm);
-  background: var(--surface-card);
-  color: var(--text-strong);
-  cursor: pointer;
 }
 
 .fv-place-name,
