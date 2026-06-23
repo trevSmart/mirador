@@ -1,4 +1,6 @@
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
 import type { WorkItem } from '../api/types'
+import { useDetailDrawer } from '../detail/DetailDrawerContext'
 import { channelLabel, formatSeconds, workStatusLabel } from '../utils/format'
 import { resolveWorkItemIcon } from '../utils/salesforce-object-icon'
 import { SfIcon } from './ds'
@@ -11,6 +13,13 @@ interface WorkRowProps {
 
 export function WorkRow({ item, agentName, queueName }: WorkRowProps) {
   const icon = resolveWorkItemIcon(item)
+  const { openAgent, openQueue } = useDetailDrawer()
+  const target = item.agentId
+    ? () => openAgent(item.agentId as string)
+    : item.queueId
+      ? () => openQueue(item.queueId as string)
+      : null
+
   const metaParts = [
     channelLabel(item.channelKey),
     workStatusLabel(item.status),
@@ -26,7 +35,22 @@ export function WorkRow({ item, agentName, queueName }: WorkRowProps) {
   }
 
   return (
-    <article className="work-row">
+    <article
+      className={`work-row${target ? ' work-row--clickable' : ''}`}
+      {...(target
+        ? {
+            role: 'button',
+            tabIndex: 0,
+            onClick: target,
+            onKeyDown: (event: ReactKeyboardEvent) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                target()
+              }
+            },
+          }
+        : {})}
+    >
       <div className="work-row__main">
         <SfIcon sprite={icon.sprite} symbol={icon.symbol} size={32} bg={icon.tint} />
         <div className="work-row__body">

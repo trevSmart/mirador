@@ -4,10 +4,10 @@ import type { Agent, PresenceStatus } from '../api/types'
 import { FloorView } from '../components/floor/FloorView'
 import { FloorView3D, type SeatStyle } from '../components/floor/FloorView3D'
 import { PanelShell } from '../components/PanelState'
+import { useDetailDrawer } from '../detail/DetailDrawerContext'
 import type { Dir } from '../floor/floor-iso'
 import { useFloorPlanData } from '../floor/useFloorPlanData'
 import { presenceLabel } from '../utils/format'
-import { recordDetailOpen } from '../utils/detail-recent-store'
 
 const STATUS_ORDER: PresenceStatus[] = ['online', 'busy', 'away', 'offline']
 const STATUS_DOT: Record<PresenceStatus, string> = {
@@ -51,6 +51,7 @@ function loadPrefs(): ViewPrefs {
 export function FloorPanel() {
   const { data, loaded } = useFloorPlanData()
   const { agents } = useMiradorData()
+  const { openAgent } = useDetailDrawer()
   const [placeId, setPlaceId] = useState<string | null>(null)
   const [floorIndex, setFloorIndex] = useState(0)
 
@@ -90,8 +91,7 @@ export function FloorPanel() {
   }, [activeFloor, agentsById])
 
   const handleSelectAgent = (agent: Agent) => {
-    recordDetailOpen({ kind: 'agent', id: agent.id, name: agent.name })
-    if (agent.recordUrl) window.open(agent.recordUrl, '_blank', 'noopener,noreferrer')
+    openAgent(agent.id)
   }
 
   if (!loaded) {

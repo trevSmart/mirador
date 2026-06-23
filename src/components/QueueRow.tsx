@@ -1,4 +1,5 @@
 import type { Queue } from '../api/types'
+import { useDetailDrawer } from '../detail/DetailDrawerContext'
 import { formatSeconds } from '../utils/format'
 import { PressureBar, SfIcon } from './ds'
 
@@ -11,9 +12,21 @@ interface QueueRowProps {
 
 export function QueueRow({ queue }: QueueRowProps) {
   const pressure = Math.min(1, queue.backlog / BACKLOG_FULL)
+  const { openQueue } = useDetailDrawer()
 
   return (
-    <article className="queue-row">
+    <article
+      className="queue-row queue-row--clickable"
+      role="button"
+      tabIndex={0}
+      onClick={() => openQueue(queue.id)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          openQueue(queue.id)
+        }
+      }}
+    >
       <div className="queue-row__main">
         <SfIcon name="queue" size={32} bg={queue.color} />
         <div>

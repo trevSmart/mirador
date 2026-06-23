@@ -1,4 +1,5 @@
 import type { Agent, ChannelKey, PresenceStatus } from '../api/types'
+import { useDetailDrawer } from '../detail/DetailDrawerContext'
 import { useSalesforcePhoto } from '../hooks/useSalesforcePhoto'
 import { agentInitials, formatMinutes } from '../utils/format'
 import { CapacityBar, Ring, SfIcon } from './ds'
@@ -69,25 +70,26 @@ export function AgentRow({ agent, showSkills = false }: AgentRowProps) {
   const queueCount = agent.queueIds.length
   const skillNames = agent.skills.map((skill) => skill.name).slice(0, 3)
   const color = STATUS_COLOR[agent.status]
+  const { openAgent } = useDetailDrawer()
 
   return (
-    <article className="agent-row">
+    <article
+      className="agent-row agent-row--clickable"
+      role="button"
+      tabIndex={0}
+      onClick={() => openAgent(agent.id)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          openAgent(agent.id)
+        }
+      }}
+    >
       <div className="agent-row__main">
         <AgentRing agent={agent} color={color} />
         <div className="agent-row__info">
           <div className="agent-row__title">
-            {agent.recordUrl ? (
-              <a
-                className="agent-row__name"
-                href={agent.recordUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {agent.name}
-              </a>
-            ) : (
-              <span className="agent-row__name">{agent.name}</span>
-            )}
+            <span className="agent-row__name">{agent.name}</span>
             <StatusBadge status={agent.status} />
           </div>
           <p className="agent-row__meta">
