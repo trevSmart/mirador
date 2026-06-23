@@ -90,7 +90,7 @@
   --surface-canvas: var(--pa-bg);
   --surface-raised: var(--pa-bg-tint);
   --surface-card: var(--pa-surface);
-  --surface-well: var(--pa-surface-2);
+  --surface-well: #F4F3F0;
 
   --text-strong: var(--pa-ink);
   --text-body: var(--pa-dim);
@@ -121,6 +121,7 @@
   --font-display: 'Space Grotesk', system-ui, sans-serif;
   --font-body: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --mono-fs-nudge: -1px;
 
   --fs-h2: 24px;
   --fs-h3: 20px;
@@ -247,6 +248,7 @@ body {
 .pa-mono {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
+  font-size: calc(1em + var(--mono-fs-nudge));
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -303,7 +305,7 @@ body {
 .app-header__clock {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: var(--fs-title);
+  font-size: calc(var(--fs-title) + var(--mono-fs-nudge));
   font-weight: var(--fw-regular);
   color: var(--text-strong);
   white-space: nowrap;
@@ -568,7 +570,7 @@ body {
 
 .qsearch-item .si-kbd {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: calc(10px + var(--mono-fs-nudge));
   color: var(--text-muted);
   flex-shrink: 0;
 }
@@ -923,7 +925,7 @@ body {
   margin: 0;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: var(--fs-metric-xl);
+  font-size: calc(var(--fs-metric-xl) + var(--mono-fs-nudge));
   font-weight: var(--fw-medium);
   line-height: var(--lh-tight);
   color: var(--text-strong);
@@ -1158,7 +1160,7 @@ body {
 .agent-row__channel-count {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: var(--fs-2xs);
+  font-size: calc(var(--fs-2xs) + var(--mono-fs-nudge));
   font-weight: var(--fw-medium);
   color: var(--text-strong);
 }
@@ -1236,7 +1238,7 @@ body {
 .metric-pill__value {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: var(--fs-sm);
+  font-size: calc(var(--fs-sm) + var(--mono-fs-nudge));
   font-weight: var(--fw-semibold);
   color: var(--text-strong);
 }
@@ -1378,7 +1380,7 @@ body {
   grid-row: 1 / 3;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 22px;
+  font-size: calc(22px + var(--mono-fs-nudge));
   font-weight: var(--fw-medium);
   letter-spacing: -0.03em;
   line-height: var(--lh-tight);
@@ -1530,7 +1532,7 @@ body {
   display: flex;
   gap: var(--sp-3);
   font-family: var(--font-mono);
-  font-size: var(--fs-xs);
+  font-size: calc(var(--fs-xs) + var(--mono-fs-nudge));
   color: var(--text-muted);
 }
 
@@ -1798,7 +1800,7 @@ body {
 
 .fe-place__count {
   font-family: var(--font-mono);
-  font-size: var(--fs-xs);
+  font-size: calc(var(--fs-xs) + var(--mono-fs-nudge));
   color: var(--text-muted);
 }
 
@@ -1826,7 +1828,7 @@ body {
 
 .fe-floor__meta {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: calc(10px + var(--mono-fs-nudge));
   color: var(--text-muted);
 }
 
@@ -1909,6 +1911,7 @@ body {
 
 .fe-opacity__value {
   font-family: var(--font-mono);
+  font-size: calc(1em + var(--mono-fs-nudge));
   color: var(--text-muted);
   min-width: 34px;
   text-align: right;
@@ -2065,7 +2068,7 @@ body {
   align-items: center;
   gap: var(--sp-4);
   font-family: var(--font-mono);
-  font-size: var(--fs-sm);
+  font-size: calc(var(--fs-sm) + var(--mono-fs-nudge));
   color: var(--text-body);
 }
 
@@ -2147,7 +2150,7 @@ body {
   background: transparent;
   color: var(--text-body);
   font-family: var(--font-mono);
-  font-size: var(--fs-xs);
+  font-size: calc(var(--fs-xs) + var(--mono-fs-nudge));
   font-weight: 600;
   padding: 4px 12px;
   border-radius: var(--r-sm);
@@ -2203,7 +2206,7 @@ body {
 /* ── Header user menu ──────────────────────────────────────────────────── */
 .app-header__dev {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: calc(10px + var(--mono-fs-nudge));
   font-weight: 700;
   letter-spacing: 0.06em;
   color: var(--accent);
@@ -2222,14 +2225,12 @@ body {
 .user-menu__trigger {
   display: inline-flex;
   align-items: center;
-  gap: var(--sp-2);
   border: 1px solid transparent;
   border-radius: var(--r-pill);
   background: transparent;
-  padding: 3px 8px 3px 3px;
+  padding: 3px;
   cursor: pointer;
   color: var(--text-strong);
-  font-size: var(--fs-sm);
   transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
 }
 
@@ -2242,17 +2243,6 @@ body {
   width: 28px;
   height: 28px;
   font-size: 10px;
-}
-
-.user-menu__trigger-name {
-  max-width: 140px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.user-menu__trigger > span:last-child {
-  color: var(--text-muted);
 }
 
 .user-menu__dropdown {
@@ -2528,7 +2518,7 @@ body {
 
 .dd-stat__value {
   font-family: var(--font-mono);
-  font-size: var(--fs-body-lg);
+  font-size: calc(var(--fs-body-lg) + var(--mono-fs-nudge));
   font-weight: 600;
   color: var(--text-strong);
 }
@@ -2561,7 +2551,7 @@ body {
   border-radius: var(--r-pill);
   background: var(--surface-well);
   font-family: var(--font-mono);
-  font-size: var(--fs-xs);
+  font-size: calc(var(--fs-xs) + var(--mono-fs-nudge));
   color: var(--text-muted);
 }
 
@@ -2803,6 +2793,9 @@ body {
 }
 
 .settings-row__label strong {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
   font-weight: 500;
   font-size: 13.5px;
   color: var(--text-strong);
@@ -2815,6 +2808,30 @@ body {
 
 .settings-row__control {
   flex: 0 0 auto;
+}
+
+/* "Pròximament" rows: dimmed control + a tag, but the label stays readable. */
+.settings-soon-tag {
+  font-size: 7.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--pa-watch) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pa-watch) 18%, transparent);
+  color: var(--pa-watch);
+}
+
+.settings-row--soon .settings-row__control {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.settings-select:disabled,
+.settings-input:disabled,
+.settings-toggle input:disabled + .settings-toggle__track {
+  cursor: not-allowed;
 }
 
 .settings-text {

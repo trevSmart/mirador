@@ -20,9 +20,11 @@ const STATUS_COLOR: Record<PresenceStatus, string> = {
 interface FloorSeatProps {
   agent: Agent
   onSelect: (agent: Agent) => void
+  showAvatars: boolean
+  animations: boolean
 }
 
-function FloorSeat({ agent, onSelect }: FloorSeatProps) {
+function FloorSeat({ agent, onSelect, showAvatars, animations }: FloorSeatProps) {
   const photo = useSalesforcePhoto(agent.photo)
   return (
     <button
@@ -36,9 +38,9 @@ function FloorSeat({ agent, onSelect }: FloorSeatProps) {
         max={agent.max}
         color={STATUS_COLOR[agent.status]}
         size={VIEW_CELL - 10}
-        photo={photo}
+        photo={showAvatars ? photo : null}
         initials={agentInitials(agent.name)}
-        breathe={agent.status === 'busy'}
+        breathe={animations && agent.status === 'busy'}
       />
     </button>
   )
@@ -48,9 +50,11 @@ interface FloorViewProps {
   floor: Floor
   agentsById: Map<string, Agent>
   onSelectAgent: (agent: Agent) => void
+  showAvatars: boolean
+  animations: boolean
 }
 
-export function FloorView({ floor, agentsById, onSelectAgent }: FloorViewProps) {
+export function FloorView({ floor, agentsById, onSelectAgent, showAvatars, animations }: FloorViewProps) {
   const seatByKey = useMemo(() => {
     const map = new Map<string, Floor['seats'][number]>()
     for (const seat of floor.seats) map.set(cellKey(seat.c, seat.r), seat)
@@ -105,7 +109,12 @@ export function FloorView({ floor, agentsById, onSelectAgent }: FloorViewProps) 
           >
             {seat ? (
               agent ? (
-                <FloorSeat agent={agent} onSelect={onSelectAgent} />
+                <FloorSeat
+                  agent={agent}
+                  onSelect={onSelectAgent}
+                  showAvatars={showAvatars}
+                  animations={animations}
+                />
               ) : (
                 <span className="fv-seat fv-seat--vacant" title="Seient lliure" />
               )

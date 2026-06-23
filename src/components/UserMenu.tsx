@@ -56,11 +56,10 @@ export function UserMenu() {
         className="user-menu__trigger"
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-label={`Menú d'usuari: ${name}`}
         onClick={() => setOpen((value) => !value)}
       >
         <AgentAvatar name={name} photo={photo} />
-        <span className="user-menu__trigger-name">{name}</span>
-        <SfIcon sprite="utility" symbol="chevrondown" size={12} />
       </button>
 
       <div ref={dropRef} className="user-menu__dropdown dropdown-panel" role="menu" hidden>
@@ -71,6 +70,20 @@ export function UserMenu() {
             <span className="user-menu__email">{secondary}</span>
           </div>
         </div>
+
+        <div className="user-menu__sep" />
+        <button
+          type="button"
+          role="menuitem"
+          className="user-menu__item"
+          onClick={() => {
+            setOpen(false)
+            settings.open()
+          }}
+        >
+          <SfIcon sprite="utility" symbol="settings" size={16} />
+          Configuració
+        </button>
 
         {!isMockMode && instanceUrl ? (
           <>
@@ -95,20 +108,6 @@ export function UserMenu() {
             </button>
           </>
         ) : null}
-
-        <div className="user-menu__sep" />
-        <button
-          type="button"
-          role="menuitem"
-          className="user-menu__item"
-          onClick={() => {
-            setOpen(false)
-            settings.open()
-          }}
-        >
-          <SfIcon sprite="utility" symbol="settings" size={16} />
-          Configuració
-        </button>
 
         <div className="user-menu__sep" />
         <button
