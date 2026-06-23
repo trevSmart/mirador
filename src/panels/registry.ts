@@ -3,11 +3,12 @@ import type { IDockviewPanelProps } from 'dockview'
 import type { SfIconName } from '../components/ds/SfIcon'
 import { AgentsPanel } from './AgentsPanel'
 import { HomePanel } from './HomePanel'
+import { InsightsPanel } from './InsightsPanel'
 import { QueuesPanel } from './QueuesPanel'
 import { SkillsPanel } from './SkillsPanel'
 import { WorkPanel } from './WorkPanel'
 
-export type PanelType = 'home' | 'agents' | 'queues' | 'skills' | 'work'
+export type PanelType = 'home' | 'insights' | 'agents' | 'queues' | 'skills' | 'work'
 
 export interface PanelDefinition {
   type: PanelType
@@ -18,6 +19,7 @@ export interface PanelDefinition {
 
 export const PANEL_DEFINITIONS: PanelDefinition[] = [
   { type: 'home', title: 'Home', iconName: 'home', component: HomePanel },
+  { type: 'insights', title: 'Insights', iconName: 'insights', component: InsightsPanel },
   { type: 'agents', title: 'Agents', iconName: 'agent', component: AgentsPanel },
   { type: 'queues', title: 'Queues', iconName: 'queue', component: QueuesPanel },
   { type: 'skills', title: 'Skills', iconName: 'skill', component: SkillsPanel },

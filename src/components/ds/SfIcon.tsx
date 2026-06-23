@@ -27,6 +27,7 @@ const TILED_SPRITES: ReadonlySet<SfSprite> = new Set([
 
 export type SfIconName =
   | 'home'
+  | 'insights'
   | 'voice'
   | 'chat'
   | 'email'
@@ -46,6 +47,7 @@ interface NamedIcon {
 
 const NAMED: Record<SfIconName, NamedIcon> = {
   home: { sprite: 'standard', symbol: 'agent_home', tint: 'var(--pa-ic-user)' },
+  insights: { sprite: 'utility', symbol: 'metrics' },
   voice: { sprite: 'standard', symbol: 'voice_call', tint: 'var(--pa-ic-voice)' },
   chat: { sprite: 'standard', symbol: 'live_chat', tint: 'var(--pa-ic-chat)' },
   email: { sprite: 'standard', symbol: 'email', tint: 'var(--pa-ic-email)' },

@@ -9,20 +9,32 @@ interface PanelShellProps {
   icon?: ReactNode
   children: ReactNode
   actions?: ReactNode
+  className?: string
+  hideHeader?: boolean
 }
 
-export function PanelShell({ title, icon, children, actions }: PanelShellProps) {
+export function PanelShell({
+  title,
+  icon,
+  children,
+  actions,
+  className,
+  hideHeader = false,
+}: PanelShellProps) {
   const scrollRef = useSmoothScroll<HTMLDivElement>()
+  const showHeader = !hideHeader && (title || icon || actions)
 
   return (
-    <div className="panel-shell" ref={scrollRef}>
-      <div className="panel-shell__header">
-        <div className="panel-shell__heading">
-          {icon}
-          <h2 className="panel-shell__title">{title ?? 'Panell'}</h2>
+    <div className={['panel-shell', className].filter(Boolean).join(' ')} ref={scrollRef}>
+      {showHeader ? (
+        <div className="panel-shell__header">
+          <div className="panel-shell__heading">
+            {icon}
+            <h2 className="panel-shell__title">{title ?? 'Panell'}</h2>
+          </div>
+          {actions}
         </div>
-        {actions}
-      </div>
+      ) : null}
       {children}
     </div>
   )
@@ -38,6 +50,8 @@ interface PanelStateProps {
   isEmpty?: boolean
   children: ReactNode
   actions?: ReactNode
+  hideHeader?: boolean
+  shellClassName?: string
 }
 
 export function PanelState({
@@ -50,12 +64,20 @@ export function PanelState({
   isEmpty = false,
   children,
   actions,
+  hideHeader = false,
+  shellClassName,
 }: PanelStateProps) {
   const { isAuthenticated, isMockMode, isSalesforceEnabled } = useAuth()
   const icon = panelType ? <PanelIcon type={panelType} size={28} /> : undefined
 
   return (
-    <PanelShell title={title} icon={icon} actions={actions}>
+    <PanelShell
+      title={hideHeader ? undefined : title}
+      icon={hideHeader ? undefined : icon}
+      actions={actions}
+      className={shellClassName}
+      hideHeader={hideHeader}
+    >
       {!isMockMode && !isSalesforceEnabled ? (
         <p className="panel-state panel-state--muted">
           Configura SF_CLIENT_ID per connectar a Salesforce.

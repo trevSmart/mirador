@@ -32,6 +32,65 @@ export function presenceLabel(status: PresenceStatus): string {
   return PRESENCE_LABELS[status]
 }
 
+function formatDurationDays(totalMin: number): string {
+  const days = Math.floor(totalMin / (24 * 60))
+  const hours = Math.floor((totalMin % (24 * 60)) / 60)
+  const minutes = totalMin % 60
+  let out = `${days}d`
+  if (hours > 0) {
+    out += ` ${hours}h`
+  }
+  if (minutes > 0) {
+    out += ` ${minutes}m`
+  }
+  return out
+}
+
+function formatDurationMinutes(totalMin: number): string {
+  const minutes = Math.max(0, Math.floor(Number(totalMin) || 0))
+  if (minutes < 60) {
+    return `${minutes}m`
+  }
+  if (minutes >= 24 * 60) {
+    return formatDurationDays(minutes)
+  }
+  const hours = Math.floor(minutes / 60)
+  const remainder = minutes % 60
+  return remainder ? `${hours}h ${remainder}m` : `${hours}h`
+}
+
+/** Wait-time KPI formatter (seconds in, human label out). */
+export function formatDurationSec(totalSec: number, { short = false } = {}): string {
+  const seconds = Math.max(0, Math.floor(Number(totalSec) || 0))
+  if (seconds < 60) {
+    return `${seconds}s`
+  }
+  if (short) {
+    return formatDurationMinutes(Math.round(seconds / 60))
+  }
+
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const remainder = seconds % 60
+
+  if (hours >= 24) {
+    return formatDurationDays(hours * 60 + minutes)
+  }
+
+  if (hours > 0) {
+    let out = `${hours}h`
+    if (minutes > 0) {
+      out += ` ${minutes}m`
+    }
+    if (remainder > 0) {
+      out += ` ${String(remainder).padStart(2, '0')}s`
+    }
+    return out
+  }
+
+  return `${minutes}m ${String(remainder).padStart(2, '0')}s`
+}
+
 export function formatSeconds(seconds: number): string {
   if (seconds < 60) {
     return `${seconds}s`
