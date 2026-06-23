@@ -488,10 +488,7 @@ body {
   right: 0;
   width: 360px;
   overflow: hidden;
-  background: var(--surface-card);
   border: 1px solid var(--border-subtle);
-  border-radius: 12px;
-  box-shadow: var(--shadow-lift);
   z-index: 100;
   padding: 6px;
 }
@@ -2296,10 +2293,7 @@ body {
   z-index: 200;
   min-width: 250px;
   padding: var(--sp-3);
-  background: var(--surface-card);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
-  box-shadow: var(--shadow-lift);
 }
 
 .user-menu__header {
