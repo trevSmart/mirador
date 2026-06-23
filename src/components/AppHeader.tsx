@@ -2,6 +2,7 @@ import { useMiradorData } from '../api/MiradorDataProvider'
 import { useAuth } from '../auth/AuthProvider'
 import panoramaLogo from '../assets/panorama/logo/panorama-logo.png'
 import { SfIcon } from './ds/SfIcon'
+import { GlobalSearch } from './GlobalSearch'
 import { HeaderClock } from './HeaderClock'
 
 export function AppHeader() {
@@ -51,6 +52,8 @@ export function AppHeader() {
         >
           <SfIcon sprite="utility" symbol="refresh" size={18} />
         </button>
+
+        <GlobalSearch />
 
         {isLoading ? (
           <span className="app-header__status">Carregant sessió…</span>
