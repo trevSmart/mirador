@@ -2903,6 +2903,8 @@ body {
   border-radius: var(--r-sm);
   padding: var(--sp-2) var(--sp-3);
   transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+  width: 84px;
+  text-align: right;
 }
 
 .settings-select {
