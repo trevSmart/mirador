@@ -1,21 +1,16 @@
 import { useMiradorData } from '../api/MiradorDataProvider'
 import { useAuth } from '../auth/AuthProvider'
 import panoramaLogo from '../assets/panorama/logo/panorama-logo.png'
+import { useDeveloperMode } from '../hooks/useDeveloperMode'
 import { SfIcon } from './ds/SfIcon'
 import { GlobalSearch } from './GlobalSearch'
 import { HeaderClock } from './HeaderClock'
+import { UserMenu } from './UserMenu'
 
 export function AppHeader() {
-  const {
-    authError,
-    isAuthenticated,
-    isLoading,
-    isMockMode,
-    isSalesforceEnabled,
-    logout,
-    userInfo,
-  } = useAuth()
+  const { authError, isAuthenticated, isLoading, isMockMode, isSalesforceEnabled } = useAuth()
   const { isRefreshing, refresh } = useMiradorData()
+  const { enabled: devMode } = useDeveloperMode()
 
   return (
     <header className="app-header">
@@ -42,6 +37,12 @@ export function AppHeader() {
           </span>
         ) : null}
 
+        {devMode ? (
+          <span className="app-header__dev" title="Mode desenvolupador actiu">
+            DEV
+          </span>
+        ) : null}
+
         <button
           type="button"
           className={`app-header__button app-header__button--icon${isRefreshing ? ' app-header__button--spinning' : ''}`}
@@ -58,14 +59,7 @@ export function AppHeader() {
         {isLoading ? (
           <span className="app-header__status">Carregant sessió…</span>
         ) : isAuthenticated ? (
-          <div className="app-header__user">
-            <span>{userInfo?.name ?? (isMockMode ? 'Supervisor mock' : 'Usuari Salesforce')}</span>
-            {!isMockMode ? (
-              <button type="button" className="app-header__button" onClick={logout}>
-                Logout
-              </button>
-            ) : null}
-          </div>
+          <UserMenu />
         ) : isSalesforceEnabled && !authError ? (
           <span className="app-header__status">Redirigint a Salesforce…</span>
         ) : null}
