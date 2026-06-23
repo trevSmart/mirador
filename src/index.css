@@ -655,9 +655,6 @@ body {
   z-index: 20;
   min-width: 180px;
   border: 1px solid var(--border-subtle);
-  border-radius: var(--r-xs);
-  background: var(--surface-card);
-  box-shadow: var(--shadow-lift);
   padding: var(--sp-1);
 }
 
