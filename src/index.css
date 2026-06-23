@@ -2894,7 +2894,6 @@ body {
 }
 
 /* Form controls */
-.settings-select,
 .settings-input {
   font-family: var(--font-body);
   font-size: 13px;
@@ -2908,15 +2907,8 @@ body {
 
 .settings-select {
   min-width: 150px;
-  cursor: pointer;
 }
 
-.settings-input {
-  width: 84px;
-  text-align: right;
-}
-
-.settings-select:focus-visible,
 .settings-input:focus-visible {
   outline: none;
   border-color: var(--accent);

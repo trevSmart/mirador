@@ -4,6 +4,7 @@
    value + onChange so the dirty-check and save are trivial. */
 
 import { useId, type ReactNode } from 'react'
+import { Select } from '../ds/Select'
 
 export function SettingsGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -85,23 +86,15 @@ export function SelectField<T extends string | number>({
   disabled?: boolean
 }) {
   return (
-    <select
-      className="settings-select"
-      value={String(value)}
-      onChange={(e) => {
-        const raw = e.target.value
-        const match = options.find((o) => String(o.value) === raw)
-        if (match) onChange(match.value)
-      }}
-      aria-label={label}
+    <Select
+      value={value}
+      options={options}
+      onChange={onChange}
+      ariaLabel={label}
       disabled={disabled}
-    >
-      {options.map((o) => (
-        <option key={String(o.value)} value={String(o.value)}>
-          {o.label}
-        </option>
-      ))}
-    </select>
+      className="settings-select"
+      minWidth={150}
+    />
   )
 }
 
