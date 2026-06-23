@@ -90,7 +90,7 @@
   --surface-canvas: var(--pa-bg);
   --surface-raised: var(--pa-bg-tint);
   --surface-card: var(--pa-surface);
-  --surface-well: #F4F3F0;
+  --surface-well: #F7F6F3;
 
   --text-strong: var(--pa-ink);
   --text-body: var(--pa-dim);
@@ -2125,7 +2125,7 @@ body {
   overflow: auto;
   display: grid;
   place-items: center;
-  padding: var(--sp-8);
+  padding: var(--sp-4);
   background: var(--surface-canvas);
 }
 
