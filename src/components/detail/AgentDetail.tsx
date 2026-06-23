@@ -1,6 +1,6 @@
-import { useMiradorData } from '../../api/MiradorDataProvider'
+import { useMiradorData } from '../../api/mirador-data-context'
 import type { Agent, ChannelKey, PresenceStatus } from '../../api/types'
-import { useDetailDrawer } from '../../detail/DetailDrawerContext'
+import { useDetailDrawer } from '../../detail/detail-drawer-context'
 import { useSalesforcePhoto } from '../../hooks/useSalesforcePhoto'
 import { agentInitials, channelLabel, formatMinutes } from '../../utils/format'
 import { resolveWorkItemIcon } from '../../utils/salesforce-object-icon'

@@ -1,6 +1,6 @@
-import { useMiradorData } from '../../api/MiradorDataProvider'
+import { useMiradorData } from '../../api/mirador-data-context'
 import type { Skill } from '../../api/types'
-import { useDetailDrawer } from '../../detail/DetailDrawerContext'
+import { useDetailDrawer } from '../../detail/detail-drawer-context'
 import { sortAgentsByPresence } from '../../utils/agent-stats'
 import { colorFromString } from '../../utils/color-from-string'
 import { SfIcon, Badge } from '../ds'

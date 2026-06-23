@@ -4,8 +4,11 @@ import { MiradorApiProvider } from './api/MiradorApiProvider'
 import { MiradorDataProvider } from './api/MiradorDataProvider'
 import { AppHeader } from './components/AppHeader'
 import { DetailDrawer } from './components/detail/DetailDrawer'
+import { SettingsModal } from './components/settings/SettingsModal'
 import { DockviewShell } from './components/DockviewShell'
 import { DetailDrawerProvider } from './detail/DetailDrawerContext'
+import { PreferencesProvider } from './settings/PreferencesProvider'
+import { SettingsModalProvider } from './settings/SettingsModalProvider'
 
 function AppContent() {
   return (
@@ -17,6 +20,7 @@ function AppContent() {
         </main>
       </div>
       <DetailDrawer />
+      <SettingsModal />
     </div>
   )
 }
@@ -24,13 +28,17 @@ function AppContent() {
 function App({ initialAuthError = null }: { initialAuthError?: string | null }) {
   return (
     <AuthProvider initialAuthError={initialAuthError}>
-      <MiradorApiProvider>
-        <MiradorDataProvider>
-          <DetailDrawerProvider>
-            <AppContent />
-          </DetailDrawerProvider>
-        </MiradorDataProvider>
-      </MiradorApiProvider>
+      <PreferencesProvider>
+        <MiradorApiProvider>
+          <MiradorDataProvider>
+            <DetailDrawerProvider>
+              <SettingsModalProvider>
+                <AppContent />
+              </SettingsModalProvider>
+            </DetailDrawerProvider>
+          </MiradorDataProvider>
+        </MiradorApiProvider>
+      </PreferencesProvider>
     </AuthProvider>
   )
 }

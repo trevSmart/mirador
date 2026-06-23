@@ -1,13 +1,5 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { AuthContext, type AuthContextValue } from './auth-context'
 import {
   fetchPublicConfig,
   fetchUserInfo,
@@ -28,22 +20,6 @@ const MOCK_SESSION: OAuthSession = {
   instanceUrl: 'https://mock.local',
   expiresAt: Number.MAX_SAFE_INTEGER,
 }
-
-interface AuthContextValue {
-  config: PublicOAuthConfig | null
-  session: OAuthSession | null
-  userInfo: SalesforceUserInfo | null
-  isAuthenticated: boolean
-  isMockMode: boolean
-  isSalesforceEnabled: boolean
-  isLoading: boolean
-  authError: string | null
-  login: () => Promise<void>
-  logout: () => void
-  refreshSession: () => Promise<OAuthSession | null>
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({
   children,
@@ -103,11 +79,15 @@ export function AuthProvider({
     }
   }, [])
 
+  // Clear a stale profile once the session is gone (non-mock). Adjusted during
+  // render (convergent) rather than in an effect, to avoid a synchronous effect
+  // setState. Mock mode keeps MOCK_USER_INFO.
+  if (!session && userInfo !== null && !isMockMode(config)) {
+    setUserInfo(null)
+  }
+
   useEffect(() => {
     if (!session || isMockMode(config)) {
-      if (!isMockMode(config)) {
-        setUserInfo(null)
-      }
       return
     }
 
@@ -153,7 +133,10 @@ export function AuthProvider({
     if (!config || isMockMode(config) || !isSalesforceConfigured(config)) return
 
     autoLoginAttempted.current = true
-    void login()
+    // Defer so the setState inside login() doesn't run synchronously in the effect.
+    queueMicrotask(() => {
+      void login()
+    })
   }, [authError, config, isLoading, login, session])
 
   const logout = useCallback(() => {
@@ -187,12 +170,4 @@ export function AuthProvider({
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export function useAuth(): AuthContextValue {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider')
-  }
-  return context
 }

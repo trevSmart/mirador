@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useMiradorData } from '../api/MiradorDataProvider'
+import { useMiradorData } from '../api/mirador-data-context'
 import type { Agent, PresenceStatus } from '../api/types'
 import { FloorView } from '../components/floor/FloorView'
 import { FloorView3D, type SeatStyle } from '../components/floor/FloorView3D'
 import { PanelShell } from '../components/PanelState'
-import { useDetailDrawer } from '../detail/DetailDrawerContext'
+import { useDetailDrawer } from '../detail/detail-drawer-context'
 import type { Dir } from '../floor/floor-iso'
 import { useFloorPlanData } from '../floor/useFloorPlanData'
+import { usePreferences } from '../settings/preferences-context'
 import { presenceLabel } from '../utils/format'
 
 const STATUS_ORDER: PresenceStatus[] = ['online', 'busy', 'away', 'offline']
@@ -24,48 +25,40 @@ const SEAT_STYLES: Array<{ value: SeatStyle; label: string }> = [
 ]
 
 type ViewMode = '2d' | '3d'
-const PREFS_KEY = 'mirador.floor.viewPrefs'
+const SEAT_STYLE_KEY = 'mirador.floor.seatStyle'
 
-interface ViewPrefs {
-  view: ViewMode
-  seatStyle: SeatStyle
-}
-
-function loadPrefs(): ViewPrefs {
+function loadSeatStyle(): SeatStyle {
   try {
-    const raw = localStorage.getItem(PREFS_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw) as Partial<ViewPrefs>
-      return {
-        view: parsed.view === '3d' ? '3d' : '2d',
-        seatStyle:
-          parsed.seatStyle === 'avatar' || parsed.seatStyle === 'cube' ? parsed.seatStyle : 'tower',
-      }
-    }
+    const raw = localStorage.getItem(SEAT_STYLE_KEY)
+    if (raw === 'avatar' || raw === 'cube' || raw === 'tower') return raw
   } catch {
     /* ignore */
   }
-  return { view: '2d', seatStyle: 'tower' }
+  return 'tower'
 }
 
 export function FloorPanel() {
   const { data, loaded } = useFloorPlanData()
   const { agents } = useMiradorData()
   const { openAgent } = useDetailDrawer()
+  const { prefs } = usePreferences()
   const [placeId, setPlaceId] = useState<string | null>(null)
   const [floorIndex, setFloorIndex] = useState(0)
 
-  const [view, setView] = useState<ViewMode>(() => loadPrefs().view)
-  const [seatStyle, setSeatStyle] = useState<SeatStyle>(() => loadPrefs().seatStyle)
+  // The view opens on the user's default (Settings → Aparença); the seat style
+  // is remembered per use. Once the user toggles the view here it stays put,
+  // even if the default preference changes later.
+  const [view, setView] = useState<ViewMode>(prefs.defaultFloorView)
+  const [seatStyle, setSeatStyle] = useState<SeatStyle>(loadSeatStyle)
   const [dir, setDir] = useState<Dir>(0)
 
   useEffect(() => {
     try {
-      localStorage.setItem(PREFS_KEY, JSON.stringify({ view, seatStyle }))
+      localStorage.setItem(SEAT_STYLE_KEY, seatStyle)
     } catch {
       /* ignore */
     }
-  }, [view, seatStyle])
+  }, [seatStyle])
 
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents])
 

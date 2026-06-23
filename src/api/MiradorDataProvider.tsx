@@ -1,40 +1,19 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react'
-import { useAuth } from '../auth/AuthProvider'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useAuth } from '../auth/auth-context'
+import { usePreferences } from '../settings/preferences-context'
 import { MiradorApiError } from './mirador-client'
-import { useMiradorApi } from './MiradorApiProvider'
+import { useMiradorApi } from './mirador-api-context'
+import {
+  MiradorDataContext,
+  type MiradorDataContextValue,
+  type RefreshOptions,
+} from './mirador-data-context'
 import type { Agent, Queue, Skill, WorkItem } from './types'
-
-const POLL_INTERVAL_MS = 15_000
-
-interface RefreshOptions {
-  silent?: boolean
-}
-
-interface MiradorDataContextValue {
-  agents: Agent[]
-  queues: Queue[]
-  skills: Skill[]
-  work: WorkItem[]
-  isLoading: boolean
-  isRefreshing: boolean
-  error: string | null
-  refresh: (options?: RefreshOptions) => Promise<void>
-}
-
-const MiradorDataContext = createContext<MiradorDataContextValue | null>(null)
 
 export function MiradorDataProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth()
   const client = useMiradorApi()
+  const { prefs } = usePreferences()
   const [agents, setAgents] = useState<Agent[]>([])
   const [queues, setQueues] = useState<Queue[]>([])
   const [skills, setSkills] = useState<Skill[]>([])
@@ -106,30 +85,43 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
     }
   }, [clearData, client])
 
-  useEffect(() => {
-    if (!isAuthenticated || !client) {
+  const authedNow = isAuthenticated && Boolean(client)
+  // Reset to a clean idle state when auth/client is lost. Done during render
+  // (convergent) instead of in an effect, to avoid a synchronous effect setState.
+  const [prevAuthed, setPrevAuthed] = useState(authedNow)
+  if (prevAuthed !== authedNow) {
+    setPrevAuthed(authedNow)
+    if (!authedNow) {
       clearData()
       setError(null)
       setIsLoading(false)
-      return
     }
-
-    void refresh()
-  }, [clearData, client, isAuthenticated, refresh])
+  }
 
   useEffect(() => {
     if (!isAuthenticated || !client) {
+      return
+    }
+
+    // Defer so the setState inside refresh() doesn't run synchronously in the effect.
+    queueMicrotask(() => {
+      void refresh()
+    })
+  }, [client, isAuthenticated, refresh])
+
+  useEffect(() => {
+    if (!isAuthenticated || !client || !prefs.autoRefresh) {
       return
     }
 
     const intervalId = window.setInterval(() => {
       void refresh({ silent: true })
-    }, POLL_INTERVAL_MS)
+    }, prefs.refreshInterval * 1000)
 
     return () => {
       window.clearInterval(intervalId)
     }
-  }, [client, isAuthenticated, refresh])
+  }, [client, isAuthenticated, refresh, prefs.autoRefresh, prefs.refreshInterval])
 
   const value = useMemo<MiradorDataContextValue>(
     () => ({
@@ -150,12 +142,4 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
       {children}
     </MiradorDataContext.Provider>
   )
-}
-
-export function useMiradorData(): MiradorDataContextValue {
-  const context = useContext(MiradorDataContext)
-  if (!context) {
-    throw new Error('useMiradorData must be used within MiradorDataProvider')
-  }
-  return context
 }
