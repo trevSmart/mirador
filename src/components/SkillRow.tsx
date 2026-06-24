@@ -1,12 +1,17 @@
 import type { Skill } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
-import { FadeValue, MetricPill } from './ds'
+import { colorFromString } from '../utils/color-from-string'
+import { FadeValue, MetricPill, PressureBar, SfIcon } from './ds'
+
+/** Backlog count that reads as "full" pressure on the bar. */
+const BACKLOG_FULL = 20
 
 interface SkillRowProps {
   skill: Skill
 }
 
 export function SkillRow({ skill }: SkillRowProps) {
+  const pressure = Math.min(1, skill.backlog / BACKLOG_FULL)
   const { openSkill } = useDetailDrawer()
 
   return (
@@ -23,13 +28,16 @@ export function SkillRow({ skill }: SkillRowProps) {
       }}
     >
       <div className="skill-row__main">
-        <div>
+        <SfIcon name="skill" sldsSize="medium" bg={colorFromString(skill.name)} />
+        <div className="skill-row__body">
           <h3 className="skill-row__name" title={skill.name}>{skill.name}</h3>
           <p className="skill-row__meta">
             {skill.type ?? 'Sense tipus'} · <FadeValue value={skill.agents} /> agents qualificats
           </p>
         </div>
       </div>
+
+      <PressureBar value={pressure} />
 
       <div className="skill-row__metrics">
         <MetricPill label="Backlog" value={skill.backlog} />

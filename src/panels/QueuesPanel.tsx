@@ -22,7 +22,7 @@ export function QueuesPanel() {
         <FadeValue value={queues.length} /> cues · <FadeValue value={totalQueueBacklog(queues)} /> treballs en cua
       </p>
 
-      <div className="entity-list">
+      <div className="entity-list entity-list--grid">
         {sortedQueues.map((queue) => (
           <QueueRow key={queue.id} queue={queue} />
         ))}

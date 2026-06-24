@@ -27,7 +27,7 @@ function loadSplit(): number {
 }
 import {
   countAgentsByStatus,
-  sortAgentsByPresence,
+  pickRepresentativeAgents,
   sortQueuesByBacklog,
   totalAgentWork,
   totalQueueBacklog,
@@ -44,11 +44,11 @@ export function HomePanel() {
   const seatedAgentIds = useFloorSeatedAgentIds()
 
   const activeAgents = useMemo(() => {
-    const sorted = sortAgentsByPresence(agents)
-    const onFloor = seatedAgentIds.size > 0
-      ? sorted.filter((agent) => seatedAgentIds.has(agent.id))
-      : sorted
-    return onFloor.slice(0, 5)
+    const seated =
+      seatedAgentIds.size > 0
+        ? agents.filter((agent) => seatedAgentIds.has(agent.id))
+        : agents
+    return pickRepresentativeAgents(seated, 5)
   }, [agents, seatedAgentIds])
 
   const startResize = useCallback((event: React.PointerEvent) => {
@@ -113,7 +113,7 @@ export function HomePanel() {
                   <FadeValue value={statusCounts.online} /> en línia ·{' '}
                   <FadeValue value={statusCounts.busy} /> ocupats ·{' '}
                   <FadeValue value={statusCounts.away} /> absents ·{' '}
-                  <FadeValue value={statusCounts.offline} /> fora de línia
+                  <FadeValue value={statusCounts.offline} /> desconnectats
                 </p>
               </div>
             </div>
@@ -179,7 +179,7 @@ export function HomePanel() {
           <section className="panel-section">
             <h3 className="panel-section__title">Cues amb més backlog</h3>
             {topQueues.length > 0 ? (
-              <div className="entity-list">
+              <div className="entity-list entity-list--grid">
                 {topQueues.map((queue) => (
                   <QueueRow key={queue.id} queue={queue} />
                 ))}
@@ -192,7 +192,7 @@ export function HomePanel() {
           <section className="panel-section">
             <h3 className="panel-section__title">Agents al plànol</h3>
             {activeAgents.length > 0 ? (
-              <div className="entity-list">
+              <div className="entity-list entity-list--grid">
                 {activeAgents.map((agent) => (
                   <AgentRow key={agent.id} agent={agent} />
                 ))}

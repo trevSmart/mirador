@@ -90,7 +90,7 @@ export function AgentRow({ agent, showSkills = false }: AgentRowProps) {
         <div className="agent-row__info">
           <div className="agent-row__title">
             <span className="agent-row__name">{agent.name}</span>
-            <StatusBadge status={agent.status} />
+            <StatusBadge status={agent.status} compact />
           </div>
           <p className="agent-row__meta">
             {agent.role}

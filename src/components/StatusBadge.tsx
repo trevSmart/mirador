@@ -4,8 +4,9 @@ import { StatusPill } from './ds'
 
 interface StatusBadgeProps {
   status: PresenceStatus
+  compact?: boolean
 }
 
-export function StatusBadge({ status }: StatusBadgeProps) {
-  return <StatusPill status={status} label={presenceLabel(status)} />
+export function StatusBadge({ status, compact = false }: StatusBadgeProps) {
+  return <StatusPill status={status} label={presenceLabel(status)} compact={compact} />
 }

@@ -22,7 +22,7 @@ export function SkillsPanel() {
         <FadeValue value={skills.length} /> skills · <FadeValue value={totalSkillBacklog(skills)} /> treballs en cua
       </p>
 
-      <div className="entity-list">
+      <div className="entity-list entity-list--grid">
         {sortedSkills.map((skill) => (
           <SkillRow key={skill.id} skill={skill} />
         ))}

@@ -2,11 +2,22 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="preload" href="/panorama-icon.png" as="image" />
     <link rel="stylesheet" href="/slds/icons.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mirador</title>
     <style>
+      #app-splash,
+      #app-splash *,
+      #app-splash *::before,
+      #app-splash *::after {
+        box-sizing: border-box;
+      }
+
       #app-splash {
         position: fixed;
         inset: 0;
@@ -19,49 +30,87 @@
       }
 
       .app-splash__inner {
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-rows: 64px 24px;
+        row-gap: 18px;
         align-items: center;
-        gap: 15px;
+        justify-items: center;
+        min-height: 106px;
       }
 
       .app-splash__mark {
-        width: 52px;
-        height: auto;
-      }
-
-      .app-splash__ring {
-        width: 30px;
-        height: 30px;
-        border: 2px solid rgba(0, 128, 190, 0.1);
-        border-top-color: #0080be;
-        border-radius: 50%;
-        animation: app-splash-spin 0.85s linear infinite;
+        height: 64px;
+        width: 64px;
+        display: block;
+        object-fit: contain;
       }
 
       .app-splash__status {
         margin: 0;
-        font: 500 13px/1.5 'Inter', system-ui, sans-serif;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        color: #9c98a6;
+        display: flex;
+        align-items: center;
+        height: 24px;
+        font-family: 'Space Grotesk', system-ui, sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        color: #65616f;
+        white-space: nowrap;
       }
 
-      @keyframes app-splash-spin {
-        to {
-          transform: rotate(360deg);
+      .app-splash__dots span {
+        display: inline-block;
+        width: 0.34em;
+        text-align: center;
+        color: #0080be;
+        opacity: 0.22;
+        animation: app-splash-dot 1.15s ease-in-out infinite;
+      }
+
+      .app-splash__dots span:nth-child(2) {
+        animation-delay: 0.16s;
+      }
+
+      .app-splash__dots span:nth-child(3) {
+        animation-delay: 0.32s;
+      }
+
+      @keyframes app-splash-dot {
+        0%,
+        70%,
+        100% {
+          opacity: 0.22;
+          transform: translateY(0);
+        }
+
+        35% {
+          opacity: 1;
+          transform: translateY(-1px);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .app-splash__dots span {
+          animation: none;
+          opacity: 0.55;
         }
       }
     </style>
   </head>
   <body>
-    <div id="app-splash" class="app-splash" aria-live="polite" aria-busy="true">
+    <div id="app-splash" class="app-splash" aria-live="polite" aria-busy="true" data-shown-at="">
       <div class="app-splash__inner">
-        <img class="app-splash__mark" src="/favicon.svg" width="52" height="50" alt="" />
-        <div class="app-splash__ring" aria-hidden="true"></div>
-        <p class="app-splash__status">Carregant…</p>
+        <img class="app-splash__mark" src="/panorama-icon.png" width="64" height="64" alt="Panorama" />
+        <p class="app-splash__status">
+          <span class="app-splash__label">carregant</span
+          ><span class="app-splash__dots" aria-hidden="true"
+            ><span>.</span><span>.</span><span>.</span></span>
+        </p>
       </div>
     </div>
+    <script>
+      document.getElementById('app-splash')?.setAttribute('data-shown-at', String(performance.now()))
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

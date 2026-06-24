@@ -52,6 +52,15 @@ const EMAIL_SUBJECTS = [
 
 const ACTIVE_STATUSES = new Set<PresenceStatus>(['online', 'busy', 'away'])
 
+/** Minimum agents per presence bucket so mock mode keeps visible variety. */
+const MIN_PRESENCE_COUNTS: Partial<Record<PresenceStatus, number>> = {
+  offline: 4,
+  away: 5,
+  busy: 4,
+}
+
+const EVOLVE_COOLDOWN_MS = 2_500
+
 let state: MockLiveState | null = null
 let lastEvolveMs = 0
 
@@ -161,14 +170,14 @@ function syncAgentChannels(agent: Agent): void {
 }
 
 function reconcileAgentStatus(agent: Agent): void {
-  if (agent.status === 'offline') {
+  if (agent.status === 'offline' || agent.status === 'away') {
     return
   }
   if (agent.used >= agent.max) {
     agent.status = 'busy'
     return
   }
-  if (agent.status === 'busy' && agent.used < agent.max) {
+  if (agent.status === 'busy' && agent.used === 0) {
     agent.status = 'online'
   }
 }
@@ -464,6 +473,48 @@ function moveAgentWorkToQueue(agent: Agent, stateRef: MockLiveState): void {
   syncAgentChannels(agent)
 }
 
+function enforcePresenceMix(stateRef: MockLiveState, rand: () => number): void {
+  const counts: Record<PresenceStatus, number> = {
+    online: 0,
+    busy: 0,
+    away: 0,
+    offline: 0,
+  }
+  for (const agent of stateRef.agents) {
+    counts[agent.status] += 1
+  }
+
+  const demoteOrder: PresenceStatus[] = ['online', 'busy', 'away']
+  const targetStatuses: PresenceStatus[] = ['offline', 'away', 'busy']
+
+  for (let i = 0; i < targetStatuses.length; i += 1) {
+    const status = targetStatuses[i]
+    const minimum = MIN_PRESENCE_COUNTS[status] ?? 0
+    let deficit = minimum - counts[status]
+    if (deficit <= 0) continue
+
+    const donors = demoteOrder
+      .flatMap((from) =>
+        stateRef.agents.filter((agent) => agent.status === from),
+      )
+      .sort(() => rand() - 0.5)
+
+    for (const agent of donors) {
+      if (deficit <= 0) break
+      if (status === 'offline') {
+        moveAgentWorkToQueue(agent, stateRef)
+        agent.loginMin = 0
+      } else if (status === 'away' && agent.status === 'online') {
+        agent.loginMin = Math.max(agent.loginMin, 5)
+      }
+      counts[agent.status] -= 1
+      agent.status = status
+      counts[status] += 1
+      deficit -= 1
+    }
+  }
+}
+
 function shiftPresence(stateRef: MockLiveState, rand: () => number): void {
   const transitions: Array<{
     from: PresenceStatus
@@ -499,6 +550,8 @@ function shiftPresence(stateRef: MockLiveState, rand: () => number): void {
       changed += 1
     }
   }
+
+  enforcePresenceMix(stateRef, rand)
 }
 
 function evolveState(stateRef: MockLiveState): void {
@@ -522,14 +575,13 @@ function evolveState(stateRef: MockLiveState): void {
 function prepareState(): MockLiveState {
   if (!state) {
     state = cloneInitialState()
+    lastEvolveMs = Date.now()
     return state
   }
 
   const now = Date.now()
-  if (now > lastEvolveMs) {
-    if (lastEvolveMs > 0) {
-      evolveState(state)
-    }
+  if (now - lastEvolveMs >= EVOLVE_COOLDOWN_MS) {
+    evolveState(state)
     lastEvolveMs = now
   }
 

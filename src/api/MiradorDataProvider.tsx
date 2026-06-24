@@ -10,6 +10,9 @@ import {
 } from './mirador-status-context'
 import type { Agent, Queue, Skill, WorkItem } from './types'
 
+/** Minimum time between refresh executions (rate limit). */
+const MIN_REFRESH_GAP_MS = 3_000
+
 export function MiradorDataProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth()
   const client = useMiradorApi()
@@ -23,6 +26,9 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const isRefreshingRef = useRef(false)
+  const lastRefreshStartedAtRef = useRef(0)
+  const pendingRefreshOptionsRef = useRef<RefreshOptions | null>(null)
+  const pendingRefreshTimerRef = useRef(0)
 
   const clearData = useCallback(() => {
     setAgents([])
@@ -31,7 +37,7 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
     setWork([])
   }, [])
 
-  const refresh = useCallback(async (options?: RefreshOptions) => {
+  const runRefresh = useCallback(async (options?: RefreshOptions) => {
     const silent = options?.silent ?? false
 
     if (!client) {
@@ -86,6 +92,63 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
     }
   }, [clearData, client])
 
+  const dispatchRefreshRef = useRef<(options?: RefreshOptions) => void>(() => {})
+
+  dispatchRefreshRef.current = (options?: RefreshOptions) => {
+    if (!client) {
+      clearData()
+      setError(null)
+      setIsLoading(false)
+      pendingRefreshOptionsRef.current = null
+      window.clearTimeout(pendingRefreshTimerRef.current)
+      pendingRefreshTimerRef.current = 0
+      return
+    }
+
+    // Coalesce rapid calls; keep the latest options.
+    pendingRefreshOptionsRef.current = options ?? {}
+
+    const flushPending = () => {
+      if (pendingRefreshOptionsRef.current === null) return
+
+      const now = Date.now()
+      const elapsed = now - lastRefreshStartedAtRef.current
+      if (lastRefreshStartedAtRef.current > 0 && elapsed < MIN_REFRESH_GAP_MS) {
+        if (pendingRefreshTimerRef.current === 0) {
+          pendingRefreshTimerRef.current = window.setTimeout(() => {
+            pendingRefreshTimerRef.current = 0
+            flushPending()
+          }, MIN_REFRESH_GAP_MS - elapsed)
+        }
+        return
+      }
+
+      if (isRefreshingRef.current) return
+
+      const pending = pendingRefreshOptionsRef.current
+      pendingRefreshOptionsRef.current = null
+      lastRefreshStartedAtRef.current = now
+
+      void runRefresh(pending).finally(() => {
+        if (pendingRefreshOptionsRef.current !== null) {
+          flushPending()
+        }
+      })
+    }
+
+    flushPending()
+  }
+
+  const refresh = useCallback(async (options?: RefreshOptions) => {
+    dispatchRefreshRef.current(options)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      window.clearTimeout(pendingRefreshTimerRef.current)
+    }
+  }, [])
+
   const authedNow = isActive && Boolean(client)
   // Reset to a clean idle state when auth/client is lost. Done during render
   // (convergent) instead of in an effect, to avoid a synchronous effect setState.
@@ -96,6 +159,9 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
       clearData()
       setError(null)
       setIsLoading(false)
+      pendingRefreshOptionsRef.current = null
+      window.clearTimeout(pendingRefreshTimerRef.current)
+      pendingRefreshTimerRef.current = 0
     }
   }
 
