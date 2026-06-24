@@ -200,10 +200,16 @@ export function addCellRect(floor: Floor, start: Cell, end: Cell): Floor {
     An erase that would split the room into separate islands is rejected. */
 export function eraseCell(floor: Floor, c: number, r: number): Floor {
   if (!hasCell(floor, c, r)) return floor
+  // Two-step erase: while a seat sits on the cell, the first erase removes only
+  // the seat (and its agent) and keeps the floor area. A second erase, now that
+  // the cell is bare, removes the area itself.
+  const hasSeat = floor.seats.some((seat) => seat.c === c && seat.r === r)
+  if (hasSeat) {
+    return { ...floor, seats: floor.seats.filter((seat) => !(seat.c === c && seat.r === r)) }
+  }
   const cells = floor.cells.filter(([cc, rr]) => !(cc === c && rr === r))
   if (!isConnected(cells)) return floor
-  const seats = floor.seats.filter((seat) => !(seat.c === c && seat.r === r))
-  return sanitizeFloor({ ...floor, cells, seats })
+  return sanitizeFloor({ ...floor, cells })
 }
 
 /** Toggle an empty seat on an existing cell. */
