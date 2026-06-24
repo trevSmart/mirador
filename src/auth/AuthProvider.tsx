@@ -10,7 +10,8 @@ import {
 } from './salesforce-oauth'
 import { initOAuthSessionStorage } from './oauth-session-storage'
 import { MOCK_USER_INFO } from '../api/mock/mock-user'
-import { isMockMode } from '../config/data-source'
+import { isMockMode as isServerMockConfig } from '../config/data-source'
+import { usePreferences } from '../settings/preferences-context'
 import type { OAuthSession, PublicOAuthConfig, SalesforceUserInfo } from './types'
 import { OAuthError } from './types'
 
@@ -28,11 +29,15 @@ export function AuthProvider({
   children: ReactNode
   initialAuthError?: string | null
 }) {
+  const { prefs } = usePreferences()
   const [config, setConfig] = useState<PublicOAuthConfig | null>(null)
   const [session, setSession] = useState<OAuthSession | null>(null)
   const [userInfo, setUserInfo] = useState<SalesforceUserInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [authError, setAuthError] = useState<string | null>(initialAuthError)
+
+  const isServerMockMode = isServerMockConfig(config)
+  const isMockMode = isServerMockMode || prefs.mockOverride
 
   const refreshSession = useCallback(async () => {
     const nextSession = await getValidAccessSession()
@@ -49,8 +54,7 @@ export function AuthProvider({
         if (cancelled) return
         setConfig(publicConfig)
 
-        if (isMockMode(publicConfig)) {
-          setSession(MOCK_SESSION)
+        if (isServerMockConfig(publicConfig)) {
           setUserInfo(MOCK_USER_INFO)
         } else {
           await initOAuthSessionStorage()
@@ -79,15 +83,14 @@ export function AuthProvider({
     }
   }, [])
 
-  // Clear a stale profile once the session is gone (non-mock). Adjusted during
-  // render (convergent) rather than in an effect, to avoid a synchronous effect
-  // setState. Mock mode keeps MOCK_USER_INFO.
-  if (!session && userInfo !== null && !isMockMode(config)) {
+  // Clear a stale profile once the real session is gone. Simulation mode always
+  // exposes MOCK_USER_INFO regardless of stored session state.
+  if (!session && userInfo !== null && !isMockMode) {
     setUserInfo(null)
   }
 
   useEffect(() => {
-    if (!session || isMockMode(config)) {
+    if (!session || isMockMode) {
       return
     }
 
@@ -107,10 +110,10 @@ export function AuthProvider({
     return () => {
       cancelled = true
     }
-  }, [config, session])
+  }, [isMockMode, session])
 
   const login = useCallback(async () => {
-    if (isMockMode(config)) {
+    if (isMockMode) {
       return
     }
     setAuthError(null)
@@ -119,7 +122,7 @@ export function AuthProvider({
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : 'Login failed')
     }
-  }, [config])
+  }, [config, isMockMode])
 
   // Auto-login on startup: once bootstrap has settled, if Salesforce is
   // configured but there's no session, kick off the OAuth redirect. Skipped
@@ -129,15 +132,14 @@ export function AuthProvider({
   const autoLoginAttempted = useRef(false)
   useEffect(() => {
     if (autoLoginAttempted.current) return
-    if (isLoading || session || authError) return
-    if (!config || isMockMode(config) || !isSalesforceConfigured(config)) return
+    if (isLoading || session || authError || isMockMode) return
+    if (!config || !isSalesforceConfigured(config)) return
 
     autoLoginAttempted.current = true
-    // Defer so the setState inside login() doesn't run synchronously in the effect.
     queueMicrotask(() => {
       void login()
     })
-  }, [authError, config, isLoading, login, session])
+  }, [authError, config, isLoading, isMockMode, login, session])
 
   const logout = useCallback(() => {
     oauthLogout()
@@ -146,10 +148,11 @@ export function AuthProvider({
   const value = useMemo<AuthContextValue>(
     () => ({
       config,
-      session,
-      userInfo,
-      isAuthenticated: Boolean(session),
-      isMockMode: isMockMode(config),
+      session: isMockMode ? MOCK_SESSION : session,
+      userInfo: isMockMode ? MOCK_USER_INFO : userInfo,
+      isAuthenticated: isMockMode || Boolean(session),
+      isMockMode,
+      isServerMockMode,
       isSalesforceEnabled: config ? isSalesforceConfigured(config) : false,
       isLoading,
       authError,
@@ -161,6 +164,8 @@ export function AuthProvider({
       authError,
       config,
       isLoading,
+      isMockMode,
+      isServerMockMode,
       login,
       logout,
       refreshSession,

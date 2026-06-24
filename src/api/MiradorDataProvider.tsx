@@ -11,10 +11,10 @@ import {
 import type { Agent, Queue, Skill, WorkItem } from './types'
 
 export function MiradorDataProvider({ children }: { children: ReactNode }) {
-  const { isAuthenticated, isMockMode } = useAuth()
+  const { isAuthenticated } = useAuth()
   const client = useMiradorApi()
   const { prefs } = usePreferences()
-  const isActive = isAuthenticated || isMockMode || prefs.mockOverride
+  const isActive = isAuthenticated && Boolean(client)
   const [agents, setAgents] = useState<Agent[]>([])
   const [queues, setQueues] = useState<Queue[]>([])
   const [skills, setSkills] = useState<Skill[]>([])

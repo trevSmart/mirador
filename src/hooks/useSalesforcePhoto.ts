@@ -2,14 +2,27 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../auth/auth-context'
 import { buildPhotoProxyUrlFromAbsoluteUrl } from '../auth/salesforce-oauth'
 
+/** Bundled or same-origin URLs never need the Salesforce photo proxy. */
+function isDirectPhotoUrl(url: string): boolean {
+  if (url.startsWith('/') || url.startsWith('blob:') || url.startsWith('data:')) {
+    return true
+  }
+  try {
+    return new URL(url).origin === window.location.origin
+  } catch {
+    return false
+  }
+}
+
 export function useSalesforcePhoto(photoUrl: string | null): string | null {
-  const { session } = useAuth()
+  const { session, isMockMode } = useAuth()
   const accessToken = session?.accessToken ?? null
+  const isDirect =
+    photoUrl !== null && (isMockMode || isDirectPhotoUrl(photoUrl))
+
   const [src, setSrc] = useState<string | null>(null)
 
-  // Reset the resolved blob when the inputs change. Done during render
-  // (convergent) instead of in the effect, so the effect only setStates async.
-  const inputKey = photoUrl && accessToken ? photoUrl : null
+  const inputKey = !isDirect && photoUrl && accessToken ? photoUrl : null
   const [loadedKey, setLoadedKey] = useState<string | null>(inputKey)
   if (loadedKey !== inputKey) {
     setLoadedKey(inputKey)
@@ -17,7 +30,7 @@ export function useSalesforcePhoto(photoUrl: string | null): string | null {
   }
 
   useEffect(() => {
-    if (!photoUrl || !accessToken) {
+    if (isDirect || !photoUrl || !accessToken) {
       return
     }
 
@@ -52,7 +65,11 @@ export function useSalesforcePhoto(photoUrl: string | null): string | null {
         URL.revokeObjectURL(objectUrl)
       }
     }
-  }, [photoUrl, accessToken])
+  }, [accessToken, isDirect, photoUrl])
+
+  if (isDirect) {
+    return photoUrl
+  }
 
   return src
 }
