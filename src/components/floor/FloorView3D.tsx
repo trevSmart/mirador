@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTowerHeightScale } from '../../hooks/useTowerHeightScale'
 import type { Agent, PresenceStatus } from '../../api/types'
 import {
   type Dir,
@@ -156,6 +157,8 @@ function IsoSeat({ agent, x, y, style, showAvatars, animations, onSelect }: IsoS
   const status = STATUS_COLOR[agent.status]
   const saturated = agent.max > 0 && agent.used >= agent.max
   const title = `${agent.name} · ${agent.used}/${agent.max}`
+  const targetH = style === 'avatar' ? SEAT_MIN_H : seatHeight(agent)
+  const h = useTowerHeightScale(targetH, style !== 'avatar')
 
   let body: React.ReactNode
   if (style === 'avatar') {
@@ -167,7 +170,6 @@ function IsoSeat({ agent, x, y, style, showAvatars, animations, onSelect }: IsoS
       </>
     )
   } else if (style === 'cube') {
-    const h = seatHeight(agent)
     const team = colorFromString(agent.role || agent.name)
     body = (
       <>
@@ -177,7 +179,6 @@ function IsoSeat({ agent, x, y, style, showAvatars, animations, onSelect }: IsoS
     )
   } else {
     // tower
-    const h = seatHeight(agent)
     body = (
       <>
         {towerFaces(x, y, h, status)}

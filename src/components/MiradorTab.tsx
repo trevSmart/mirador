@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { IDockviewDefaultTabProps } from 'dockview-react'
 import { getPanelTypeFromComponent } from '../panels/panel-actions'
+import { parseDetailPanelParams, isDetailPanelComponent } from '../detail/detail-panel'
+import { DetailTabIcon } from '../components/detail/DetailTabIcon'
 import { PanelIcon } from '../panels/PanelIcon'
 import { scrollPanelToTop } from '../hooks/useSmoothScroll'
 
@@ -50,6 +52,9 @@ export function MiradorTab({
   const wasActiveOnPress = useRef(false)
   const panel = containerApi.panels.find((item) => item.id === api.id)
   const panelType = getPanelTypeFromComponent(panel?.view.contentComponent)
+  const detailParams = isDetailPanelComponent(panel?.view.contentComponent)
+    ? parseDetailPanelParams(panel?.params)
+    : null
 
   useEffect(() => {
     const disposable = api.onDidTitleChange((event) => {
@@ -139,7 +144,11 @@ export function MiradorTab({
       className="dv-default-tab"
     >
       <span className="dv-default-tab-content mirador-tab__content">
-        {panelType ? (
+        {detailParams ? (
+          <span className="mirador-tab__icon mirador-tab__icon--detail">
+            <DetailTabIcon target={detailParams} />
+          </span>
+        ) : panelType ? (
           <span className="mirador-tab__icon">
             <PanelIcon type={panelType} sldsSize="x-small" />
           </span>

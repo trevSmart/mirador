@@ -13,7 +13,9 @@ import {
   getMiradorTabGroupChipContextMenuItems,
 } from '../dockview/context-menus'
 import { loadDockviewLayout, saveDockviewLayout } from '../dockview/layout-storage'
+import { useDockviewHost } from '../dockview/dockview-host-context'
 import { miradorDockviewTheme } from '../dockview/theme'
+import { DetailPanel } from '../panels/DetailPanel'
 import { PANEL_COMPONENTS, getPanelDefinition, type PanelType } from '../panels/registry'
 import {
   addPanelByType,
@@ -41,6 +43,7 @@ export function DockviewShell({ ref }: DockviewShellProps) {
   const apiRef = useRef<DockviewApi | null>(null)
   const layoutDisposableRef = useRef<{ dispose: () => void } | null>(null)
   const [openTypes, setOpenTypes] = useState<PanelType[]>(['home'])
+  const { registerApi } = useDockviewHost()
 
   const syncOpenTypes = (api: DockviewApi) => {
     setOpenTypes(getOpenPanelTypes(api))
@@ -69,7 +72,9 @@ export function DockviewShell({ ref }: DockviewShellProps) {
     }
     if (typeof ref === 'function') {
       ref(handle)
-      return () => ref(null)
+      return () => {
+        ref(null)
+      }
     }
     ref.current = handle
     return () => {
@@ -79,6 +84,7 @@ export function DockviewShell({ ref }: DockviewShellProps) {
 
   const onReady = (event: DockviewReadyEvent) => {
     apiRef.current = event.api
+    registerApi(event.api)
 
     const loaded = loadDockviewLayout(event.api)
     if (!loaded || event.api.panels.length === 0) {
@@ -99,7 +105,7 @@ export function DockviewShell({ ref }: DockviewShellProps) {
     <DockviewReact
       theme={miradorDockviewTheme}
       onReady={onReady}
-      components={PANEL_COMPONENTS}
+      components={{ ...PANEL_COMPONENTS, detail: DetailPanel }}
       defaultTabComponent={MiradorTab}
       leftHeaderActionsComponent={AddPanelHeaderActions}
       getTabContextMenuItems={getMiradorTabContextMenuItems}

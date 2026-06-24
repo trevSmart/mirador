@@ -4,7 +4,11 @@
    read stale state, and delegates every mutation to the pure model functions. */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { floorPlanRepository } from './floor-plan-repository'
+import { useAuth } from '../auth/auth-context'
+import {
+  loadFloorPlan,
+  saveFloorPlan,
+} from './floor-plan-repository'
 import {
   UNDO_LIMIT,
   addCellRect,
@@ -43,6 +47,7 @@ function uniqueName(base: string, existing: string[]): string {
 }
 
 export function useFloorPlan() {
+  const { isMockMode } = useAuth()
   const [data, setData] = useState<FloorPlanData>(() => defaultFloorPlan())
   const [tool, setToolState] = useState<FloorTool>('cell')
   const [activeFloorIndex, setActiveFloorIndex] = useState(0)
@@ -76,21 +81,26 @@ export function useFloorPlan() {
     setCanRedo(redoStack.current.length > 0)
   }, [])
 
-  /* ── Load on mount ──────────────────────────────────────────────────── */
+  /* ── Load on mount / when data source changes ───────────────────────── */
   useEffect(() => {
     let cancelled = false
-    void floorPlanRepository.load().then((stored) => {
+    void loadFloorPlan(isMockMode).then((stored) => {
       if (cancelled) return
       const next = stored ?? defaultFloorPlan()
+      undoStack.current = []
+      redoStack.current = []
       dataRef.current = next
       setData(next)
       setSavedSignature(floorPlanSignature(next))
+      setActiveFloorIndex(0)
+      setSelectedSeat(null)
+      syncHistoryFlags()
       setLoaded(true)
     })
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [isMockMode, syncHistoryFlags])
 
   /* ── Core mutation plumbing ─────────────────────────────────────────── */
   const apply = useCallback((transform: (d: FloorPlanData) => FloorPlanData, recordHistory = true) => {
@@ -368,13 +378,13 @@ export function useFloorPlan() {
   /* ── Save / reset ───────────────────────────────────────────────────── */
   const save = useCallback(() => {
     const current = dataRef.current
-    void floorPlanRepository.save(current).then(() => {
+    void saveFloorPlan(current, isMockMode).then(() => {
       setSavedSignature(floorPlanSignature(current))
     })
-  }, [])
+  }, [isMockMode])
 
   const reset = useCallback(() => {
-    void floorPlanRepository.load().then((stored) => {
+    void loadFloorPlan(isMockMode).then((stored) => {
       const next = stored ?? defaultFloorPlan()
       undoStack.current = []
       redoStack.current = []
@@ -385,7 +395,7 @@ export function useFloorPlan() {
       setSelectedSeat(null)
       syncHistoryFlags()
     })
-  }, [syncHistoryFlags])
+  }, [isMockMode, syncHistoryFlags])
 
   // Keep the live active floor reachable from callbacks that read it (seatAt).
   useEffect(() => {

@@ -9,9 +9,9 @@ import type {
 } from '../types'
 import { workItemIconFields } from '../../utils/salesforce-object-icon'
 
-// Deterministic seed — values are fixed so the mock looks the same every run.
-// Using Math.random() would re-shuffle on every hot-reload, making the UI
-// hard to demonstrate or screenshot reliably.
+// Deterministic seed — baseline snapshot for mock mode. On each refresh,
+// `mock-state` applies small incremental changes so the contact center evolves
+// naturally over time without re-shuffling on hot-reload.
 
 type QueueDef = { id: string; name: string; color: string }
 
@@ -572,7 +572,7 @@ function buildWork(agentRoster: Agent[]): WorkItem[] {
   return items
 }
 
-function skillAgentSlice(skill: Skill, roster: Agent[]): Agent[] {
+export function skillAgentSlice(skill: Skill, roster: Agent[]): Agent[] {
   const want = Math.min(skill.agents, roster.length)
   if (!want) return []
   let seed = 0

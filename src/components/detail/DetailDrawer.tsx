@@ -7,7 +7,7 @@ import { QueueDetail } from './QueueDetail'
 import { SkillDetail } from './SkillDetail'
 
 export function DetailDrawer() {
-  const { detail, close } = useDetailDrawer()
+  const { detail, close, openAsTab } = useDetailDrawer()
   const { agents, queues, skills } = useMiradorData()
 
   const open = detail !== null
@@ -54,9 +54,21 @@ export function DetailDrawer() {
         aria-modal="true"
         aria-hidden={!open}
       >
-        <button type="button" className="detail-drawer__close" onClick={close} aria-label="Tanca el detall">
-          <SfIcon sprite="utility" symbol="close" size={16} />
-        </button>
+        <div className="detail-drawer__toolbar">
+          <button
+            type="button"
+            className="detail-drawer__icon-btn"
+            onClick={() => shown && openAsTab(shown)}
+            disabled={!shown}
+            aria-label="Obre com a pestanya"
+            title="Obre com a pestanya"
+          >
+            <SfIcon sprite="utility" symbol="expand_alt" size={16} />
+          </button>
+          <button type="button" className="detail-drawer__icon-btn" onClick={close} aria-label="Tanca el detall">
+            <SfIcon sprite="utility" symbol="close" size={16} />
+          </button>
+        </div>
         <div className="detail-drawer__scroll">{content}</div>
       </aside>
     </>
