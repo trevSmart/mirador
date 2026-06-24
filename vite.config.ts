@@ -33,6 +33,10 @@ export default defineConfig(({ mode }) => {
     ],
     server: {
       port: 3000,
+      hmr: {
+        // Replaced by DevErrorOverlay (Panorama-styled) in src/components/error/.
+        overlay: false,
+      },
     },
     preview: {
       port: 3000,

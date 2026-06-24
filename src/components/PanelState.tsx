@@ -11,6 +11,8 @@ interface PanelShellProps {
   actions?: ReactNode
   className?: string
   hideHeader?: boolean
+  /** When false, Lenis is not attached to the shell (use on panels that scroll internally). */
+  smoothScroll?: boolean
 }
 
 export function PanelShell({
@@ -20,12 +22,16 @@ export function PanelShell({
   actions,
   className,
   hideHeader = false,
+  smoothScroll = true,
 }: PanelShellProps) {
   const scrollRef = useSmoothScroll<HTMLDivElement>()
   const showHeader = !hideHeader && (title || icon || actions)
 
   return (
-    <div className={['panel-shell', className].filter(Boolean).join(' ')} ref={scrollRef}>
+    <div
+      className={['panel-shell', className].filter(Boolean).join(' ')}
+      ref={smoothScroll ? scrollRef : undefined}
+    >
       {showHeader ? (
         <div className="panel-shell__header">
           <div className="panel-shell__heading">

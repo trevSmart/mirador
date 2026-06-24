@@ -6,6 +6,7 @@ import { AppHeader } from './components/AppHeader'
 import { DetailDrawer } from './components/detail/DetailDrawer'
 import { SettingsModal } from './components/settings/SettingsModal'
 import { DockviewShell } from './components/DockviewShell'
+import { DevErrorOverlay } from './components/error/DevErrorOverlay'
 import { ErrorBoundary } from './components/error/ErrorBoundary'
 import { ErrorFallback } from './components/error/ErrorFallback'
 import { DetailDrawerProvider } from './detail/DetailDrawerContext'
@@ -30,23 +31,26 @@ function AppContent() {
 
 function App({ initialAuthError = null }: { initialAuthError?: string | null }) {
   return (
-    <PreferencesProvider>
-      <AuthProvider initialAuthError={initialAuthError}>
-        <MiradorApiProvider>
-          <MiradorDataProvider>
-            <DockviewHostProvider>
-              <DetailDrawerProvider>
-                <SettingsModalProvider>
-                  <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} />}>
-                    <AppContent />
-                  </ErrorBoundary>
-                </SettingsModalProvider>
-              </DetailDrawerProvider>
-            </DockviewHostProvider>
-          </MiradorDataProvider>
-        </MiradorApiProvider>
-      </AuthProvider>
-    </PreferencesProvider>
+    <>
+      {import.meta.env.DEV ? <DevErrorOverlay /> : null}
+      <PreferencesProvider>
+        <AuthProvider initialAuthError={initialAuthError}>
+          <MiradorApiProvider>
+            <MiradorDataProvider>
+              <DockviewHostProvider>
+                <DetailDrawerProvider>
+                  <SettingsModalProvider>
+                    <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} />}>
+                      <AppContent />
+                    </ErrorBoundary>
+                  </SettingsModalProvider>
+                </DetailDrawerProvider>
+              </DockviewHostProvider>
+            </MiradorDataProvider>
+          </MiradorApiProvider>
+        </AuthProvider>
+      </PreferencesProvider>
+    </>
   )
 }
 

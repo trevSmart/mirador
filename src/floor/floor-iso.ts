@@ -58,6 +58,31 @@ function lerp(a: Point, b: Point, t: number): Point {
   return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]
 }
 
+export type OpeningQuad = { bl: Point; br: Point; tr: Point; tl: Point }
+
+/** Window/door opening as corner points on a wall quad. */
+export function openingQuad(
+  g0: Point,
+  g1: Point,
+  t0: Point,
+  t1: Point,
+  kind: 'door' | 'window',
+): OpeningQuad {
+  const vLo = kind === 'door' ? 0 : 0.32
+  const vHi = kind === 'door' ? 0.62 : 0.7
+  return {
+    bl: lerp(g0, t0, vLo),
+    tl: lerp(g0, t0, vHi),
+    br: lerp(g1, t1, vLo),
+    tr: lerp(g1, t1, vHi),
+  }
+}
+
+export function openingQuadPoints(quad: OpeningQuad): string {
+  const { bl, br, tr, tl } = quad
+  return `${bl[0]},${bl[1]} ${br[0]},${br[1]} ${tr[0]},${tr[1]} ${tl[0]},${tl[1]}`
+}
+
 /** Opening (door/window) frame as a quad on a wall, given its ground+top edges. */
 export function openingPoints(
   g0: Point,
@@ -66,13 +91,7 @@ export function openingPoints(
   t1: Point,
   kind: 'door' | 'window',
 ): string {
-  const vLo = kind === 'door' ? 0 : 0.32
-  const vHi = kind === 'door' ? 0.62 : 0.7
-  const bl = lerp(g0, t0, vLo)
-  const tl = lerp(g0, t0, vHi)
-  const br = lerp(g1, t1, vLo)
-  const tr = lerp(g1, t1, vHi)
-  return `${bl[0]},${bl[1]} ${br[0]},${br[1]} ${tr[0]},${tr[1]} ${tl[0]},${tl[1]}`
+  return openingQuadPoints(openingQuad(g0, g1, t0, t1, kind))
 }
 
 type Has = (c: number, r: number) => boolean

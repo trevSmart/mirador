@@ -216,11 +216,11 @@ export function AparencaSection({ draft, patch }: SectionProps) {
           }
         />
         <SettingsRow
-          title="Mostrar avatars"
-          hint="Imatges de perfil dels agents a la planta"
+          title="Avatars sobre les torres"
+          hint="Mostra la foto de perfil a sobre de cada torre a la vista 3D; a la 2D controla les fotos als anells"
           control={
             <ToggleField
-              label="Mostrar avatars"
+              label="Avatars sobre les torres"
               checked={draft.showAvatars}
               onChange={(v) => patch({ showAvatars: v })}
             />

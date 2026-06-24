@@ -1,7 +1,9 @@
-import { useMemo, type ReactNode } from 'react'
+import { useCallback, useMemo, useState, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react'
+import { createPortal } from 'react-dom'
+import { FloorSeatTooltip } from './FloorSeatTooltip'
 import { useTowerHeightScale } from '../../hooks/useTowerHeightScale'
 import type { Agent, Queue } from '../../api/types'
-import { agentTowerSegments, type TowerSegment } from '../../floor/agent-tower-segments'
+import { agentTowerSegments, towerSegmentLabel, type TowerSegment } from '../../floor/agent-tower-segments'
 import {
   type Dir,
   DIV_H,
@@ -21,7 +23,9 @@ import {
   diamondPoints,
   leftFace,
   leftFaceVisible,
-  openingPoints,
+  openingQuad,
+  openingQuadPoints,
+  type OpeningQuad,
   projectCell,
   rightFace,
   rightFaceVisible,
@@ -41,8 +45,126 @@ const MAX_R = GRID_R - 1
 const PEDESTAL_COLOR = 'var(--text-disabled)'
 const AVATAR_RING = 'var(--border-subtle)'
 
-const FLOOR_FILL = 'rgb(247,246,243)'
+const FLOOR_FILL_A = '#F8F7F4'
+const FLOOR_FILL_B = '#F5F4F1'
 const WALL_FILL = 'rgb(247,246,243)'
+
+function lerpPt(a: [number, number], b: [number, number], t: number): [number, number] {
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]
+}
+
+/** Parametric point inside an opening quad (u = left→right, v = bottom→top). */
+function quadAt(quad: OpeningQuad, u: number, v: number): [number, number] {
+  return lerpPt(lerpPt(quad.bl, quad.br, u), lerpPt(quad.tl, quad.tr, u), v)
+}
+
+function quadSlice(quad: OpeningQuad, u0: number, u1: number, v0: number, v1: number): OpeningQuad {
+  return {
+    bl: quadAt(quad, u0, v0),
+    br: quadAt(quad, u1, v0),
+    tr: quadAt(quad, u1, v1),
+    tl: quadAt(quad, u0, v1),
+  }
+}
+
+/** Glass pane with pixel-art gradient + hard-edged reflection bands. */
+function WindowGlass({ id, quad }: { id: string; quad: OpeningQuad }) {
+  const { bl, tl, tr } = quad
+  const gradId = `${id}-glass`
+  const pane = openingQuadPoints(quad)
+  const sill = openingQuadPoints(quadSlice(quad, 0, 1, 0, 0.1))
+  const reflect = openingQuadPoints(quadSlice(quad, 0.06, 0.24, 0.38, 0.94))
+  const glint = openingQuadPoints(quadSlice(quad, 0.58, 0.8, 0.74, 0.94))
+
+  return (
+    <g>
+      <defs>
+        <linearGradient id={gradId} x1={tl[0]} y1={tl[1]} x2={bl[0]} y2={bl[1]} gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="rgba(196, 228, 248, 0.44)" />
+          <stop offset="55%" stopColor="rgba(118, 172, 215, 0.34)" />
+          <stop offset="100%" stopColor="rgba(62, 108, 152, 0.28)" />
+        </linearGradient>
+      </defs>
+      <polygon points={pane} fill={`url(#${gradId})`} />
+      <polygon points={sill} fill="rgba(38, 68, 98, 0.14)" />
+      <polygon points={reflect} fill="rgba(236, 248, 255, 0.38)" />
+      <polygon points={glint} fill="rgba(255, 255, 255, 0.28)" />
+      <polygon
+        points={pane}
+        fill="none"
+        stroke="rgba(48, 88, 128, 0.38)"
+        strokeWidth={0.65}
+        strokeLinejoin="miter"
+      />
+      <line
+        x1={lerpPt(tl, tr, 0.04)[0]}
+        y1={lerpPt(tl, tr, 0.04)[1]}
+        x2={lerpPt(tl, tr, 0.96)[0]}
+        y2={lerpPt(tl, tr, 0.96)[1]}
+        stroke="rgba(48, 88, 128, 0.22)"
+        strokeWidth={0.5}
+      />
+    </g>
+  )
+}
+
+/** Door panel with the same pixel-art layered treatment (warm wood tones). */
+function DoorPanel({ id, quad }: { id: string; quad: OpeningQuad }) {
+  const { bl, tl, tr, br } = quad
+  const gradId = `${id}-door`
+  const pane = openingQuadPoints(quad)
+  const threshold = openingQuadPoints(quadSlice(quad, 0, 1, 0, 0.12))
+  const reflect = openingQuadPoints(quadSlice(quad, 0.07, 0.25, 0.32, 0.92))
+  const glint = openingQuadPoints(quadSlice(quad, 0.6, 0.82, 0.7, 0.9))
+  const panelLineY = 0.56
+
+  return (
+    <g>
+      <defs>
+        <linearGradient id={gradId} x1={tl[0]} y1={tl[1]} x2={bl[0]} y2={bl[1]} gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="rgba(228, 218, 200, 0.52)" />
+          <stop offset="55%" stopColor="rgba(178, 158, 132, 0.42)" />
+          <stop offset="100%" stopColor="rgba(118, 98, 78, 0.36)" />
+        </linearGradient>
+      </defs>
+      <polygon points={pane} fill={`url(#${gradId})`} />
+      <polygon points={threshold} fill="rgba(68, 54, 42, 0.16)" />
+      <polygon points={reflect} fill="rgba(255, 246, 232, 0.34)" />
+      <polygon points={glint} fill="rgba(255, 255, 248, 0.24)" />
+      <polygon
+        points={pane}
+        fill="none"
+        stroke="rgba(88, 72, 58, 0.4)"
+        strokeWidth={0.65}
+        strokeLinejoin="miter"
+      />
+      <line
+        x1={lerpPt(tl, tr, 0.04)[0]}
+        y1={lerpPt(tl, tr, 0.04)[1]}
+        x2={lerpPt(tl, tr, 0.96)[0]}
+        y2={lerpPt(tl, tr, 0.96)[1]}
+        stroke="rgba(88, 72, 58, 0.24)"
+        strokeWidth={0.5}
+      />
+      <line
+        x1={quadAt(quad, 0.06, panelLineY)[0]}
+        y1={quadAt(quad, 0.06, panelLineY)[1]}
+        x2={quadAt(quad, 0.94, panelLineY)[0]}
+        y2={quadAt(quad, 0.94, panelLineY)[1]}
+        stroke="rgba(88, 72, 58, 0.2)"
+        strokeWidth={0.5}
+      />
+      <circle
+        cx={lerpPt(lerpPt(bl, br, 0.88), lerpPt(tl, tr, 0.88), 0.42)[0]}
+        cy={lerpPt(lerpPt(bl, br, 0.88), lerpPt(tl, tr, 0.88), 0.42)[1]}
+        r={1.4}
+        fill="rgba(168, 148, 118, 0.75)"
+        stroke="rgba(88, 72, 58, 0.35)"
+        strokeWidth={0.4}
+      />
+    </g>
+  )
+}
 
 function seatHeight(agent: Agent): number {
   const ratio = agent.max > 0 ? Math.min(1, agent.used / agent.max) : 0
@@ -58,6 +180,7 @@ function AvatarDisc({
   r,
   ring,
   showPhoto,
+  clipPrefix,
 }: {
   agent: Agent
   cx: number
@@ -65,10 +188,11 @@ function AvatarDisc({
   r: number
   ring: string
   showPhoto: boolean
+  clipPrefix: string
 }) {
   const loadedPhoto = useSalesforcePhoto(agent.photo)
   const photo = showPhoto ? loadedPhoto : null
-  const clipId = `fv3d-clip-${agent.id}`
+  const clipId = `${clipPrefix}-clip-${agent.id}`
   return (
     <g>
       <clipPath id={clipId}>
@@ -113,22 +237,26 @@ interface IsoSeatProps {
   animations: boolean
   queuesById: Map<string, Queue>
   onSelect: (agent: Agent) => void
+  onPointerOver: (agent: Agent, event: ReactPointerEvent<SVGGElement>) => void
+  onPointerMove: (agent: Agent, event: ReactPointerEvent<SVGGElement>) => void
+  onPointerOut: () => void
+  clipPrefix: string
 }
 
 const BASE_H = SEAT_MIN_H
-const CAP_OPACITY = 0.60
-const BASE_OPACITY = 0.55
-const SEGMENT_OPACITY = 0.78
+const CAP_OPACITY = 0.42
+const BASE_OPACITY = 0.38
+const SEGMENT_OPACITY = 0.55
 
 function pedestalFaces(x: number, y: number, base: number) {
   return (
     <g style={{ color: PEDESTAL_COLOR }}>
-      <polygon points={leftFace(x, y, 0, base)} fill="currentColor" fillOpacity={BASE_OPACITY} />
-      <polygon points={leftFace(x, y, 0, base)} fill="rgba(0,0,0,0.18)" />
-      <polygon points={rightFace(x, y, 0, base)} fill="currentColor" fillOpacity={BASE_OPACITY} />
-      <polygon points={rightFace(x, y, 0, base)} fill="rgba(0,0,0,0.08)" />
-      <polygon points={diamondPoints(x, y, base)} fill="currentColor" fillOpacity={BASE_OPACITY} />
-      <polygon points={diamondPoints(x, y, base)} fill="rgba(255,255,255,0.15)" />
+      <polygon key="ped-left" points={leftFace(x, y, 0, base)} fill="currentColor" fillOpacity={BASE_OPACITY} />
+      <polygon key="ped-left-shade" points={leftFace(x, y, 0, base)} fill="rgba(0,0,0,0.12)" />
+      <polygon key="ped-right" points={rightFace(x, y, 0, base)} fill="currentColor" fillOpacity={BASE_OPACITY} />
+      <polygon key="ped-right-shade" points={rightFace(x, y, 0, base)} fill="rgba(0,0,0,0.05)" />
+      <polygon key="ped-top" points={diamondPoints(x, y, base)} fill="currentColor" fillOpacity={BASE_OPACITY} />
+      <polygon key="ped-top-highlight" points={diamondPoints(x, y, base)} fill="rgba(255,255,255,0.10)" />
     </g>
   )
 }
@@ -136,18 +264,19 @@ function pedestalFaces(x: number, y: number, base: number) {
 function segmentFaces(x: number, y: number, h1: number, h2: number, color: string, isTop: boolean) {
   return (
     <g style={{ color }}>
-      <polygon points={leftFace(x, y, h1, h2)} fill="currentColor" fillOpacity={SEGMENT_OPACITY} />
-      <polygon points={leftFace(x, y, h1, h2)} fill="rgba(0,0,0,0.10)" />
-      <polygon points={rightFace(x, y, h1, h2)} fill="currentColor" fillOpacity={SEGMENT_OPACITY} />
-      <polygon points={rightFace(x, y, h1, h2)} fill="rgba(0,0,0,0.05)" />
+      <polygon key="seg-left" points={leftFace(x, y, h1, h2)} fill="currentColor" fillOpacity={SEGMENT_OPACITY} />
+      <polygon key="seg-left-shade" points={leftFace(x, y, h1, h2)} fill="rgba(0,0,0,0.07)" />
+      <polygon key="seg-right" points={rightFace(x, y, h1, h2)} fill="currentColor" fillOpacity={SEGMENT_OPACITY} />
+      <polygon key="seg-right-shade" points={rightFace(x, y, h1, h2)} fill="rgba(0,0,0,0.03)" />
       {isTop ? (
         <>
-          <polygon points={diamondPoints(x, y, h2)} fill="currentColor" fillOpacity={CAP_OPACITY} />
+          <polygon key="seg-cap" points={diamondPoints(x, y, h2)} fill="currentColor" fillOpacity={CAP_OPACITY} />
           <polygon
+            key="seg-cap-highlight"
             points={diamondPoints(x, y, h2)}
-            fill="rgba(255,255,255,0.20)"
+            fill="rgba(255,255,255,0.14)"
             stroke="currentColor"
-            strokeOpacity={0.35}
+            strokeOpacity={0.25}
             strokeWidth={0.5}
           />
         </>
@@ -174,12 +303,14 @@ function segmentedTowerFaces(x: number, y: number, h: number, segments: TowerSeg
   }
 
   if (segments.length === 0 && h > base) {
-    parts.push(segmentFaces(x, y, base, h, PEDESTAL_COLOR, true))
+    parts.push(
+      <g key="shaft-fallback">{segmentFaces(x, y, base, h, PEDESTAL_COLOR, true)}</g>,
+    )
   }
 
   return (
     <>
-      {pedestalFaces(x, y, base)}
+      <g key="pedestal">{pedestalFaces(x, y, base)}</g>
       {parts}
     </>
   )
@@ -190,15 +321,25 @@ function towerTitle(agent: Agent, queuesById: Map<string, Queue>): string {
   const load = `${agent.used}/${agent.max}`
   if (segments.length === 0) return `${agent.name} · ${load}`
   const breakdown = segments
-    .map((seg) => {
-      const name = seg.queueId ? (queuesById.get(seg.queueId)?.name ?? 'Sense cua') : 'Sense cua'
-      return `${name} ×${seg.count}`
-    })
+    .map((seg) => `${towerSegmentLabel(seg, queuesById)} ${seg.count}`)
     .join(', ')
   return `${agent.name} · ${load} · ${breakdown}`
 }
 
-function IsoSeat({ agent, x, y, style, showAvatars, animations, queuesById, onSelect }: IsoSeatProps) {
+function IsoSeat({
+  agent,
+  x,
+  y,
+  style,
+  showAvatars,
+  animations,
+  queuesById,
+  onSelect,
+  onPointerOver,
+  onPointerMove,
+  onPointerOut,
+  clipPrefix,
+}: IsoSeatProps) {
   const saturated = agent.max > 0 && agent.used >= agent.max
   const segments = agentTowerSegments(agent, queuesById)
   const title = towerTitle(agent, queuesById)
@@ -211,26 +352,38 @@ function IsoSeat({ agent, x, y, style, showAvatars, animations, queuesById, onSe
     const cy = y - SEAT_MIN_H
     body = (
       <>
-        <ellipse cx={x} cy={y + TH * 0.2} rx={TW * 0.5} ry={TH * 0.5} fill="rgba(27,25,36,0.16)" />
-        <AvatarDisc agent={agent} cx={x} cy={cy} r={TH * 0.95} ring={AVATAR_RING} showPhoto={showAvatars} />
+        <ellipse key="shadow" cx={x} cy={y + TH * 0.2} rx={TW * 0.5} ry={TH * 0.5} fill="rgba(27,25,36,0.16)" />
+        <AvatarDisc key="avatar" agent={agent} cx={x} cy={cy} r={TH * 0.95} ring={AVATAR_RING} showPhoto={showAvatars} clipPrefix={clipPrefix} />
       </>
     )
   } else if (style === 'cube') {
     body = (
       <>
-        {segmentedTowerFaces(x, y, h, segments)}
-        <circle cx={x} cy={y - h} r={4} style={{ fill: topColor }} stroke="#fff" strokeWidth={1.2} />
+        <g key="tower">{segmentedTowerFaces(x, y, h, segments)}</g>
+        <circle key="cap-dot" cx={x} cy={y - h} r={4} style={{ fill: topColor }} stroke="#fff" strokeWidth={1.2} />
       </>
     )
   } else {
     body = (
       <>
-        {segmentedTowerFaces(x, y, h, segments)}
-        <AvatarDisc agent={agent} cx={x} cy={y - h - TH * 0.55} r={TH * 0.85} ring={AVATAR_RING} showPhoto={showAvatars} />
+        <g key="tower">{segmentedTowerFaces(x, y, h, segments)}</g>
+        {showAvatars ? (
+          <AvatarDisc
+            key="avatar"
+            agent={agent}
+            cx={x}
+            cy={y - h - TH * 0.55}
+            r={TH * 0.85}
+            ring={AVATAR_RING}
+            showPhoto
+            clipPrefix={clipPrefix}
+          />
+        ) : null}
         {saturated ? (
           <>
-            <line x1={x} y1={y - h} x2={x} y2={y - h - TH * 1.6} stroke="#E05641" strokeWidth={1.5} />
+            <line key="beacon-stem" x1={x} y1={y - h} x2={x} y2={y - h - TH * 1.6} stroke="#E05641" strokeWidth={1.5} />
             <circle
+              key="beacon"
               className={animations ? 'fv3d-beacon' : undefined}
               cx={x}
               cy={y - h - TH * 1.6}
@@ -246,8 +399,15 @@ function IsoSeat({ agent, x, y, style, showAvatars, animations, queuesById, onSe
   }
 
   return (
-    <g className="fv3d-seat" onClick={() => onSelect(agent)} role="button" aria-label={title}>
-      <title>{title}</title>
+    <g
+      className="fv3d-seat"
+      onClick={() => onSelect(agent)}
+      onPointerOver={(event) => onPointerOver(agent, event)}
+      onPointerMove={(event) => onPointerMove(agent, event)}
+      onPointerOut={onPointerOut}
+      role="button"
+      aria-label={title}
+    >
       {body}
     </g>
   )
@@ -291,6 +451,36 @@ export function FloorView3D({
   animations,
   onSelectAgent,
 }: FloorView3DProps) {
+  const [tooltip, setTooltip] = useState<{ agent: Agent; x: number; y: number } | null>(null)
+  const [tooltipOpen, setTooltipOpen] = useState(false)
+
+  const tipAt = useCallback((agent: Agent, clientX: number, clientY: number) => {
+    setTooltip({
+      agent,
+      x: clientX + 14,
+      y: clientY + 14,
+    })
+    setTooltipOpen(true)
+  }, [])
+
+  const handleSeatOver = useCallback(
+    (agent: Agent, event: ReactPointerEvent<SVGGElement>) => {
+      tipAt(agent, event.clientX, event.clientY)
+    },
+    [tipAt],
+  )
+
+  const handleSeatMove = useCallback(
+    (agent: Agent, event: ReactPointerEvent<SVGGElement>) => {
+      tipAt(agent, event.clientX, event.clientY)
+    },
+    [tipAt],
+  )
+
+  const handleSeatOut = useCallback(() => setTooltipOpen(false), [])
+
+  const handleTooltipExited = useCallback(() => setTooltip(null), [])
+
   const cellSet = useMemo(() => new Set(floor.cells.map(([c, r]) => cellKey(c, r))), [floor.cells])
   const has = useMemo(() => (c: number, r: number) => cellSet.has(cellKey(c, r)), [cellSet])
 
@@ -318,6 +508,9 @@ export function FloorView3D({
   }, [floor.openings])
 
   const ordered = useMemo(() => [...floor.cells].sort(depthCompare(dir)), [floor.cells, dir])
+  const svgIdPrefix = `fv3d-${floor.id}`
+  const floorGrainId = `${svgIdPrefix}-floor-grain`
+  const floorSheenId = `${svgIdPrefix}-floor-sheen`
   const bounds = useMemo(
     () => computeIsoBounds(floor.cells, dir, MAX_C, MAX_R, TH * 2),
     [floor.cells, dir],
@@ -340,9 +533,12 @@ export function FloorView3D({
   const wallOpening = (c: number, r: number, edge: Edge, g0: Cell, g1: Cell, t0: Cell, t1: Cell) => {
     const kind = openingByKey.get(`${c},${r},${edge}`)
     if (!kind) return null
-    const fill = kind === 'door' ? 'rgba(110,110,115,.34)' : 'rgba(120,140,170,.36)'
-    const stroke = kind === 'door' ? 'rgba(80,80,88,.20)' : 'rgba(95,120,155,.20)'
-    return <polygon points={openingPoints(g0, g1, t0, t1, kind)} fill={fill} stroke={stroke} />
+    if (kind === 'window') {
+      const quad = openingQuad(g0, g1, t0, t1, 'window')
+      return <WindowGlass id={`${svgIdPrefix}-w-${c}-${r}-${edge}`} quad={quad} />
+    }
+    const quad = openingQuad(g0, g1, t0, t1, 'door')
+    return <DoorPanel id={`${svgIdPrefix}-d-${c}-${r}-${edge}`} quad={quad} />
   }
 
   const body: ReactNode[] = []
@@ -373,10 +569,11 @@ export function FloorView3D({
     if (lfVis(c, r)) body.push(<polygon key={`lf-${key}`} points={slabLeftFace(x, y)} fill="rgba(27,25,36,.08)" />)
 
     // Tile top.
-    body.push(<polygon key={`t-${key}`} points={diamondPoints(x, y, 0)} fill={FLOOR_FILL} />)
-    body.push(
-      <polygon key={`t2-${key}`} points={diamondPoints(x, y, 0)} fill="rgba(247,246,243,.4)" stroke="rgba(27,25,36,.09)" />,
-    )
+    const tilePoints = diamondPoints(x, y, 0)
+    body.push(<polygon key={`t-${key}`} points={tilePoints} fill={(c + r) % 2 === 0 ? FLOOR_FILL_A : FLOOR_FILL_B} />)
+    body.push(<polygon key={`tg-${key}`} points={tilePoints} fill={`url(#${floorGrainId})`} opacity={0.5} />)
+    body.push(<polygon key={`ts-${key}`} points={tilePoints} fill={`url(#${floorSheenId})`} />)
+    body.push(<polygon key={`t2-${key}`} points={tilePoints} fill="none" stroke="rgba(27,25,36,.065)" />)
 
     // Dividers owned by this cell.
     for (const d of dividersByKey.get(key) ?? []) {
@@ -418,6 +615,10 @@ export function FloorView3D({
             animations={animations}
             queuesById={queuesById}
             onSelect={onSelectAgent}
+            onPointerOver={handleSeatOver}
+            onPointerMove={handleSeatMove}
+            onPointerOut={handleSeatOut}
+            clipPrefix={svgIdPrefix}
           />,
         )
       } else {
@@ -427,21 +628,48 @@ export function FloorView3D({
   }
 
   return (
-    <svg
-      className="fv3d-svg"
-      viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`}
-      preserveAspectRatio="xMidYMid meet"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <filter id="fv3d-shadow" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="14" />
-        </filter>
-      </defs>
-      <g filter="url(#fv3d-shadow)" fill="rgba(27,25,36,.10)">
-        {shadows}
-      </g>
-      {body}
-    </svg>
+    <>
+      <div className="fv3d-wrap" onPointerLeave={handleSeatOut}>
+        <svg
+          className="fv3d-svg"
+          viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`}
+          preserveAspectRatio="xMidYMid meet"
+          style={{ aspectRatio: `${bounds.width} / ${bounds.height}` }}
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <filter id={`${svgIdPrefix}-shadow`} x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="14" />
+            </filter>
+            <pattern id={floorGrainId} width="10" height="10" patternUnits="userSpaceOnUse">
+              <rect width="10" height="10" fill="transparent" />
+              <circle cx="2.5" cy="2.5" r="0.35" fill="rgba(27,25,36,0.02)" />
+              <circle cx="7.5" cy="7.5" r="0.3" fill="rgba(27,25,36,0.016)" />
+            </pattern>
+            <linearGradient id={floorSheenId} gradientUnits="objectBoundingBox" x1="0.5" y1="0" x2="0.5" y2="1">
+              <stop offset="0%" stopColor="rgba(255,255,255,0.07)" />
+              <stop offset="100%" stopColor="rgba(27,25,36,0.03)" />
+            </linearGradient>
+          </defs>
+          <g filter={`url(#${svgIdPrefix}-shadow)`} fill="rgba(27,25,36,.10)">
+            {shadows}
+          </g>
+          {body}
+        </svg>
+      </div>
+      {tooltip
+        ? createPortal(
+            <FloorSeatTooltip
+              agent={tooltip.agent}
+              queuesById={queuesById}
+              x={tooltip.x}
+              y={tooltip.y}
+              open={tooltipOpen}
+              onExited={handleTooltipExited}
+            />,
+            document.body,
+          )
+        : null}
+    </>
   )
 }
