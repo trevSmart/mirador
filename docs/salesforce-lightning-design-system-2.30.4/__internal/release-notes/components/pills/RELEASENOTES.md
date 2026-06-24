@@ -1,0 +1,78 @@
+<!-- Release notes authoring guidelines: http://keepachangelog.com/ -->
+
+# Pills Release Notes
+
+<!-- ## [Unreleased] -->
+
+## 2.27.0
+
+#### Changed
+
+- Updated focus state style of all the Pill variants
+
+## 2.24.0
+
+## Changed
+
+- Fixed tap target size of close icon in Pill to meet 24x24.
+
+## Added
+
+- Added new truncated state for Pill as a tooltip.
+- Updated focus style.
+
+## 2.23.1
+
+## Changed
+
+- Added Button element for `Pill` remove feature. Now remove button is focusable and can be clickable.
+- Removed non applicable ARIA attributes after markup updates.
+
+## 2.17.0
+
+### Added
+
+- Added reassignment of Styling Hooks for component states.
+
+## 2.14.0
+
+### Changed
+
+- Fixed incorrect styling hooks on focus state, suffix is now using `-focus` vs `-active`.
+
+## 2.13.0
+
+### Changed
+
+- The assistive text for the listbox of pills has been moved out of the individual pills to remove repetition for users with screenreaders.
+- Addressed layout inconsistencies for touch styles
+- Clarified documentation around when linked pills can be used
+
+### Added
+
+- Enabled styling hooks for pill. See pill's styling hooks overview table for a full listing of the currently available hooks.
+- Added example for Listbox of Pills in Group
+
+### Changed
+
+- Removed redundant `border-radius` on `.slds-pill:focus`
+
+## 2.11.7
+
+### Added
+
+- Added documentation and examples for mobile/touch context
+
+## 2.10.0
+
+### Changed
+
+- For touch devices:
+  - Increase tap target height of `.slds-pill` to `$height-tappable-small` (2rem) and change horizontal padding to `$spacing-small` (0.75rem)
+  - Update spacing between pills to `$spacing-xx-small` (0.25rem)
+  - Set padding of pill container to `$spacing-xx-small` (0.25rem)
+  - Set `font-size` of `.slds-pill__label` to `$font-size-4` (0.875rem)
+  - Update the padding of `.slds-pill__action`
+  - Adjust the positioning of the icon inside a pill after padding updates
+
+<!-- ## [VERSION] -->
