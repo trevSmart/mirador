@@ -9,6 +9,7 @@ import type {
   QueuesResponse,
   SkillAgentsResponse,
   SkillsResponse,
+  SnapshotResponse,
   UpdateSkillsRequest,
   UpdateSkillsResponse,
   WorkResponse,
@@ -40,6 +41,7 @@ export interface MiradorClient {
   getQueues: () => Promise<QueuesResponse>
   getSkills: () => Promise<SkillsResponse>
   getWork: () => Promise<WorkResponse>
+  getSnapshot: (scope?: AgentScope) => Promise<SnapshotResponse>
 }
 
 type SessionGetter = () => OAuthSession | null | Promise<OAuthSession | null>
@@ -129,5 +131,7 @@ export function createMiradorClient(getSession: SessionGetter): MiradorClient {
     getQueues: () => request<QueuesResponse>('/queues'),
     getSkills: () => request<SkillsResponse>('/skills'),
     getWork: () => request<WorkResponse>('/work'),
+    getSnapshot: (scope = 'all') =>
+      request<SnapshotResponse>(`/snapshot?scope=${encodeURIComponent(scope)}`),
   }
 }

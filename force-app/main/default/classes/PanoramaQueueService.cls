@@ -18,8 +18,14 @@ public with sharing class PanoramaQueueService {
     };
 
     public static QueuesResponse getQueues() {
+        PanoramaLoadContext ctx = PanoramaLoadContext.load();
         QueuesResponse response = new QueuesResponse();
-        response.queues = new List<QueueDto>();
+        response.queues = buildQueuesFromContext(ctx);
+        return response;
+    }
+
+    public static List<QueueDto> buildQueuesFromContext(PanoramaLoadContext ctx) {
+        List<QueueDto> queues = new List<QueueDto>();
 
         List<Group> groups = [
             SELECT Id, Name
@@ -29,12 +35,12 @@ public with sharing class PanoramaQueueService {
             LIMIT 200
         ];
         if (groups.isEmpty()) {
-            return response;
+            return queues;
         }
 
         Set<Id> queueIds = new Map<Id, Group>(groups).keySet();
-        Map<Id, BacklogStats> backlogByQueue = loadBacklogByQueue(queueIds);
-        Map<Id, Integer> onlineByQueue = loadOnlineAgentsByQueue(queueIds);
+        Map<Id, BacklogStats> backlogByQueue = backlogByQueueFromContext(ctx, queueIds);
+        Map<Id, Integer> onlineByQueue = onlineAgentsByQueueFromContext(ctx, queueIds);
 
         Integer colorIdx = 0;
         for (Group g : groups) {
@@ -48,11 +54,11 @@ public with sharing class PanoramaQueueService {
             dto.longest = stats == null ? 0 : stats.longestSec;
             dto.avg = stats == null ? 0 : stats.avgSec;
             dto.online = onlineByQueue.containsKey(g.Id) ? onlineByQueue.get(g.Id) : 0;
-            response.queues.add(dto);
+            queues.add(dto);
             colorIdx++;
         }
 
-        return response;
+        return queues;
     }
 
     /** Aggregated wait-time stats for a single queue. */
@@ -73,14 +79,17 @@ public with sharing class PanoramaQueueService {
      * caller's wait time. Backlog is the row count, longest/avg are wait-time
      * aggregates in seconds.
      */
-    private static Map<Id, BacklogStats> loadBacklogByQueue(Set<Id> queueIds) {
-        List<PendingServiceRouting> pending = [
-            SELECT QueueId, CreatedDate
-            FROM PendingServiceRouting
-            WHERE QueueId IN :queueIds AND IsReadyForRouting = true
-            LIMIT 10000
-        ];
-        return aggregateBacklog(pending, System.now());
+    private static Map<Id, BacklogStats> backlogByQueueFromContext(
+        PanoramaLoadContext ctx,
+        Set<Id> queueIds
+    ) {
+        List<PendingServiceRouting> pending = new List<PendingServiceRouting>();
+        for (PendingServiceRouting psr : ctx.pendingRouting) {
+            if (psr.QueueId != null && queueIds.contains(psr.QueueId)) {
+                pending.add(psr);
+            }
+        }
+        return aggregateBacklog(pending, ctx.loadedAt);
     }
 
     /**
@@ -115,14 +124,12 @@ public with sharing class PanoramaQueueService {
      * the presence logic in PanoramaAgentService: an agent is "online" when they
      * have a current Omni-Channel presence that maps to the online status.
      */
-    private static Map<Id, Integer> loadOnlineAgentsByQueue(Set<Id> queueIds) {
+    private static Map<Id, Integer> onlineAgentsByQueueFromContext(
+        PanoramaLoadContext ctx,
+        Set<Id> queueIds
+    ) {
         Set<Id> onlineUserIds = new Set<Id>();
-        for (UserServicePresence usp : [
-            SELECT UserId, ServicePresenceStatus.MasterLabel
-            FROM UserServicePresence
-            WHERE IsCurrentState = true
-            LIMIT 500
-        ]) {
+        for (UserServicePresence usp : ctx.presenceByUser.values()) {
             if (usp.UserId != null && isOnlineStatus(usp.ServicePresenceStatus?.MasterLabel)) {
                 onlineUserIds.add(usp.UserId);
             }

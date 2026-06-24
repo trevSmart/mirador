@@ -60,19 +60,9 @@ public with sharing class PanoramaAgentService {
      *        agents without a current presence are reported as offline.
      */
     public static AgentsResponse getAgents(String scope) {
-        Boolean includeAll = scope != null && scope.equalsIgnoreCase('all');
-
-        // Current Omni-Channel presence, keyed by user.
-        Map<Id, UserServicePresence> presenceByUser = loadCurrentPresence();
-
-        // Build the set of users to report.
-        Set<Id> userIds = new Set<Id>(presenceByUser.keySet());
-        if (includeAll) {
-            userIds.addAll(loadOmniEnabledUserIds());
-        }
-
+        PanoramaLoadContext ctx = PanoramaLoadContext.load();
         AgentsResponse response = new AgentsResponse();
-        response.agents = buildAgentDtos(userIds, presenceByUser);
+        response.agents = buildAgentsFromContext(ctx, scope);
         return response;
     }
 
@@ -106,7 +96,8 @@ public with sharing class PanoramaAgentService {
             return response;
         }
 
-        response.agents = buildAgentDtos(userIds, loadCurrentPresence());
+        PanoramaLoadContext ctx = PanoramaLoadContext.load();
+        response.agents = buildAgentDtos(userIds, ctx.presenceByUser, ctx);
         return response;
     }
 
@@ -173,18 +164,16 @@ public with sharing class PanoramaAgentService {
         return byUser;
     }
 
-    private static Map<Id, UserServicePresence> loadCurrentPresence() {
-        Map<Id, UserServicePresence> presenceByUser = new Map<Id, UserServicePresence>();
-        for (UserServicePresence usp : [
-            SELECT UserId, ServicePresenceStatus.MasterLabel,
-                   StatusStartDate, ConfiguredCapacity
-            FROM UserServicePresence
-            WHERE IsCurrentState = true
-            LIMIT 500
-        ]) {
-            presenceByUser.put(usp.UserId, usp);
+    /**
+     * Build the agent roster from a pre-loaded context (shared by /snapshot).
+     */
+    public static List<AgentDto> buildAgentsFromContext(PanoramaLoadContext ctx, String scope) {
+        Boolean includeAll = scope != null && scope.equalsIgnoreCase('all');
+        Set<Id> userIds = new Set<Id>(ctx.presenceByUser.keySet());
+        if (includeAll) {
+            userIds.addAll(loadOmniEnabledUserIds());
         }
-        return presenceByUser;
+        return buildAgentDtos(userIds, ctx.presenceByUser, ctx);
     }
 
     /**
@@ -193,14 +182,16 @@ public with sharing class PanoramaAgentService {
      * getAgentsBySkill so both surface identical agent shapes.
      */
     private static List<AgentDto> buildAgentDtos(
-        Set<Id> userIds, Map<Id, UserServicePresence> presenceByUser
+        Set<Id> userIds,
+        Map<Id, UserServicePresence> presenceByUser,
+        PanoramaLoadContext ctx
     ) {
         List<AgentDto> result = new List<AgentDto>();
         if (userIds.isEmpty()) {
             return result;
         }
 
-        Map<Id, List<WorkItemDto>> workByUser = loadWorkItemsByUser();
+        Map<Id, List<WorkItemDto>> workByUser = workItemsByUserFromContext(ctx);
         String orgUrl = Url.getOrgDomainUrl().toExternalForm();
         Map<Id, List<String>> queueIdsByUser = loadQueueIdsByUser(userIds);
         Map<Id, List<AgentSkillDto>> skillsByUser = loadSkillsByUser(userIds);
@@ -304,37 +295,9 @@ public with sharing class PanoramaAgentService {
         return new List<String>(merged);
     }
 
-    private static Map<Id, List<WorkItemDto>> loadWorkItemsByUser() {
-        List<AgentWork> works = [
-            SELECT Id, UserId, WorkItemId, Status,
-                   ServiceChannel.MasterLabel, ServiceChannel.DeveloperName,
-                   RequestDateTime, OriginalQueueId
-            FROM AgentWork
-            WHERE Status IN ('Opened', 'Assigned', 'Accepted')
-            ORDER BY RequestDateTime DESC
-            LIMIT 2000
-        ];
-
-        Set<Id> caseIds = new Set<Id>();
-        Set<Id> queueIds = new Set<Id>();
-        for (AgentWork aw : works) {
-            if (aw.WorkItemId != null && String.valueOf(aw.WorkItemId).startsWith('500')) {
-                caseIds.add(aw.WorkItemId);
-            }
-            if (aw.OriginalQueueId != null) {
-                queueIds.add(aw.OriginalQueueId);
-            }
-        }
-
-        Map<Id, Case> caseById = caseIds.isEmpty()
-            ? new Map<Id, Case>()
-            : new Map<Id, Case>([SELECT Id, CaseNumber, Subject FROM Case WHERE Id IN :caseIds]);
-        Map<Id, Group> queueById = queueIds.isEmpty()
-            ? new Map<Id, Group>()
-            : new Map<Id, Group>([SELECT Id, Name FROM Group WHERE Id IN :queueIds]);
-
+    private static Map<Id, List<WorkItemDto>> workItemsByUserFromContext(PanoramaLoadContext ctx) {
         Map<Id, List<WorkItemDto>> byUser = new Map<Id, List<WorkItemDto>>();
-        for (AgentWork aw : works) {
+        for (AgentWork aw : ctx.activeAgentWork) {
             WorkItemDto item = new WorkItemDto();
             item.id = String.valueOf(aw.Id);
             item.recordId = aw.WorkItemId == null ? null : String.valueOf(aw.WorkItemId);
@@ -343,12 +306,12 @@ public with sharing class PanoramaAgentService {
             item.status = aw.Status;
             item.ageMin = minutesSince(aw.RequestDateTime);
             item.queueId = aw.OriginalQueueId == null ? null : String.valueOf(aw.OriginalQueueId);
-            item.queue = aw.OriginalQueueId != null && queueById.containsKey(aw.OriginalQueueId)
-                ? queueById.get(aw.OriginalQueueId).Name
+            item.queue = aw.OriginalQueueId != null && ctx.queuesById.containsKey(aw.OriginalQueueId)
+                ? ctx.queuesById.get(aw.OriginalQueueId).Name
                 : null;
 
-            if (aw.WorkItemId != null && caseById.containsKey(aw.WorkItemId)) {
-                Case c = caseById.get(aw.WorkItemId);
+            if (aw.WorkItemId != null && ctx.casesById.containsKey(aw.WorkItemId)) {
+                Case c = ctx.casesById.get(aw.WorkItemId);
                 item.label = 'Case ' + c.CaseNumber;
                 item.subject = c.Subject;
             } else {

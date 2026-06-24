@@ -2,7 +2,8 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { useMiradorData } from '../api/mirador-data-context'
 import type { Agent, PresenceStatus } from '../api/types'
 import { FloorView } from '../components/floor/FloorView'
-import { FloorZoomControl, FLOOR_ZOOM_KEY, adjustFloorZoomFromWheel, loadFloorZoom } from '../components/floor/FloorZoomControl'
+import { FloorZoomControl } from '../components/floor/FloorZoomControl'
+import { FLOOR_ZOOM_KEY, adjustFloorZoomFromWheel, loadFloorZoom } from '../components/floor/floor-zoom'
 import { PanelSuspenseFallback } from '../components/PanelSuspenseFallback'
 import { PanelShell } from '../components/PanelState'
 import { Select } from '../components/ds/Select'
@@ -35,6 +36,8 @@ export function FloorPanel() {
   const { prefs } = usePreferences()
   const canvasScrollRef = useSmoothScroll<HTMLDivElement>()
   const wheelCleanupRef = useRef<(() => void) | null>(null)
+  const [placeId, setPlaceId] = useState<string | null>(null)
+  const [zoom, setZoom] = useState<number>(loadFloorZoom)
 
   const setCanvasRef = useCallback(
     (element: HTMLDivElement | null) => {
@@ -57,8 +60,6 @@ export function FloorPanel() {
     },
     [canvasScrollRef],
   )
-  const [placeId, setPlaceId] = useState<string | null>(null)
-  const [zoom, setZoom] = useState<number>(loadFloorZoom)
 
   // The view follows the user's default (Settings → Aparença). Changing the
   // preference re-syncs the live view, even though Dockview keeps this panel

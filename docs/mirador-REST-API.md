@@ -103,6 +103,33 @@ Error body shape:
 
 ---
 
+## Snapshot
+
+Full dashboard refresh in a single request. **Mirador's built-in polling uses this endpoint** to avoid four parallel calls to `/agents`, `/queues`, `/skills`, and `/work`. Third-party integrators may still call those individual resources for partial updates or lighter payloads.
+
+### `GET /snapshot`
+
+| Query param | Default | Description |
+|-------------|---------|-------------|
+| `scope` | `all` | Agent roster scope — same semantics as `GET /agents?scope=connected\|all` |
+
+**Response `200`**
+
+Top-level arrays (not nested under domain keys like the individual endpoints):
+
+```json
+{
+  "agents": [ /* same shape as GET /agents → agents */ ],
+  "queues": [ /* same shape as GET /queues → queues */ ],
+  "skills": [ /* same shape as GET /skills → skills */ ],
+  "work":   [ /* same shape as GET /work → work */ ]
+}
+```
+
+**Example:** `GET /snapshot?scope=all`
+
+---
+
 ## Capabilities
 
 Discover which write features the authenticated user can use.
@@ -542,6 +569,7 @@ curl -sS -X PUT \
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/capabilities` | Write-feature flags for the current user |
+| `GET` | `/snapshot` | Full dashboard refresh (`?scope=connected\|all`, default `all`) — **use for polling** |
 | `GET` | `/agents` | Agent roster (`?scope=connected\|all`) |
 | `GET` | `/agents/{userId}/skills` | Skills for one agent |
 | `PUT` | `/agents/{userId}/skills` | Add/update/remove agent skills |
@@ -556,4 +584,5 @@ curl -sS -X PUT \
 
 | Date | Change |
 |------|--------|
+| 2026-06-24 | Added `GET /snapshot` for single-call dashboard refresh; individual read endpoints unchanged. |
 | 2026-06-20 | Initial third-party specification for v1 (read endpoints + `PUT` skills + `/capabilities`). |

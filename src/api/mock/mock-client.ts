@@ -6,6 +6,7 @@ import type {
   QueuesResponse,
   SkillAgentsResponse,
   SkillsResponse,
+  SnapshotResponse,
   UpdateSkillsResponse,
   WorkResponse,
 } from '../types'
@@ -38,5 +39,18 @@ export function createMockMiradorClient(): MiradorClient {
     getQueues: async () => ({ queues: getMockQueues() }) satisfies QueuesResponse,
     getSkills: async () => ({ skills: getMockSkills() }) satisfies SkillsResponse,
     getWork: async () => ({ work: getMockWork() }) satisfies WorkResponse,
+    getSnapshot: async (scope: AgentScope = 'all') => {
+      const roster = getMockAgents()
+      const agents =
+        scope === 'connected'
+          ? roster.filter((agent) => agent.status !== 'offline')
+          : roster
+      return {
+        agents,
+        queues: getMockQueues(),
+        skills: getMockSkills(),
+        work: getMockWork(),
+      } satisfies SnapshotResponse
+    },
   }
 }

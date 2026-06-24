@@ -19,36 +19,40 @@ public with sharing class PanoramaSkillService {
     }
 
     public static SkillsResponse getSkills() {
+        PanoramaLoadContext ctx = PanoramaLoadContext.load();
         SkillsResponse response = new SkillsResponse();
-        response.skills = new List<SkillDto>();
+        response.skills = buildSkillsFromContext(ctx);
+        return response;
+    }
 
-        // Order by skill type first so the client can render type sections in a
-        // stable order without re-sorting.
-        List<Skill> skills = [
+    public static List<SkillDto> buildSkillsFromContext(PanoramaLoadContext ctx) {
+        List<SkillDto> skills = new List<SkillDto>();
+
+        List<Skill> skillRows = [
             SELECT Id, MasterLabel, Type.MasterLabel
             FROM Skill
             ORDER BY Type.MasterLabel NULLS LAST, MasterLabel
             LIMIT 500
         ];
-        if (skills.isEmpty()) {
-            return response;
+        if (skillRows.isEmpty()) {
+            return skills;
         }
 
-        Set<Id> skillIds = new Map<Id, Skill>(skills).keySet();
-        Map<Id, Integer> backlogBySkill = loadBacklogBySkill(skillIds);
+        Set<Id> skillIds = new Map<Id, Skill>(skillRows).keySet();
+        Map<Id, Integer> backlogBySkill = backlogBySkillFromContext(ctx, skillIds);
         Map<Id, Integer> agentsBySkill = loadAgentsBySkill(skillIds);
 
-        for (Skill s : skills) {
+        for (Skill s : skillRows) {
             SkillDto dto = new SkillDto();
             dto.id = String.valueOf(s.Id);
             dto.name = s.MasterLabel;
             dto.type = s.Type == null ? null : s.Type.MasterLabel;
             dto.agents = agentsBySkill.containsKey(s.Id) ? agentsBySkill.get(s.Id) : 0;
             dto.backlog = backlogBySkill.containsKey(s.Id) ? backlogBySkill.get(s.Id) : 0;
-            response.skills.add(dto);
+            skills.add(dto);
         }
 
-        return response;
+        return skills;
     }
 
     /**
@@ -56,7 +60,10 @@ public with sharing class PanoramaSkillService {
      * (RelatedRecordId → PendingServiceRouting) to a required Skill; we count the
      * requirements whose PSR is still waiting to be routed.
      */
-    private static Map<Id, Integer> loadBacklogBySkill(Set<Id> skillIds) {
+    private static Map<Id, Integer> backlogBySkillFromContext(
+        PanoramaLoadContext ctx,
+        Set<Id> skillIds
+    ) {
         List<SkillRequirement> reqs = [
             SELECT SkillId, RelatedRecordId
             FROM SkillRequirement
@@ -66,26 +73,7 @@ public with sharing class PanoramaSkillService {
         if (reqs.isEmpty()) {
             return new Map<Id, Integer>();
         }
-
-        // Keep only requirements tied to a routing row still ready for routing.
-        Set<Id> psrIds = new Set<Id>();
-        for (SkillRequirement req : reqs) {
-            if (req.RelatedRecordId != null && String.valueOf(req.RelatedRecordId).startsWith('0JR')) {
-                psrIds.add(req.RelatedRecordId);
-            }
-        }
-        Set<Id> readyPsrIds = new Set<Id>();
-        if (!psrIds.isEmpty()) {
-            for (PendingServiceRouting psr : [
-                SELECT Id FROM PendingServiceRouting
-                WHERE Id IN :psrIds AND IsReadyForRouting = true
-                LIMIT 10000
-            ]) {
-                readyPsrIds.add(psr.Id);
-            }
-        }
-
-        return countBacklog(reqs, readyPsrIds);
+        return countBacklog(reqs, ctx.readyPsrIds());
     }
 
     /**

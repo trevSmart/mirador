@@ -20,6 +20,12 @@ public with sharing class PanoramaRestHandler {
                 writeJson(res, 200, PanoramaAgentService.getAgentsBySkill(skillId));
             } else if (path == '/work') {
                 writeJson(res, 200, PanoramaWorkService.getWork());
+            } else if (path == '/snapshot') {
+                String scope = req.params.get('scope');
+                if (String.isBlank(scope)) {
+                    scope = 'all';
+                }
+                writeJson(res, 200, PanoramaSnapshotService.getSnapshot(scope));
             } else if (path == '/capabilities') {
                 writeJson(res, 200, PanoramaCapabilityService.getCapabilities());
             } else {
