@@ -6,6 +6,7 @@ import {
   SEAT_MAX_H,
   SEAT_MIN_H,
   TH,
+  THK,
   TW,
   WALL_H,
   backLeftEdge,
@@ -117,16 +118,38 @@ interface IsoSeatProps {
   onSelect: (agent: Agent) => void
 }
 
+const BASE_H = SEAT_MIN_H  // pedestal height matches idle agent tower height
+const CAP_OPACITY = 0.60  // top face opacity
+const BASE_OPACITY = 0.55 // pedestal face opacity
+const SHAFT_OPACITY = 0.18 // transparent shaft body
+
 function towerFaces(x: number, y: number, h: number, color: string) {
+  // Three-section tower: opaque pedestal base + transparent shaft + opaque top cap.
+  // The pedestal is drawn first (behind), then the shaft on top with low opacity so
+  // the pedestal faces show through. Uses currentColor so CSS vars resolve at paint time.
+  const base = Math.min(BASE_H, h)
   return (
-    <>
-      <polygon points={leftFace(x, y, 0, h)} style={{ fill: color }} />
-      <polygon points={leftFace(x, y, 0, h)} fill="rgba(0,0,0,0.30)" />
-      <polygon points={rightFace(x, y, 0, h)} style={{ fill: color }} />
-      <polygon points={rightFace(x, y, 0, h)} fill="rgba(0,0,0,0.16)" />
-      <polygon points={diamondPoints(x, y, h)} style={{ fill: color }} />
-      <polygon points={diamondPoints(x, y, h)} fill="rgba(255,255,255,0.24)" stroke="rgba(255,255,255,0.5)" />
-    </>
+    <g style={{ color }}>
+      {/* 1. Pedestal base — drawn first so shaft is painted over it and shows through */}
+      <polygon points={leftFace(x, y, 0, base)} fill="currentColor" fillOpacity={BASE_OPACITY} />
+      <polygon points={leftFace(x, y, 0, base)} fill="rgba(0,0,0,0.18)" />
+      <polygon points={rightFace(x, y, 0, base)} fill="currentColor" fillOpacity={BASE_OPACITY} />
+      <polygon points={rightFace(x, y, 0, base)} fill="rgba(0,0,0,0.08)" />
+      <polygon points={diamondPoints(x, y, base)} fill="currentColor" fillOpacity={BASE_OPACITY} />
+      <polygon points={diamondPoints(x, y, base)} fill="rgba(255,255,255,0.15)" />
+      {/* 2. Shaft — transparent, full height so pedestal shows through at the bottom */}
+      {h > base && (
+        <>
+          <polygon points={leftFace(x, y, base, h)} fill="currentColor" fillOpacity={SHAFT_OPACITY} />
+          <polygon points={leftFace(x, y, base, h)} fill="rgba(0,0,0,0.06)" />
+          <polygon points={rightFace(x, y, base, h)} fill="currentColor" fillOpacity={SHAFT_OPACITY} />
+          <polygon points={rightFace(x, y, base, h)} fill="rgba(0,0,0,0.03)" />
+        </>
+      )}
+      {/* 3. Top cap face — opaque */}
+      <polygon points={diamondPoints(x, y, h)} fill="currentColor" fillOpacity={CAP_OPACITY} />
+      <polygon points={diamondPoints(x, y, h)} fill="rgba(255,255,255,0.20)" stroke="currentColor" strokeOpacity={0.35} strokeWidth={0.5} />
+    </g>
   )
 }
 
