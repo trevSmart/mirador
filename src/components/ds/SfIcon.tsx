@@ -48,7 +48,7 @@ const NAMED: Record<SfIconName, NamedIcon> = {
   home:        { sprite: 'standard', symbol: 'agent_home' },
   insights:    { sprite: 'utility',  symbol: 'metrics' },
   voice:       { sprite: 'standard', symbol: 'voice_call' },
-  chat:        { sprite: 'standard', symbol: 'live_chat' },
+  chat:        { sprite: 'standard', symbol: 'messaging_session' },
   email:       { sprite: 'standard', symbol: 'email' },
   whatsapp:    { sprite: 'standard', symbol: 'messaging_session' },
   case:        { sprite: 'standard', symbol: 'case' },
