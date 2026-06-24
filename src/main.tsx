@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { bootstrapAuth, preloadPublicConfig } from './auth/bootstrap-auth'
+import { dismissAppSplash } from './bootstrap/dismiss-splash'
 
 const rootElement = document.getElementById('root')
 if (!rootElement) {
@@ -18,6 +19,8 @@ async function startApp() {
       <App initialAuthError={authError} />
     </StrictMode>,
   )
+
+  dismissAppSplash()
 }
 
 void startApp()
