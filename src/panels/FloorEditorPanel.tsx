@@ -48,6 +48,7 @@ export function FloorEditorPanel() {
             canUndo={fp.canUndo}
             canRedo={fp.canRedo}
             onSelectTool={fp.setTool}
+            onRotate={fp.rotateFloor}
             onUndo={fp.undo}
             onRedo={fp.redo}
             onSave={fp.save}
