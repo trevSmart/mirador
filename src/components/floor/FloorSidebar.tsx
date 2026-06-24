@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import type { Place } from '../../floor/types'
 import { ButtonIcon } from '../ds/ButtonIcon'
 
@@ -120,9 +120,6 @@ export function FloorSidebar({
     })
   }, [])
 
-  useEffect(() => {
-    if (activePlace?.id) expandPlace(activePlace.id)
-  }, [activePlace?.id, expandPlace])
 
   const handleSelectPlace = (placeId: string) => {
     expandPlace(placeId)
