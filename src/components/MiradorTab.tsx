@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { IDockviewDefaultTabProps } from 'dockview'
+import type { IDockviewDefaultTabProps } from 'dockview-react'
 import { getPanelTypeFromComponent } from '../panels/panel-actions'
 import { PanelIcon } from '../panels/PanelIcon'
 import { scrollPanelToTop } from '../hooks/useSmoothScroll'

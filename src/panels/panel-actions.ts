@@ -1,4 +1,4 @@
-import type { DockviewApi } from 'dockview'
+import type { DockviewApi } from 'dockview-react'
 import { PANEL_COMPONENTS, getPanelDefinition, type PanelType } from './registry'
 
 let panelCounter = 0

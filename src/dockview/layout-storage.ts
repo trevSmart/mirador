@@ -1,4 +1,4 @@
-import type { DockviewApi } from 'dockview'
+import type { DockviewApi } from 'dockview-react'
 
 const STORAGE_KEY = 'mirador-dockview-layout-v1'
 
