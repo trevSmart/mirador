@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useDeferredValue,
   useEffect,
   useMemo,
   useRef,
@@ -225,10 +226,13 @@ export function GlobalSearch() {
   const heightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const normalizedQuery = query.trim().toLowerCase()
+  // Deferred: search runs at lower priority so keystrokes never block the input.
+  const deferredQuery = useDeferredValue(normalizedQuery)
+  const isSearchPending = deferredQuery !== normalizedQuery
 
   const searchResults = useMemo(
-    () => runGlobalSearch(normalizedQuery, agents, queues, skills),
-    [agents, normalizedQuery, queues, skills],
+    () => runGlobalSearch(deferredQuery, agents, queues, skills),
+    [agents, deferredQuery, queues, skills],
   )
 
   const items: SearchItemRef[] = useMemo(() => {
