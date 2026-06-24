@@ -24,8 +24,8 @@ export function TintSwatchField({
             aria-checked={value === tint}
             aria-label={label}
             title={label}
-            className={`settings-tint-swatch${value === tint ? ' is-active' : ''}`}
-            style={{ background: buildFloorCanvasWash(tint) }}
+            className={`settings-tint-swatch${tint === 'none' ? ' settings-tint-swatch--none' : ''}${value === tint ? ' is-active' : ''}`}
+            style={tint === 'none' ? undefined : { background: buildFloorCanvasWash(tint) }}
             onClick={() => onChange(tint)}
           />
         )

@@ -24,7 +24,9 @@ export function AppHeader() {
 
       <div className="app-header__right">
         {isMockMode ? (
-          <span className="app-header__status">Simulació (mock)</span>
+          <span className="app-header__status" title="Dades simulades (mock)">
+            Simulació
+          </span>
         ) : !isSalesforceEnabled ? (
           <span className="app-header__warning">
             Configura SF_CLIENT_ID per connectar a Salesforce

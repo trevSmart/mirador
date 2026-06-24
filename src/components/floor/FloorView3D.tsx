@@ -243,51 +243,99 @@ interface IsoSeatProps {
   clipPrefix: string
 }
 
-const BASE_H = SEAT_MIN_H
-const CAP_OPACITY = 0.42
-const BASE_OPACITY = 0.38
-const SEGMENT_OPACITY = 0.55
+// Base and cap are solid, outlined slabs with real thickness — they frame the
+// translucent shaft between them (the panorama capsule look).
+const BAND_H = 4.5
+const BAND_OPACITY = 0.68
 
-function pedestalFaces(x: number, y: number, base: number) {
+// Glassy tower face: the colour stays the queue hue but fades to translucent
+// toward the top, giving the whole shaft a vertical "rising glass" gradient.
+const FACE_OPACITY_BOTTOM = 0.6
+const FACE_OPACITY_TOP = 0.22
+
+// Lit (right) vs. shaded (left) faces keep a faint dark wash for iso depth.
+const SHADE_LEFT = 'rgba(12,10,22,0.12)'
+const SHADE_RIGHT = 'rgba(12,10,22,0.04)'
+
+// Stronger hue outline that rings the base and cap bands.
+const BAND_STROKE_OPACITY = 0.55
+const BAND_STROKE_WIDTH = 0.85
+
+/** Vertical colour gradient spanning the FULL tower height, so each stacked
+   segment exposes the slice of the fade that matches its own elevation.
+   Uses currentColor so it inherits the segment's queue hue. */
+function TowerFaceGradient({ id, x, y, h }: { id: string; x: number; y: number; h: number }) {
   return (
-    <g style={{ color: PEDESTAL_COLOR }}>
-      <polygon key="ped-left" points={leftFace(x, y, 0, base)} fill="currentColor" fillOpacity={BASE_OPACITY} />
-      <polygon key="ped-left-shade" points={leftFace(x, y, 0, base)} fill="rgba(0,0,0,0.12)" />
-      <polygon key="ped-right" points={rightFace(x, y, 0, base)} fill="currentColor" fillOpacity={BASE_OPACITY} />
-      <polygon key="ped-right-shade" points={rightFace(x, y, 0, base)} fill="rgba(0,0,0,0.05)" />
-      <polygon key="ped-top" points={diamondPoints(x, y, base)} fill="currentColor" fillOpacity={BASE_OPACITY} />
-      <polygon key="ped-top-highlight" points={diamondPoints(x, y, base)} fill="rgba(255,255,255,0.10)" />
-    </g>
+    <linearGradient id={id} gradientUnits="userSpaceOnUse" x1={x} y1={y} x2={x} y2={y - h}>
+      <stop offset="0%" stopColor="currentColor" stopOpacity={FACE_OPACITY_BOTTOM} />
+      <stop offset="100%" stopColor="currentColor" stopOpacity={FACE_OPACITY_TOP} />
+    </linearGradient>
   )
 }
 
-function segmentFaces(x: number, y: number, h1: number, h2: number, color: string, isTop: boolean) {
+/** A solid slab band (base or cap) with real thickness: two side faces + a top
+   diamond, all opaque and ringed with a stronger-hue outline. */
+function bandFaces(x: number, y: number, h1: number, h2: number, color: string) {
   return (
     <g style={{ color }}>
-      <polygon key="seg-left" points={leftFace(x, y, h1, h2)} fill="currentColor" fillOpacity={SEGMENT_OPACITY} />
-      <polygon key="seg-left-shade" points={leftFace(x, y, h1, h2)} fill="rgba(0,0,0,0.07)" />
-      <polygon key="seg-right" points={rightFace(x, y, h1, h2)} fill="currentColor" fillOpacity={SEGMENT_OPACITY} />
-      <polygon key="seg-right-shade" points={rightFace(x, y, h1, h2)} fill="rgba(0,0,0,0.03)" />
-      {isTop ? (
-        <>
-          <polygon key="seg-cap" points={diamondPoints(x, y, h2)} fill="currentColor" fillOpacity={CAP_OPACITY} />
-          <polygon
-            key="seg-cap-highlight"
-            points={diamondPoints(x, y, h2)}
-            fill="rgba(255,255,255,0.14)"
-            stroke="currentColor"
-            strokeOpacity={0.25}
-            strokeWidth={0.5}
-          />
-        </>
-      ) : null}
+      <polygon
+        points={leftFace(x, y, h1, h2)}
+        fill="currentColor"
+        fillOpacity={BAND_OPACITY}
+        stroke="currentColor"
+        strokeOpacity={BAND_STROKE_OPACITY}
+        strokeWidth={BAND_STROKE_WIDTH}
+        strokeLinejoin="round"
+      />
+      <polygon className="fv3d-noedge" points={leftFace(x, y, h1, h2)} fill={SHADE_LEFT} />
+      <polygon
+        points={rightFace(x, y, h1, h2)}
+        fill="currentColor"
+        fillOpacity={BAND_OPACITY}
+        stroke="currentColor"
+        strokeOpacity={BAND_STROKE_OPACITY}
+        strokeWidth={BAND_STROKE_WIDTH}
+        strokeLinejoin="round"
+      />
+      <polygon className="fv3d-noedge" points={rightFace(x, y, h1, h2)} fill={SHADE_RIGHT} />
+      <polygon
+        points={diamondPoints(x, y, h2)}
+        fill="currentColor"
+        fillOpacity={BAND_OPACITY}
+        stroke="currentColor"
+        strokeOpacity={BAND_STROKE_OPACITY}
+        strokeWidth={BAND_STROKE_WIDTH}
+        strokeLinejoin="round"
+      />
+      <polygon className="fv3d-noedge" points={diamondPoints(x, y, h2)} fill="rgba(255,255,255,0.12)" />
     </g>
   )
 }
 
-function segmentedTowerFaces(x: number, y: number, h: number, segments: TowerSegment[]) {
-  const base = Math.min(BASE_H, h)
-  const shaftH = h - base
+/** A glassy shaft segment: just the two side faces, painted with the vertical
+   colour gradient (no top — the cap band covers the shaft). */
+function shaftSegmentFaces(x: number, y: number, h1: number, h2: number, h: number, color: string, gradId: string) {
+  const fill = `url(#${gradId})`
+  return (
+    <g style={{ color }}>
+      <defs>
+        <TowerFaceGradient id={gradId} x={x} y={y} h={h} />
+      </defs>
+      <polygon points={leftFace(x, y, h1, h2)} fill={fill} />
+      <polygon className="fv3d-noedge" points={leftFace(x, y, h1, h2)} fill={SHADE_LEFT} />
+      <polygon points={rightFace(x, y, h1, h2)} fill={fill} />
+      <polygon className="fv3d-noedge" points={rightFace(x, y, h1, h2)} fill={SHADE_RIGHT} />
+    </g>
+  )
+}
+
+function segmentedTowerFaces(x: number, y: number, h: number, segments: TowerSegment[], idBase: string) {
+  const base = Math.min(BAND_H, h)
+  const capH = Math.min(BAND_H, Math.max(0, h - base))
+  const shaftTop = h - capH
+  const shaftH = Math.max(0, shaftTop - base)
+  const topColor = segments[segments.length - 1]?.color ?? PEDESTAL_COLOR
+
   let cursor = base
   const parts: ReactNode[] = []
 
@@ -296,22 +344,23 @@ function segmentedTowerFaces(x: number, y: number, h: number, segments: TowerSeg
     const top = cursor + shaftH * seg.fraction
     parts.push(
       <g key={`${seg.queueId ?? 'unknown'}-${i}`}>
-        {segmentFaces(x, y, cursor, top, seg.color, i === segments.length - 1)}
+        {shaftSegmentFaces(x, y, cursor, top, h, seg.color, `${idBase}-sg${i}`)}
       </g>,
     )
     cursor = top
   }
 
-  if (segments.length === 0 && h > base) {
+  if (segments.length === 0 && shaftH > 0) {
     parts.push(
-      <g key="shaft-fallback">{segmentFaces(x, y, base, h, PEDESTAL_COLOR, true)}</g>,
+      <g key="shaft-fallback">{shaftSegmentFaces(x, y, base, shaftTop, h, PEDESTAL_COLOR, `${idBase}-sgf`)}</g>,
     )
   }
 
   return (
     <>
-      <g key="pedestal">{pedestalFaces(x, y, base)}</g>
+      <g key="pedestal">{bandFaces(x, y, 0, base, PEDESTAL_COLOR)}</g>
       {parts}
+      {capH > 0 ? <g key="cap">{bandFaces(x, y, shaftTop, h, topColor)}</g> : null}
     </>
   )
 }
@@ -341,11 +390,29 @@ function IsoSeat({
   clipPrefix,
 }: IsoSeatProps) {
   const saturated = agent.max > 0 && agent.used >= agent.max
+  const ratio = agent.max > 0 ? Math.min(1, agent.used / agent.max) : 0
   const segments = agentTowerSegments(agent, queuesById)
   const title = towerTitle(agent, queuesById)
   const topColor = segments[segments.length - 1]?.color ?? PEDESTAL_COLOR
   const targetH = style === 'avatar' ? SEAT_MIN_H : seatHeight(agent)
   const h = useTowerHeightScale(targetH, style !== 'avatar')
+  const idBase = `${clipPrefix}-${agent.id}`
+
+  // Soft colour aura at the foot of the tower; its strength tracks the load,
+  // so busier agents quietly glow brighter.
+  const glow =
+    ratio > 0.04 ? (
+      <ellipse
+        key="glow"
+        cx={x}
+        cy={y}
+        rx={TW * 0.92}
+        ry={TH * 0.92}
+        style={{ fill: topColor }}
+        opacity={0.16 + ratio * 0.34}
+        filter={`url(#${clipPrefix}-glow)`}
+      />
+    ) : null
 
   let body: ReactNode
   if (style === 'avatar') {
@@ -359,21 +426,23 @@ function IsoSeat({
   } else if (style === 'cube') {
     body = (
       <>
-        <g key="tower">{segmentedTowerFaces(x, y, h, segments)}</g>
+        {glow}
+        <g key="tower">{segmentedTowerFaces(x, y, h, segments, idBase)}</g>
         <circle key="cap-dot" cx={x} cy={y - h} r={4} style={{ fill: topColor }} stroke="#fff" strokeWidth={1.2} />
       </>
     )
   } else {
     body = (
       <>
-        <g key="tower">{segmentedTowerFaces(x, y, h, segments)}</g>
+        {glow}
+        <g key="tower">{segmentedTowerFaces(x, y, h, segments, idBase)}</g>
         {showAvatars ? (
           <AvatarDisc
             key="avatar"
             agent={agent}
             cx={x}
-            cy={y - h - TH * 0.55}
-            r={TH * 0.85}
+            cy={y - h - TH * 0.62}
+            r={TH * 1.05}
             ring={AVATAR_RING}
             showPhoto
             clipPrefix={clipPrefix}
@@ -640,6 +709,9 @@ export function FloorView3D({
           <defs>
             <filter id={`${svgIdPrefix}-shadow`} x="-30%" y="-30%" width="160%" height="160%">
               <feGaussianBlur stdDeviation="14" />
+            </filter>
+            <filter id={`${svgIdPrefix}-glow`} x="-80%" y="-80%" width="260%" height="260%">
+              <feGaussianBlur stdDeviation="5.5" />
             </filter>
             <pattern id={floorGrainId} width="10" height="10" patternUnits="userSpaceOnUse">
               <rect width="10" height="10" fill="transparent" />

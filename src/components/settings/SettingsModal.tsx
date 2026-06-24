@@ -29,10 +29,10 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
-  { id: 'connexio', label: 'Connexió', symbol: 'link' },
-  { id: 'dades', label: 'Dades', symbol: 'database' },
   { id: 'aparenca', label: 'Aparença', symbol: 'brush' },
+  { id: 'dades', label: 'Dades', symbol: 'database' },
   { id: 'notificacions', label: 'Notificacions', symbol: 'notification' },
+  { id: 'connexio', label: 'Connexió', symbol: 'link' },
   { id: 'developer', label: 'Developer', symbol: 'builder', devOnly: true },
   { id: 'sobre', label: 'Sobre', symbol: 'info' },
 ]

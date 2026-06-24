@@ -1,5 +1,5 @@
 export const FLOOR_ZOOM_MIN = 0.5
-export const FLOOR_ZOOM_MAX = 2
+export const FLOOR_ZOOM_MAX = 3
 export const FLOOR_ZOOM_DEFAULT = 1
 /** Fine nudge for +/- buttons; slider is fully continuous. */
 export const FLOOR_ZOOM_STEP = 0.05
