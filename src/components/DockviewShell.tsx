@@ -43,6 +43,7 @@ function createDefaultLayout(api: DockviewApi): void {
 export function DockviewShell({ ref }: DockviewShellProps) {
   const apiRef = useRef<DockviewApi | null>(null)
   const layoutDisposableRef = useRef<{ dispose: () => void } | null>(null)
+  const panelDisposablesRef = useRef<{ dispose: () => void }[]>([])
   const [openTypes, setOpenTypes] = useState<PanelType[]>(['home'])
   const { registerApi } = useDockviewHost()
 
@@ -53,6 +54,8 @@ export function DockviewShell({ ref }: DockviewShellProps) {
   useEffect(() => {
     return () => {
       layoutDisposableRef.current?.dispose()
+      panelDisposablesRef.current.forEach((d) => d.dispose())
+      panelDisposablesRef.current = []
     }
   }, [])
 
@@ -93,11 +96,16 @@ export function DockviewShell({ ref }: DockviewShellProps) {
     }
     ensureHomePanel(event.api)
 
-    event.api.onDidAddPanel(() => syncOpenTypes(event.api))
-    event.api.onDidRemovePanel(() => {
-      ensureHomePanel(event.api)
-      syncOpenTypes(event.api)
-    })
+    // Dispose any prior subscriptions so a re-run of onReady (StrictMode
+    // double-invoke, remount) doesn't accumulate duplicate handlers.
+    panelDisposablesRef.current.forEach((d) => d.dispose())
+    panelDisposablesRef.current = [
+      event.api.onDidAddPanel(() => syncOpenTypes(event.api)),
+      event.api.onDidRemovePanel(() => {
+        ensureHomePanel(event.api)
+        syncOpenTypes(event.api)
+      }),
+    ]
     syncOpenTypes(event.api)
 
     layoutDisposableRef.current?.dispose()

@@ -56,17 +56,30 @@ async function postTokenProxy(body: Record<string, string>): Promise<TokenRespon
       })
       const data = (await response.json()) as TokenResponse
       if (!response.ok) {
-        throw new OAuthError(
+        const oauthError = new OAuthError(
           data.error_description ?? data.error ?? 'Token exchange failed',
           data.error,
         )
+        // 4xx are deterministic OAuth failures (e.g. invalid_grant). Retrying
+        // is pointless and harmful: an authorization_code is single-use, so a
+        // retry resends an already-consumed code and masks the real error.
+        // Only transient 5xx responses are worth retrying.
+        if (response.status < 500) {
+          throw oauthError
+        }
+        lastError = oauthError
+      } else {
+        return data
       }
-      return data
     } catch (error) {
-      lastError = error instanceof Error ? error : new Error('Network error')
-      if (attempt < MAX_RETRIES - 1) {
-        await new Promise((resolve) => setTimeout(resolve, 300 * (attempt + 1)))
+      // OAuthError from a 4xx is final — propagate without retrying.
+      if (error instanceof OAuthError) {
+        throw error
       }
+      lastError = error instanceof Error ? error : new Error('Network error')
+    }
+    if (attempt < MAX_RETRIES - 1) {
+      await new Promise((resolve) => setTimeout(resolve, 300 * (attempt + 1)))
     }
   }
 
@@ -217,6 +230,10 @@ async function completeOAuthCallback(): Promise<OAuthSession> {
   }
 
   if (!verifier || state !== storedState) {
+    // Discard the stale PKCE material on a mismatched/replayed callback so it
+    // can't linger at rest or interfere with a later legitimate login.
+    localStorage.removeItem(PKCE_STATE_KEY)
+    localStorage.removeItem(PKCE_VERIFIER_KEY)
     const existingSession = await getValidAccessSession()
     if (existingSession) {
       return existingSession

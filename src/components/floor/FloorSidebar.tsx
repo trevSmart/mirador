@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { BACKGROUND_OPTIONS } from '../../floor/floor-plan-model'
 import type { Floor, Place } from '../../floor/types'
 import { ButtonIcon } from '../ds/ButtonIcon'
@@ -16,6 +16,9 @@ interface EditableLabelProps {
 function EditableLabel({ value, className, onCommit }: EditableLabelProps) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(value)
+  // Enter commits then unmounts the input, which fires onBlur and would commit
+  // a second time. This guard makes the rename idempotent per edit session.
+  const committedRef = useRef(false)
 
   if (editing) {
     return (
@@ -26,14 +29,17 @@ function EditableLabel({ value, className, onCommit }: EditableLabelProps) {
         maxLength={40}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={() => {
-          onCommit(draft)
+          if (!committedRef.current) onCommit(draft)
+          committedRef.current = false
           setEditing(false)
         }}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
+            committedRef.current = true
             onCommit(draft)
             setEditing(false)
           } else if (e.key === 'Escape') {
+            committedRef.current = true
             setDraft(value)
             setEditing(false)
           }

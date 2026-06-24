@@ -9,6 +9,10 @@ function isAllowedHost(host: string): boolean {
 }
 
 function isAllowedPath(path: string): boolean {
+  // Reject before normalization: `..` traversal could escape the
+  // `/profilephoto/` allowlist and turn this into a general authenticated
+  // proxy to arbitrary Salesforce REST endpoints.
+  if (path.includes('..')) return false
   return ALLOWED_PATH_PATTERN.test(path)
 }
 
@@ -39,8 +43,24 @@ export async function handleSalesforcePhotoProxy(
     return
   }
 
+  // Re-validate against the normalized URL so percent-encoded traversal
+  // (e.g. `%2e%2e`) that resolves outside `/profilephoto/` is also rejected.
+  let photoUrl: string
   try {
-    const photoUrl = `https://${host}${path}`
+    const resolved = new URL(`https://${host}${path}`)
+    if (resolved.host !== host || !ALLOWED_PATH_PATTERN.test(resolved.pathname)) {
+      res.statusCode = 403
+      res.end('Forbidden')
+      return
+    }
+    photoUrl = resolved.href
+  } catch {
+    res.statusCode = 400
+    res.end('Invalid host or path')
+    return
+  }
+
+  try {
     const sfResponse = await fetch(photoUrl, {
       headers: { Authorization: authHeader },
     })

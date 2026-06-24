@@ -243,7 +243,14 @@ export function GlobalSearch() {
     // whenever a detail is opened.
     void recentsVersion
     const recents = getDetailRecents()
-    return recents.map((entry) => ({ kind: entry.kind, id: entry.id }))
+    // Match the grouped render order (agents → queues → skills) so keyboard
+    // navigation (activeIdx) and selection (items[idx]) stay aligned. Without
+    // the grouping, mixed-kind recents highlight one row but open another.
+    return [
+      ...recents.filter((entry) => entry.kind === 'agent'),
+      ...recents.filter((entry) => entry.kind === 'queue'),
+      ...recents.filter((entry) => entry.kind === 'skill'),
+    ].map((entry) => ({ kind: entry.kind, id: entry.id }))
   }, [deferredQuery, recentsVersion, searchResults])
 
   const syncAnimation = useCallback(() => {

@@ -8,7 +8,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useDeveloperMode } from '../../hooks/useDeveloperMode'
 import { usePreferences } from '../../settings/preferences-context'
-import type { Preferences } from '../../settings/preferences'
+import { PREFERENCES_DEFAULTS, type Preferences } from '../../settings/preferences'
 import { useSettingsModal, type SettingsSectionId } from '../../settings/settings-modal-context'
 import { Button } from '../ds/Button'
 import { SfIcon } from '../ds/SfIcon'
@@ -38,7 +38,9 @@ const NAV: NavItem[] = [
 ]
 
 function prefsEqual(a: Preferences, b: Preferences): boolean {
-  const keys = Object.keys(a) as Array<keyof Preferences>
+  // Iterate the canonical key set so a key missing from either object can't
+  // make two differing objects compare equal.
+  const keys = Object.keys(PREFERENCES_DEFAULTS) as Array<keyof Preferences>
   return keys.every((k) => a[k] === b[k])
 }
 
@@ -48,18 +50,22 @@ export function SettingsModal() {
   const { enabled: devMode } = useDeveloperMode()
 
   // Draft + active section reset each time the modal transitions to open.
+  // The baseline is snapshotted at open time so dirtiness reflects the user's
+  // own edits, not external prefs changes (e.g. a cross-tab storage sync).
   const [draft, setDraft] = useState<Preferences>(prefs)
+  const [baseline, setBaseline] = useState<Preferences>(prefs)
   const [section, setSection] = useState<SettingsSectionId>(initialSection)
   const [wasOpen, setWasOpen] = useState(false)
   if (isOpen && !wasOpen) {
     setWasOpen(true)
     setDraft(prefs)
+    setBaseline(prefs)
     setSection(initialSection)
   } else if (!isOpen && wasOpen) {
     setWasOpen(false)
   }
 
-  const dirty = !prefsEqual(draft, prefs)
+  const dirty = !prefsEqual(draft, baseline)
 
   function requestClose() {
     if (dirty && !window.confirm('Tens canvis sense desar. Tancar igualment?')) return
