@@ -1,6 +1,7 @@
 import { useMiradorStatus } from '../api/mirador-status-context'
 import { useAuth } from '../auth/auth-context'
 import panoramaLogo from '../assets/panorama/logo/panorama-logo.png'
+import { useDevConsole } from '../dev/useDevConsole'
 import { useDeveloperMode } from '../hooks/useDeveloperMode'
 import { SfIcon } from './ds/SfIcon'
 import { GlobalSearch } from './GlobalSearch'
@@ -11,6 +12,7 @@ export function AppHeader() {
   const { authError, isAuthenticated, isLoading, isMockMode, isSalesforceEnabled } = useAuth()
   const { isRefreshing, refresh } = useMiradorStatus()
   const { enabled: devMode } = useDeveloperMode()
+  const { visible: consoleVisible, toggle: toggleConsole } = useDevConsole()
 
   return (
     <header className="app-header">
@@ -25,6 +27,17 @@ export function AppHeader() {
           <span className="app-header__dev" title="Mode desenvolupador actiu">
             DEV
           </span>
+        ) : null}
+        {devMode ? (
+          <button
+            type="button"
+            className={`app-header__button app-header__button--console${consoleVisible ? ' app-header__button--console-active' : ''}`}
+            onClick={toggleConsole}
+            title={consoleVisible ? 'Amaga la consola' : 'Mostra la consola'}
+            aria-pressed={consoleVisible}
+          >
+            Console
+          </button>
         ) : null}
       </div>
 
