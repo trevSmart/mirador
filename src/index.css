@@ -3153,6 +3153,33 @@ textarea,
   padding: 2px 7px;
 }
 
+.app-header__button--console {
+  font-family: var(--font-mono);
+  font-size: calc(10px + var(--mono-fs-nudge));
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--pa-line-2);
+  background: transparent;
+  color: var(--pa-faint);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.app-header__button--console:hover {
+  background: var(--pa-surface-2);
+  color: var(--pa-dim);
+}
+.app-header__button--console-active {
+  border-color: var(--pa-ok);
+  color: var(--pa-ok);
+  background: var(--pa-ok-soft);
+}
+.app-header__button--console-active:hover {
+  background: var(--pa-ok-soft);
+  color: var(--pa-ok);
+}
+
 .user-menu {
   position: relative;
   display: flex;
@@ -4867,3 +4894,256 @@ textarea,
 .wb-stats--grid .wb-stat__value {
   font-size: 22px;
 }
+
+/* ════════════════════════════════════════════════════════════
+   DEV CONSOLE — bottom activity panel (dev mode only)
+   ════════════════════════════════════════════════════════════ */
+
+.dev-console {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 8000;
+  display: flex;
+  flex-direction: column;
+  background: #0e0d12;
+  border-top: 1px solid rgba(255, 255, 255, .10);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: #c9c6d3;
+  min-height: 32px;
+  user-select: none;
+}
+
+/* Resize drag handle */
+.dev-console__resize {
+  position: absolute;
+  top: -3px;
+  left: 0;
+  right: 0;
+  height: 6px;
+  cursor: ns-resize;
+  z-index: 1;
+}
+.dev-console__resize:hover {
+  background: rgba(255, 255, 255, .06);
+}
+
+/* Header row */
+.dev-console__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  height: 32px;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, .07);
+}
+
+.dev-console--minimized .dev-console__head {
+  border-bottom: none;
+  cursor: pointer;
+}
+.dev-console--minimized .dev-console__head:hover {
+  background: rgba(255, 255, 255, .04);
+}
+
+.dev-console__title {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .35);
+  flex-shrink: 0;
+}
+
+/* Minimized preview */
+.dev-console__preview {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.dev-console__preview-msg {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: rgba(255, 255, 255, .5);
+}
+
+/* Toolbar */
+.dev-console__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.dev-console__search {
+  height: 20px;
+  padding: 0 6px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, .06);
+  color: inherit;
+  font: inherit;
+  font-size: 11px;
+  width: 120px;
+  flex-shrink: 0;
+  outline: none;
+}
+.dev-console__search:focus {
+  border-color: rgba(0, 128, 190, .6);
+  background: rgba(0, 128, 190, .08);
+}
+.dev-console__search::placeholder {
+  color: rgba(255, 255, 255, .25);
+}
+
+/* Level filter buttons */
+.dev-console__filters {
+  display: flex;
+  gap: 3px;
+}
+
+.dev-console__filter {
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, .10);
+  background: transparent;
+  color: rgba(255, 255, 255, .3);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+}
+.dev-console__filter--active {
+  color: rgba(255, 255, 255, .8);
+}
+
+.dev-console__filter--log.dev-console__filter--active   { border-color: #9aa0a6; color: #9aa0a6; }
+.dev-console__filter--info.dev-console__filter--active  { border-color: #6cb6ff; color: #6cb6ff; }
+.dev-console__filter--warn.dev-console__filter--active  { border-color: #f0b429; color: #f0b429; }
+.dev-console__filter--error.dev-console__filter--active { border-color: #ff6b6b; color: #ff6b6b; }
+.dev-console__filter--action.dev-console__filter--active{ border-color: #7ee787; color: #7ee787; }
+.dev-console__filter--api.dev-console__filter--active   { border-color: #c9a0ff; color: #c9a0ff; }
+
+.dev-console__filter:hover {
+  background: rgba(255, 255, 255, .06);
+}
+
+/* Action buttons */
+.dev-console__actions {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+
+.dev-console__action-btn {
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, .10);
+  background: transparent;
+  color: rgba(255, 255, 255, .4);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+.dev-console__action-btn:hover {
+  background: rgba(255, 255, 255, .08);
+  color: rgba(255, 255, 255, .7);
+}
+
+/* Expand/minimize toggle */
+.dev-console__toggle {
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, .3);
+  font-size: 9px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+}
+.dev-console__toggle:hover {
+  background: rgba(255, 255, 255, .08);
+  color: rgba(255, 255, 255, .7);
+}
+
+/* Log body */
+.dev-console__body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.15) transparent;
+}
+
+.dev-console__empty {
+  padding: 12px 12px;
+  color: rgba(255, 255, 255, .2);
+  font-style: italic;
+  font-size: 11px;
+  user-select: none;
+}
+
+/* Log lines */
+.dev-console__line {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 1px 10px;
+  line-height: 1.5;
+}
+.dev-console__line:hover {
+  background: rgba(255, 255, 255, .04);
+}
+
+.dev-console__ts {
+  color: rgba(255, 255, 255, .25);
+  flex-shrink: 0;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Level badge */
+.dev-console__badge {
+  flex-shrink: 0;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 0 4px;
+  border-radius: 2px;
+  background: rgba(255,255,255,.08);
+}
+
+.dev-console__badge--log    { color: #9aa0a6; }
+.dev-console__badge--info   { color: #6cb6ff; }
+.dev-console__badge--warn   { color: #f0b429; }
+.dev-console__badge--error  { color: #ff6b6b; }
+.dev-console__badge--action { color: #7ee787; }
+.dev-console__badge--api    { color: #c9a0ff; }
+
+/* Message text */
+.dev-console__msg {
+  flex: 1;
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: text;
+  color: #c9c6d3;
+}
+
+.dev-console__line--warn  .dev-console__msg { color: #f0b429; }
+.dev-console__line--error .dev-console__msg { color: #ff6b6b; }

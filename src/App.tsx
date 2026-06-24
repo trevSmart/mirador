@@ -13,6 +13,8 @@ import { DetailDrawerProvider } from './detail/DetailDrawerContext'
 import { DockviewHostProvider } from './dockview/DockviewHostProvider'
 import { PreferencesProvider } from './settings/PreferencesProvider'
 import { SettingsModalProvider } from './settings/SettingsModalProvider'
+import { DevConsoleProvider } from './dev/DevConsoleContext'
+import { DevConsole } from './dev/DevConsole'
 
 function AppContent() {
   return (
@@ -25,6 +27,7 @@ function AppContent() {
       </div>
       <DetailDrawer />
       <SettingsModal />
+      <DevConsole />
     </div>
   )
 }
@@ -40,9 +43,11 @@ function App({ initialAuthError = null }: { initialAuthError?: string | null }) 
               <DockviewHostProvider>
                 <DetailDrawerProvider>
                   <SettingsModalProvider>
-                    <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} />}>
-                      <AppContent />
-                    </ErrorBoundary>
+                    <DevConsoleProvider>
+                      <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} />}>
+                        <AppContent />
+                      </ErrorBoundary>
+                    </DevConsoleProvider>
                   </SettingsModalProvider>
                 </DetailDrawerProvider>
               </DockviewHostProvider>
