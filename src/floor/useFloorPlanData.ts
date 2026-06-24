@@ -3,7 +3,12 @@
    pub/sub) or another tab writes the store (the window `storage` event). */
 
 import { useEffect, useState } from 'react'
-import { FLOOR_PLAN_STORAGE_KEY, floorPlanRepository, subscribeFloorPlan } from './floor-plan-repository'
+import { useAuth } from '../auth/auth-context'
+import {
+  FLOOR_PLAN_STORAGE_KEY,
+  loadFloorPlan,
+  subscribeFloorPlan,
+} from './floor-plan-repository'
 import type { FloorPlanData } from './types'
 
 export interface FloorPlanDataState {
@@ -12,6 +17,7 @@ export interface FloorPlanDataState {
 }
 
 export function useFloorPlanData(): FloorPlanDataState {
+  const { isMockMode } = useAuth()
   const [data, setData] = useState<FloorPlanData | null>(null)
   const [loaded, setLoaded] = useState(false)
 
@@ -19,7 +25,7 @@ export function useFloorPlanData(): FloorPlanDataState {
     let cancelled = false
 
     const reload = () => {
-      void floorPlanRepository.load().then((next) => {
+      void loadFloorPlan(isMockMode).then((next) => {
         if (cancelled) return
         setData(next)
         setLoaded(true)
@@ -29,7 +35,7 @@ export function useFloorPlanData(): FloorPlanDataState {
     reload()
     const unsubscribe = subscribeFloorPlan(reload)
     const onStorage = (event: StorageEvent) => {
-      if (event.key === FLOOR_PLAN_STORAGE_KEY) reload()
+      if (!isMockMode && event.key === FLOOR_PLAN_STORAGE_KEY) reload()
     }
     window.addEventListener('storage', onStorage)
 
@@ -38,7 +44,7 @@ export function useFloorPlanData(): FloorPlanDataState {
       unsubscribe()
       window.removeEventListener('storage', onStorage)
     }
-  }, [])
+  }, [isMockMode])
 
   return { data, loaded }
 }

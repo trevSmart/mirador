@@ -10,29 +10,33 @@ import type {
   WorkResponse,
 } from '../types'
 import { MOCK_CAPABILITIES } from './capabilities'
+import { getAgentSkills } from './mock-seed'
 import {
-  agents,
-  getAgentSkills,
-  getSkillAgents,
-  queues,
-  skills,
-  work,
-} from './mock-seed'
+  getMockAgents,
+  getMockQueues,
+  getMockSkillAgents,
+  getMockSkills,
+  getMockWork,
+} from './mock-state'
 
 export function createMockMiradorClient(): MiradorClient {
   return {
     getCapabilities: async () => MOCK_CAPABILITIES,
     getAgents: async (scope: AgentScope = 'connected') => {
-      const roster = scope === 'all' ? agents : agents
-      return { agents: roster.map((agent) => ({ ...agent, skills: getAgentSkills(agent.id) })) } satisfies AgentsResponse
+      const roster = getMockAgents()
+      const filtered =
+        scope === 'connected'
+          ? roster.filter((agent) => agent.status !== 'offline')
+          : roster
+      return { agents: filtered } satisfies AgentsResponse
     },
     getAgentSkills: async (userId) =>
       ({ skills: getAgentSkills(userId) }) satisfies AgentSkillsResponse,
     updateAgentSkills: async () => ({ ok: true }) satisfies UpdateSkillsResponse,
     getSkillAgents: async (skillId) =>
-      ({ agents: getSkillAgents(skillId) }) satisfies SkillAgentsResponse,
-    getQueues: async () => ({ queues: queues.slice() }) satisfies QueuesResponse,
-    getSkills: async () => ({ skills: skills.slice() }) satisfies SkillsResponse,
-    getWork: async () => ({ work: work.slice() }) satisfies WorkResponse,
+      ({ agents: getMockSkillAgents(skillId) }) satisfies SkillAgentsResponse,
+    getQueues: async () => ({ queues: getMockQueues() }) satisfies QueuesResponse,
+    getSkills: async () => ({ skills: getMockSkills() }) satisfies SkillsResponse,
+    getWork: async () => ({ work: getMockWork() }) satisfies WorkResponse,
   }
 }

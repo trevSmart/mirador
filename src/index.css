@@ -792,6 +792,21 @@ body {
   color: var(--text-body);
 }
 
+.mirador-tab__icon--detail .agent-avatar,
+.mirador-tab__icon--detail .agent-avatar--photo {
+  width: 14px;
+  height: 14px;
+  font-size: 7px;
+}
+
+.panel-shell--detail {
+  padding: var(--sp-8);
+}
+
+.detail-panel__body {
+  max-width: 960px;
+}
+
 .dv-tab-group-chip {
   font-size: var(--fs-2xs);
 }
@@ -2484,11 +2499,16 @@ body {
   pointer-events: auto;
 }
 
-.detail-drawer__close {
+.detail-drawer__toolbar {
   position: absolute;
   top: var(--sp-4);
   right: var(--sp-4);
   z-index: 1;
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.detail-drawer__icon-btn {
   width: 30px;
   height: 30px;
   display: inline-grid;
@@ -2501,8 +2521,13 @@ body {
   transition: border-color var(--dur-fast) var(--ease);
 }
 
-.detail-drawer__close:hover {
+.detail-drawer__icon-btn:hover:not(:disabled) {
   border-color: var(--border-strong);
+}
+
+.detail-drawer__icon-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .detail-drawer__scroll {

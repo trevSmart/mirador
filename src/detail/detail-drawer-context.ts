@@ -16,6 +16,7 @@ export interface DetailDrawerContextValue {
   openAgent: (id: string) => void
   openQueue: (id: string) => void
   openSkill: (id: string) => void
+  openAsTab: (target: DetailTarget) => void
   close: () => void
 }
 

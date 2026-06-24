@@ -8,7 +8,11 @@
    of this component file so Fast Refresh works). */
 
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
+import { useMiradorData } from '../api/mirador-data-context'
+import { useDockviewHost } from '../dockview/dockview-host-context'
+import { openDetailTab } from '../panels/detail-tab-actions'
 import { recordDetailOpen } from '../utils/detail-recent-store'
+import { resolveDetailTitle } from './resolve-detail-meta'
 import {
   DetailDrawerContext,
   type DetailDrawerContextValue,
@@ -18,11 +22,27 @@ import {
 
 export function DetailDrawerProvider({ children }: { children: ReactNode }) {
   const [detail, setDetail] = useState<DetailTarget | null>(null)
+  const { agents, queues, skills } = useMiradorData()
+  const { getApi } = useDockviewHost()
 
   const open = useCallback((kind: DetailKind, id: string) => {
     recordDetailOpen({ kind, id })
     setDetail({ kind, id })
   }, [])
+
+  const openAsTab = useCallback(
+    (target: DetailTarget) => {
+      const api = getApi()
+      if (!api) {
+        return
+      }
+      const title = resolveDetailTitle(target, { agents, queues, skills })
+      recordDetailOpen({ kind: target.kind, id: target.id, name: title })
+      openDetailTab(api, target, title)
+      setDetail(null)
+    },
+    [agents, getApi, queues, skills],
+  )
 
   const value = useMemo<DetailDrawerContextValue>(
     () => ({
@@ -30,9 +50,10 @@ export function DetailDrawerProvider({ children }: { children: ReactNode }) {
       openAgent: (id) => open('agent', id),
       openQueue: (id) => open('queue', id),
       openSkill: (id) => open('skill', id),
+      openAsTab,
       close: () => setDetail(null),
     }),
-    [detail, open],
+    [detail, open, openAsTab],
   )
 
   return <DetailDrawerContext.Provider value={value}>{children}</DetailDrawerContext.Provider>
