@@ -1,5 +1,7 @@
 import type { Floor, FloorTool } from '../../floor/types'
 import { Button } from '../ds'
+import { ButtonIcon } from '../ds/ButtonIcon'
+import { ROTATE_ICON_PATH } from './rotate-icon-path'
 
 interface ToolDef {
   tool: FloorTool
@@ -24,6 +26,7 @@ interface FloorToolbarProps {
   canUndo: boolean
   canRedo: boolean
   onSelectTool: (tool: FloorTool) => void
+  onRotate: (delta: 1 | -1) => void
   onUndo: () => void
   onRedo: () => void
   onSave: () => void
@@ -37,6 +40,7 @@ export function FloorToolbar({
   canUndo,
   canRedo,
   onSelectTool,
+  onRotate,
   onUndo,
   onRedo,
   onSave,
@@ -74,6 +78,30 @@ export function FloorToolbar({
       ) : null}
 
       <div className="fe-toolbar__actions">
+        <ButtonIcon
+          className="fe-icon-btn"
+          title="Gira a l'esquerra"
+          aria-label="Gira a l'esquerra"
+          onClick={() => onRotate(-1)}
+          disabled={!floor}
+        >
+          <svg width={18} height={18} viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+            <path d={ROTATE_ICON_PATH} />
+          </svg>
+        </ButtonIcon>
+        <ButtonIcon
+          className="fe-icon-btn"
+          title="Gira a la dreta"
+          aria-label="Gira a la dreta"
+          onClick={() => onRotate(1)}
+          disabled={!floor}
+        >
+          <svg width={18} height={18} viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+            <g transform="translate(24 0) scale(-1 1)">
+              <path d={ROTATE_ICON_PATH} />
+            </g>
+          </svg>
+        </ButtonIcon>
         <button
           type="button"
           className="fe-icon-btn"
