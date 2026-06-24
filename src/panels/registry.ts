@@ -14,6 +14,7 @@ export type PanelType =
   | 'work'
   | 'floor'
   | 'floorEditor'
+  | 'dev' // EXPERIMENTAL — vectorial floor projection; delete with src/dev/
 
 export type PanelIcon =
   | { name: SfIconName }
@@ -35,6 +36,8 @@ export const PANEL_DEFINITIONS: PanelDefinition[] = [
   { type: 'work',       title: 'Work',         icon: { name: 'work' },                                    component: lazy(() => import('./WorkPanel').then(m => ({ default: m.WorkPanel }))) },
   { type: 'floor',      title: 'Floor',        icon: { sprite: 'standard', symbol: 'business_unit' },      component: lazy(() => import('./FloorPanel').then(m => ({ default: m.FloorPanel }))) },
   { type: 'floorEditor', title: 'Floor editor', icon: { sprite: 'custom', symbol: 'custom83' },              component: lazy(() => import('./FloorEditorPanel').then(m => ({ default: m.FloorEditorPanel }))) },
+  // EXPERIMENTAL — vectorial floor projection. Remove this line + delete src/dev/ to drop it.
+  { type: 'dev',        title: 'Dev',          icon: { sprite: 'utility', symbol: 'settings' },           component: lazy(() => import('../dev/DevPanel').then(m => ({ default: m.DevPanel }))) },
 ]
 
 function withPanelErrorBoundary(

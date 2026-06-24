@@ -436,7 +436,7 @@ function IsoSeat({
       <>
         {glow}
         <g key="tower">{segmentedTowerFaces(x, y, h, segments, idBase)}</g>
-        {showAvatars ? (
+        <g className={`fv3d-avatar${showAvatars ? ' fv3d-avatar--on' : ''}`}>
           <AvatarDisc
             key="avatar"
             agent={agent}
@@ -447,7 +447,7 @@ function IsoSeat({
             showPhoto
             clipPrefix={clipPrefix}
           />
-        ) : null}
+        </g>
         {saturated ? (
           <>
             <line key="beacon-stem" x1={x} y1={y - h} x2={x} y2={y - h - TH * 1.6} stroke="#E05641" strokeWidth={1.5} />

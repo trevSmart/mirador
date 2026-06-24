@@ -2778,6 +2778,21 @@ body {
   overflow: hidden;
 }
 
+/* Tower avatars fade in/out instead of popping when the Avatars toggle flips. */
+.fv3d-avatar {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity calc(var(--dur-bar) / 2) var(--ease);
+}
+.fv3d-avatar--on {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fv3d-avatar {
+    transition: none;
+  }
+}
+
 .fv3d-tip {
   position: fixed;
   z-index: 150;
