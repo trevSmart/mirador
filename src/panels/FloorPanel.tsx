@@ -1,14 +1,19 @@
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { useMiradorData } from '../api/mirador-data-context'
 import type { Agent, PresenceStatus } from '../api/types'
 import { FloorView } from '../components/floor/FloorView'
-import { FloorView3D, type SeatStyle } from '../components/floor/FloorView3D'
+import type { SeatStyle } from '../components/floor/FloorView3D'
+import { PanelSuspenseFallback } from '../components/PanelSuspenseFallback'
 import { PanelShell } from '../components/PanelState'
 import { Select } from '../components/ds/Select'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { useFloorPlanData } from '../floor/useFloorPlanData'
 import { usePreferences } from '../settings/preferences-context'
 import { presenceLabel } from '../utils/format'
+
+const FloorView3D = lazy(() =>
+  import('../components/floor/FloorView3D').then(m => ({ default: m.FloorView3D }))
+)
 
 const STATUS_ORDER: PresenceStatus[] = ['online', 'busy', 'away', 'offline']
 const STATUS_DOT: Record<PresenceStatus, string> = {
@@ -189,15 +194,17 @@ export function FloorPanel() {
 
         <div className="fv-canvas">
           {view === '3d' ? (
-            <FloorView3D
-              floor={activeFloor}
-              agentsById={agentsById}
-              dir={dir}
-              seatStyle={seatStyle}
-              showAvatars={prefs.showAvatars}
-              animations={prefs.animations}
-              onSelectAgent={handleSelectAgent}
-            />
+            <Suspense fallback={<PanelSuspenseFallback />}>
+              <FloorView3D
+                floor={activeFloor}
+                agentsById={agentsById}
+                dir={dir}
+                seatStyle={seatStyle}
+                showAvatars={prefs.showAvatars}
+                animations={prefs.animations}
+                onSelectAgent={handleSelectAgent}
+              />
+            </Suspense>
           ) : (
             <FloorView
               floor={activeFloor}
