@@ -236,7 +236,7 @@ export function GlobalSearch() {
   )
 
   const items: SearchItemRef[] = useMemo(() => {
-    if (normalizedQuery) {
+    if (deferredQuery) {
       return flattenSearchResults(searchResults)
     }
     // recentsVersion is the cache-bust key: re-read the (external) recents store
@@ -244,7 +244,7 @@ export function GlobalSearch() {
     void recentsVersion
     const recents = getDetailRecents()
     return recents.map((entry) => ({ kind: entry.kind, id: entry.id }))
-  }, [normalizedQuery, recentsVersion, searchResults])
+  }, [deferredQuery, recentsVersion, searchResults])
 
   const syncAnimation = useCallback(() => {
     closeTimeoutRef.current = syncDropdownPanel(dropRef.current, open, {
@@ -338,7 +338,7 @@ export function GlobalSearch() {
     if (!open) return
     const prevHeight = bodyRef.current?.offsetHeight ?? 0
     syncContentHeight(prevHeight)
-  }, [open, normalizedQuery, recentsVersion, searchResults, activeIdx, syncContentHeight])
+  }, [open, deferredQuery, recentsVersion, searchResults, activeIdx, syncContentHeight])
 
   const closePanel = useCallback((clear = false) => {
     clearTimeout(blurTimerRef.current ?? undefined)
@@ -424,7 +424,7 @@ export function GlobalSearch() {
   let content: React.ReactNode
   let idx = 0
 
-  if (!normalizedQuery) {
+  if (!deferredQuery) {
     const recents = getDetailRecents()
     if (!recents.length) {
       content = (
@@ -510,7 +510,7 @@ export function GlobalSearch() {
   } else if (!items.length) {
     content = (
       <div className="qsearch-empty">
-        No results for &quot;<b>{query.trim()}</b>&quot;
+        No results for &quot;<b>{deferredQuery}</b>&quot;
       </div>
     )
   } else {
@@ -581,7 +581,7 @@ export function GlobalSearch() {
   }
 
   return (
-    <div className="qsearch" id="globalSearch">
+    <div className={`qsearch${isSearchPending ? ' is-searching' : ''}`} id="globalSearch">
       <SearchIcon />
       <input
         ref={inputRef}

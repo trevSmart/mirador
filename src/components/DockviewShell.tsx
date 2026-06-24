@@ -1,9 +1,8 @@
 import {
-  forwardRef,
   useEffect,
-  useImperativeHandle,
   useRef,
   useState,
+  type Ref,
 } from 'react'
 import { DockviewReact } from 'dockview-react'
 import type { DockviewApi, DockviewReadyEvent } from 'dockview-react'
@@ -26,6 +25,10 @@ export interface DockviewShellHandle {
   getOpenPanelTypes: () => PanelType[]
 }
 
+interface DockviewShellProps {
+  ref?: Ref<DockviewShellHandle>
+}
+
 function createDefaultLayout(api: DockviewApi): void {
   api.addPanel({
     id: 'home-initial',
@@ -34,10 +37,7 @@ function createDefaultLayout(api: DockviewApi): void {
   })
 }
 
-export const DockviewShell = forwardRef<DockviewShellHandle>(function DockviewShell(
-  _props,
-  ref,
-) {
+export function DockviewShell({ ref }: DockviewShellProps) {
   const apiRef = useRef<DockviewApi | null>(null)
   const layoutDisposableRef = useRef<{ dispose: () => void } | null>(null)
   const [openTypes, setOpenTypes] = useState<PanelType[]>(['home'])
@@ -51,6 +51,31 @@ export const DockviewShell = forwardRef<DockviewShellHandle>(function DockviewSh
       layoutDisposableRef.current?.dispose()
     }
   }, [])
+
+  // Expose imperative handle via ref prop (React 19 pattern).
+  useEffect(() => {
+    if (!ref) return
+    const handle: DockviewShellHandle = {
+      addPanel(type: PanelType) {
+        const api = apiRef.current
+        if (!api) return
+        addPanelByType(api, type)
+      },
+      getOpenPanelTypes() {
+        const api = apiRef.current
+        if (!api) return openTypes
+        return getOpenPanelTypes(api)
+      },
+    }
+    if (typeof ref === 'function') {
+      ref(handle)
+      return () => ref(null)
+    }
+    ref.current = handle
+    return () => {
+      ref.current = null
+    }
+  }, [ref, openTypes])
 
   const onReady = (event: DockviewReadyEvent) => {
     apiRef.current = event.api
@@ -70,23 +95,6 @@ export const DockviewShell = forwardRef<DockviewShellHandle>(function DockviewSh
     })
   }
 
-  useImperativeHandle(ref, () => ({
-    addPanel(type: PanelType) {
-      const api = apiRef.current
-      if (!api) {
-        return
-      }
-      addPanelByType(api, type)
-    },
-    getOpenPanelTypes() {
-      const api = apiRef.current
-      if (!api) {
-        return openTypes
-      }
-      return getOpenPanelTypes(api)
-    },
-  }), [openTypes])
-
   return (
     <DockviewReact
       theme={miradorDockviewTheme}
@@ -98,4 +106,4 @@ export const DockviewShell = forwardRef<DockviewShellHandle>(function DockviewSh
       getTabGroupChipContextMenuItems={getMiradorTabGroupChipContextMenuItems}
     />
   )
-})
+}

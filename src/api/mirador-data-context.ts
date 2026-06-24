@@ -1,22 +1,15 @@
 /* Mirador data — context + hook (no components, for Fast Refresh).
-   The <MiradorDataProvider> in MiradorDataProvider.tsx supplies this value. */
+   The <MiradorDataProvider> in MiradorDataProvider.tsx supplies this value.
+   Only holds domain data arrays; fetch status lives in mirador-status-context. */
 
 import { createContext, useContext } from 'react'
 import type { Agent, Queue, Skill, WorkItem } from './types'
-
-export interface RefreshOptions {
-  silent?: boolean
-}
 
 export interface MiradorDataContextValue {
   agents: Agent[]
   queues: Queue[]
   skills: Skill[]
   work: WorkItem[]
-  isLoading: boolean
-  isRefreshing: boolean
-  error: string | null
-  refresh: (options?: RefreshOptions) => Promise<void>
 }
 
 export const MiradorDataContext = createContext<MiradorDataContextValue | null>(null)
