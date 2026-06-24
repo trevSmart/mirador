@@ -23,7 +23,7 @@ export function SkillRow({ skill }: SkillRowProps) {
     >
       <div className="skill-row__main">
         <div>
-          <h3 className="skill-row__name">{skill.name}</h3>
+          <h3 className="skill-row__name" title={skill.name}>{skill.name}</h3>
           <p className="skill-row__meta">
             {skill.type ?? 'Sense tipus'} · {skill.agents} agents qualificats
           </p>

@@ -9,7 +9,7 @@ import { computeHealthInsights } from '../utils/health-insights'
 import { addPanelByType } from './panel-actions'
 import type { PanelType } from './registry'
 
-export function InsightsPanel({ api, containerApi }: IDockviewPanelProps) {
+export function InsightsPanel({ containerApi }: IDockviewPanelProps) {
   const { agents, queues } = useMiradorData()
   const { isLoading, error, refresh } = useMiradorStatus()
   const { isMockMode } = useAuth()

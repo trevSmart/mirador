@@ -111,7 +111,7 @@ export function AgentRow({ agent, showSkills = false }: AgentRowProps) {
               className="agent-row__channel"
               data-active={active ? 'true' : 'false'}
             >
-              <SfIcon channel={channel} size={18} />
+              <SfIcon channel={channel} sldsSize="small" />
               <span className="agent-row__channel-count">{count}</span>
             </div>
           )

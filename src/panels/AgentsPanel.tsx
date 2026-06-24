@@ -1,11 +1,10 @@
-import type { IDockviewPanelProps } from 'dockview-react'
 import { useMiradorData } from '../api/mirador-data-context'
 import { useMiradorStatus } from '../api/mirador-status-context'
 import { AgentRow } from '../components/AgentRow'
 import { PanelState } from '../components/PanelState'
 import { countAgentsByStatus, sortAgentsByPresence } from '../utils/agent-stats'
 
-export function AgentsPanel(_: IDockviewPanelProps) {
+export function AgentsPanel() {
   const { agents } = useMiradorData()
   const { isLoading, error, refresh } = useMiradorStatus()
   const sortedAgents = sortAgentsByPresence(agents)

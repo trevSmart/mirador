@@ -51,7 +51,7 @@ export function AppHeader() {
           title="Actualitza les dades d'Omni"
           aria-label="Actualitza les dades d'Omni"
         >
-          <SfIcon sprite="utility" symbol="refresh" size={18} />
+          <SfIcon sprite="utility" symbol="refresh" size={12} />
         </button>
 
         <GlobalSearch />

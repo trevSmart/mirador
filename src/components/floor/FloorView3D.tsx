@@ -6,7 +6,6 @@ import {
   SEAT_MAX_H,
   SEAT_MIN_H,
   TH,
-  THK,
   TW,
   WALL_H,
   backLeftEdge,

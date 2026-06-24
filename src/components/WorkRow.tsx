@@ -54,7 +54,7 @@ export function WorkRow({ item, agentName, queueName }: WorkRowProps) {
       <div className="work-row__main">
         <SfIcon sprite={icon.sprite} symbol={icon.symbol} size={32} bg={icon.tint} />
         <div className="work-row__body">
-          <h3 className="work-row__subject">{item.subject}</h3>
+          <h3 className="work-row__subject" title={item.subject ?? undefined}>{item.subject}</h3>
           <p className="work-row__meta">{metaParts.join(' · ')}</p>
         </div>
         <span className={`work-row__status work-row__status--${item.status}`}>

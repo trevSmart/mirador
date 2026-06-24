@@ -4,6 +4,7 @@
    The Connexió and Sobre sections are read-only info pulled from auth state. */
 
 import { useAuth } from '../../auth/auth-context'
+import { usePreferences } from '../../settings/preferences-context'
 import {
   REFRESH_OPTIONS,
   type FloorViewMode,
@@ -33,18 +34,31 @@ function refreshLabel(seconds: number): string {
   return `Cada ${seconds / 3600} h`
 }
 
-export function ConnexioSection() {
+export function ConnexioSection({ draft, patch }: SectionProps) {
   const { isMockMode, isSalesforceEnabled, session, userInfo } = useAuth()
   const instanceUrl = session?.instanceUrl ?? null
+  const effectiveMock = isMockMode || draft.mockOverride
 
   return (
     <>
       <SettingsGroup label="Font de dades">
         <SettingsRow
-          title="Mode de dades"
+          title="Mode de simulació (mock)"
+          hint="Usa dades locals de demostració sense connexió a Salesforce"
+          control={
+            <ToggleField
+              label="Mode de simulació"
+              checked={draft.mockOverride}
+              onChange={(v) => patch({ mockOverride: v })}
+              disabled={isMockMode}
+            />
+          }
+        />
+        <SettingsRow
+          title="Font activa"
           hint="D'on s'obtenen les dades del centre"
           control={
-            isMockMode ? (
+            effectiveMock ? (
               <SettingsBadge tone="watch">Simulació (mock)</SettingsBadge>
             ) : (
               <SettingsBadge tone="ok">Salesforce</SettingsBadge>
@@ -55,7 +69,7 @@ export function ConnexioSection() {
           title="Estat de la connexió"
           hint="Comprovació en iniciar sessió"
           control={
-            isMockMode ? (
+            effectiveMock ? (
               <SettingsBadge tone="watch">Simulada</SettingsBadge>
             ) : session ? (
               <SettingsBadge tone="ok">Connectat</SettingsBadge>
@@ -66,7 +80,7 @@ export function ConnexioSection() {
         />
       </SettingsGroup>
 
-      {!isMockMode ? (
+      {!effectiveMock ? (
         <SettingsGroup label="Salesforce">
           <SettingsRow
             title="Connected App"
@@ -335,6 +349,8 @@ export function DeveloperSection() {
 
 export function SobreSection() {
   const { isMockMode, userInfo } = useAuth()
+  const { prefs } = usePreferences()
+  const effectiveMock = isMockMode || prefs.mockOverride
 
   return (
     <>
@@ -347,7 +363,7 @@ export function SobreSection() {
           <br />
           <strong>Versió:</strong> {APP_VERSION}
           <br />
-          <strong>Entorn:</strong> {isMockMode ? 'Simulació (mock)' : 'Salesforce'}
+          <strong>Entorn:</strong> {effectiveMock ? 'Simulació (mock)' : 'Salesforce'}
         </div>
       </SettingsGroup>
 

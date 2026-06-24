@@ -65,7 +65,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
         <div className="dd-channels">
           {CHANNELS.map((ch) => (
             <div key={ch} className="dd-channel" data-active={(agent.chans[ch] ?? 0) > 0}>
-              <SfIcon channel={ch} size={16} />
+              <SfIcon channel={ch} sldsSize="x-small" />
               <span>{agent.chans[ch] ?? 0}</span>
             </div>
           ))}

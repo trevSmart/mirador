@@ -11,9 +11,10 @@ import {
 import type { Agent, Queue, Skill, WorkItem } from './types'
 
 export function MiradorDataProvider({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, isMockMode } = useAuth()
   const client = useMiradorApi()
   const { prefs } = usePreferences()
+  const isActive = isAuthenticated || isMockMode || prefs.mockOverride
   const [agents, setAgents] = useState<Agent[]>([])
   const [queues, setQueues] = useState<Queue[]>([])
   const [skills, setSkills] = useState<Skill[]>([])
@@ -85,7 +86,7 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
     }
   }, [clearData, client])
 
-  const authedNow = isAuthenticated && Boolean(client)
+  const authedNow = isActive && Boolean(client)
   // Reset to a clean idle state when auth/client is lost. Done during render
   // (convergent) instead of in an effect, to avoid a synchronous effect setState.
   const [prevAuthed, setPrevAuthed] = useState(authedNow)
@@ -99,7 +100,7 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    if (!isAuthenticated || !client) {
+    if (!isActive || !client) {
       return
     }
 
@@ -107,10 +108,10 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
     queueMicrotask(() => {
       void refresh()
     })
-  }, [client, isAuthenticated, refresh])
+  }, [client, isActive, refresh])
 
   useEffect(() => {
-    if (!isAuthenticated || !client || !prefs.autoRefresh) {
+    if (!isActive || !client || !prefs.autoRefresh) {
       return
     }
 
@@ -121,7 +122,7 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
     return () => {
       window.clearInterval(intervalId)
     }
-  }, [client, isAuthenticated, refresh, prefs.autoRefresh, prefs.refreshInterval])
+  }, [client, isActive, refresh, prefs.autoRefresh, prefs.refreshInterval])
 
   // Separate memos: data changes don't trigger status consumers, and vice versa.
   const dataValue = useMemo(

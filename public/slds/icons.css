@@ -1,0 +1,53 @@
+/* Regles d'icones extretes de Salesforce Lightning Design System v2.30.4
+   Únicament les regles necessàries per a SfIcon: container, mides i colors
+   de les icones estàndard usades a l'app. */
+
+/* ── Container ──────────────────────────────────────────────────────────── */
+
+.slds-icon_container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+  line-height: 1;
+  background-color: transparent;
+}
+
+.slds-icon_container_circle {
+  border-radius: 50%;
+  padding: 0.5rem;
+}
+
+/* ── Glyph SVG ──────────────────────────────────────────────────────────── */
+
+.slds-icon {
+  display: block;
+  width: 2rem;
+  height: 2rem;
+  fill: rgb(255, 255, 255);
+}
+
+.slds-icon_xx-small { width: 0.875rem; height: 0.875rem; line-height: 1; }
+.slds-icon_x-small  { width: 1rem;     height: 1rem;     line-height: 1; }
+.slds-icon_small    { width: 1.5rem;   height: 1.5rem;   line-height: 1; }
+.slds-icon_large    { width: 3rem;     height: 3rem; }
+
+/* Utility icons: hereten el color del pare en comptes de blanc */
+.slds-current-color .slds-icon { fill: currentColor; }
+
+/* ── Colors estàndard SLDS per a les icones usades a l'app ─────────────── */
+
+.slds-icon-standard-agent-home       { background-color: rgb(3,   45,  96);  }
+.slds-icon-standard-voice-call       { background-color: rgb(59,  167, 85);  }
+.slds-icon-standard-live-chat        { background-color: rgb(255, 93,  45);  }
+.slds-icon-standard-email            { background-color: rgb(147, 147, 147); }
+.slds-icon-standard-messaging-session{ background-color: rgb(6,   165, 154); }
+.slds-icon-standard-case             { background-color: rgb(255, 83,  138); }
+.slds-icon-standard-queue            { background-color: rgb(16,  124, 173); }
+.slds-icon-standard-skill            { background-color: rgb(255, 93,  45);  }
+.slds-icon-standard-user             { background-color: rgb(16,  124, 173); }
+.slds-icon-standard-work-order-item  { background-color: rgb(27,  150, 255); }
+.slds-icon-standard-service-territory{ background-color: rgb(88,  103, 232); }
+.slds-icon-standard-maintenance-plan { background-color: rgb(16,  124, 173); }
+.slds-icon-standard-customer-portal-users { background-color: rgb(27,  150, 255); }
+.slds-icon-standard-customers            { background-color: rgb(6,   165, 154); }
