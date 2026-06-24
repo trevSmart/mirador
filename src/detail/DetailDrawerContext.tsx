@@ -8,6 +8,7 @@
    of this component file so Fast Refresh works). */
 
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
+import { devLog } from '../dev/dev-log'
 import { useMiradorData } from '../api/mirador-data-context'
 import { useDockviewHost } from '../dockview/dockview-host-context'
 import { openDetailTab } from '../panels/detail-tab-actions'
@@ -26,6 +27,7 @@ export function DetailDrawerProvider({ children }: { children: ReactNode }) {
   const { getApi } = useDockviewHost()
 
   const open = useCallback((kind: DetailKind, id: string) => {
+    devLog.action('detail:open', `${kind} ${id}`)
     recordDetailOpen({ kind, id })
     setDetail({ kind, id })
   }, [])
@@ -37,6 +39,7 @@ export function DetailDrawerProvider({ children }: { children: ReactNode }) {
         return
       }
       const title = resolveDetailTitle(target, { agents, queues, skills })
+      devLog.action('detail:open-as-tab', `${target.kind} · ${title}`)
       recordDetailOpen({ kind: target.kind, id: target.id, name: title })
       openDetailTab(api, target, title)
       setDetail(null)

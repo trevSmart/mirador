@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useAuth } from '../auth/auth-context'
 import { usePreferences } from '../settings/preferences-context'
+import { devLog } from '../dev/dev-log'
 import { MiradorApiError } from './mirador-client'
 import { useMiradorApi } from './mirador-api-context'
 import { MiradorDataContext } from './mirador-data-context'
@@ -59,6 +60,8 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
       setError(null)
     }
 
+    devLog.action(silent ? 'data:refresh (silent)' : 'data:refresh')
+
     try {
       const snapshot = await client.getSnapshot('all')
       setAgents(snapshot.agents)
@@ -68,14 +71,21 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
       if (silent) {
         setError(null)
       }
+      devLog.action('data:loaded', {
+        agents: snapshot.agents.length,
+        queues: snapshot.queues.length,
+        skills: snapshot.skills.length,
+        work: snapshot.work.length,
+      })
     } catch (fetchError) {
+      const message =
+        fetchError instanceof MiradorApiError
+          ? fetchError.message
+          : 'No s\'han pogut carregar les dades de Salesforce'
+      console.error('[data:refresh] failed:', message)
       if (!silent) {
         clearData()
-        setError(
-          fetchError instanceof MiradorApiError
-            ? fetchError.message
-            : 'No s\'han pogut carregar les dades de Salesforce',
-        )
+        setError(message)
       }
     } finally {
       isRefreshingRef.current = false

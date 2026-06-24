@@ -1,4 +1,5 @@
 import { recoverAccessSession } from '../auth/salesforce-oauth'
+import { devLog } from '../dev/dev-log'
 import type { OAuthSession } from '../auth/types'
 import type {
   AgentScope,
@@ -61,8 +62,11 @@ export function createMiradorClient(getSession: SessionGetter): MiradorClient {
     init: RequestInit = {},
     retry = true,
   ): Promise<T> {
+    const method = (init.method ?? 'GET').toUpperCase()
+
     const session = await getSession()
     if (!session) {
+      devLog.api(method, path, '401 not authenticated')
       throw new MiradorApiError('Not authenticated', 401)
     }
 
@@ -75,7 +79,16 @@ export function createMiradorClient(getSession: SessionGetter): MiradorClient {
       headers.set('Content-Type', 'application/json')
     }
 
-    const response = await fetch(url, { ...init, headers })
+    const startedAt = Date.now()
+    let response: Response
+    try {
+      response = await fetch(url, { ...init, headers })
+    } catch (networkError) {
+      devLog.api(method, path, 'network error')
+      throw networkError
+    }
+    const elapsed = Date.now() - startedAt
+    devLog.api(method, path, `${response.status} · ${elapsed}ms`)
     const text = await response.text()
     let payload: unknown = null
     if (text) {
@@ -99,8 +112,10 @@ export function createMiradorClient(getSession: SessionGetter): MiradorClient {
         retry &&
         (response.status === 401 || isSessionExpiredMessage(message))
       ) {
+        devLog.action('auth:session-expired', path)
         const recovered = await recoverAccessSession()
         if (recovered) {
+          devLog.action('auth:session-recovered', path)
           return request<T>(path, init, false)
         }
       }

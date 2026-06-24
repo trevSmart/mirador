@@ -14,6 +14,7 @@ import {
 } from '../dockview/context-menus'
 import { loadDockviewLayout, saveDockviewLayout } from '../dockview/layout-storage'
 import { useDockviewHost } from '../dockview/dockview-host-context'
+import { devLog } from '../dev/dev-log'
 import { miradorDockviewTheme } from '../dockview/theme'
 import { DetailPanel } from '../panels/DetailPanel'
 import { PANEL_COMPONENTS, getPanelDefinition, type PanelType } from '../panels/registry'
@@ -109,10 +110,17 @@ export function DockviewShell({ ref }: DockviewShellProps) {
     // double-invoke, remount) doesn't accumulate duplicate handlers.
     panelDisposablesRef.current.forEach((d) => d.dispose())
     panelDisposablesRef.current = [
-      event.api.onDidAddPanel(() => syncOpenTypes(event.api)),
-      event.api.onDidRemovePanel(() => {
+      event.api.onDidAddPanel((panel) => {
+        devLog.action('panel:open', panel.title ?? panel.id)
+        syncOpenTypes(event.api)
+      }),
+      event.api.onDidRemovePanel((panel) => {
+        devLog.action('panel:close', panel.title ?? panel.id)
         ensureHomePanel(event.api)
         syncOpenTypes(event.api)
+      }),
+      event.api.onDidActivePanelChange((panel) => {
+        if (panel) devLog.action('panel:activate', panel.title ?? panel.id)
       }),
     ]
     syncOpenTypes(event.api)
