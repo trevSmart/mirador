@@ -1,4 +1,4 @@
-import { themeLightSpaced } from 'dockview'
+import { themeLightSpaced } from 'dockview-react'
 
 export const miradorDockviewTheme = {
   ...themeLightSpaced,

@@ -1,4 +1,4 @@
-import type { IDockviewPanelProps } from 'dockview'
+import type { IDockviewPanelProps } from 'dockview-react'
 
 interface PlaceholderPanelProps extends IDockviewPanelProps {
   description: string

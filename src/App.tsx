@@ -1,4 +1,4 @@
-import 'dockview/dist/styles/dockview.css'
+import 'dockview-react/dist/styles/dockview.css'
 import { AuthProvider } from './auth/AuthProvider'
 import { MiradorApiProvider } from './api/MiradorApiProvider'
 import { MiradorDataProvider } from './api/MiradorDataProvider'

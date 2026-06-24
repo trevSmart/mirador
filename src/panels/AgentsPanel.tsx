@@ -1,4 +1,4 @@
-import type { IDockviewPanelProps } from 'dockview'
+import type { IDockviewPanelProps } from 'dockview-react'
 import { useMiradorData } from '../api/mirador-data-context'
 import { AgentRow } from '../components/AgentRow'
 import { PanelState } from '../components/PanelState'

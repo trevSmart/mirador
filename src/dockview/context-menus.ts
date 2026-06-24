@@ -4,7 +4,7 @@ import type {
   GetTabContextMenuItemsParams,
   GetTabGroupChipContextMenuItemsParams,
   ReactContextMenuItemConfig,
-} from 'dockview'
+} from 'dockview-react'
 import {
   addPanelToExistingTabGroup,
   createTabGroupWithPanel,

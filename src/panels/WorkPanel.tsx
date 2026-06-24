@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { IDockviewPanelProps } from 'dockview'
+import type { IDockviewPanelProps } from 'dockview-react'
 import { useMiradorData } from '../api/mirador-data-context'
 import { PanelState } from '../components/PanelState'
 import { WorkRow } from '../components/WorkRow'

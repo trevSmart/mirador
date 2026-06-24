@@ -1,4 +1,4 @@
-import type { DockviewApi, ITabGroup } from 'dockview'
+import type { DockviewApi, ITabGroup } from 'dockview-react'
 
 const TAB_GROUP_COLORS = ['blue', 'green', 'purple', 'orange', 'cyan', 'pink'] as const
 

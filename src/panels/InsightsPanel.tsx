@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { IDockviewPanelProps } from 'dockview'
+import type { IDockviewPanelProps } from 'dockview-react'
 import { useMiradorData } from '../api/mirador-data-context'
 import { useAuth } from '../auth/auth-context'
 import { InsightsBanner } from '../components/InsightsBanner'

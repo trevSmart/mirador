@@ -1,5 +1,5 @@
 import type { FunctionComponent } from 'react'
-import type { IDockviewPanelProps } from 'dockview'
+import type { IDockviewPanelProps } from 'dockview-react'
 import type { SfIconName } from '../components/ds/SfIcon'
 import { AgentsPanel } from './AgentsPanel'
 import { FloorEditorPanel } from './FloorEditorPanel'

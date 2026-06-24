@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { IDockviewHeaderActionsProps } from 'dockview'
+import type { IDockviewHeaderActionsProps } from 'dockview-react'
 import { addPanelByType } from '../panels/panel-actions'
 import { PanelIcon } from '../panels/PanelIcon'
 import { PANEL_DEFINITIONS, type PanelType } from '../panels/registry'

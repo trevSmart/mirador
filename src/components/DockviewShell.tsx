@@ -5,8 +5,8 @@ import {
   useRef,
   useState,
 } from 'react'
-import { DockviewReact } from 'dockview'
-import type { DockviewApi, DockviewReadyEvent } from 'dockview'
+import { DockviewReact } from 'dockview-react'
+import type { DockviewApi, DockviewReadyEvent } from 'dockview-react'
 import { AddPanelHeaderActions } from './AddPanelHeaderActions'
 import { MiradorTab } from './MiradorTab'
 import {
