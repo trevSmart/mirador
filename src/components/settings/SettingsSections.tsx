@@ -4,6 +4,8 @@
    The Connexió and Sobre sections are read-only info pulled from auth state. */
 
 import { useAuth } from '../../auth/auth-context'
+import { clearLocalData } from '../../utils/clear-local-data'
+import { Button } from '../ds/Button'
 import {
   REFRESH_OPTIONS,
   type FloorViewMode,
@@ -193,8 +195,31 @@ export function DadesSection({ draft, patch }: SectionProps) {
           }
         />
       </SettingsGroup>
+
+      <SettingsGroup label="Zona perillosa">
+        <SettingsRow
+          title="Esborra totes les dades locals"
+          hint="Elimina preferències, sessió, layout i la resta de dades desades en aquest navegador i reinicia l'app des de zero. El plànol de planta es manté. Aquesta acció no es pot desfer."
+          control={
+            <Button variant="danger" onClick={handleClearLocalData}>
+              Esborra-ho tot
+            </Button>
+          }
+        />
+      </SettingsGroup>
     </>
   )
+}
+
+function handleClearLocalData() {
+  const confirmed = window.confirm(
+    'Això esborrarà les dades locals (preferències, sessió, layout…) i reiniciarà ' +
+      "l'app des de zero. El plànol de planta es manté. Aquesta acció no es pot desfer." +
+      '\n\nVols continuar?',
+  )
+  if (!confirmed) return
+  clearLocalData()
+  window.location.reload()
 }
 
 export function AparencaSection({ draft, patch }: SectionProps) {

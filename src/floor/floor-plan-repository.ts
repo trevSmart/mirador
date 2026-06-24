@@ -16,7 +16,7 @@ export interface FloorPlanRepository {
   save(data: FloorPlanData): Promise<void>
 }
 
-const STORAGE_KEY = 'mirador.floorPlan.v1'
+export const STORAGE_KEY = 'mirador.floorPlan.v1'
 
 /* Lightweight pub/sub so the live supervision view reloads the moment the editor
    saves, within the same app instance. Cross-tab updates are handled separately
