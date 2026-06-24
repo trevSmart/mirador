@@ -12,9 +12,9 @@ import {
 
 export function SettingsModalProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
-  const [initialSection, setInitialSection] = useState<SettingsSectionId>('connexio')
+  const [initialSection, setInitialSection] = useState<SettingsSectionId>('aparenca')
 
-  const open = useCallback((section: SettingsSectionId = 'connexio') => {
+  const open = useCallback((section: SettingsSectionId = 'aparenca') => {
     setInitialSection(section)
     setIsOpen(true)
   }, [])

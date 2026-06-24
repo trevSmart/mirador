@@ -14,7 +14,7 @@ export type SettingsSectionId =
 
 export interface SettingsModalContextValue {
   isOpen: boolean
-  /** Section to land on when opening (defaults to 'connexio'). */
+  /** Section to land on when opening (defaults to 'aparenca', the first nav item). */
   initialSection: SettingsSectionId
   open: (section?: SettingsSectionId) => void
   close: () => void

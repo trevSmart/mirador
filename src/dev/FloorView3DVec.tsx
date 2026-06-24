@@ -25,7 +25,8 @@ import {
   backRightOpeningEdge,
   backRightTrue,
   backRightWallVec,
-  computeBoundsVec,
+  cellsCentroid,
+  computeBoundsCentered,
   depthCompareVec,
   diamondPointsVec,
   dividerFaceVec,
@@ -304,12 +305,7 @@ function IsoSeat({ agent, x, y, b, showAvatars, animations, queuesById, onSelect
       <g className={`fv3d-avatar${showAvatars ? ' fv3d-avatar--on' : ''}`}>
         <AvatarDisc key="avatar" agent={agent} cx={x} cy={y - h - VEC_TH * 0.62} r={VEC_TH * 1.05} ring={AVATAR_RING} showPhoto clipPrefix={clipPrefix} />
       </g>
-      {saturated ? (
-        <>
-          <line key="beacon-stem" x1={x} y1={y - h} x2={x} y2={y - h - VEC_TH * 1.6} stroke="#E05641" strokeWidth={1.5} />
-          <circle key="beacon" className={animations ? 'fv3d-beacon' : undefined} cx={x} cy={y - h - VEC_TH * 1.6} r={4.5} fill="#E05641" stroke="#fff" strokeWidth={1.5} />
-        </>
-      ) : null}
+      {saturated ? <SaturationBeacon x={x} avatarCy={y - h - VEC_TH * 0.62} animations={animations} /> : null}
     </>
   )
 
@@ -329,6 +325,34 @@ function VacantSeat({ x, y }: { x: number; y: number }) {
   )
 }
 
+/** A copy of the hovered seat's avatar, drawn in a top layer so it sits above
+    every other avatar/tower regardless of painter order. Recomputes the same
+    animated tower height so it lands exactly on the original. */
+function HoverAvatar({ agent, x, y, animations, clipPrefix }: { agent: Agent; x: number; y: number; animations: boolean; clipPrefix: string }) {
+  const h = useTowerHeightScale(seatHeight(agent), true)
+  const avatarCy = y - h - VEC_TH * 0.62
+  const saturated = agent.max > 0 && agent.used >= agent.max
+  return (
+    <g className="fv3d-avatar-hover" style={{ pointerEvents: 'none' }}>
+      <AvatarDisc agent={agent} cx={x} cy={avatarCy} r={VEC_TH * 1.05} ring={AVATAR_RING} showPhoto clipPrefix={clipPrefix} />
+      {saturated ? <SaturationBeacon x={x} avatarCy={avatarCy} animations={animations} /> : null}
+    </g>
+  )
+}
+
+/** El punt vermell de saturació, posicionat sobre la vora del disc de l'avatar
+    (lleugerament a la dreta de dalt). S'extreu en un component per poder-lo
+    redibuixar idènticament a la capa de hover. */
+function SaturationBeacon({ x, avatarCy, animations }: { x: number; avatarCy: number; animations: boolean }) {
+  const avatarR = VEC_TH * 1.05
+  const beaconAngle = (Math.PI / 180) * 38
+  const beaconCx = x + avatarR * Math.sin(beaconAngle)
+  const beaconCy = avatarCy - avatarR * Math.cos(beaconAngle)
+  return (
+    <circle key="beacon" className={animations ? 'fv3d-beacon' : undefined} cx={beaconCx} cy={beaconCy} r={4.5} fill="#E05641" stroke="#fff" strokeWidth={1.5} />
+  )
+}
+
 interface FloorView3DVecProps {
   floor: Floor
   agentsById: Map<string, Agent>
@@ -342,14 +366,23 @@ interface FloorView3DVecProps {
 export function FloorView3DVec({ floor, agentsById, queuesById, basis, showAvatars, animations, onSelectAgent }: FloorView3DVecProps) {
   const [tooltip, setTooltip] = useState<{ agent: Agent; x: number; y: number } | null>(null)
   const [tooltipOpen, setTooltipOpen] = useState(false)
+  // Which seat is hovered, so its avatar can be lifted above every other one
+  // (SVG z-order is document order, so we re-draw it in a top overlay layer).
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
 
   const tipAt = useCallback((agent: Agent, clientX: number, clientY: number) => {
     setTooltip({ agent, x: clientX + 14, y: clientY + 14 })
     setTooltipOpen(true)
   }, [])
-  const handleSeatOver = useCallback((agent: Agent, e: ReactPointerEvent<SVGGElement>) => tipAt(agent, e.clientX, e.clientY), [tipAt])
+  const handleSeatOver = useCallback((agent: Agent, e: ReactPointerEvent<SVGGElement>) => {
+    setHoveredId(agent.id)
+    tipAt(agent, e.clientX, e.clientY)
+  }, [tipAt])
   const handleSeatMove = useCallback((agent: Agent, e: ReactPointerEvent<SVGGElement>) => tipAt(agent, e.clientX, e.clientY), [tipAt])
-  const handleSeatOut = useCallback(() => setTooltipOpen(false), [])
+  const handleSeatOut = useCallback(() => {
+    setHoveredId(null)
+    setTooltipOpen(false)
+  }, [])
   const handleTooltipExited = useCallback(() => setTooltip(null), [])
 
   const plan = useMemo(() => normalizeFloor(floor), [floor])
@@ -384,7 +417,12 @@ export function FloorView3DVec({ floor, agentsById, queuesById, basis, showAvata
   const svgIdPrefix = `fvvec-${floor.id}`
   const floorGrainId = `${svgIdPrefix}-floor-grain`
   const floorSheenId = `${svgIdPrefix}-floor-sheen`
-  const bounds = useMemo(() => computeBoundsVec(plan.cells, basis, VEC_TH * 2), [plan, basis])
+  // viewBox kept symmetric around the room centroid in BOTH axes, so the pivot
+  // stays put at the viewport centre for any azimuth/tilt and the room spins in
+  // place. (Horizontal-only recentring wasn't enough: the centroid's projected
+  // Y also moves with the azimuth, so the vertical framing drifted too.)
+  const centroid = useMemo(() => cellsCentroid(plan.cells), [plan])
+  const bounds = useMemo(() => computeBoundsCentered(plan.cells, basis, centroid, VEC_TH * 2), [plan, basis, centroid])
 
   const brVis = useMemo(() => backRightTrue(has, plan.cells, 0, GRID_MAX, GRID_MAX), [has, plan])
   const blVis = useMemo(() => backLeftTrue(has, plan.cells, 0, GRID_MAX, GRID_MAX), [has, plan])
@@ -453,6 +491,11 @@ export function FloorView3DVec({ floor, agentsById, queuesById, basis, showAvata
     }
   }
 
+  // Hovered avatar lifted to a top overlay (only meaningful while avatars show).
+  const hoveredAgent = hoveredId ? agentsById.get(hoveredId) ?? null : null
+  const hoveredSeat = hoveredId ? plan.seats.find((s) => s.agentId === hoveredId) ?? null : null
+  const hoverPos = hoveredSeat ? projectCellVec(hoveredSeat.c, hoveredSeat.r, basis) : null
+
   return (
     <>
       <div className="fv3d-wrap" onPointerLeave={handleSeatOut}>
@@ -478,6 +521,11 @@ export function FloorView3DVec({ floor, agentsById, queuesById, basis, showAvata
           {shadows}
         </g>
         {body}
+        {showAvatars && hoveredAgent && hoverPos ? (
+          // key per agent → fresh mount when moving avatar→avatar, so the height
+          // hook starts at the final height instead of sliding from the previous.
+          <HoverAvatar key={hoveredAgent.id} agent={hoveredAgent} x={hoverPos[0]} y={hoverPos[1]} animations={animations} clipPrefix={`${svgIdPrefix}-hover`} />
+        ) : null}
         </svg>
       </div>
       {tooltip

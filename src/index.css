@@ -405,6 +405,15 @@ body {
   -webkit-font-smoothing: antialiased;
   background-image: var(--pa-wash);
   background-attachment: fixed;
+  /* Keep the default arrow cursor everywhere, even over selectable text. */
+  cursor: default;
+}
+
+/* Editable fields still need the text caret for editing. */
+input:not([type='button']):not([type='submit']):not([type='checkbox']):not([type='radio']),
+textarea,
+[contenteditable='true'] {
+  cursor: text;
 }
 
 ::selection {
@@ -882,6 +891,8 @@ body {
   --dv-tab-border-radius: var(--r-sm);
   --dv-tab-margin: 4px 2px 0;
   --dv-floating-group-border: 1px solid var(--border-subtle);
+  --tab-hover-bg: color-mix(in srgb, var(--pa-accent) 22%, var(--surface-card));
+  --tab-hover-active-bg: color-mix(in srgb, var(--pa-accent) 32%, var(--surface-card));
 }
 
 .dockview-container > div {
@@ -966,6 +977,25 @@ body {
   width: 14px;
   height: 14px;
   font-size: 7px;
+}
+
+.dockview-container .dv-tab {
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+
+/* Dockview sets tab backgrounds with 6-class selectors; match that depth so hover wins. */
+.app-chrome .dockview-container .dv-groupview .dv-tabs-container > .dv-tab.dv-inactive-tab:hover,
+.app-chrome .dockview-container .dv-tabs-overflow-container .dv-tab.dv-inactive-tab:hover {
+  background-color: var(--tab-hover-bg);
+  color: var(--text-strong);
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+}
+
+.app-chrome .dockview-container .dv-groupview .dv-tabs-container > .dv-tab.dv-active-tab:hover,
+.app-chrome .dockview-container .dv-tabs-overflow-container .dv-tab.dv-active-tab:hover {
+  background-color: var(--tab-hover-active-bg);
+  color: var(--text-strong);
+  box-shadow: inset 0 -2px 0 var(--pa-accent);
 }
 
 .dockview-container .dv-tab .dv-default-tab .dv-default-tab-action:hover {
@@ -2527,15 +2557,15 @@ body {
   display: flex;
   align-items: center;
   width: 120px;
-  height: 4px;
-  border-radius: var(--r-full);
+  height: 5px;
+  border-radius: 999px;
   background: var(--border-subtle);
 }
 
 .fv-zoom__slider input[type='range'] {
   width: 100%;
   height: 16px;
-  margin: -6px 0;
+  margin: -5.5px 0;
   -webkit-appearance: none;
   appearance: none;
   background: transparent;
@@ -2543,35 +2573,35 @@ body {
 }
 
 .fv-zoom__slider input[type='range']::-webkit-slider-runnable-track {
-  height: 4px;
-  border-radius: var(--r-full);
+  height: 5px;
+  border-radius: 999px;
   background: transparent;
 }
 
 .fv-zoom__slider input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 11px;
-  height: 11px;
+  width: 12px;
+  height: 12px;
   margin-top: -3.5px;
   border: none;
-  border-radius: var(--r-full);
+  border-radius: 999px;
   background: var(--accent);
   box-shadow: 0 0 0 1px rgba(27, 25, 36, 0.08);
 }
 
 .fv-zoom__slider input[type='range']::-moz-range-track {
-  height: 4px;
-  border-radius: var(--r-full);
+  height: 5px;
+  border-radius: 999px;
   background: var(--border-subtle);
   border: none;
 }
 
 .fv-zoom__slider input[type='range']::-moz-range-thumb {
-  width: 11px;
-  height: 11px;
+  width: 12px;
+  height: 12px;
   border: none;
-  border-radius: var(--r-full);
+  border-radius: 999px;
   background: var(--accent);
   box-shadow: 0 0 0 1px rgba(27, 25, 36, 0.08);
 }
@@ -2581,6 +2611,65 @@ body {
 }
 
 .fv-zoom__slider input[type='range']:focus-visible::-moz-range-thumb {
+  box-shadow: var(--ring-focus);
+}
+
+/* Sliders prims del DevPanel (Azimut / Inclinació) */
+.fv-stat input[type='range'] {
+  width: 100px;
+  height: 12px;
+  margin: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.fv-stat input[type='range']::-webkit-slider-runnable-track {
+  height: 5px;
+  border-radius: 999px;
+  background: var(--border-subtle);
+}
+
+.fv-stat input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -3.5px;
+  border: none;
+  border-radius: var(--r-full);
+  background: var(--accent);
+  box-shadow: 0 0 0 1px rgba(27, 25, 36, 0.08);
+}
+
+.fv-stat input[type='range']::-moz-range-track {
+  height: 5px;
+  border-radius: 999px;
+  background: var(--border-subtle);
+  border: none;
+}
+
+.fv-stat input[type='range']::-moz-range-progress {
+  height: 5px;
+  border-radius: 999px;
+  background: var(--border-subtle);
+}
+
+.fv-stat input[type='range']::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: var(--r-full);
+  background: var(--accent);
+  box-shadow: 0 0 0 1px rgba(27, 25, 36, 0.08);
+}
+
+.fv-stat input[type='range']:focus-visible::-webkit-slider-thumb {
+  box-shadow: var(--ring-focus);
+}
+
+.fv-stat input[type='range']:focus-visible::-moz-range-thumb {
   box-shadow: var(--ring-focus);
 }
 
@@ -2778,7 +2867,10 @@ body {
   overflow: hidden;
 }
 
-/* Tower avatars fade in/out instead of popping when the Avatars toggle flips. */
+/* Tower avatars fade in/out instead of popping when the Avatars toggle flips.
+   Hidden avatars are non-interactive; visible ones take pointer events so that
+   hovering the avatar counts as hovering its tower (the lifted overlay copy
+   opts out again via an inline pointer-events:none). */
 .fv3d-avatar {
   opacity: 0;
   pointer-events: none;
@@ -2786,10 +2878,26 @@ body {
 }
 .fv3d-avatar--on {
   opacity: 1;
+  pointer-events: auto;
+}
+/* Hover overlay copy: fades in each time it mounts (re-keyed per hovered seat). */
+.fv3d-avatar-hover {
+  animation: fv3d-avatar-fadein calc(var(--dur-bar) / 2) var(--ease);
+}
+@keyframes fv3d-avatar-fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .fv3d-avatar {
     transition: none;
+  }
+  .fv3d-avatar-hover {
+    animation: none;
   }
 }
 
@@ -2932,6 +3040,17 @@ body {
   filter: brightness(1.04);
 }
 
+/* Resting state: outline each face in a very subtle near-black so densely
+   stacked columns stay visually distinct even without hover. CSS wins over the
+   inline stroke="currentColor" presentation attributes. Shade/highlight
+   overlays (.fv3d-noedge) are skipped so strokes don't stack. */
+.fv3d-seat polygon:not(.fv3d-noedge) {
+  stroke: #1b1924;
+  stroke-opacity: 0.04;
+  stroke-width: 0.5px;
+  stroke-linejoin: round;
+}
+
 /* Highlight every tower edge on hover: outline each face once in translucent
    near-black. Shade/highlight overlays (.fv3d-noedge) are skipped so strokes
    don't stack and read as fully opaque. */
@@ -2983,9 +3102,9 @@ body {
 }
 
 .user-menu__trigger .agent-avatar {
-  width: 28px;
-  height: 28px;
-  font-size: 10px;
+  width: 34px;
+  height: 34px;
+  font-size: 12px;
 }
 
 .user-menu__dropdown {
@@ -3673,7 +3792,7 @@ body {
   color: var(--text-strong);
 }
 
-.settings-row__label span {
+.settings-row__label > span {
   font-size: 12px;
   color: var(--text-muted);
 }
@@ -3683,18 +3802,6 @@ body {
 }
 
 /* "Pròximament" rows: dimmed control + a tag, but the label stays readable. */
-.settings-soon-tag {
-  font-size: 7.5px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 1px 5px;
-  border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--pa-watch) 6%, transparent);
-  border: 1px solid color-mix(in srgb, var(--pa-watch) 18%, transparent);
-  color: var(--pa-watch);
-}
-
 .settings-row--soon .settings-row__control {
   opacity: 0.45;
   pointer-events: none;
@@ -4201,4 +4308,487 @@ body {
   font-family: var(--font-mono);
   font-size: var(--fs-2xs);
   color: var(--text-body);
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Wallboard panel — faithful Salesforce Lightning (SLDS) replica of the
+   standard Omni Supervisor "Wallboard" tab. Intentionally NOT using Mirador's
+   paper-warm tokens: this surface mimics the Lightning console (cool grey
+   canvas, white cards, SLDS blue bars, system sans).
+   ─────────────────────────────────────────────────────────────────────── */
+
+.panel-shell--wallboard {
+  padding: 0;
+  background: #f3f3f3;
+}
+
+.wb {
+  --wb-blue: #1b96ff;
+  --wb-blue-strong: #0176d3;
+  --wb-border: #c9c7c5;
+  --wb-border-soft: #e5e5e5;
+  --wb-text: #181818;
+  --wb-text-muted: #747474;
+  --wb-grid: #ecebea;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Salesforce Sans',
+    Arial, sans-serif;
+  color: var(--wb-text);
+  padding: 16px;
+  min-height: 100%;
+}
+
+.wb__topbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 4px 4px 16px;
+}
+
+.wb__controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wb__control {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--wb-border);
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.wb__control:hover {
+  background: #f3f3f3;
+}
+
+/* Card grid — 3 columns at the standard wallboard width, collapsing down. */
+.wb__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 1100px) {
+  .wb__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .wb__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── Card chassis ──────────────────────────────────────────────────────── */
+
+.wb-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 340px;
+  background: #fff;
+  border: 1px solid var(--wb-border-soft);
+  border-radius: 8px;
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.wb-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 14px 10px;
+}
+
+.wb-card__icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+}
+
+.wb-card__icon .slds-icon_container {
+  background: transparent !important;
+}
+
+.wb-card__titles {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.wb-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.wb-card__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--wb-text);
+}
+
+.wb-card__badge {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 8px;
+  border: 1px solid var(--wb-border);
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--wb-text-muted);
+  background: #fff;
+}
+
+/* "Pròximament" tag — shared with Settings modal rows (.settings-row--soon). */
+.wb-card__badge--soon {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pa-watch);
+  background: color-mix(in srgb, var(--pa-watch) 6%, transparent);
+  border-color: color-mix(in srgb, var(--pa-watch) 18%, transparent);
+}
+
+.wb-card__filter {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--wb-text-muted);
+}
+
+.wb-card__action {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wb-card__menu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--wb-border);
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.wb-card__menu:hover {
+  background: #f3f3f3;
+}
+
+.wb-card__body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 16px 18px;
+  min-height: 0;
+}
+
+/* ── No-data placeholder ───────────────────────────────────────────────── */
+
+.wb-nodata {
+  margin: auto;
+  padding: 24px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--wb-text-muted);
+}
+
+/* ── Vertical bar chart ────────────────────────────────────────────────── */
+
+.wb-vbar {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 220px;
+}
+
+.wb-vbar__plot {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 8px;
+  min-height: 0;
+}
+
+.wb-vbar__yaxis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  width: 22px;
+  padding: 2px 0;
+  font-size: 11px;
+  color: var(--wb-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.wb-vbar__bars {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 6px;
+  padding-bottom: 1px;
+  border-bottom: 1px solid var(--wb-border);
+}
+
+.wb-vbar__gridline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--wb-grid);
+  pointer-events: none;
+}
+
+.wb-vbar__bars .wb-vbar__gridline:nth-child(1) { top: 0%; }
+.wb-vbar__bars .wb-vbar__gridline:nth-child(2) { top: 25%; }
+.wb-vbar__bars .wb-vbar__gridline:nth-child(3) { top: 50%; }
+.wb-vbar__bars .wb-vbar__gridline:nth-child(4) { top: 75%; }
+.wb-vbar__bars .wb-vbar__gridline:nth-child(5) { top: 100%; }
+
+.wb-vbar__col {
+  position: relative;
+  flex: 1 1 0;
+  max-width: 56px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.wb-vbar__value {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--wb-text);
+  margin-bottom: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.wb-vbar__bar {
+  width: 100%;
+  min-height: 2px;
+  background: var(--wb-blue);
+  border-radius: 2px 2px 0 0;
+  transition: height 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.wb-vbar__labels {
+  display: flex;
+  justify-content: space-around;
+  gap: 6px;
+  margin-top: 6px;
+  padding-left: 30px;
+}
+
+.wb-vbar__label {
+  flex: 1 1 0;
+  max-width: 64px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--wb-text-muted);
+}
+
+/* ── Horizontal bar chart ──────────────────────────────────────────────── */
+
+.wb-hbar {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 200px;
+}
+
+.wb-hbar__xaxis {
+  display: flex;
+  justify-content: space-between;
+  margin-left: 110px;
+  font-size: 11px;
+  color: var(--wb-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.wb-hbar__rows {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.wb-hbar__gridline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  margin-left: 110px;
+  background: var(--wb-grid);
+  pointer-events: none;
+}
+
+.wb-hbar__row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.wb-hbar__label {
+  flex: 0 0 110px;
+  width: 110px;
+  padding-right: 8px;
+  text-align: right;
+  font-size: 12px;
+  color: var(--wb-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wb-hbar__track {
+  position: relative;
+  flex: 1 1 auto;
+  height: 20px;
+}
+
+.wb-hbar__bar {
+  height: 100%;
+  min-width: 2px;
+  background: var(--wb-blue);
+  border-radius: 0 2px 2px 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  transition: width 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.wb-hbar__value {
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  padding-right: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Donut chart ───────────────────────────────────────────────────────── */
+
+.wb-donut {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+}
+
+.wb-donut__svg {
+  width: 150px;
+  height: 150px;
+  flex: 0 0 auto;
+}
+
+.wb-donut__track {
+  fill: none;
+  stroke: #e5e5e5;
+}
+
+.wb-donut__arc {
+  fill: none;
+  stroke: var(--wb-blue);
+  transition: stroke-dasharray 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.wb-donut__legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wb-donut__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--wb-text);
+}
+
+.wb-donut__swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.wb-donut__swatch--used { background: var(--wb-blue); }
+.wb-donut__swatch--free { background: #e5e5e5; }
+
+/* ── Big stats ─────────────────────────────────────────────────────────── */
+
+.wb-stats {
+  flex: 1 1 auto;
+}
+
+.wb-stats--stack {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 24px;
+}
+
+.wb-stats--single {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.wb-stats--grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 16px;
+  align-content: center;
+}
+
+.wb-stat__label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--wb-text-muted);
+  margin-bottom: 6px;
+}
+
+.wb-stat__value {
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--wb-text);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.wb-stats--single .wb-stat__value {
+  font-size: 56px;
+}
+
+.wb-stats--grid .wb-stat__value {
+  font-size: 22px;
 }
