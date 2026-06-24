@@ -4,7 +4,6 @@
    The Connexió and Sobre sections are read-only info pulled from auth state. */
 
 import { useAuth } from '../../auth/auth-context'
-import { usePreferences } from '../../settings/preferences-context'
 import {
   REFRESH_OPTIONS,
   type FloorViewMode,
@@ -35,9 +34,9 @@ function refreshLabel(seconds: number): string {
 }
 
 export function ConnexioSection({ draft, patch }: SectionProps) {
-  const { isMockMode, isSalesforceEnabled, session, userInfo } = useAuth()
+  const { isMockMode, isServerMockMode, isSalesforceEnabled, session, userInfo } = useAuth()
   const instanceUrl = session?.instanceUrl ?? null
-  const effectiveMock = isMockMode || draft.mockOverride
+  const effectiveMock = isMockMode
 
   return (
     <>
@@ -50,7 +49,7 @@ export function ConnexioSection({ draft, patch }: SectionProps) {
               label="Mode de simulació"
               checked={draft.mockOverride}
               onChange={(v) => patch({ mockOverride: v })}
-              disabled={isMockMode}
+              disabled={isServerMockMode}
             />
           }
         />
@@ -349,8 +348,6 @@ export function DeveloperSection() {
 
 export function SobreSection() {
   const { isMockMode, userInfo } = useAuth()
-  const { prefs } = usePreferences()
-  const effectiveMock = isMockMode || prefs.mockOverride
 
   return (
     <>
@@ -363,7 +360,7 @@ export function SobreSection() {
           <br />
           <strong>Versió:</strong> {APP_VERSION}
           <br />
-          <strong>Entorn:</strong> {effectiveMock ? 'Simulació (mock)' : 'Salesforce'}
+          <strong>Entorn:</strong> {isMockMode ? 'Simulació (mock)' : 'Salesforce'}
         </div>
       </SettingsGroup>
 

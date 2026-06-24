@@ -9,7 +9,10 @@ export interface AuthContextValue {
   session: OAuthSession | null
   userInfo: SalesforceUserInfo | null
   isAuthenticated: boolean
+  /** Effective simulation: server mock config or user preference override. */
   isMockMode: boolean
+  /** Server config forces mock (preference toggle is locked). */
+  isServerMockMode: boolean
   isSalesforceEnabled: boolean
   isLoading: boolean
   authError: string | null

@@ -29,8 +29,8 @@ function AppContent() {
 
 function App({ initialAuthError = null }: { initialAuthError?: string | null }) {
   return (
-    <AuthProvider initialAuthError={initialAuthError}>
-      <PreferencesProvider>
+    <PreferencesProvider>
+      <AuthProvider initialAuthError={initialAuthError}>
         <MiradorApiProvider>
           <MiradorDataProvider>
             <DetailDrawerProvider>
@@ -42,8 +42,8 @@ function App({ initialAuthError = null }: { initialAuthError?: string | null }) 
             </DetailDrawerProvider>
           </MiradorDataProvider>
         </MiradorApiProvider>
-      </PreferencesProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </PreferencesProvider>
   )
 }
 

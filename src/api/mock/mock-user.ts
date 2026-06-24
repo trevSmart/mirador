@@ -1,3 +1,4 @@
+import supervisorAvatar from './avatars/m3.jpg'
 import type { SalesforceUserInfo } from '../../auth/types'
 
 export const MOCK_SUPERVISOR = {
@@ -11,4 +12,5 @@ export const MOCK_USER_INFO: SalesforceUserInfo = {
   organization_id: 'mock-org',
   name: MOCK_SUPERVISOR.name,
   email: 'supervisor@mock.local',
+  picture: supervisorAvatar,
 }

@@ -42,7 +42,6 @@ type AgentSpec = {
   id: string
   name: string
   role: string
-  photo: string | null
   status: 'online' | 'busy' | 'away' | 'offline'
   max: number
   used: number
@@ -53,8 +52,42 @@ type AgentSpec = {
   skillIds: string[]
 }
 
-const w = (n: number) => `https://randomuser.me/api/portraits/women/${n}.jpg`
-const m = (n: number) => `https://randomuser.me/api/portraits/men/${n}.jpg`
+/* Profile photos bundled locally (downloaded from randomuser.me) so the mock
+   has no network dependency. Vite turns each import into a hashed asset URL.
+   `eager: true` resolves them at module load; the filename stem (e.g. "w0",
+   "m1") is the lookup key. */
+const AVATAR_MODULES = import.meta.glob<string>('./avatars/*.jpg', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+})
+
+const AVATAR_URLS: Record<string, string> = {}
+for (const [path, url] of Object.entries(AVATAR_MODULES)) {
+  const stem = path.split('/').pop()?.replace('.jpg', '') ?? ''
+  AVATAR_URLS[stem] = url
+}
+
+/* Agent → avatar-file mapping. A handful of agents are deliberately left out
+   (no entry) so the UI exercises its no-photo fallback, exactly as happens in
+   production when a Salesforce user has no profile picture. */
+const AGENT_PHOTOS: Record<string, string> = {
+  a0: 'w0', a1: 'm1', a2: 'w2', a3: 'm3', a4: 'w4', a5: 'm5', a6: 'w6',
+  a7: 'm7', a8: 'w8', a9: 'm9', a10: 'w10', a11: 'w11', a12: 'm12',
+  a13: 'w13', a14: 'm14', a15: 'm15', a16: 'm16', a17: 'w17', a18: 'm18',
+  a19: 'w19', a20: 'm20', a21: 'w21', a22: 'w22', a23: 'm23', a24: 'w24',
+  a25: 'm25', a26: 'w26', a27: 'm27', a28: 'w28', a29: 'w29', a30: 'm30',
+  a31: 'w31', a32: 'm32', a33: 'w33',
+}
+
+// Agents intentionally without a photo (mirrors production gaps).
+const NO_PHOTO_AGENTS = new Set(['a9', 'a17', 'a24', 'a27', 'a32'])
+
+function agentPhoto(agentId: string): string | null {
+  if (NO_PHOTO_AGENTS.has(agentId)) return null
+  const stem = AGENT_PHOTOS[agentId]
+  return stem ? AVATAR_URLS[stem] ?? null : null
+}
 
 const AGENT_SPECS: AgentSpec[] = [
   // --- ONLINE agents ---
@@ -443,7 +476,7 @@ function buildAgent(spec: AgentSpec): Agent {
     used: spec.used,
     queueIds: spec.queueIds,
     loginMin: spec.loginMin,
-    photo: null,
+    photo: agentPhoto(spec.id),
     chans: spec.chans,
     work: workItems,
     skills: [],
