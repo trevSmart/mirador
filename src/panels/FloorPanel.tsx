@@ -3,6 +3,7 @@ import { useMiradorData } from '../api/mirador-data-context'
 import type { Agent, PresenceStatus } from '../api/types'
 import { FloorView } from '../components/floor/FloorView'
 import { FloorView3D, type SeatStyle } from '../components/floor/FloorView3D'
+import { ButtonIcon } from '../components/ds/ButtonIcon'
 import { PanelShell } from '../components/PanelState'
 import { Select } from '../components/ds/Select'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
@@ -174,8 +175,7 @@ export function FloorPanel() {
                   onChange={(s) => setSeatStyle(s)}
                 />
                 <div className="fv-rotate">
-                  <button
-                    type="button"
+                  <ButtonIcon
                     className="fv-icon-btn"
                     title="Gira a l'esquerra"
                     aria-label="Gira a l'esquerra"
@@ -184,9 +184,8 @@ export function FloorPanel() {
                     <svg width={18} height={18} viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
                       <path d={ROTATE_ICON_PATH} />
                     </svg>
-                  </button>
-                  <button
-                    type="button"
+                  </ButtonIcon>
+                  <ButtonIcon
                     className="fv-icon-btn"
                     title="Gira a la dreta"
                     aria-label="Gira a la dreta"
@@ -197,7 +196,7 @@ export function FloorPanel() {
                         <path d={ROTATE_ICON_PATH} />
                       </g>
                     </svg>
-                  </button>
+                  </ButtonIcon>
                 </div>
               </>
             ) : null}
