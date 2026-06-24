@@ -3119,3 +3119,121 @@ body {
 .ds-select__option[aria-selected='true'] {
   font-weight: var(--fw-semibold);
 }
+
+/* ── Error boundary fallbacks ── */
+.error-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: var(--text-strong);
+}
+
+.error-fallback--global {
+  height: 100%;
+  width: 100%;
+  padding: 32px;
+}
+
+.error-fallback__card {
+  max-width: 460px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 28px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  text-align: center;
+}
+
+.error-fallback__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.error-fallback__message {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-body);
+}
+
+.error-fallback__details {
+  text-align: left;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.error-fallback__details > summary {
+  cursor: pointer;
+  user-select: none;
+}
+
+.error-fallback__pre {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  background: var(--surface-well);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+}
+
+.error-fallback__pre--compact {
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.error-fallback__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.error-fallback__btn {
+  appearance: none;
+  cursor: pointer;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--surface-card);
+  color: var(--text-strong);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.error-fallback__btn:hover {
+  background: var(--surface-raised);
+  border-color: var(--border-strong);
+}
+
+.error-fallback__btn--primary {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: var(--accent);
+}
+
+.error-fallback__btn--primary:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  filter: brightness(0.95);
+}
+
+.error-fallback--panel {
+  height: 100%;
+  padding: 24px;
+  text-align: center;
+}
+
+.error-fallback--panel .error-fallback__pre {
+  max-width: 360px;
+  width: 100%;
+}

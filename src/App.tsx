@@ -6,6 +6,8 @@ import { AppHeader } from './components/AppHeader'
 import { DetailDrawer } from './components/detail/DetailDrawer'
 import { SettingsModal } from './components/settings/SettingsModal'
 import { DockviewShell } from './components/DockviewShell'
+import { ErrorBoundary } from './components/error/ErrorBoundary'
+import { ErrorFallback } from './components/error/ErrorFallback'
 import { DetailDrawerProvider } from './detail/DetailDrawerContext'
 import { PreferencesProvider } from './settings/PreferencesProvider'
 import { SettingsModalProvider } from './settings/SettingsModalProvider'
@@ -33,7 +35,9 @@ function App({ initialAuthError = null }: { initialAuthError?: string | null }) 
           <MiradorDataProvider>
             <DetailDrawerProvider>
               <SettingsModalProvider>
-                <AppContent />
+                <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} />}>
+                  <AppContent />
+                </ErrorBoundary>
               </SettingsModalProvider>
             </DetailDrawerProvider>
           </MiradorDataProvider>
