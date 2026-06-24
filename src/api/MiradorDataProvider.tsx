@@ -60,17 +60,11 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const [agentsResponse, queuesResponse, skillsResponse, workResponse] =
-        await Promise.all([
-          client.getAgents('all'),
-          client.getQueues(),
-          client.getSkills(),
-          client.getWork(),
-        ])
-      setAgents(agentsResponse.agents)
-      setQueues(queuesResponse.queues)
-      setSkills(skillsResponse.skills)
-      setWork(workResponse.work)
+      const snapshot = await client.getSnapshot('all')
+      setAgents(snapshot.agents)
+      setQueues(snapshot.queues)
+      setSkills(snapshot.skills)
+      setWork(snapshot.work)
       if (silent) {
         setError(null)
       }
@@ -94,50 +88,55 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
 
   const dispatchRefreshRef = useRef<(options?: RefreshOptions) => void>(() => {})
 
-  dispatchRefreshRef.current = (options?: RefreshOptions) => {
-    if (!client) {
-      clearData()
-      setError(null)
-      setIsLoading(false)
-      pendingRefreshOptionsRef.current = null
-      window.clearTimeout(pendingRefreshTimerRef.current)
-      pendingRefreshTimerRef.current = 0
-      return
-    }
-
-    // Coalesce rapid calls; keep the latest options.
-    pendingRefreshOptionsRef.current = options ?? {}
-
-    const flushPending = () => {
-      if (pendingRefreshOptionsRef.current === null) return
-
-      const now = Date.now()
-      const elapsed = now - lastRefreshStartedAtRef.current
-      if (lastRefreshStartedAtRef.current > 0 && elapsed < MIN_REFRESH_GAP_MS) {
-        if (pendingRefreshTimerRef.current === 0) {
-          pendingRefreshTimerRef.current = window.setTimeout(() => {
-            pendingRefreshTimerRef.current = 0
-            flushPending()
-          }, MIN_REFRESH_GAP_MS - elapsed)
-        }
+  // Keep the dispatcher current with each render's captured values. refresh()
+  // is only ever called from effects/handlers, never during render, so the ref
+  // is always up to date by the time it runs.
+  useEffect(() => {
+    dispatchRefreshRef.current = (options?: RefreshOptions) => {
+      if (!client) {
+        clearData()
+        setError(null)
+        setIsLoading(false)
+        pendingRefreshOptionsRef.current = null
+        window.clearTimeout(pendingRefreshTimerRef.current)
+        pendingRefreshTimerRef.current = 0
         return
       }
 
-      if (isRefreshingRef.current) return
+      // Coalesce rapid calls; keep the latest options.
+      pendingRefreshOptionsRef.current = options ?? {}
 
-      const pending = pendingRefreshOptionsRef.current
-      pendingRefreshOptionsRef.current = null
-      lastRefreshStartedAtRef.current = now
+      const flushPending = () => {
+        if (pendingRefreshOptionsRef.current === null) return
 
-      void runRefresh(pending).finally(() => {
-        if (pendingRefreshOptionsRef.current !== null) {
-          flushPending()
+        const now = Date.now()
+        const elapsed = now - lastRefreshStartedAtRef.current
+        if (lastRefreshStartedAtRef.current > 0 && elapsed < MIN_REFRESH_GAP_MS) {
+          if (pendingRefreshTimerRef.current === 0) {
+            pendingRefreshTimerRef.current = window.setTimeout(() => {
+              pendingRefreshTimerRef.current = 0
+              flushPending()
+            }, MIN_REFRESH_GAP_MS - elapsed)
+          }
+          return
         }
-      })
-    }
 
-    flushPending()
-  }
+        if (isRefreshingRef.current) return
+
+        const pending = pendingRefreshOptionsRef.current
+        pendingRefreshOptionsRef.current = null
+        lastRefreshStartedAtRef.current = now
+
+        void runRefresh(pending).finally(() => {
+          if (pendingRefreshOptionsRef.current !== null) {
+            flushPending()
+          }
+        })
+      }
+
+      flushPending()
+    }
+  }, [client, clearData, runRefresh])
 
   const refresh = useCallback(async (options?: RefreshOptions) => {
     dispatchRefreshRef.current(options)
@@ -150,8 +149,9 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const authedNow = isActive && Boolean(client)
-  // Reset to a clean idle state when auth/client is lost. Done during render
-  // (convergent) instead of in an effect, to avoid a synchronous effect setState.
+  // Reset to a clean idle state when auth/client is lost. The setState part is
+  // done during render (convergent) to avoid a synchronous effect setState; the
+  // pending-timer cleanup (ref work) belongs in an effect.
   const [prevAuthed, setPrevAuthed] = useState(authedNow)
   if (prevAuthed !== authedNow) {
     setPrevAuthed(authedNow)
@@ -159,11 +159,15 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
       clearData()
       setError(null)
       setIsLoading(false)
-      pendingRefreshOptionsRef.current = null
-      window.clearTimeout(pendingRefreshTimerRef.current)
-      pendingRefreshTimerRef.current = 0
     }
   }
+
+  useEffect(() => {
+    if (authedNow) return
+    pendingRefreshOptionsRef.current = null
+    window.clearTimeout(pendingRefreshTimerRef.current)
+    pendingRefreshTimerRef.current = 0
+  }, [authedNow])
 
   useEffect(() => {
     if (!isActive || !client) {

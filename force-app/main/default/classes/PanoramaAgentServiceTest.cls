@@ -629,4 +629,47 @@ private class PanoramaAgentServiceTest {
         System.assertEquals(1, bySkill.get(skillA), 'Only the ready PSR counts for skill A');
         System.assertEquals(2, bySkill.get(skillB), 'Ready PSR plus null-PSR requirement count for skill B');
     }
+
+    /* ───────── Snapshot service ───────── */
+
+    @IsTest
+    static void getSnapshotReturnsAllDomains() {
+        Test.startTest();
+        PanoramaSnapshotService.SnapshotResponse response =
+            PanoramaSnapshotService.getSnapshot('all');
+        Test.stopTest();
+        System.assertNotEquals(null, response);
+        System.assertNotEquals(null, response.agents);
+        System.assertNotEquals(null, response.queues);
+        System.assertNotEquals(null, response.skills);
+        System.assertNotEquals(null, response.work);
+    }
+
+    @IsTest
+    static void getSnapshotScopeConnected() {
+        Test.startTest();
+        PanoramaSnapshotService.SnapshotResponse connected =
+            PanoramaSnapshotService.getSnapshot('connected');
+        PanoramaSnapshotService.SnapshotResponse all =
+            PanoramaSnapshotService.getSnapshot('all');
+        Test.stopTest();
+        System.assertNotEquals(null, connected.agents);
+        System.assertNotEquals(null, all.agents);
+        System.assert(
+            all.agents.size() >= connected.agents.size(),
+            'all scope should include at least as many agents as connected'
+        );
+    }
+
+    @IsTest
+    static void loadContextSharesDataAcrossDomains() {
+        Test.startTest();
+        PanoramaLoadContext ctx = PanoramaLoadContext.load();
+        Test.stopTest();
+        System.assertNotEquals(null, ctx.presenceByUser);
+        System.assertNotEquals(null, ctx.activeAgentWork);
+        System.assertNotEquals(null, ctx.pendingRouting);
+        System.assertNotEquals(null, ctx.casesById);
+        System.assertNotEquals(null, ctx.readyPsrIds());
+    }
 }

@@ -135,3 +135,10 @@ export interface UpdateSkillsRequest {
 export interface UpdateSkillsResponse {
   ok: boolean
 }
+
+export interface SnapshotResponse {
+  agents: Agent[]
+  queues: Queue[]
+  skills: Skill[]
+  work: WorkItem[]
+}

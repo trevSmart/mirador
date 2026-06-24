@@ -18,42 +18,40 @@ function easeOut(t: number): number {
  */
 export function useTowerHeightScale(targetH: number, enabled: boolean): number {
   const [h, setH] = useState(targetH)
-  const hRef = useRef(targetH)
   const rafRef = useRef(0)
 
+  // Snap during render (no effect setState) when animation isn't wanted or the
+  // gap is negligible. Reading `h` (state) here is fine; reading a ref isn't.
+  const [prevTarget, setPrevTarget] = useState(targetH)
+  const shouldAnimate = enabled && !prefersReducedMotion() && Math.abs(h - targetH) >= 0.5
+  if (prevTarget !== targetH) {
+    setPrevTarget(targetH)
+    if (!shouldAnimate) setH(targetH)
+  }
+
   useEffect(() => {
-    if (!enabled || prefersReducedMotion()) {
-      hRef.current = targetH
-      setH(targetH)
-      return
-    }
+    if (!shouldAnimate) return
 
-    const from = hRef.current
-    if (Math.abs(from - targetH) < 0.5) {
-      hRef.current = targetH
-      setH(targetH)
-      return
-    }
-
+    const from = h
     cancelAnimationFrame(rafRef.current)
     const start = performance.now()
 
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / DURATION_MS)
-      const next = from + (targetH - from) * easeOut(t)
-      hRef.current = next
-      setH(next)
+      setH(from + (targetH - from) * easeOut(t))
       if (t < 1) {
         rafRef.current = requestAnimationFrame(tick)
       } else {
-        hRef.current = targetH
         setH(targetH)
       }
     }
 
     rafRef.current = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(rafRef.current)
-  }, [targetH, enabled])
+    // `h` is the animation's start value, captured once when targetH changes;
+    // intentionally excluded so mid-flight setH calls don't restart the tween.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetH, shouldAnimate])
 
   return h
 }

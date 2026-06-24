@@ -27,55 +27,31 @@ public with sharing class PanoramaWorkService {
     }
 
     public static WorkResponse getWork() {
+        PanoramaLoadContext ctx = PanoramaLoadContext.load();
         WorkResponse response = new WorkResponse();
-        response.work = new List<WorkItemDto>();
+        response.work = buildWorkFromContext(ctx);
+        return response;
+    }
 
-        Datetime nowDt = System.now();
+    public static List<WorkItemDto> buildWorkFromContext(PanoramaLoadContext ctx) {
+        List<WorkItemDto> work = new List<WorkItemDto>();
 
-        // Resolve case subjects for both sources in one pass.
-        Set<Id> caseIds = new Set<Id>();
-
-        List<AgentWork> assigned = [
-            SELECT Id, UserId, WorkItemId, Status,
-                   ServiceChannel.MasterLabel, ServiceChannel.DeveloperName,
-                   RequestDateTime, OriginalQueueId
-            FROM AgentWork
-            WHERE Status IN ('Opened', 'Assigned', 'Accepted')
-            ORDER BY RequestDateTime DESC
-            LIMIT 2000
-        ];
-        for (AgentWork aw : assigned) {
-            if (isCaseId(aw.WorkItemId)) {
-                caseIds.add(aw.WorkItemId);
-            }
+        List<PendingServiceRouting> pendingForWork = new List<PendingServiceRouting>();
+        for (Integer i = 0; i < ctx.pendingRouting.size() && i < 2000; i++) {
+            pendingForWork.add(ctx.pendingRouting[i]);
         }
 
-        List<PendingServiceRouting> pending = [
-            SELECT Id, WorkItemId, QueueId,
-                   ServiceChannel.MasterLabel, ServiceChannel.DeveloperName,
-                   CreatedDate
-            FROM PendingServiceRouting
-            WHERE IsReadyForRouting = true
-            ORDER BY CreatedDate ASC
-            LIMIT 2000
-        ];
-        for (PendingServiceRouting psr : pending) {
-            if (isCaseId(psr.WorkItemId)) {
-                caseIds.add(psr.WorkItemId);
-            }
-        }
-
-        Map<Id, Case> caseById = caseIds.isEmpty()
-            ? new Map<Id, Case>()
-            : new Map<Id, Case>([SELECT Id, CaseNumber, Subject FROM Case WHERE Id IN :caseIds]);
-
-        Set<Id> workItemIds = collectWorkItemIds(assigned, pending);
+        Set<Id> workItemIds = collectWorkItemIds(ctx.activeAgentWork, pendingForWork);
         Map<String, PanoramaObjectIconUtil.IconDescriptor> iconsByApiName =
             PanoramaObjectIconUtil.forWorkItemIds(workItemIds);
 
-        response.work.addAll(buildAssignedItems(assigned, caseById, nowDt, iconsByApiName));
-        response.work.addAll(buildQueuedItems(pending, caseById, nowDt, iconsByApiName));
-        return response;
+        work.addAll(buildAssignedItems(
+            ctx.activeAgentWork, ctx.casesById, ctx.loadedAt, iconsByApiName
+        ));
+        work.addAll(buildQueuedItems(
+            pendingForWork, ctx.casesById, ctx.loadedAt, iconsByApiName
+        ));
+        return work;
     }
 
     @TestVisible
