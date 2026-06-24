@@ -359,9 +359,8 @@ export function FloorView3D({
   return (
     <svg
       className="fv3d-svg"
-      width={bounds.width}
-      height={bounds.height}
       viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`}
+      preserveAspectRatio="xMidYMid meet"
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
