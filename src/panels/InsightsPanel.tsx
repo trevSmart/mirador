@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import type { IDockviewPanelProps } from 'dockview-react'
 import { useMiradorData } from '../api/mirador-data-context'
+import { useMiradorStatus } from '../api/mirador-status-context'
 import { useAuth } from '../auth/auth-context'
 import { InsightsBanner } from '../components/InsightsBanner'
 import { PanelState } from '../components/PanelState'
@@ -9,7 +10,8 @@ import { addPanelByType } from './panel-actions'
 import type { PanelType } from './registry'
 
 export function InsightsPanel({ api, containerApi }: IDockviewPanelProps) {
-  const { agents, queues, isLoading, error, refresh } = useMiradorData()
+  const { agents, queues } = useMiradorData()
+  const { isLoading, error, refresh } = useMiradorStatus()
   const { isMockMode } = useAuth()
 
   const health = useMemo(

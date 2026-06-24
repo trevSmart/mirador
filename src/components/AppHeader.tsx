@@ -1,4 +1,4 @@
-import { useMiradorData } from '../api/mirador-data-context'
+import { useMiradorStatus } from '../api/mirador-status-context'
 import { useAuth } from '../auth/auth-context'
 import panoramaLogo from '../assets/panorama/logo/panorama-logo.png'
 import { useDeveloperMode } from '../hooks/useDeveloperMode'
@@ -9,7 +9,7 @@ import { UserMenu } from './UserMenu'
 
 export function AppHeader() {
   const { authError, isAuthenticated, isLoading, isMockMode, isSalesforceEnabled } = useAuth()
-  const { isRefreshing, refresh } = useMiradorData()
+  const { isRefreshing, refresh } = useMiradorStatus()
   const { enabled: devMode } = useDeveloperMode()
 
   return (
