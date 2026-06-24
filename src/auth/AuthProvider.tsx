@@ -10,6 +10,7 @@ import {
 } from './salesforce-oauth'
 import { initOAuthSessionStorage } from './oauth-session-storage'
 import { MOCK_USER_INFO } from '../api/mock/mock-user'
+import { devLog } from '../dev/dev-log'
 import { isMockMode as isServerMockConfig } from '../config/data-source'
 import { usePreferences } from '../settings/preferences-context'
 import type { OAuthSession, PublicOAuthConfig, SalesforceUserInfo } from './types'
@@ -55,21 +56,21 @@ export function AuthProvider({
         setConfig(publicConfig)
 
         if (isServerMockConfig(publicConfig)) {
+          devLog.action('auth:bootstrap', 'mock mode')
           setUserInfo(MOCK_USER_INFO)
         } else {
           await initOAuthSessionStorage()
 
           const existingSession = await getValidAccessSession()
           if (cancelled) return
+          devLog.action('auth:bootstrap', existingSession ? 'session restored' : 'no session')
           setSession(existingSession)
         }
       } catch (error) {
         if (cancelled) return
-        if (error instanceof OAuthError) {
-          setAuthError(error.message)
-        } else {
-          setAuthError('Failed to initialize authentication')
-        }
+        const message = error instanceof OAuthError ? error.message : 'Failed to initialize authentication'
+        console.error('[auth:bootstrap] failed:', message)
+        setAuthError(message)
       } finally {
         if (!cancelled) {
           setIsLoading(false)
@@ -117,10 +118,13 @@ export function AuthProvider({
       return
     }
     setAuthError(null)
+    devLog.action('auth:login', 'redirecting to Salesforce')
     try {
       await startLogin(config ?? undefined)
     } catch (error) {
-      setAuthError(error instanceof Error ? error.message : 'Login failed')
+      const message = error instanceof Error ? error.message : 'Login failed'
+      console.error('[auth:login] failed:', message)
+      setAuthError(message)
     }
   }, [config, isMockMode])
 
@@ -142,6 +146,7 @@ export function AuthProvider({
   }, [authError, config, isLoading, isMockMode, login, session])
 
   const logout = useCallback(() => {
+    devLog.action('auth:logout')
     oauthLogout()
   }, [])
 

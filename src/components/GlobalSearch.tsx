@@ -9,6 +9,7 @@ import {
   type MouseEvent,
 } from 'react'
 import { useMiradorData } from '../api/mirador-data-context'
+import { devLog } from '../dev/dev-log'
 import type { Agent, PresenceStatus, Queue, Skill } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { colorFromString } from '../utils/color-from-string'
@@ -384,6 +385,7 @@ export function GlobalSearch() {
 
   const handleSelect = useCallback(
     (kind: SearchItemRef['kind'], id: string) => {
+      devLog.action('search:select', `${kind} ${id}`)
       if (kind === 'agent') {
         openAgent(id)
       } else if (kind === 'work') {

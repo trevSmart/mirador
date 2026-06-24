@@ -54,10 +54,10 @@ export const PREFERENCES_DEFAULTS: Preferences = {
   slaTarget: 80,
   alertPct: 30,
 
-  defaultFloorView: '2d',
+  defaultFloorView: '3d',
   showAvatars: true,
   animations: true,
-  floorCanvasTint: 'blue',
+  floorCanvasTint: 'none',
   lang: 'ca',
   timeFormat: '24h',
 

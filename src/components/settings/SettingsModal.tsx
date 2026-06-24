@@ -92,6 +92,10 @@ export function SettingsModal() {
     close()
   }
 
+  function handleReset() {
+    setDraft({ ...PREFERENCES_DEFAULTS })
+  }
+
   // If dev mode turns off while sitting on the Developer section, bounce away.
   const activeSection: SettingsSectionId =
     section === 'developer' && !devMode ? 'connexio' : section
@@ -165,6 +169,13 @@ export function SettingsModal() {
         </div>
 
         <footer className="settings-modal__foot">
+          <Button
+            variant="ghost"
+            className="settings-modal__reset"
+            onClick={handleReset}
+          >
+            Restaura els valors per defecte
+          </Button>
           <Button variant="ghost" onClick={requestClose}>
             Cancel·la
           </Button>

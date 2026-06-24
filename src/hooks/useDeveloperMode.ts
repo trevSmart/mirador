@@ -3,6 +3,7 @@
    future debug/instrumentation features can switch on. */
 
 import { useCallback, useEffect, useState } from 'react'
+import { devLog } from '../dev/dev-log'
 
 const STORAGE_KEY = 'mirador.developerMode'
 const EVENT = 'mirador:devmode'
@@ -43,6 +44,7 @@ export function useDeveloperMode(): DeveloperModeState {
     } catch {
       /* ignore quota / private mode */
     }
+    devLog.action('devmode:toggle', value ? 'on' : 'off')
     window.dispatchEvent(new Event(EVENT))
   }, [])
 

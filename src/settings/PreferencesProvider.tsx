@@ -5,6 +5,7 @@
    the settings modal writes through `save`. */
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { devLog } from '../dev/dev-log'
 import { PreferencesContext, type PreferencesContextValue } from './preferences-context'
 import { buildFloorCanvasWash } from './floor-canvas-wash'
 import {
@@ -39,6 +40,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   }, [prefs.floorCanvasTint])
 
   const save = useCallback((next: Preferences) => {
+    devLog.action('settings:save', next)
     savePreferences(next) // fires PREFERENCES_EVENT → sync() updates state
   }, [])
 

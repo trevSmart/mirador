@@ -3939,6 +3939,11 @@ textarea,
   border-top: 1px solid var(--border-subtle);
 }
 
+/* Reset-to-defaults sits on the left; the auto margin pushes the rest right. */
+.settings-modal__reset {
+  margin-right: auto;
+}
+
 /* Form controls */
 .settings-input {
   font-family: var(--font-body);
