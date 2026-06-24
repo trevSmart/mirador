@@ -40,7 +40,7 @@ export function CapacityBar({
               fontFamily: 'var(--font-mono)',
               fontVariantNumeric: 'tabular-nums',
               color: 'var(--text-strong)',
-              fontSize: 12,
+              fontSize: 'calc(12px + var(--mono-fs-nudge))',
               fontWeight: 500,
             }}
           >

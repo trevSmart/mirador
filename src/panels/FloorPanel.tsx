@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useMiradorData } from '../api/MiradorDataProvider'
+import { useMiradorData } from '../api/mirador-data-context'
 import type { Agent, PresenceStatus } from '../api/types'
 import { FloorView } from '../components/floor/FloorView'
 import { FloorView3D, type SeatStyle } from '../components/floor/FloorView3D'
 import { PanelShell } from '../components/PanelState'
+import { Select } from '../components/ds/Select'
+import { useDetailDrawer } from '../detail/detail-drawer-context'
 import type { Dir } from '../floor/floor-iso'
 import { useFloorPlanData } from '../floor/useFloorPlanData'
+import { usePreferences } from '../settings/preferences-context'
 import { presenceLabel } from '../utils/format'
-import { recordDetailOpen } from '../utils/detail-recent-store'
 
 const STATUS_ORDER: PresenceStatus[] = ['online', 'busy', 'away', 'offline']
 const STATUS_DOT: Record<PresenceStatus, string> = {
@@ -23,48 +25,53 @@ const SEAT_STYLES: Array<{ value: SeatStyle; label: string }> = [
   { value: 'cube', label: 'Cub per equip' },
 ]
 
+// Rotate-axis-y icon path, shared visual language with the Panorama floor editor.
+// Left button uses it as drawn; right button mirrors it horizontally.
+const ROTATE_ICON_PATH =
+  'M11.2797426,14.9868494 L10.1464466,13.8535534 C9.95118446,13.6582912 9.95118446,13.3417088 10.1464466,13.1464466 C10.3417088,12.9511845 10.6582912,12.9511845 10.8535534,13.1464466 L12.8535534,15.1464466 C13.0488155,15.3417088 13.0488155,15.6582912 12.8535534,15.8535534 L10.8535534,17.8535534 C10.6582912,18.0488155 10.3417088,18.0488155 10.1464466,17.8535534 C9.95118446,17.6582912 9.95118446,17.3417088 10.1464466,17.1464466 L11.3044061,15.9884871 C6.13483244,15.8167229 2,13.7413901 2,11 C2,8.13669069 6.51079147,6 12,6 C17.4892085,6 22,8.13669069 22,11 C22,12.5021775 20.7611164,13.8263891 18.6925542,14.7433738 C18.4401046,14.8552836 18.1447329,14.7413536 18.0328231,14.4889039 C17.9209133,14.2364543 18.0348433,13.9410827 18.2872929,13.8291729 C20.0336708,13.0550111 21,12.0221261 21,11 C21,8.89274656 17.0042017,7 12,7 C6.99579829,7 3,8.89274656 3,11 C3,13.0051086 6.6178104,14.8160018 11.2797426,14.9868494 Z'
+
 type ViewMode = '2d' | '3d'
-const PREFS_KEY = 'mirador.floor.viewPrefs'
+const SEAT_STYLE_KEY = 'mirador.floor.seatStyle'
 
-interface ViewPrefs {
-  view: ViewMode
-  seatStyle: SeatStyle
-}
-
-function loadPrefs(): ViewPrefs {
+function loadSeatStyle(): SeatStyle {
   try {
-    const raw = localStorage.getItem(PREFS_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw) as Partial<ViewPrefs>
-      return {
-        view: parsed.view === '3d' ? '3d' : '2d',
-        seatStyle:
-          parsed.seatStyle === 'avatar' || parsed.seatStyle === 'cube' ? parsed.seatStyle : 'tower',
-      }
-    }
+    const raw = localStorage.getItem(SEAT_STYLE_KEY)
+    if (raw === 'avatar' || raw === 'cube' || raw === 'tower') return raw
   } catch {
     /* ignore */
   }
-  return { view: '2d', seatStyle: 'tower' }
+  return 'tower'
 }
 
 export function FloorPanel() {
   const { data, loaded } = useFloorPlanData()
   const { agents } = useMiradorData()
+  const { openAgent } = useDetailDrawer()
+  const { prefs } = usePreferences()
   const [placeId, setPlaceId] = useState<string | null>(null)
   const [floorIndex, setFloorIndex] = useState(0)
 
-  const [view, setView] = useState<ViewMode>(() => loadPrefs().view)
-  const [seatStyle, setSeatStyle] = useState<SeatStyle>(() => loadPrefs().seatStyle)
+  // The view follows the user's default (Settings → Aparença). Changing the
+  // preference re-syncs the live view, even though Dockview keeps this panel
+  // mounted — handled by adjusting state during render when the default changes.
+  // A manual toggle here still wins until the default preference changes again.
+  const [view, setView] = useState<ViewMode>(prefs.defaultFloorView)
+  const [prevDefault, setPrevDefault] = useState<ViewMode>(prefs.defaultFloorView)
+  if (prevDefault !== prefs.defaultFloorView) {
+    setPrevDefault(prefs.defaultFloorView)
+    setView(prefs.defaultFloorView)
+  }
+
+  const [seatStyle, setSeatStyle] = useState<SeatStyle>(loadSeatStyle)
   const [dir, setDir] = useState<Dir>(0)
 
   useEffect(() => {
     try {
-      localStorage.setItem(PREFS_KEY, JSON.stringify({ view, seatStyle }))
+      localStorage.setItem(SEAT_STYLE_KEY, seatStyle)
     } catch {
       /* ignore */
     }
-  }, [view, seatStyle])
+  }, [seatStyle])
 
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents])
 
@@ -90,8 +97,7 @@ export function FloorPanel() {
   }, [activeFloor, agentsById])
 
   const handleSelectAgent = (agent: Agent) => {
-    recordDetailOpen({ kind: 'agent', id: agent.id, name: agent.name })
-    if (agent.recordUrl) window.open(agent.recordUrl, '_blank', 'noopener,noreferrer')
+    openAgent(agent.id)
   }
 
   if (!loaded) {
@@ -118,38 +124,28 @@ export function FloorPanel() {
         <header className="fv-bar">
           <div className="fv-selectors">
             {data.places.length > 1 ? (
-              <select
+              <Select
                 className="fv-select"
+                ariaLabel="Lloc"
                 value={activePlace.id}
-                onChange={(e) => {
-                  setPlaceId(e.target.value)
+                options={data.places.map((place) => ({ value: place.id, label: place.name }))}
+                onChange={(id) => {
+                  setPlaceId(id)
                   setFloorIndex(0)
                 }}
-                aria-label="Lloc"
-              >
-                {data.places.map((place) => (
-                  <option key={place.id} value={place.id}>
-                    {place.name}
-                  </option>
-                ))}
-              </select>
+              />
             ) : (
               <span className="fv-place-name">{activePlace.name}</span>
             )}
 
             {activePlace.floors.length > 1 ? (
-              <select
+              <Select
                 className="fv-select"
+                ariaLabel="Planta"
                 value={safeFloorIndex}
-                onChange={(e) => setFloorIndex(Number(e.target.value))}
-                aria-label="Planta"
-              >
-                {activePlace.floors.map((floor, index) => (
-                  <option key={floor.id} value={index}>
-                    {floor.name}
-                  </option>
-                ))}
-              </select>
+                options={activePlace.floors.map((floor, index) => ({ value: index, label: floor.name }))}
+                onChange={(index) => setFloorIndex(index)}
+              />
             ) : (
               <span className="fv-floor-name">{activeFloor.name}</span>
             )}
@@ -170,18 +166,13 @@ export function FloorPanel() {
 
             {view === '3d' ? (
               <>
-                <select
+                <Select
                   className="fv-select"
+                  ariaLabel="Estil de seient"
                   value={seatStyle}
-                  onChange={(e) => setSeatStyle(e.target.value as SeatStyle)}
-                  aria-label="Estil de seient"
-                >
-                  {SEAT_STYLES.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
+                  options={SEAT_STYLES}
+                  onChange={(s) => setSeatStyle(s)}
+                />
                 <div className="fv-rotate">
                   <button
                     type="button"
@@ -190,7 +181,9 @@ export function FloorPanel() {
                     aria-label="Gira a l'esquerra"
                     onClick={() => setDir((d) => (((d + 3) % 4) as Dir))}
                   >
-                    ⟲
+                    <svg width={18} height={18} viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+                      <path d={ROTATE_ICON_PATH} />
+                    </svg>
                   </button>
                   <button
                     type="button"
@@ -199,7 +192,11 @@ export function FloorPanel() {
                     aria-label="Gira a la dreta"
                     onClick={() => setDir((d) => (((d + 1) % 4) as Dir))}
                   >
-                    ⟳
+                    <svg width={18} height={18} viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+                      <g transform="translate(24 0) scale(-1 1)">
+                        <path d={ROTATE_ICON_PATH} />
+                      </g>
+                    </svg>
                   </button>
                 </div>
               </>
@@ -231,10 +228,18 @@ export function FloorPanel() {
               agentsById={agentsById}
               dir={dir}
               seatStyle={seatStyle}
+              showAvatars={prefs.showAvatars}
+              animations={prefs.animations}
               onSelectAgent={handleSelectAgent}
             />
           ) : (
-            <FloorView floor={activeFloor} agentsById={agentsById} onSelectAgent={handleSelectAgent} />
+            <FloorView
+              floor={activeFloor}
+              agentsById={agentsById}
+              showAvatars={prefs.showAvatars}
+              animations={prefs.animations}
+              onSelectAgent={handleSelectAgent}
+            />
           )}
         </div>
       </div>

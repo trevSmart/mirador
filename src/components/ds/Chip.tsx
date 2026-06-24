@@ -53,6 +53,7 @@ export function Chip({ children, active = false, dotColor, count, style = {}, ..
           style={{
             fontFamily: 'var(--font-mono)',
             fontVariantNumeric: 'tabular-nums',
+            fontSize: 'calc(1em + var(--mono-fs-nudge))',
             color: active ? 'var(--accent)' : 'var(--text-strong)',
             fontWeight: 500,
           }}

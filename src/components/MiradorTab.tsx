@@ -31,7 +31,18 @@ export function MiradorTab({
   params: _params,
   ...rest
 }: IDockviewDefaultTabProps) {
+  // tabLocation/params are pulled out so they aren't spread onto the DOM node.
+  void _tabLocation
+  void _params
+
   const [title, setTitle] = useState(api.title)
+  // Keep the title synced with the panel during render (convergent); the effect
+  // only subscribes to future title changes.
+  const [trackedTitle, setTrackedTitle] = useState(api.title)
+  if (trackedTitle !== api.title) {
+    setTrackedTitle(api.title)
+    setTitle(api.title)
+  }
   const isMiddleMouseButton = useRef(false)
   // Whether this tab's panel was already the active one when the press started.
   // Captured on pointerdown (before dockview processes the activation) so the
@@ -45,14 +56,10 @@ export function MiradorTab({
       setTitle(event.title)
     })
 
-    if (title !== api.title) {
-      setTitle(api.title)
-    }
-
     return () => {
       disposable.dispose()
     }
-  }, [api, title])
+  }, [api])
 
   const onClose = useCallback(
     (event: React.MouseEvent) => {

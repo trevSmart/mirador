@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useAuth } from '../auth/AuthProvider'
+import { useAuth } from '../auth/auth-context'
 import { buildPhotoProxyUrlFromAbsoluteUrl } from '../auth/salesforce-oauth'
 
 export function useSalesforcePhoto(photoUrl: string | null): string | null {
@@ -7,9 +7,17 @@ export function useSalesforcePhoto(photoUrl: string | null): string | null {
   const accessToken = session?.accessToken ?? null
   const [src, setSrc] = useState<string | null>(null)
 
+  // Reset the resolved blob when the inputs change. Done during render
+  // (convergent) instead of in the effect, so the effect only setStates async.
+  const inputKey = photoUrl && accessToken ? photoUrl : null
+  const [loadedKey, setLoadedKey] = useState<string | null>(inputKey)
+  if (loadedKey !== inputKey) {
+    setLoadedKey(inputKey)
+    setSrc(null)
+  }
+
   useEffect(() => {
     if (!photoUrl || !accessToken) {
-      setSrc(null)
       return
     }
 

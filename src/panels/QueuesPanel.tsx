@@ -1,5 +1,5 @@
 import type { IDockviewPanelProps } from 'dockview'
-import { useMiradorData } from '../api/MiradorDataProvider'
+import { useMiradorData } from '../api/mirador-data-context'
 import { PanelState } from '../components/PanelState'
 import { QueueRow } from '../components/QueueRow'
 import { sortQueuesByBacklog, totalQueueBacklog } from '../utils/agent-stats'

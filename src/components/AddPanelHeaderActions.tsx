@@ -3,10 +3,20 @@ import type { IDockviewHeaderActionsProps } from 'dockview'
 import { addPanelByType } from '../panels/panel-actions'
 import { PanelIcon } from '../panels/PanelIcon'
 import { PANEL_DEFINITIONS, type PanelType } from '../panels/registry'
+import { syncDropdownPanel } from '../utils/sync-dropdown-panel'
 
 export function AddPanelHeaderActions(props: IDockviewHeaderActionsProps) {
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const dropRef = useRef<HTMLDivElement>(null)
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Animate open/close with the shared dropdown helper.
+  useEffect(() => {
+    closeTimeoutRef.current = syncDropdownPanel(dropRef.current, isOpen, {
+      closeTimeoutId: closeTimeoutRef.current,
+    })
+  }, [isOpen])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -14,7 +24,6 @@ export function AddPanelHeaderActions(props: IDockviewHeaderActionsProps) {
         setIsOpen(false)
       }
     }
-
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
@@ -45,22 +54,25 @@ export function AddPanelHeaderActions(props: IDockviewHeaderActionsProps) {
       >
         +
       </button>
-      {isOpen ? (
-        <div className="add-panel-control__dropdown" role="menu">
-          {PANEL_DEFINITIONS.map((panel) => (
-            <button
-              key={panel.type}
-              type="button"
-              role="menuitem"
-              className="add-panel-control__item"
-              onClick={() => handleAddPanel(panel.type)}
-            >
-              <PanelIcon type={panel.type} size={18} />
-              {panel.title}
-            </button>
-          ))}
-        </div>
-      ) : null}
+      <div
+        ref={dropRef}
+        className="add-panel-control__dropdown dropdown-panel"
+        role="menu"
+        hidden
+      >
+        {PANEL_DEFINITIONS.map((panel) => (
+          <button
+            key={panel.type}
+            type="button"
+            role="menuitem"
+            className="add-panel-control__item"
+            onClick={() => handleAddPanel(panel.type)}
+          >
+            <PanelIcon type={panel.type} size={18} />
+            {panel.title}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useMiradorData } from '../api/MiradorDataProvider'
+import { useMiradorData } from '../api/mirador-data-context'
 import { AgentAssignPalette } from '../components/floor/AgentAssignPalette'
 import { FloorGrid } from '../components/floor/FloorGrid'
 import { FloorSidebar } from '../components/floor/FloorSidebar'
