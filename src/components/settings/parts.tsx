@@ -36,7 +36,9 @@ export function SettingsRow({
       <div className="settings-row__label">
         <strong>
           {title}
-          {comingSoon ? <span className="settings-soon-tag">Pròximament</span> : null}
+          {comingSoon ? (
+            <span className="wb-card__badge wb-card__badge--soon">Pròximament</span>
+          ) : null}
         </strong>
         {hint ? <span>{hint}</span> : null}
       </div>

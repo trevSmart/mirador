@@ -16,6 +16,16 @@ export function AppHeader() {
     <header className="app-header">
       <div className="app-header__left">
         <img className="app-header__logo" src={panoramaLogo} alt="Panorama" />
+        {isMockMode ? (
+          <span className="app-header__status" title="Dades simulades (mock)">
+            Simulació
+          </span>
+        ) : null}
+        {devMode ? (
+          <span className="app-header__dev" title="Mode desenvolupador actiu">
+            DEV
+          </span>
+        ) : null}
       </div>
 
       <div className="app-header__center">
@@ -23,11 +33,7 @@ export function AppHeader() {
       </div>
 
       <div className="app-header__right">
-        {isMockMode ? (
-          <span className="app-header__status" title="Dades simulades (mock)">
-            Simulació
-          </span>
-        ) : !isSalesforceEnabled ? (
+        {!isMockMode && !isSalesforceEnabled ? (
           <span className="app-header__warning">
             Configura SF_CLIENT_ID per connectar a Salesforce
           </span>
@@ -36,12 +42,6 @@ export function AppHeader() {
         {authError ? (
           <span className="app-header__error" title={authError}>
             {authError}
-          </span>
-        ) : null}
-
-        {devMode ? (
-          <span className="app-header__dev" title="Mode desenvolupador actiu">
-            DEV
           </span>
         ) : null}
 

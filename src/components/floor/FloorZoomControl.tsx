@@ -6,16 +6,18 @@ import {
   FLOOR_ZOOM_MAX,
   FLOOR_ZOOM_MIN,
   FLOOR_ZOOM_STEP,
-  clampZoom,
 } from './floor-zoom'
 
 interface FloorZoomSliderProps {
   zoom: number
   onChange: (zoom: number) => void
+  minZoom: number
+  maxZoom: number
 }
 
-function FloorZoomSlider({ zoom, onChange }: FloorZoomSliderProps) {
+function FloorZoomSlider({ zoom, onChange, minZoom, maxZoom }: FloorZoomSliderProps) {
   const pct = Math.round(zoom * 100)
+  const clamp = (value: number) => Math.min(maxZoom, Math.max(minZoom, value))
 
   return (
     <div className="fv-zoom" role="group" aria-label="Zoom del plànol">
@@ -24,21 +26,21 @@ function FloorZoomSlider({ zoom, onChange }: FloorZoomSliderProps) {
         aria-label="Redueix el zoom"
         icon="utility:dash"
         size={14}
-        disabled={zoom <= FLOOR_ZOOM_MIN}
-        onClick={() => onChange(clampZoom(Number((zoom - FLOOR_ZOOM_STEP).toFixed(3))))}
+        disabled={zoom <= minZoom}
+        onClick={() => onChange(clamp(Number((zoom - FLOOR_ZOOM_STEP).toFixed(3))))}
       />
       <label className="fv-zoom__slider">
         <input
           type="range"
           aria-label="Zoom"
-          aria-valuemin={FLOOR_ZOOM_MIN * 100}
-          aria-valuemax={FLOOR_ZOOM_MAX * 100}
+          aria-valuemin={minZoom * 100}
+          aria-valuemax={maxZoom * 100}
           aria-valuenow={pct}
-          min={FLOOR_ZOOM_MIN * 100}
-          max={FLOOR_ZOOM_MAX * 100}
+          min={minZoom * 100}
+          max={maxZoom * 100}
           step={0.1}
           value={zoom * 100}
-          onChange={(e) => onChange(clampZoom(Number(e.target.value) / 100))}
+          onChange={(e) => onChange(clamp(Number(e.target.value) / 100))}
         />
       </label>
       <ButtonIcon
@@ -46,8 +48,8 @@ function FloorZoomSlider({ zoom, onChange }: FloorZoomSliderProps) {
         aria-label="Augmenta el zoom"
         icon="utility:add"
         size={14}
-        disabled={zoom >= FLOOR_ZOOM_MAX}
-        onClick={() => onChange(clampZoom(Number((zoom + FLOOR_ZOOM_STEP).toFixed(3))))}
+        disabled={zoom >= maxZoom}
+        onClick={() => onChange(clamp(Number((zoom + FLOOR_ZOOM_STEP).toFixed(3))))}
       />
       <span className="fv-zoom__value" aria-hidden="true">
         {pct}%
@@ -68,9 +70,12 @@ function FloorZoomSlider({ zoom, onChange }: FloorZoomSliderProps) {
 interface FloorZoomControlProps {
   zoom: number
   onChange: (zoom: number) => void
+  /** Overridable zoom bounds (default to the shared floor-zoom constants). */
+  minZoom?: number
+  maxZoom?: number
 }
 
-export function FloorZoomControl({ zoom, onChange }: FloorZoomControlProps) {
+export function FloorZoomControl({ zoom, onChange, minZoom = FLOOR_ZOOM_MIN, maxZoom = FLOOR_ZOOM_MAX }: FloorZoomControlProps) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const dropRef = useRef<HTMLDivElement>(null)
@@ -113,7 +118,7 @@ export function FloorZoomControl({ zoom, onChange }: FloorZoomControlProps) {
         </span>
       </button>
       <div ref={dropRef} className="fv-zoom-drop__panel dropdown-panel" role="dialog" hidden>
-        <FloorZoomSlider zoom={zoom} onChange={onChange} />
+        <FloorZoomSlider zoom={zoom} onChange={onChange} minZoom={minZoom} maxZoom={maxZoom} />
       </div>
     </div>
   )

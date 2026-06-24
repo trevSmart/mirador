@@ -1,14 +1,14 @@
 /* EXPERIMENTAL — Dev tab. A throwaway replica of the Floor panel that renders
-   the 3D view through the vectorial projection in `src/dev/`, with azimuth and
-   tilt sliders so we can see whether a dimetric angle breaks tower occlusion.
-   Registered with a single experimental line in `panels/registry.ts`. Remove
-   that line + delete `src/dev/` and this DevPanel to drop the experiment. */
+   the 3D view through the vectorial projection in `src/dev/`. Each room (floor)
+   has its own perspective rotation, draggable on the render and persisted in
+   localStorage. Registered with a single experimental line in
+   `panels/registry.ts`. Remove that line + delete `src/dev/` to drop it. */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useMiradorData } from '../api/mirador-data-context'
-import type { Agent, PresenceStatus } from '../api/types'
+import type { Agent, Queue, PresenceStatus } from '../api/types'
 import { FloorZoomControl } from '../components/floor/FloorZoomControl'
-import { FLOOR_ZOOM_KEY, adjustFloorZoomFromWheel, loadFloorZoom } from '../components/floor/floor-zoom'
+import { DEV_ZOOM_KEY, DEV_ZOOM_MAX, DEV_ZOOM_MIN, adjustDevZoomFromWheel, loadDevZoom } from './dev-zoom'
 import { PanelShell } from '../components/PanelState'
 import { Select } from '../components/ds/Select'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
@@ -20,6 +20,18 @@ import { presenceLabel } from '../utils/format'
 import type { Floor } from '../floor/types'
 import { FloorView3DVec } from './FloorView3DVec'
 import { makeBasis } from './floor-iso-vec'
+import {
+  type RoomRotation,
+  ROOM_AZ_DEFAULT,
+  ROOM_AZ_MAX,
+  ROOM_AZ_MIN,
+  ROOM_TILT_DEFAULT,
+  ROOM_TILT_MAX,
+  ROOM_TILT_MIN,
+  defaultRotation,
+  loadRoomRotations,
+  saveRoomRotations,
+} from './floor-rotation-store'
 
 const STATUS_ORDER: PresenceStatus[] = ['online', 'busy', 'away', 'offline']
 const STATUS_DOT: Record<PresenceStatus, string> = {
@@ -29,8 +41,123 @@ const STATUS_DOT: Record<PresenceStatus, string> = {
   offline: 'var(--text-disabled)',
 }
 
-const AZIMUTH_DEFAULT = 45
-const TILT_DEFAULT = 0.5
+// Drag sensitivity (degrees / px and tilt-units / px).
+const DRAG_AZ_PER_PX = 0.25
+const DRAG_TILT_PER_PX = 0.0018
+// Must move past this many px within this many ms of pressing to begin orbiting.
+const ORBIT_THRESHOLD_PX = 4
+const ORBIT_START_WINDOW_MS = 300
+
+const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
+
+interface RoomRenderProps {
+  floor: Floor
+  rotation: RoomRotation
+  onRotate: (next: RoomRotation) => void
+  onFocus: (floorId: string) => void
+  multiFloor: boolean
+  agentsById: Map<string, Agent>
+  queuesById: Map<string, Queue>
+  showAvatars: boolean
+  animations: boolean
+  onSelectAgent: (agent: Agent) => void
+}
+
+/** One room: owns its own drag-to-orbit gesture, rotating only this floor. */
+function RoomRender({
+  floor,
+  rotation,
+  onRotate,
+  onFocus,
+  multiFloor,
+  agentsById,
+  queuesById,
+  showAvatars,
+  animations,
+  onSelectAgent,
+}: RoomRenderProps) {
+  const [dragging, setDragging] = useState(false)
+  // Pointer origin (+ press timestamp) and the az/tilt captured at press. `active`
+  // only flips once the pointer clears the distance threshold *within* a short
+  // time window, so neither a plain click (selecting a tower) nor an involuntary
+  // long-press-with-drift starts a rotation. After the window it `expired`s.
+  const orbitRef = useRef<{ x: number; y: number; t: number; az: number; tilt: number; active: boolean; expired: boolean } | null>(null)
+
+  const basis = useMemo(() => makeBasis(rotation.az, rotation.tilt), [rotation.az, rotation.tilt])
+
+  const onDown = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (event.button !== 0) return
+      onFocus(floor.id)
+      orbitRef.current = { x: event.clientX, y: event.clientY, t: event.timeStamp, az: rotation.az, tilt: rotation.tilt, active: false, expired: false }
+    },
+    [floor.id, onFocus, rotation.az, rotation.tilt],
+  )
+
+  const onMove = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      const start = orbitRef.current
+      if (!start || start.expired) return
+      const dx = event.clientX - start.x
+      const dy = event.clientY - start.y
+
+      if (!start.active) {
+        const movedEnough = Math.hypot(dx, dy) >= ORBIT_THRESHOLD_PX
+        const inWindow = event.timeStamp - start.t <= ORBIT_START_WINDOW_MS
+        if (movedEnough && inWindow) {
+          start.active = true
+          setDragging(true)
+          event.currentTarget.setPointerCapture(event.pointerId)
+        } else if (!inWindow) {
+          start.expired = true
+          return
+        } else {
+          return
+        }
+      }
+
+      // Horizontal → azimuth (orbit around), vertical → tilt (drag down = flatter).
+      onRotate({
+        az: clamp(start.az - dx * DRAG_AZ_PER_PX, ROOM_AZ_MIN, ROOM_AZ_MAX),
+        tilt: clamp(start.tilt + dy * DRAG_TILT_PER_PX, ROOM_TILT_MIN, ROOM_TILT_MAX),
+      })
+    },
+    [onRotate],
+  )
+
+  const onUp = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    const start = orbitRef.current
+    orbitRef.current = null
+    setDragging(false)
+    if (start?.active && event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+  }, [])
+
+  return (
+    <section className="fv-stack__item">
+      {multiFloor ? <h4 className="fv-stack__label">{floor.name}</h4> : null}
+      <div
+        className="fv-stack__render"
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+        onPointerCancel={onUp}
+        style={{ cursor: dragging ? 'grabbing' : 'grab', touchAction: 'none' }}
+      >
+        <FloorView3DVec
+          floor={floor}
+          agentsById={agentsById}
+          queuesById={queuesById}
+          basis={basis}
+          showAvatars={showAvatars}
+          animations={animations}
+          onSelectAgent={onSelectAgent}
+        />
+      </div>
+    </section>
+  )
+}
 
 export function DevPanel() {
   const { data, loaded } = useFloorPlanData()
@@ -40,9 +167,11 @@ export function DevPanel() {
   const canvasScrollRef = useSmoothScroll<HTMLDivElement>()
   const wheelCleanupRef = useRef<(() => void) | null>(null)
   const [placeId, setPlaceId] = useState<string | null>(null)
-  const [zoom, setZoom] = useState<number>(loadFloorZoom)
-  const [azimuth, setAzimuth] = useState<number>(AZIMUTH_DEFAULT)
-  const [tilt, setTilt] = useState<number>(TILT_DEFAULT)
+  const [zoom, setZoom] = useState<number>(loadDevZoom)
+  // Per-room rotation, keyed by floor id, hydrated from + persisted to localStorage.
+  const [rotations, setRotations] = useState<Record<string, RoomRotation>>(loadRoomRotations)
+  // Which room the toolbar sliders act on (defaults to the first floor).
+  const [focusedId, setFocusedId] = useState<string | null>(null)
 
   const setCanvasRef = useCallback(
     (element: HTMLDivElement | null) => {
@@ -56,7 +185,7 @@ export function DevPanel() {
         if (!event.ctrlKey && !event.metaKey) return
         event.preventDefault()
         event.stopImmediatePropagation()
-        setZoom((current) => adjustFloorZoomFromWheel(current, event.deltaY))
+        setZoom((current) => adjustDevZoomFromWheel(current, event.deltaY))
       }
       element.addEventListener('wheel', onWheel, { passive: false, capture: true })
       wheelCleanupRef.current = () => element.removeEventListener('wheel', onWheel)
@@ -67,7 +196,7 @@ export function DevPanel() {
   useEffect(() => {
     const id = window.setTimeout(() => {
       try {
-        localStorage.setItem(FLOOR_ZOOM_KEY, String(zoom))
+        localStorage.setItem(DEV_ZOOM_KEY, String(zoom))
       } catch {
         /* ignore */
       }
@@ -75,9 +204,14 @@ export function DevPanel() {
     return () => window.clearTimeout(id)
   }, [zoom])
 
+  // Persist room rotations (debounced).
+  useEffect(() => {
+    const id = window.setTimeout(() => saveRoomRotations(rotations), 250)
+    return () => window.clearTimeout(id)
+  }, [rotations])
+
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents])
   const queuesById = useMemo(() => new Map(queues.map((queue) => [queue.id, queue])), [queues])
-  const basis = useMemo(() => makeBasis(azimuth, tilt), [azimuth, tilt])
 
   const activePlace = useMemo(() => {
     if (!data || data.places.length === 0) return null
@@ -87,9 +221,25 @@ export function DevPanel() {
   const floors = useMemo(() => activePlace?.floors ?? [], [activePlace])
   const multiFloor = floors.length > 1
 
+  const getRotation = useCallback(
+    (floorId: string): RoomRotation => rotations[floorId] ?? defaultRotation(),
+    [rotations],
+  )
+  const setRotation = useCallback((floorId: string, next: RoomRotation) => {
+    setRotations((prev) => ({ ...prev, [floorId]: next }))
+  }, [])
+
+  const focusedFloor = useMemo(
+    () => floors.find((f) => f.id === focusedId) ?? floors[0] ?? null,
+    [floors, focusedId],
+  )
+
   const stackStyle = {
     '--fv-zoom': zoom,
     '--fv-render-zoom': zoom,
+    // Centre the rooms horizontally in the canvas (overrides the shared
+    // .fv-stack flex-start without touching official CSS).
+    justifyContent: 'center',
   } as React.CSSProperties
 
   useEffect(() => {
@@ -117,28 +267,25 @@ export function DevPanel() {
     return { counts, vacant, total }
   }, [floors, agentsById])
 
-  const handleSelectAgent = (agent: Agent) => openAgent(agent.id)
+  const handleSelectAgent = useCallback((agent: Agent) => openAgent(agent.id), [openAgent])
 
-  const renderFloorTile = (floor: Floor) => (
-    <section key={floor.id} className="fv-stack__item">
-      {multiFloor ? <h4 className="fv-stack__label">{floor.name}</h4> : null}
-      <div className="fv-stack__render">
-        <FloorView3DVec
+  const floorStack = (
+    <div className={`fv-stack${multiFloor ? ' fv-stack--multi' : ' fv-stack--single'}`} style={stackStyle}>
+      {floors.map((floor) => (
+        <RoomRender
+          key={floor.id}
           floor={floor}
+          rotation={getRotation(floor.id)}
+          onRotate={(next) => setRotation(floor.id, next)}
+          onFocus={setFocusedId}
+          multiFloor={multiFloor}
           agentsById={agentsById}
           queuesById={queuesById}
-          basis={basis}
           showAvatars={prefs.showAvatars}
           animations={prefs.animations}
           onSelectAgent={handleSelectAgent}
         />
-      </div>
-    </section>
-  )
-
-  const floorStack = (
-    <div className={`fv-stack${multiFloor ? ' fv-stack--multi' : ' fv-stack--single'}`} style={stackStyle}>
-      {floors.map(renderFloorTile)}
+      ))}
     </div>
   )
 
@@ -159,6 +306,8 @@ export function DevPanel() {
       </PanelShell>
     )
   }
+
+  const focusedRotation = focusedFloor ? getRotation(focusedFloor.id) : defaultRotation()
 
   return (
     <PanelShell hideHeader smoothScroll={false} className="panel-shell--floor">
@@ -193,25 +342,41 @@ export function DevPanel() {
               </span>
             </div>
 
-            <label className="fv-stat" title="Azimut de la projecció (45° = isomètric clàssic)" style={{ gap: 6 }}>
+            {multiFloor && focusedFloor ? (
+              <span className="fv-floor-name" title="Sala que controlen els sliders">{focusedFloor.name}</span>
+            ) : null}
+
+            <label className="fv-stat" title="Azimut de la projecció (45° = isomètric clàssic). També: arrossega el render en horitzontal." style={{ gap: 6 }}>
               Azimut
-              <input type="range" min={30} max={60} step={1} value={azimuth} onChange={(e) => setAzimuth(Number(e.target.value))} />
-              <span style={{ width: 34, textAlign: 'right' }}>{azimuth}°</span>
+              <input
+                type="range"
+                min={ROOM_AZ_MIN}
+                max={ROOM_AZ_MAX}
+                step={1}
+                value={Math.round(focusedRotation.az)}
+                onChange={(e) => focusedFloor && setRotation(focusedFloor.id, { ...focusedRotation, az: Number(e.target.value) })}
+              />
+              <span style={{ width: 34, textAlign: 'right' }}>{Math.round(focusedRotation.az)}°</span>
             </label>
 
-            <label className="fv-stat" title="Inclinació vertical (0.5 = 2:1 isomètric)" style={{ gap: 6 }}>
+            <label className="fv-stat" title="Inclinació vertical (0.5 = 2:1 isomètric). També: arrossega el render en vertical." style={{ gap: 6 }}>
               Inclinació
-              <input type="range" min={0.35} max={0.7} step={0.01} value={tilt} onChange={(e) => setTilt(Number(e.target.value))} />
-              <span style={{ width: 34, textAlign: 'right' }}>{tilt.toFixed(2)}</span>
+              <input
+                type="range"
+                min={ROOM_TILT_MIN}
+                max={ROOM_TILT_MAX}
+                step={0.01}
+                value={focusedRotation.tilt}
+                onChange={(e) => focusedFloor && setRotation(focusedFloor.id, { ...focusedRotation, tilt: Number(e.target.value) })}
+              />
+              <span style={{ width: 34, textAlign: 'right' }}>{focusedRotation.tilt.toFixed(2)}</span>
             </label>
 
             <button
               type="button"
               className="fv-toggle__btn"
-              onClick={() => {
-                setAzimuth(AZIMUTH_DEFAULT)
-                setTilt(TILT_DEFAULT)
-              }}
+              title={multiFloor ? 'Reinicia la rotació de la sala seleccionada' : 'Reinicia la rotació'}
+              onClick={() => focusedFloor && setRotation(focusedFloor.id, { az: ROOM_AZ_DEFAULT, tilt: ROOM_TILT_DEFAULT })}
             >
               Reset
             </button>
@@ -228,7 +393,7 @@ export function DevPanel() {
               </button>
             </div>
 
-            <FloorZoomControl zoom={zoom} onChange={setZoom} />
+            <FloorZoomControl zoom={zoom} onChange={setZoom} minZoom={DEV_ZOOM_MIN} maxZoom={DEV_ZOOM_MAX} />
           </div>
         </header>
 
