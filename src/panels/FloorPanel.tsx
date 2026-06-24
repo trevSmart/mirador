@@ -55,8 +55,11 @@ export function FloorPanel() {
         setZoom((current) => adjustFloorZoomFromWheel(current, event.deltaY))
       }
 
+      // Removal must repeat the capture flag, otherwise it's a no-op and the
+      // listener (plus its closure) leaks on every ref change / remount.
       element.addEventListener('wheel', onWheel, { passive: false, capture: true })
-      wheelCleanupRef.current = () => element.removeEventListener('wheel', onWheel)
+      wheelCleanupRef.current = () =>
+        element.removeEventListener('wheel', onWheel, { capture: true })
     },
     [canvasScrollRef],
   )
