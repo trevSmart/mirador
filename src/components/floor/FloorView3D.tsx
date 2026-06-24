@@ -52,9 +52,25 @@ function seatHeight(agent: Agent): number {
   return SEAT_MIN_H + ratio * (SEAT_MAX_H - SEAT_MIN_H)
 }
 
-/** Circular avatar (photo or initials) drawn in SVG, clipped to a disc. */
-function AvatarDisc({ agent, cx, cy, r, ring }: { agent: Agent; cx: number; cy: number; r: number; ring: string }) {
-  const photo = useSalesforcePhoto(agent.photo)
+/** Circular avatar (photo or initials) drawn in SVG, clipped to a disc.
+   When showPhoto is false we always render initials, never the photo. */
+function AvatarDisc({
+  agent,
+  cx,
+  cy,
+  r,
+  ring,
+  showPhoto,
+}: {
+  agent: Agent
+  cx: number
+  cy: number
+  r: number
+  ring: string
+  showPhoto: boolean
+}) {
+  const loadedPhoto = useSalesforcePhoto(agent.photo)
+  const photo = showPhoto ? loadedPhoto : null
   const clipId = `fv3d-clip-${agent.id}`
   return (
     <g>
@@ -96,6 +112,8 @@ interface IsoSeatProps {
   x: number
   y: number
   style: SeatStyle
+  showAvatars: boolean
+  animations: boolean
   onSelect: (agent: Agent) => void
 }
 
@@ -112,7 +130,7 @@ function towerFaces(x: number, y: number, h: number, color: string) {
   )
 }
 
-function IsoSeat({ agent, x, y, style, onSelect }: IsoSeatProps) {
+function IsoSeat({ agent, x, y, style, showAvatars, animations, onSelect }: IsoSeatProps) {
   const status = STATUS_COLOR[agent.status]
   const saturated = agent.max > 0 && agent.used >= agent.max
   const title = `${agent.name} · ${agent.used}/${agent.max}`
@@ -123,7 +141,7 @@ function IsoSeat({ agent, x, y, style, onSelect }: IsoSeatProps) {
     body = (
       <>
         <ellipse cx={x} cy={y + TH * 0.2} rx={TW * 0.5} ry={TH * 0.5} fill="rgba(27,25,36,0.16)" />
-        <AvatarDisc agent={agent} cx={x} cy={cy} r={TH * 0.95} ring={status} />
+        <AvatarDisc agent={agent} cx={x} cy={cy} r={TH * 0.95} ring={status} showPhoto={showAvatars} />
       </>
     )
   } else if (style === 'cube') {
@@ -141,11 +159,19 @@ function IsoSeat({ agent, x, y, style, onSelect }: IsoSeatProps) {
     body = (
       <>
         {towerFaces(x, y, h, status)}
-        <AvatarDisc agent={agent} cx={x} cy={y - h - TH * 0.55} r={TH * 0.85} ring={status} />
+        <AvatarDisc agent={agent} cx={x} cy={y - h - TH * 0.55} r={TH * 0.85} ring={status} showPhoto={showAvatars} />
         {saturated ? (
           <>
             <line x1={x} y1={y - h} x2={x} y2={y - h - TH * 1.6} stroke="#E05641" strokeWidth={1.5} />
-            <circle className="fv3d-beacon" cx={x} cy={y - h - TH * 1.6} r={4.5} fill="#E05641" stroke="#fff" strokeWidth={1.5} />
+            <circle
+              className={animations ? 'fv3d-beacon' : undefined}
+              cx={x}
+              cy={y - h - TH * 1.6}
+              r={4.5}
+              fill="#E05641"
+              stroke="#fff"
+              strokeWidth={1.5}
+            />
           </>
         ) : null}
       </>
@@ -182,10 +208,20 @@ interface FloorView3DProps {
   agentsById: Map<string, Agent>
   dir: Dir
   seatStyle: SeatStyle
+  showAvatars: boolean
+  animations: boolean
   onSelectAgent: (agent: Agent) => void
 }
 
-export function FloorView3D({ floor, agentsById, dir, seatStyle, onSelectAgent }: FloorView3DProps) {
+export function FloorView3D({
+  floor,
+  agentsById,
+  dir,
+  seatStyle,
+  showAvatars,
+  animations,
+  onSelectAgent,
+}: FloorView3DProps) {
   const cellSet = useMemo(() => new Set(floor.cells.map(([c, r]) => cellKey(c, r))), [floor.cells])
   const has = useMemo(() => (c: number, r: number) => cellSet.has(cellKey(c, r)), [cellSet])
 
@@ -302,7 +338,18 @@ export function FloorView3D({ floor, agentsById, dir, seatStyle, onSelectAgent }
     if (seat) {
       const agent = seat.agentId ? agentsById.get(seat.agentId) ?? null : null
       if (agent) {
-        body.push(<IsoSeat key={`s-${key}`} agent={agent} x={x} y={y} style={seatStyle} onSelect={onSelectAgent} />)
+        body.push(
+          <IsoSeat
+            key={`s-${key}`}
+            agent={agent}
+            x={x}
+            y={y}
+            style={seatStyle}
+            showAvatars={showAvatars}
+            animations={animations}
+            onSelect={onSelectAgent}
+          />,
+        )
       } else {
         body.push(<VacantSeat key={`s-${key}`} x={x} y={y} />)
       }

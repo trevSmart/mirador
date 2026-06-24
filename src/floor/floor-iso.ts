@@ -10,7 +10,7 @@ export const TH = 17 // tile half-height
 export const THK = 6 // floor slab thickness
 export const WALL_H = 104 // exterior wall height
 export const DIV_H = 14 // interior divider height
-export const SEAT_MIN_H = 16
+export const SEAT_MIN_H = 4
 export const SEAT_MAX_H = 88
 export const SHADOW_PAD = 1.31
 
@@ -134,7 +134,7 @@ export function computeIsoBounds(
   maxC: number,
   maxR: number,
   topExtra = 0,
-  pad = 36,
+  pad = 22,
 ): IsoBounds {
   if (cells.length === 0) return { minX: 0, minY: 0, width: 1, height: 1 }
   let minX = Infinity

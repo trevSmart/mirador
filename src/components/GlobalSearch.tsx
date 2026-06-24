@@ -7,12 +7,12 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent,
 } from 'react'
-import { useMiradorData } from '../api/MiradorDataProvider'
+import { useMiradorData } from '../api/mirador-data-context'
 import type { Agent, PresenceStatus, Queue, Skill } from '../api/types'
+import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { colorFromString } from '../utils/color-from-string'
 import {
   getDetailRecents,
-  recordDetailOpen,
   setDetailRecentResolver,
   type DetailRecentEntry,
 } from '../utils/detail-recent-store'
@@ -210,6 +210,7 @@ function resolveRecentEntry(
 
 export function GlobalSearch() {
   const { agents, queues, skills } = useMiradorData()
+  const { openAgent, openQueue, openSkill } = useDetailDrawer()
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
   const [activeIdx, setActiveIdx] = useState(-1)
@@ -234,6 +235,9 @@ export function GlobalSearch() {
     if (normalizedQuery) {
       return flattenSearchResults(searchResults)
     }
+    // recentsVersion is the cache-bust key: re-read the (external) recents store
+    // whenever a detail is opened.
+    void recentsVersion
     const recents = getDetailRecents()
     return recents.map((entry) => ({ kind: entry.kind, id: entry.id }))
   }, [normalizedQuery, recentsVersion, searchResults])
@@ -369,26 +373,19 @@ export function GlobalSearch() {
 
   const handleSelect = useCallback(
     (kind: SearchItemRef['kind'], id: string) => {
-      if (kind === 'agent' || kind === 'work') {
-        const agentId = kind === 'work' ? id : id
-        const agent = agents.find((item) => item.id === agentId)
-        if (agent?.recordUrl) {
-          window.open(agent.recordUrl, '_blank', 'noopener,noreferrer')
-        }
-        if (kind === 'agent') {
-          recordDetailOpen({ kind: 'agent', id })
-          setRecentsVersion((value) => value + 1)
-        }
+      if (kind === 'agent') {
+        openAgent(id)
+      } else if (kind === 'work') {
+        if (agents.some((item) => item.id === id)) openAgent(id)
       } else if (kind === 'queue') {
-        recordDetailOpen({ kind: 'queue', id })
-        setRecentsVersion((value) => value + 1)
+        openQueue(id)
       } else if (kind === 'skill') {
-        recordDetailOpen({ kind: 'skill', id })
-        setRecentsVersion((value) => value + 1)
+        openSkill(id)
       }
+      setRecentsVersion((value) => value + 1)
       closePanel(true)
     },
-    [agents, closePanel],
+    [agents, closePanel, openAgent, openQueue, openSkill],
   )
 
   const handleKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
