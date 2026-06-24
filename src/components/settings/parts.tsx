@@ -3,8 +3,12 @@
    Controlled components throughout: the modal owns a draft object and passes
    value + onChange so the dirty-check and save are trivial. */
 
+/* @refresh reset */
+
 import { useId, type ReactNode } from 'react'
 import { Select } from '../ds/Select'
+
+export { TintSwatchField } from './TintSwatchField'
 
 export function SettingsGroup({ label, children }: { label: string; children: ReactNode }) {
   return (

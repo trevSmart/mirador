@@ -4,7 +4,7 @@ import { useDetailDrawer } from '../../detail/detail-drawer-context'
 import { useSalesforcePhoto } from '../../hooks/useSalesforcePhoto'
 import { agentInitials, channelLabel, formatMinutes } from '../../utils/format'
 import { resolveWorkItemIcon } from '../../utils/salesforce-object-icon'
-import { CapacityBar, Ring, SfIcon } from '../ds'
+import { CapacityBar, FadeValue, Ring, SfIcon } from '../ds'
 import { StatusBadge } from '../StatusBadge'
 import { DetailRow, DrawerSection, EmptyHint, Stat, StatGrid } from './parts'
 
@@ -64,9 +64,9 @@ export function AgentDetail({ agent }: { agent: Agent }) {
       <DrawerSection title="Canals">
         <div className="dd-channels">
           {CHANNELS.map((ch) => (
-            <div key={ch} className="dd-channel" data-active={(agent.chans[ch] ?? 0) > 0}>
+            <div key={ch} className="dd-channel" data-active={(agent.chans[ch] ?? 0) > 0 ? 'true' : 'false'}>
               <SfIcon channel={ch} sldsSize="x-small" />
-              <span>{agent.chans[ch] ?? 0}</span>
+              <FadeValue value={agent.chans[ch] ?? 0} />
             </div>
           ))}
         </div>
@@ -104,7 +104,11 @@ export function AgentDetail({ agent }: { agent: Agent }) {
                   key={queueId}
                   leading={<SfIcon name="queue" size={28} bg={queue.color} />}
                   title={queue.name}
-                  meta={`${queue.backlog} backlog · ${queue.online} en línia`}
+                  meta={
+                    <>
+                      <FadeValue value={queue.backlog} /> backlog · <FadeValue value={queue.online} /> en línia
+                    </>
+                  }
                   onClick={() => openQueue(queueId)}
                 />
               )

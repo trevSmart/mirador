@@ -3,7 +3,7 @@ import type { WorkItem } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { channelLabel, formatSeconds, workStatusLabel } from '../utils/format'
 import { resolveWorkItemIcon } from '../utils/salesforce-object-icon'
-import { SfIcon } from './ds'
+import { FadeValue, SfIcon } from './ds'
 
 interface WorkRowProps {
   item: WorkItem
@@ -19,20 +19,6 @@ export function WorkRow({ item, agentName, queueName }: WorkRowProps) {
     : item.queueId
       ? () => openQueue(item.queueId as string)
       : null
-
-  const metaParts = [
-    channelLabel(item.channelKey),
-    workStatusLabel(item.status),
-    formatSeconds(item.ageSec),
-  ]
-
-  if (item.status === 'assigned' && agentName) {
-    metaParts.push(agentName)
-  }
-
-  if (queueName) {
-    metaParts.push(queueName)
-  }
 
   return (
     <article
@@ -55,7 +41,12 @@ export function WorkRow({ item, agentName, queueName }: WorkRowProps) {
         <SfIcon sprite={icon.sprite} symbol={icon.symbol} size={32} bg={icon.tint} />
         <div className="work-row__body">
           <h3 className="work-row__subject" title={item.subject ?? undefined}>{item.subject}</h3>
-          <p className="work-row__meta">{metaParts.join(' · ')}</p>
+          <p className="work-row__meta">
+            {channelLabel(item.channelKey)} · {workStatusLabel(item.status)} ·{' '}
+            <FadeValue value={formatSeconds(item.ageSec)} />
+            {item.status === 'assigned' && agentName ? ` · ${agentName}` : ''}
+            {queueName ? ` · ${queueName}` : ''}
+          </p>
         </div>
         <span className={`work-row__status work-row__status--${item.status}`}>
           {workStatusLabel(item.status)}

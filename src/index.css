@@ -98,10 +98,10 @@
   /* ── Canvas wash — fixed radial behind the app ──────── */
   --pa-wash: radial-gradient(1100px 600px at 75% -15%, rgba(0, 128, 190, .05), transparent 60%);
   --fv-canvas-wash:
-    radial-gradient(ellipse 120% 95% at 50% -8%, rgba(255, 255, 255, 0.16) 0%, transparent 58%),
-    radial-gradient(ellipse 90% 80% at 12% 92%, rgba(52, 190, 205, 0.05) 0%, transparent 56%),
-    radial-gradient(ellipse 85% 75% at 88% 18%, rgba(0, 128, 190, 0.05) 0%, transparent 54%),
-    linear-gradient(155deg, #e8eef2 0%, #e6ebef 45%, #e7ecf0 100%);
+    radial-gradient(ellipse 120% 95% at 50% -8%, rgba(255, 255, 255, 0.12) 0%, transparent 58%),
+    radial-gradient(ellipse 90% 80% at 12% 92%, rgba(61, 212, 240, 0.1) 0%, transparent 56%),
+    radial-gradient(ellipse 85% 75% at 88% 18%, rgba(0, 96, 160, 0.1) 0%, transparent 54%),
+    linear-gradient(155deg, rgb(225, 246, 251) 0%, rgb(226, 237, 245) 52%, rgb(222, 236, 248) 100%);
 
   /* ════════════════════════════════════════════════════
      SEMANTIC ALIASES — prefer these in components
@@ -204,6 +204,7 @@
      PANORAMA · EFFECTS — shadow, motion, blur
      ════════════════════════════════════════════════════ */
   --shadow: 0 1px 2px rgba(27, 25, 36, .04), 0 4px 16px rgba(27, 25, 36, .05);
+  --shadow-hover: 0 0 6px rgba(27, 25, 36, .065), 0 0 19px rgba(27, 25, 36, .075);
   --shadow-lift: 0 8px 30px rgba(27, 25, 36, .10);
   --shadow-drawer: -30px 0 60px rgba(27, 25, 36, .15);
   --shadow-tip: 0 10px 28px rgba(0, 0, 0, .28);
@@ -213,6 +214,7 @@
   --dur-fast: .15s;
   --dur-base: .2s;
   --dur-slow: .32s;
+  --dur-value: .45s;
   --dur-bar: .6s;
 
   --blur-bar: blur(14px);
@@ -1040,7 +1042,7 @@ body {
 }
 
 .summary-card:hover {
-  box-shadow: var(--shadow-lift);
+  box-shadow: var(--shadow-hover);
 }
 
 .summary-card__body {
@@ -1211,7 +1213,7 @@ body {
 .skill-row:hover,
 .work-row:hover {
   border-color: var(--border-strong);
-  box-shadow: var(--shadow-lift);
+  box-shadow: var(--shadow-hover);
 }
 
 .agent-row__main,
@@ -1312,6 +1314,7 @@ body {
   padding: var(--sp-2) 0 5px;
   border-radius: var(--r-xs);
   background: var(--surface-well);
+  transition: opacity var(--dur-value) var(--ease);
 }
 
 .agent-row__channel[data-active='false'] {
@@ -1324,6 +1327,7 @@ body {
   font-size: calc(var(--fs-2xs) + var(--mono-fs-nudge));
   font-weight: var(--fw-medium);
   color: var(--text-strong);
+  transition: color var(--dur-value) var(--ease);
 }
 
 .agent-row__channel[data-active='false'] .agent-row__channel-count {
@@ -1379,6 +1383,40 @@ body {
 .work-row__status--queued {
   background: var(--pa-watch-soft);
   color: var(--status-watch);
+}
+
+/* ── Fade value (live metric crossfade) ── */
+.fade-value {
+  display: inline-grid;
+  vertical-align: baseline;
+}
+
+.fade-value__layer {
+  grid-area: 1 / 1;
+  transition: opacity var(--dur-value) var(--ease);
+}
+
+/* Idle — single visible layer */
+.fade-value__layer:not([data-phase]) {
+  opacity: 1;
+}
+
+/* Crossfade start frame: both layers painted before transition runs */
+.fade-value__layer[data-role='out'][data-phase='start'] {
+  opacity: 1;
+}
+
+.fade-value__layer[data-role='in'][data-phase='start'] {
+  opacity: 0;
+}
+
+/* Crossfade run: outgoing and incoming move in opposite directions */
+.fade-value__layer[data-role='out'][data-phase='run'] {
+  opacity: 0;
+}
+
+.fade-value__layer[data-role='in'][data-phase='run'] {
+  opacity: 1;
 }
 
 /* ── Metric pill ── */
@@ -1530,7 +1568,7 @@ body {
 
 .insights-pillar:hover {
   border-color: var(--border-strong);
-  box-shadow: var(--shadow-lift);
+  box-shadow: var(--shadow-hover);
 }
 
 .insights-pillar__label {
@@ -3119,11 +3157,13 @@ body {
   background: var(--surface-well);
   font-family: var(--font-mono);
   font-size: calc(var(--fs-xs) + var(--mono-fs-nudge));
-  color: var(--text-muted);
+  color: var(--text-strong);
+  transition: opacity var(--dur-value) var(--ease), color var(--dur-value) var(--ease);
 }
 
-.dd-channel[data-active='true'] {
-  color: var(--text-strong);
+.dd-channel[data-active='false'] {
+  opacity: 0.4;
+  color: var(--text-muted);
 }
 
 .dd-list {
@@ -3225,7 +3265,7 @@ body {
 
 .agent-card:hover {
   border-color: var(--border-strong);
-  box-shadow: var(--shadow-lift);
+  box-shadow: var(--shadow-hover);
 }
 
 .agent-card:focus-visible {
@@ -3576,6 +3616,34 @@ body {
 .settings-number__suffix {
   font-size: 12px;
   color: var(--text-muted);
+}
+
+.settings-tint-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  justify-content: flex-end;
+}
+
+.settings-tint-swatch {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 2px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+}
+
+.settings-tint-swatch:hover {
+  border-color: var(--border-strong);
+}
+
+.settings-tint-swatch.is-active {
+  border-color: var(--accent);
+  box-shadow: var(--ring-focus);
 }
 
 .settings-toggle {

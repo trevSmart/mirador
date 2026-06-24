@@ -4,7 +4,10 @@
    value can never break a consumer. The <SettingsModal> edits a draft copy and
    calls savePreferences(); usePreferences exposes the live value to the app. */
 
+import { FLOOR_CANVAS_TINTS, type FloorCanvasTint } from './floor-canvas-wash'
+
 export type FloorViewMode = '2d' | '3d'
+export type { FloorCanvasTint }
 export type Lang = 'ca' | 'es' | 'en'
 export type TimeFormat = '24h' | '12h'
 
@@ -28,6 +31,8 @@ export interface Preferences {
   showAvatars: boolean
   /** Animate towers / beacons in the 3D floor view. */
   animations: boolean
+  /** Background wash tint behind floor room renders. */
+  floorCanvasTint: FloorCanvasTint
   lang: Lang
   timeFormat: TimeFormat
 
@@ -52,6 +57,7 @@ export const PREFERENCES_DEFAULTS: Preferences = {
   defaultFloorView: '2d',
   showAvatars: true,
   animations: true,
+  floorCanvasTint: 'blue',
   lang: 'ca',
   timeFormat: '24h',
 
@@ -97,6 +103,7 @@ export function sanitizePreferences(raw: Partial<Preferences> | null | undefined
     defaultFloorView: oneOf(p.defaultFloorView, ['2d', '3d'], d.defaultFloorView),
     showAvatars: asBool(p.showAvatars, d.showAvatars),
     animations: asBool(p.animations, d.animations),
+    floorCanvasTint: oneOf(p.floorCanvasTint, FLOOR_CANVAS_TINTS, d.floorCanvasTint),
     lang: oneOf(p.lang, ['ca', 'es', 'en'], d.lang),
     timeFormat: oneOf(p.timeFormat, ['24h', '12h'], d.timeFormat),
 

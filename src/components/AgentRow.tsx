@@ -2,7 +2,7 @@ import type { Agent, ChannelKey, PresenceStatus } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { useSalesforcePhoto } from '../hooks/useSalesforcePhoto'
 import { agentInitials, formatMinutes } from '../utils/format'
-import { CapacityBar, Ring, SfIcon } from './ds'
+import { CapacityBar, FadeValue, MetricPill, Ring, SfIcon } from './ds'
 import { StatusBadge } from './StatusBadge'
 
 const STATUS_COLOR: Record<PresenceStatus, string> = {
@@ -94,7 +94,14 @@ export function AgentRow({ agent, showSkills = false }: AgentRowProps) {
           </div>
           <p className="agent-row__meta">
             {agent.role}
-            {agent.loginMin > 0 ? ` · ${formatMinutes(agent.loginMin)} en estat actual` : ''}
+            {agent.loginMin > 0 ? (
+              <>
+                {' · '}
+                <FadeValue value={formatMinutes(agent.loginMin)} /> en estat actual
+              </>
+            ) : (
+              ''
+            )}
           </p>
         </div>
       </div>
@@ -112,21 +119,15 @@ export function AgentRow({ agent, showSkills = false }: AgentRowProps) {
               data-active={active ? 'true' : 'false'}
             >
               <SfIcon channel={channel} sldsSize="small" />
-              <span className="agent-row__channel-count">{count}</span>
+              <FadeValue className="agent-row__channel-count" value={count} />
             </div>
           )
         })}
       </div>
 
       <div className="agent-row__metrics">
-        <div className="metric-pill">
-          <span className="metric-pill__label">Treball actiu</span>
-          <span className="metric-pill__value">{agent.work.length}</span>
-        </div>
-        <div className="metric-pill">
-          <span className="metric-pill__label">Cues</span>
-          <span className="metric-pill__value">{queueCount}</span>
-        </div>
+        <MetricPill label="Treball actiu" value={agent.work.length} />
+        <MetricPill label="Cues" value={queueCount} />
       </div>
 
       {showSkills && skillNames.length > 0 ? (

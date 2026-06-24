@@ -1,5 +1,6 @@
 import type { HealthInsights, HealthPillar } from '../utils/health-insights'
 import type { PanelType } from '../panels/registry'
+import { FadeValue } from './ds'
 
 interface InsightsBannerProps {
   health: HealthInsights
@@ -26,11 +27,11 @@ export function InsightsBanner({ health, queueCount, onOpenPanel }: InsightsBann
             </span>
             <span aria-hidden="true">·</span>
             <span>
-              <b className="pa-mono">{health.online}</b> agents online
+              <FadeValue as="b" className="pa-mono" value={health.online} /> agents online
             </span>
             <span aria-hidden="true">·</span>
             <span>
-              <b className="pa-mono">{queueCount}</b> cues actives
+              <FadeValue as="b" className="pa-mono" value={queueCount} /> cues actives
             </span>
             <span aria-hidden="true">·</span>
             <span>actualitzat ara mateix</span>
@@ -49,9 +50,11 @@ export function InsightsBanner({ health, queueCount, onOpenPanel }: InsightsBann
             <span className="insights-pillar__arrow" aria-hidden="true">
               →
             </span>
-            <div className={`insights-pillar__value ${pillarValueClass(pillar.value)}`.trim()}>
-              {pillar.value}
-            </div>
+            <FadeValue
+              as="div"
+              className={`insights-pillar__value ${pillarValueClass(pillar.value)}`.trim()}
+              value={pillar.value}
+            />
             <div className="insights-pillar__label">{pillar.label}</div>
             <div className="insights-pillar__status">
               <i style={{ background: `var(--status-${pillar.state})` }} aria-hidden="true" />

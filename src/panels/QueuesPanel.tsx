@@ -1,5 +1,6 @@
 import { useMiradorData } from '../api/mirador-data-context'
 import { useMiradorStatus } from '../api/mirador-status-context'
+import { FadeValue } from '../components/ds'
 import { PanelState } from '../components/PanelState'
 import { QueueRow } from '../components/QueueRow'
 import { sortQueuesByBacklog, totalQueueBacklog } from '../utils/agent-stats'
@@ -18,7 +19,7 @@ export function QueuesPanel() {
       emptyMessage="No hi ha cues configurades."
     >
       <p className="panel-summary">
-        {queues.length} cues · {totalQueueBacklog(queues)} treballs en cua
+        <FadeValue value={queues.length} /> cues · <FadeValue value={totalQueueBacklog(queues)} /> treballs en cua
       </p>
 
       <div className="entity-list">

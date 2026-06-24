@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useMiradorData } from '../api/mirador-data-context'
 import { useMiradorStatus } from '../api/mirador-status-context'
+import { FadeValue } from '../components/ds'
 import { PanelState } from '../components/PanelState'
 import { WorkRow } from '../components/WorkRow'
 import { countWorkByStatus, partitionWorkByStatus } from '../utils/agent-stats'
@@ -29,8 +30,8 @@ export function WorkPanel() {
       emptyMessage="No hi ha treball assignat ni en cua."
     >
       <p className="panel-summary">
-        {work.length} treballs · {statusCounts.assigned} assignats · {statusCounts.queued}{' '}
-        en cua
+        <FadeValue value={work.length} /> treballs · <FadeValue value={statusCounts.assigned} /> assignats ·{' '}
+        <FadeValue value={statusCounts.queued} /> en cua
       </p>
 
       <div className="panel-columns">

@@ -17,6 +17,7 @@ import {
   SettingsBadge,
   SettingsGroup,
   SettingsRow,
+  TintSwatchField,
   ToggleField,
 } from './parts'
 
@@ -200,6 +201,16 @@ export function AparencaSection({ draft, patch }: SectionProps) {
   return (
     <>
       <SettingsGroup label="Visualització">
+        <SettingsRow
+          title="Fons de les sales"
+          hint="To del gradient darrere els renders de planta"
+          control={
+            <TintSwatchField
+              value={draft.floorCanvasTint}
+              onChange={(v) => patch({ floorCanvasTint: v })}
+            />
+          }
+        />
         <SettingsRow
           title="Vista de planta per defecte"
           hint="Mode amb què s'obre el panell Floor"

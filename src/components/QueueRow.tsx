@@ -1,7 +1,7 @@
 import type { Queue } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { formatSeconds } from '../utils/format'
-import { PressureBar, SfIcon } from './ds'
+import { FadeValue, MetricPill, PressureBar, SfIcon } from './ds'
 
 /** Backlog count that reads as "full" pressure on the bar. */
 const BACKLOG_FULL = 20
@@ -31,25 +31,18 @@ export function QueueRow({ queue }: QueueRowProps) {
         <SfIcon name="queue" sldsSize="medium" bg={queue.color} />
         <div className="queue-row__body">
           <h3 className="queue-row__name" title={queue.name}>{queue.name}</h3>
-          <p className="queue-row__meta">{queue.online} agents en línia</p>
+          <p className="queue-row__meta">
+            <FadeValue value={queue.online} /> agents en línia
+          </p>
         </div>
       </div>
 
       <PressureBar value={pressure} />
 
       <div className="queue-row__metrics">
-        <div className="metric-pill">
-          <span className="metric-pill__label">Backlog</span>
-          <span className="metric-pill__value">{queue.backlog}</span>
-        </div>
-        <div className="metric-pill">
-          <span className="metric-pill__label">Màxim</span>
-          <span className="metric-pill__value">{formatSeconds(queue.longest)}</span>
-        </div>
-        <div className="metric-pill">
-          <span className="metric-pill__label">Mitjana</span>
-          <span className="metric-pill__value">{formatSeconds(queue.avg)}</span>
-        </div>
+        <MetricPill label="Backlog" value={queue.backlog} />
+        <MetricPill label="Màxim" value={formatSeconds(queue.longest)} />
+        <MetricPill label="Mitjana" value={formatSeconds(queue.avg)} />
       </div>
     </article>
   )

@@ -1,4 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react'
+import { FadeValue } from './FadeValue'
 
 interface CapacityBarProps {
   used?: number
@@ -60,7 +61,7 @@ export function CapacityBar({
               fontWeight: 500,
             }}
           >
-            {used} / {max}
+            <FadeValue as="span" value={used} /> / <FadeValue as="span" value={max} />
           </b>
         </div>
       )}
