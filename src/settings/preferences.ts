@@ -9,6 +9,8 @@ export type Lang = 'ca' | 'es' | 'en'
 export type TimeFormat = '24h' | '12h'
 
 export interface Preferences {
+  /** Override data source to mock mode regardless of server config. */
+  mockOverride: boolean
   /** Data refresh cadence, in seconds. */
   refreshInterval: number
   /** Poll for fresh data in the background while the tab is active. */
@@ -40,6 +42,7 @@ export interface Preferences {
 }
 
 export const PREFERENCES_DEFAULTS: Preferences = {
+  mockOverride: false,
   refreshInterval: 30,
   autoRefresh: true,
   maxWaitSeconds: 180,
@@ -84,6 +87,7 @@ export function sanitizePreferences(raw: Partial<Preferences> | null | undefined
   const p = raw ?? {}
   const refresh = clampInt(p.refreshInterval, d.refreshInterval, 1, 3600)
   return {
+    mockOverride: asBool(p.mockOverride, d.mockOverride),
     refreshInterval: (REFRESH_OPTIONS as readonly number[]).includes(refresh) ? refresh : d.refreshInterval,
     autoRefresh: asBool(p.autoRefresh, d.autoRefresh),
     maxWaitSeconds: clampInt(p.maxWaitSeconds, d.maxWaitSeconds, 30, 3600),

@@ -28,9 +28,9 @@ export function QueueRow({ queue }: QueueRowProps) {
       }}
     >
       <div className="queue-row__main">
-        <SfIcon name="queue" size={32} bg={queue.color} />
-        <div>
-          <h3 className="queue-row__name">{queue.name}</h3>
+        <SfIcon name="queue" sldsSize="medium" bg={queue.color} />
+        <div className="queue-row__body">
+          <h3 className="queue-row__name" title={queue.name}>{queue.name}</h3>
           <p className="queue-row__meta">{queue.online} agents en línia</p>
         </div>
       </div>

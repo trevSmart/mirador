@@ -1,11 +1,10 @@
-import type { IDockviewPanelProps } from 'dockview-react'
 import { useMiradorData } from '../api/mirador-data-context'
 import { useMiradorStatus } from '../api/mirador-status-context'
 import { PanelState } from '../components/PanelState'
 import { QueueRow } from '../components/QueueRow'
 import { sortQueuesByBacklog, totalQueueBacklog } from '../utils/agent-stats'
 
-export function QueuesPanel(_: IDockviewPanelProps) {
+export function QueuesPanel() {
   const { queues } = useMiradorData()
   const { isLoading, error, refresh } = useMiradorStatus()
   const sortedQueues = sortQueuesByBacklog(queues)

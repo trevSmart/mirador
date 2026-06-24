@@ -1,4 +1,3 @@
-import type { IDockviewPanelProps } from 'dockview-react'
 import { useCallback, useRef, useState } from 'react'
 import { useMiradorData } from '../api/mirador-data-context'
 import { useMiradorStatus } from '../api/mirador-status-context'
@@ -32,7 +31,7 @@ import {
   totalQueueBacklog,
 } from '../utils/agent-stats'
 
-export function HomePanel(_: IDockviewPanelProps) {
+export function HomePanel() {
   const { agents, queues } = useMiradorData()
   const { isLoading, error, refresh } = useMiradorStatus()
   const statusCounts = countAgentsByStatus(agents)

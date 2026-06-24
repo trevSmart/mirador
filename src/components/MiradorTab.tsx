@@ -141,7 +141,7 @@ export function MiradorTab({
       <span className="dv-default-tab-content mirador-tab__content">
         {panelType ? (
           <span className="mirador-tab__icon">
-            <PanelIcon type={panelType} size={18} />
+            <PanelIcon type={panelType} sldsSize="x-small" />
           </span>
         ) : null}
         {title}

@@ -68,7 +68,7 @@ export function PanelState({
   shellClassName,
 }: PanelStateProps) {
   const { isAuthenticated, isMockMode, isSalesforceEnabled } = useAuth()
-  const icon = panelType ? <PanelIcon type={panelType} size={28} /> : undefined
+  const icon = panelType ? <PanelIcon type={panelType} sldsSize="medium" /> : undefined
 
   return (
     <PanelShell

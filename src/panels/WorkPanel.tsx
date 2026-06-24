@@ -1,12 +1,11 @@
 import { useMemo } from 'react'
-import type { IDockviewPanelProps } from 'dockview-react'
 import { useMiradorData } from '../api/mirador-data-context'
 import { useMiradorStatus } from '../api/mirador-status-context'
 import { PanelState } from '../components/PanelState'
 import { WorkRow } from '../components/WorkRow'
 import { countWorkByStatus, partitionWorkByStatus } from '../utils/agent-stats'
 
-export function WorkPanel(_: IDockviewPanelProps) {
+export function WorkPanel() {
   const { agents, queues, work } = useMiradorData()
   const { isLoading, error, refresh } = useMiradorStatus()
   const { assigned, queued } = partitionWorkByStatus(work)

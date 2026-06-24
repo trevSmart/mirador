@@ -68,7 +68,7 @@ export function AddPanelHeaderActions(props: IDockviewHeaderActionsProps) {
             className="add-panel-control__item"
             onClick={() => handleAddPanel(panel.type)}
           >
-            <PanelIcon type={panel.type} size={18} />
+            <PanelIcon type={panel.type} sldsSize="x-small" />
             {panel.title}
           </button>
         ))}
