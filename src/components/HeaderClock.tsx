@@ -21,7 +21,7 @@ export function HeaderClock() {
   const timeFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(LOCALE, {
-        hour: '2-digit',
+        hour: 'numeric',
         minute: '2-digit',
         hour12: prefs.timeFormat === '12h',
       }),

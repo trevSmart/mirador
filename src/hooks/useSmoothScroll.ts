@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useRef } from 'react'
 import Lenis from 'lenis'
 
 /**
@@ -34,17 +34,18 @@ export function scrollPanelToTop(element: HTMLElement | null): void {
  * instance is created and native scrolling is used.
  */
 export function useSmoothScroll<T extends HTMLElement>() {
-  const ref = useRef<T>(null)
+  // A callback ref (not useRef + useEffect) so Lenis attaches the moment the
+  // element actually mounts — even when it's rendered conditionally or after a
+  // parent's early return, where a one-shot useEffect would see a null ref.
+  const cleanup = useRef<(() => void) | null>(null)
 
-  useEffect(() => {
-    const element = ref.current
-    if (!element) {
-      return
+  return useCallback((element: T | null) => {
+    if (cleanup.current) {
+      cleanup.current()
+      cleanup.current = null
     }
-
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return
-    }
+    if (!element) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
     const lenis = new Lenis({
       wrapper: element,
@@ -60,12 +61,10 @@ export function useSmoothScroll<T extends HTMLElement>() {
       rafId = requestAnimationFrame(raf)
     })
 
-    return () => {
+    cleanup.current = () => {
       cancelAnimationFrame(rafId)
       lenisByElement.delete(element)
       lenis.destroy()
     }
   }, [])
-
-  return ref
 }
