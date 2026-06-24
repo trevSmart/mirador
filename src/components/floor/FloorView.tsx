@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Agent, PresenceStatus } from '../../api/types'
 import { edgeStyle } from '../../floor/floor-geometry'
 import { cellKey, GRID_C } from '../../floor/floor-plan-model'
@@ -79,11 +79,33 @@ export function FloorView({ floor, dir = 0, agentsById, onSelectAgent, showAvata
   const bounds = useMemo(() => roomBounds2D(floor.cells, dir, GRID_C), [floor.cells, dir])
   const { minC, minR, cols, rows } = bounds
 
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [scale, setScale] = useState(1)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const gridW = cols * VIEW_CELL
+    const gridH = rows * VIEW_CELL
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0]
+      if (!entry) return
+      const cw = entry.contentRect.width
+      const ch = entry.contentRect.height
+      if (!gridW || !gridH) return
+      const next = Math.min(cw / gridW, ch / gridH)
+      if (!isFinite(next) || isNaN(next) || next === 0) return
+      setScale((prev) => (prev === next ? prev : next))
+    })
+    observer.observe(el)
+    return () => { observer.disconnect() }
+  }, [cols, rows])
+
   return (
-    <div className="fv-fit">
+    <div className="fv-fit" ref={containerRef}>
       <div
         className="fv-grid"
-        style={{ width: cols * VIEW_CELL, height: rows * VIEW_CELL }}
+        style={{ width: cols * VIEW_CELL, height: rows * VIEW_CELL, transform: `scale(${scale})` }}
       >
         {floor.background ? (
           <div

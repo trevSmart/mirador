@@ -30,40 +30,26 @@
    ════════════════════════════════════════════════════════════ */
 :root {
   /* ── Base palette ───────────────────────────────────── */
-  --pa-bg: #F6F5F2;
-  /* app canvas — warm paper */
-  --pa-bg-tint: #FBFAF8;
-  /* lifted canvas / drawer / sticky bars */
-  --pa-surface: #FFFFFF;
-  /* cards, inputs, raised surfaces */
-  --pa-surface-2: #F2F1ED;
-  /* inset wells, tracks, muted fills */
+  --pa-bg: #F6F5F2;        /* app canvas — warm paper */
+  --pa-bg-tint: #FBFAF8;   /* lifted canvas / drawer / sticky bars */
+  --pa-surface: #FFFFFF;   /* cards, inputs, raised surfaces */
+  --pa-surface-2: #F2F1ED; /* inset wells, tracks, muted fills */
 
   /* ── Ink ramp (text) ────────────────────────────────── */
-  --pa-ink: #1B1924;
-  /* primary text, headlines */
-  --pa-dim: #65616F;
-  /* secondary text, labels */
-  --pa-faint: #9C98A6;
-  /* tertiary text, captions, placeholders */
-  --pa-off: #B7B3C0;
-  /* disabled / offline */
+  --pa-ink: #1B1924;       /* primary text, headlines */
+  --pa-dim: #65616F;       /* secondary text, labels */
+  --pa-faint: #9C98A6;     /* tertiary text, captions, placeholders */
+  --pa-off: #B7B3C0;       /* disabled / offline */
 
   /* ── Hairlines ──────────────────────────────────────── */
-  --pa-line: rgba(27, 25, 36, .09);
-  /* default border */
-  --pa-line-2: rgba(27, 25, 36, .16);
-  /* hover / stronger border */
+  --pa-line: rgba(27, 25, 36, .09);   /* default border */
+  --pa-line-2: rgba(27, 25, 36, .16); /* hover / stronger border */
 
   /* ── Accent (Salesforce blue) ───────────────────────── */
-  --pa-accent: #0080BE;
-  /* links, active nav, primary */
-  --pa-accent-2: #34BECD;
-  /* secondary cyan */
-  --pa-accent-soft: rgba(0, 128, 190, .10);
-  /* tint fill */
-  --pa-accent-line: rgba(0, 128, 190, .30);
-  /* tint border / focus halo */
+  --pa-accent: #0080BE;                       /* links, active nav, primary */
+  --pa-accent-2: #34BECD;                     /* secondary cyan */
+  --pa-accent-soft: rgba(0, 128, 190, .10);   /* tint fill */
+  --pa-accent-line: rgba(0, 128, 190, .30);   /* tint border / focus halo */
 
   /* ── Semantic status ────────────────────────────────── */
   --pa-ok: #15A06A;
@@ -108,7 +94,7 @@
 
   --text-strong: var(--pa-ink);
   --text-body: var(--pa-dim);
-  --text-muted: #847F90;
+  --text-muted: var(--pa-faint);
   --text-disabled: var(--pa-off);
 
   --border-subtle: var(--pa-line);
@@ -179,18 +165,12 @@
   --sp-12: 48px;
   --sp-16: 64px;
 
-  --r: 16px;
-  /* cards, drawer surfaces */
-  --r-md: 11px;
-  /* buttons, stat tiles */
-  --r-sm: 10px;
-  /* inputs, segmented controls */
-  --r-xs: 8px;
-  /* nav buttons, small wells */
-  --r-pill: 20px;
-  /* chips, status pills, badges */
-  --r-full: 50%;
-  /* avatars, dots, rings */
+  --r: 16px;       /* cards, drawer surfaces */
+  --r-md: 11px;    /* buttons, stat tiles */
+  --r-sm: 10px;    /* inputs, segmented controls */
+  --r-xs: 8px;     /* nav buttons, small wells */
+  --r-pill: 20px;  /* chips, status pills, badges */
+  --r-full: 50%;   /* avatars, dots, rings */
 
   --h-topbar: 58px;
   --h-tabbar: 38px;
@@ -237,49 +217,20 @@
 
 /* ── Shared status pulses ─────────────────────────────── */
 @keyframes pa-calm {
-
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(21, 160, 106, .35);
-  }
-
-  50% {
-    box-shadow: 0 0 0 8px rgba(21, 160, 106, 0);
-  }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(21, 160, 106, .35); }
+  50%      { box-shadow: 0 0 0 8px rgba(21, 160, 106, 0); }
 }
-
 @keyframes pa-throb {
-
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(224, 86, 65, .5);
-  }
-
-  50% {
-    box-shadow: 0 0 0 9px rgba(224, 86, 65, 0);
-  }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(224, 86, 65, .5); }
+  50%      { box-shadow: 0 0 0 9px rgba(224, 86, 65, 0); }
 }
-
 @keyframes pa-breathe {
-
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 var(--st, var(--pa-alert));
-  }
-
-  50% {
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--st, var(--pa-alert)) 22%, transparent);
-  }
+  0%, 100% { box-shadow: 0 0 0 0 var(--st, var(--pa-alert)); }
+  50%      { box-shadow: 0 0 0 3px color-mix(in srgb, var(--st, var(--pa-alert)) 22%, transparent); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-  }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -305,15 +256,6 @@ body {
 
 ::selection {
   background: var(--accent-tint);
-}
-
-/* Form elements don't inherit font-family from the UA stylesheet (they
-   default to Arial), so opt them back into the app's typography. */
-button,
-input,
-select,
-textarea {
-  font-family: inherit;
 }
 
 /* Mono numerals should always be tabular so live values don't jitter. */
@@ -462,8 +404,8 @@ textarea {
   visibility: hidden;
   transform: translateY(calc(var(--dropdown-offset) * -1));
   transition: opacity var(--dropdown-dur) var(--dropdown-ease),
-    transform var(--dropdown-dur) var(--dropdown-ease),
-    visibility 0s linear var(--dropdown-dur);
+              transform var(--dropdown-dur) var(--dropdown-ease),
+              visibility 0s linear var(--dropdown-dur);
   pointer-events: none;
   border-radius: var(--dropdown-radius);
   background: var(--dropdown-bg);
@@ -477,8 +419,8 @@ textarea {
   visibility: visible;
   transform: translateY(0);
   transition: opacity var(--dropdown-dur) var(--dropdown-ease),
-    transform var(--dropdown-dur) var(--dropdown-ease),
-    visibility 0s linear 0s;
+              transform var(--dropdown-dur) var(--dropdown-ease),
+              visibility 0s linear 0s;
   pointer-events: auto;
 }
 
@@ -751,7 +693,7 @@ textarea {
   flex-direction: column;
   --dv-spacing-padding: 0;
   --dv-tabs-and-actions-container-height: var(--tabbar-h);
-  --dv-tabs-and-actions-container-font-size: calc(var(--fs-sm) + 1px);
+  --dv-tabs-and-actions-container-font-size: var(--fs-sm);
   --dv-tabs-and-actions-container-background-color: var(--surface-raised);
   --dv-group-view-background-color: var(--surface-raised);
   --dv-activegroup-visiblepanel-tab-background-color: var(--accent-tint);
@@ -759,9 +701,9 @@ textarea {
   --dv-inactivegroup-visiblepanel-tab-background-color: var(--accent-tint);
   --dv-inactivegroup-hiddenpanel-tab-background-color: var(--surface-well);
   --dv-activegroup-visiblepanel-tab-color: var(--text-strong);
-  --dv-activegroup-hiddenpanel-tab-color: var(--text-strong);
+  --dv-activegroup-hiddenpanel-tab-color: var(--text-body);
   --dv-inactivegroup-visiblepanel-tab-color: var(--text-strong);
-  --dv-inactivegroup-hiddenpanel-tab-color: var(--text-strong);
+  --dv-inactivegroup-hiddenpanel-tab-color: var(--text-body);
   --dv-tab-divider-color: transparent;
   --dv-separator-border: var(--border-subtle);
   --dv-icon-hover-background-color: var(--accent-tint);
@@ -828,16 +770,6 @@ textarea {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-}
-
-/* The light-spaced theme redefines --dv-tabs-and-actions-container-font-size
-   and the per-state tab colors on the .dockview-theme-light-spaced node, which
-   sits deeper than our .dockview-container vars and wins the cascade. Force the
-   bumped size + stronger text directly on the tab content with enough
-   specificity to override the theme. */
-.app-chrome .dockview-container .dv-tab .mirador-tab__content {
-  font-size: var(--fs-sm);
-  color: var(--text-strong);
 }
 
 .mirador-tab__icon {
@@ -1717,13 +1649,8 @@ textarea {
   user-select: none;
 }
 
-.fe-grid[data-tool='cell'] {
-  cursor: crosshair;
-}
-
-.fe-grid[data-tool='erase'] {
-  cursor: cell;
-}
+.fe-grid[data-tool='cell'] { cursor: crosshair; }
+.fe-grid[data-tool='erase'] { cursor: cell; }
 
 .fe-grid__bg {
   position: absolute;
@@ -1736,11 +1663,9 @@ textarea {
 .fe-grid__bg[data-bg='office-a'] {
   background: linear-gradient(135deg, #cfe4f2, #e7d9f5);
 }
-
 .fe-grid__bg[data-bg='office-b'] {
   background: linear-gradient(135deg, #d8efe2, #f3e7cf);
 }
-
 .fe-grid__bg[data-bg='office-c'] {
   background: linear-gradient(135deg, #f2dce0, #dfe2f5);
 }
@@ -2209,14 +2134,11 @@ textarea {
   height: 100%;
   display: grid;
   place-items: center;
-  container-type: size;
   overflow: hidden;
 }
 
 .fv-fit > .fv-grid {
-  /* Scale the natural-size grid to fit the container, keeping aspect ratio. */
-  max-width: 100%;
-  max-height: 100%;
+  transform-origin: center;
 }
 
 .fv-grid {
@@ -2645,11 +2567,9 @@ textarea {
 .dd-stat__value[data-tone='alert'] {
   color: var(--status-alert);
 }
-
 .dd-stat__value[data-tone='watch'] {
   color: var(--status-watch);
 }
-
 .dd-stat__value[data-tone='ok'] {
   color: var(--status-ok);
 }
