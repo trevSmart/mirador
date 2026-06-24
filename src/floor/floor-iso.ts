@@ -19,7 +19,7 @@ export type Point = [number, number]
 
 /** Project a grid cell to the centre of its rhombus, for camera direction `dir`. */
 export function projectCell(c: number, r: number, dir: Dir, maxC: number, maxR: number): Point {
-  if (dir === 1) return [(r - c) * TW, (r + c) * TH]
+  if (dir === 1) return [(maxR - r - c) * TW, (maxR + c - r) * TH]
   if (dir === 2) return [(maxR - r - c) * TW, (maxR - r + c) * TH]
   if (dir === 3) return [(r + c - maxC) * TW, (r + maxR - c) * TH]
   return [(c - r) * TW, (c + r) * TH]
@@ -81,7 +81,7 @@ type Has = (c: number, r: number) => boolean
    when the corresponding face/wall should be drawn (no neighbouring cell). */
 
 export function rightFaceVisible(has: Has, dir: Dir): Has {
-  if (dir === 1) return (c, r) => !has(c, r + 1)
+  if (dir === 1) return (c, r) => !has(c, r - 1)
   if (dir === 2) return (c, r) => !has(c, r - 1)
   if (dir === 3) return (c, r) => !has(c, r + 1)
   return (c, r) => !has(c + 1, r)
@@ -99,7 +99,7 @@ export function backRightVisible(has: Has, dir: Dir): Has {
   return (c, r) => !has(c, r - 1)
 }
 export function backLeftVisible(has: Has, dir: Dir): Has {
-  if (dir === 1) return (c, r) => !has(c, r - 1)
+  if (dir === 1) return (c, r) => !has(c, r + 1)
   if (dir === 2) return (c, r) => !has(c, r + 1)
   if (dir === 3) return (c, r) => !has(c, r - 1)
   return (c, r) => !has(c - 1, r)
@@ -110,11 +110,12 @@ export function backRightEdge(dir: Dir): Edge {
   return dir === 0 ? 'N' : dir === 3 ? 'E' : 'O'
 }
 export function backLeftEdge(dir: Dir): Edge {
-  return dir === 0 ? 'O' : dir === 2 ? 'S' : 'N'
+  return dir === 0 ? 'O' : dir === 2 ? 'S' : dir === 1 ? 'S' : 'N'
 }
 
 /** Comparator that orders cells far → near for the painter's algorithm. */
 export function depthCompare(dir: Dir): (a: Cell, b: Cell) => number {
+  if (dir === 1) return (a, b) => a[0] - a[1] - (b[0] - b[1]) || a[0] - b[0]
   if (dir === 2) return (a, b) => a[0] - a[1] - (b[0] - b[1]) || a[0] - b[0]
   if (dir === 3) return (a, b) => a[1] - a[0] - (b[1] - b[0]) || a[1] - b[1]
   return (a, b) => a[0] + a[1] - (b[0] + b[1]) || a[0] - b[0]
