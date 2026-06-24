@@ -1,6 +1,8 @@
-import type { FunctionComponent } from 'react'
+import { createElement, type FunctionComponent } from 'react'
 import type { IDockviewPanelProps } from 'dockview-react'
 import type { SfIconName } from '../components/ds/SfIcon'
+import { ErrorBoundary } from '../components/error/ErrorBoundary'
+import { PanelErrorFallback } from '../components/error/PanelErrorFallback'
 import { AgentsPanel } from './AgentsPanel'
 import { FloorEditorPanel } from './FloorEditorPanel'
 import { FloorPanel } from './FloorPanel'
@@ -38,8 +40,20 @@ export const PANEL_DEFINITIONS: PanelDefinition[] = [
   { type: 'floorEditor', title: 'Floor editor', iconName: 'floorEditor', component: FloorEditorPanel },
 ]
 
+function withPanelErrorBoundary(
+  PanelComponent: FunctionComponent<IDockviewPanelProps>,
+): FunctionComponent<IDockviewPanelProps> {
+  const Wrapped: FunctionComponent<IDockviewPanelProps> = (props) =>
+    createElement(ErrorBoundary, {
+      fallback: (error, reset) => createElement(PanelErrorFallback, { error, reset }),
+      children: createElement(PanelComponent, props),
+    })
+  Wrapped.displayName = `PanelErrorBoundary(${PanelComponent.displayName ?? PanelComponent.name ?? 'Panel'})`
+  return Wrapped
+}
+
 export const PANEL_COMPONENTS = Object.fromEntries(
-  PANEL_DEFINITIONS.map((panel) => [panel.type, panel.component]),
+  PANEL_DEFINITIONS.map((panel) => [panel.type, withPanelErrorBoundary(panel.component)]),
 ) as Record<PanelType, FunctionComponent<IDockviewPanelProps>>
 
 export function getPanelDefinition(type: PanelType): PanelDefinition {
