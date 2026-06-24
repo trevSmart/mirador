@@ -1,11 +1,15 @@
-import { useMemo } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import { useMiradorData } from '../api/mirador-data-context'
 import { AgentAssignPalette } from '../components/floor/AgentAssignPalette'
 import { FloorGrid } from '../components/floor/FloorGrid'
 import { FloorSidebar } from '../components/floor/FloorSidebar'
 import { FloorToolbar } from '../components/floor/FloorToolbar'
-import { FloorView3D } from '../components/floor/FloorView3D'
+import { PanelSuspenseFallback } from '../components/PanelSuspenseFallback'
 import { PanelShell } from '../components/PanelState'
+
+const FloorView3D = lazy(() =>
+  import('../components/floor/FloorView3D').then(m => ({ default: m.FloorView3D }))
+)
 import { useFloorPlan } from '../floor/useFloorPlan'
 import { useSmoothScroll } from '../hooks/useSmoothScroll'
 
@@ -82,15 +86,17 @@ export function FloorEditorPanel() {
           </div>
           {fp.activeFloor && fp.activeFloor.cells.length > 0 ? (
             <div className="floor-editor__preview" aria-label="Previsualització de la sala">
-              <FloorView3D
-                floor={fp.activeFloor}
-                agentsById={agentsById}
-                dir={fp.activeFloor.dir}
-                seatStyle="tower"
-                showAvatars
-                animations={false}
-                onSelectAgent={noop}
-              />
+              <Suspense fallback={<PanelSuspenseFallback />}>
+                <FloorView3D
+                  floor={fp.activeFloor}
+                  agentsById={agentsById}
+                  dir={fp.activeFloor.dir}
+                  seatStyle="tower"
+                  showAvatars
+                  animations={false}
+                  onSelectAgent={noop}
+                />
+              </Suspense>
             </div>
           ) : null}
         </aside>
