@@ -1,0 +1,27 @@
+// Lightning Design System 2.30.4
+
+.slds-combobox-button {
+  .slds-button_neutral,
+  .slds-button_brand {
+    --_slds-c-icon-sizing: calc(var(--slds-g-sizing-1) + var(--slds-g-sizing-4));
+    --slds-c-icon-color-foreground-default: currentColor;
+  }
+
+  .slds-button_neutral {
+    &:hover:not([disabled]),
+    &:active:not([disabled]),
+    &:focus-visible:not([disabled]) {
+      background-color: var(--slds-g-color-surface-container-1, var(--slds-g-color-neutral-base-100, #{$button-color-background-primary}));
+      color: var(--slds-g-color-accent-2, var(--sds-c-button-text-color-hover, #{$brand-accessible}));
+    }
+  }
+
+  .slds-button_brand {
+    &:hover:not([disabled]),
+    &:active:not([disabled]),
+    &:focus-visible:not([disabled]) {
+      background-color: var(--slds-g-color-accent-1, #{$brand-accessible});
+      color: var(--slds-g-color-on-accent-1, var(--slds-g-link-text-color-hover, #{$color-text-brand-primary}));
+    }
+  }
+}

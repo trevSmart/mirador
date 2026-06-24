@@ -1,0 +1,28 @@
+// Lightning Design System 2.30.4
+// Copyright (c) 2015-present, salesforce.com, inc. All rights reserved
+// Licensed under BSD 3-Clause - see LICENSE.txt or git.io/sfdc-license
+
+@import 'deprecate';
+
+/**
+ * @summary Initializes a timepicker
+ *
+ * @name base
+ * @selector .slds-timepicker
+ * @restrict div
+ * @support dev-ready
+ * @variant
+ */
+
+.slds-timepicker {
+    &.slds-combobox .slds-input[readonly] {
+        padding-inline-start: 0;
+        border-color: transparent;
+        background-color: transparent;
+        font-size: $input-static-font-size;
+    }
+
+    &:has(.slds-input[readonly]) .slds-input__icon .slds-icon {
+        fill: var(--slds-g-color-neutral-base-90);
+    }
+}

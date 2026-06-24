@@ -1,0 +1,234 @@
+// Lightning Design System 2.30.4
+// Kinetics vars
+$kx-button-ripple-size: 1.25rem;
+$kx-button-pointer-position: 50%;
+$kx-button-gradient-size: 140px;
+
+// Kinetic styles for Base Button
+[kx-scope="button"][kx-type="underline"] {
+  --slds-kx-button-underline-scale-x: 0;
+  --slds-kx-button-underline-base-y: 600%; // CAUTION: magic number, 600% positions the underline to the button text baseline, no matter padding, margin or line-height applied.
+  --slds-kx-button-underline-offset-y: 0.25rem; // this will need to be reassigned if font-size is overridden
+  --slds-kx-button-underline-translate-y: calc(var(--slds-kx-button-underline-base-y) + var(--slds-kx-button-underline-offset-y));
+  will-change: color, transform;
+  transition: $kx-duration-normal $kx-ease-out;
+  transition-property: transform, color;
+
+  &:active {
+    transform: scale(0.95);
+
+    @media (prefers-reduced-motion: reduce) {
+      transform: none;
+    }
+  }
+
+  &:after {
+    will-change: transform-origin, transform;
+    content: "";
+    position: absolute;
+    bottom: 50%; // 50% brings the underline to the relative middle of button, no matter padding, margin or line-height applied.
+    height: rem(1px);
+    width: calc(100% - var(--slds-c-button-spacing-inline-start, var(--slds-c-button-spacing-inlinestart, 0rem)) - var(--slds-c-button-spacing-inline-end, var(--slds-c-button-spacing-inlineend, 0rem)));
+    background: var(--slds-c-button-text-color-hover, var(--sds-c-button-text-color-hover, #{$brand-accessible-active}));
+    background-position: left top;
+    transform: scaleX(var(--slds-kx-button-underline-scale-x)) translateY(var(--slds-kx-button-underline-translate-y));
+    transform-origin: var(--slds-kx-button-pointer-position-x, #{$kx-button-pointer-position}) 0;
+    transition: transform $kx-duration-normal $kx-ease-out;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
+
+  &:hover:after,
+  &:focus:after {
+    --slds-kx-button-underline-scale-x: 1;
+  }
+
+  &[disabled],
+  &:disabled {
+    cursor: default;
+
+    &:after {
+      display: none;
+    }
+
+    &,
+    * {
+      pointer-events: none;
+    }
+  }
+}
+
+// Kinetic styles for "bordered" buttons
+[kx-scope="button-brand"],
+[kx-scope="button-neutral"],
+[kx-scope="button-outline"],
+[kx-scope="button-filled"] {
+  position: relative;
+  overflow: hidden;
+
+  transition: transform $kx-duration-short $kx-ease-in-out;
+
+  &:hover,
+  &:active {
+    transition: transform $kx-duration-short $kx-ease-in-out;
+  }
+
+  @media (hover: none) {
+
+    &:active {
+      transform: scale(0.97);
+
+      @media (prefers-reduced-motion: reduce) {
+        transform: none;
+      }
+    }
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+
+    &:hover {
+      transform: scale(1);
+
+      @media (prefers-reduced-motion: reduce) {
+        transform: none;
+      }
+    }
+
+    &:active {
+      transform: scale(0.97);
+    }
+  }
+}
+
+// Kinetic styles for Brand Button
+[kx-scope="button-brand"] {
+  // These purposefully override the interaction states to facilitate the Kinetics effect
+  // kinetics overrides the darker $brand-accessible-active color with $brand-accessible
+  // and the $brand-accessible-active color is then used in the hover gradient.
+  &:focus,
+  &:hover,
+  &:active {
+    background-color: var(--slds-c-button-brand-color-background, var(--sds-c-button-brand-color-background, #{$brand-accessible}));
+    border-color: transparent;
+  }
+
+  // Kinetics Button Brand hover gradient
+  &:hover:before {
+    content: "";
+    position: absolute;
+    left: var(--slds-kx-button-pointer-position-x, #{$kx-button-pointer-position});
+    top: var(--slds-kx-button-pointer-position-y, #{$kx-button-pointer-position});
+    width: var(--slds-kx-button-gradient-size, #{$kx-button-gradient-size});
+    height: var(--slds-kx-button-gradient-size, #{$kx-button-gradient-size});
+    opacity: 0.75;
+    z-index: -1;
+    background: radial-gradient(circle closest-side, var(--slds-kx-button-gradient-color, $brand-accessible-active), transparent);
+    transform: translate(-50%, -50%);
+  }
+
+  &[disabled]:before,
+  &:disabled:before {
+    display: none;
+  }
+}
+
+// Ripple
+[kx-scope^="button-"][kx-type="ripple"] {
+
+  &:focus {
+    transition: transform $kx-duration-short $kx-ease-in-out,
+      box-shadow $kx-duration-short $kx-ease-none $kx-duration-short,
+      border-color $kx-duration-short $kx-ease-none $kx-duration-short;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
+
+  &:after {
+    content: "";
+    position: absolute;
+    width: var(--slds-kx-button-ripple-size, #{$kx-button-ripple-size});
+    height: var(--slds-kx-button-ripple-size, #{$kx-button-ripple-size});
+    left: calc(
+      var(--slds-kx-button-pointer-position-x, #{$kx-button-pointer-position}) - var(--slds-kx-button-ripple-size, #{$kx-button-ripple-size}) / 2
+    );
+    top: calc(
+      var(--slds-kx-button-pointer-position-y, #{$kx-button-pointer-position}) - var(--slds-kx-button-ripple-size, #{$kx-button-ripple-size}) / 2
+    );
+    border-radius: $border-radius-circle;
+    opacity: 0;
+  }
+
+  &.slds-kx-is-animating-from-click {
+
+    &:after {
+      animation: slds-kx-button_ripple $kx-duration-normal $kx-ease-ripple;
+
+      @media (prefers-reduced-motion: reduce) {
+        animation: none;
+      }
+    }
+  }
+
+  &[disabled],
+  &:disabled {
+
+    &:after {
+      display: none;
+    }
+  }
+}
+
+// Kinetic styles for Brand and filled backgrounds
+[kx-scope="button-brand"],
+[kx-scope="button-filled"] {
+
+  &[kx-type="ripple"] {
+
+    &:after {
+      background-color: var(--slds-g-color-neutral-base-100, #{$color-background-light});
+    }
+  }
+
+  &[disabled],
+  &:disabled {
+    // @todo: global shared disabled button hooks
+    background-color: var(--slds-g-color-neutral-base-80, #{$brand-disabled});
+    border-color: var(--slds-g-color-neutral-base-80, #{$brand-disabled});
+    color: var(--slds-g-color-neutral-base-100, #{$color-text-button-brand-disabled});
+  }
+}
+
+[kx-scope="button-neutral"],
+[kx-scope="button-outline"] {
+
+  &[kx-type="ripple"] {
+
+    &:after {
+      background-color: var(--slds-c-button-brand-color-background, var(--sds-c-button-brand-color-background, #{$brand-accessible}));
+    }
+  }
+
+  &[disabled],
+  &:disabled {
+    // @todo: global shared disabled button hooks
+    background-color: var(--slds-g-color-neutral-base-100, #{$color-background-button-default-disabled});
+    border-color: var(--slds-g-color-border-base-4, #{$button-color-border-primary});
+  }
+}
+
+@keyframes slds-kx-button_ripple {
+
+  0% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(7);
+  }
+}
