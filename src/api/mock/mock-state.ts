@@ -25,10 +25,21 @@ type MockLiveState = {
   workIdSeq: number
   caseSeq: number
   evolutionStep: number
+  /** Wandering load factor: negative = calmer, positive = busier. */
+  loadBias: number
 }
 
 const QUEUE_IDS = ['ac', 'in', 've', 'st', 're'] as const
 const CHANNELS: ChannelKey[] = ['veu', 'chat', 'email', 'wa', 'cas']
+
+/** Target backlog per queue — simulation drifts around these levels. */
+const QUEUE_TARGET_BACKLOG: Record<(typeof QUEUE_IDS)[number], number> = {
+  ac: 7,
+  in: 13,
+  ve: 5,
+  st: 10,
+  re: 4,
+}
 
 const EMAIL_SUBJECTS = [
   'Email consulta general',
@@ -74,6 +85,7 @@ function cloneInitialState(): MockLiveState {
     workIdSeq: seedWork.length,
     caseSeq,
     evolutionStep: 0,
+    loadBias: 0,
   }
 }
 
@@ -109,6 +121,34 @@ function subjectForChannel(
 
 function pick<T>(items: readonly T[], rand: () => number): T {
   return items[Math.floor(rand() * items.length)]
+}
+
+function queueBacklog(stateRef: MockLiveState, queueId: string): number {
+  return stateRef.queued.filter((item) => item.queueId === queueId).length
+}
+
+function availableAgents(stateRef: MockLiveState): Agent[] {
+  return stateRef.agents.filter(
+    (agent) =>
+      ACTIVE_STATUSES.has(agent.status) &&
+      agent.status !== 'away' &&
+      agent.used < agent.max,
+  )
+}
+
+function pickWeightedQueue(stateRef: MockLiveState, rand: () => number): string {
+  const weights = QUEUE_IDS.map((queueId) => {
+    const backlog = queueBacklog(stateRef, queueId)
+    const target = QUEUE_TARGET_BACKLOG[queueId]
+    return Math.max(0.15, target + 1 - backlog * 0.35)
+  })
+  const total = weights.reduce((sum, weight) => sum + weight, 0)
+  let roll = rand() * total
+  for (let i = 0; i < QUEUE_IDS.length; i++) {
+    roll -= weights[i]
+    if (roll <= 0) return QUEUE_IDS[i]
+  }
+  return QUEUE_IDS[QUEUE_IDS.length - 1]
 }
 
 function syncAgentChannels(agent: Agent): void {
@@ -230,7 +270,13 @@ function completeSomeWork(stateRef: MockLiveState, rand: () => number): void {
     }
   }
 
-  let remaining = rand() < 0.35 ? 2 : 1
+  let remaining =
+    rand() < 0.12 ? 0 : rand() < 0.28 ? 3 : rand() < 0.55 ? 2 : 1
+  remaining = Math.max(
+    0,
+    Math.floor(remaining * (1 - stateRef.loadBias * 0.2) + (rand() < 0.08 ? 1 : 0)),
+  )
+  if (remaining === 0) return
   const agents = [...byAgent.values()].sort(() => rand() - 0.5)
 
   for (const picks of agents) {
@@ -243,67 +289,156 @@ function completeSomeWork(stateRef: MockLiveState, rand: () => number): void {
   }
 }
 
+function pushQueuedWork(
+  stateRef: MockLiveState,
+  queueId: string,
+  channelKey: ChannelKey,
+  rand: () => number,
+): void {
+  const icon = workItemIconFields(channelKey)
+  stateRef.queued.push({
+    id: nextWorkId(stateRef),
+    subject: subjectForChannel(stateRef, channelKey, rand),
+    channelKey,
+    queueId,
+    agentId: null,
+    status: 'queued',
+    ageSec: 10 + Math.floor(rand() * 90),
+    workItemId: null,
+    objectApiName: icon.objectApiName,
+    iconName: icon.iconName,
+    iconSprite: icon.iconSprite,
+    iconSymbol: icon.iconSymbol,
+  })
+}
+
+function driftLoadBias(stateRef: MockLiveState, rand: () => number): void {
+  stateRef.loadBias = Math.max(
+    -1,
+    Math.min(1, stateRef.loadBias + (rand() - 0.47) * 0.52),
+  )
+  if (rand() < 0.09) {
+    stateRef.loadBias = Math.max(-1, Math.min(1, rand() * 2 - 1))
+  }
+}
+function totalQueueTarget(): number {
+  return Object.values(QUEUE_TARGET_BACKLOG).reduce((sum, target) => sum + target, 0)
+}
+
 function enqueueIncomingWork(stateRef: MockLiveState, rand: () => number): void {
-  const count = rand() < 0.25 ? 2 : 1
+  const totalBacklog = stateRef.queued.length
+  const totalTarget = totalQueueTarget()
+  const deficit = totalTarget - totalBacklog
+  const surplus = totalBacklog - totalTarget
+  const bias = stateRef.loadBias
+
+  // Occasional rush — one queue gets a short spike of inbound work.
+  const rushChance = 0.08 + Math.max(0, bias) * 0.1
+  if (rand() < rushChance) {
+    const rushQueue = pickWeightedQueue(stateRef, rand)
+    const rushCount = 3 + Math.floor(rand() * 4)
+    for (let i = 0; i < rushCount; i++) {
+      pushQueuedWork(stateRef, rushQueue, pick(CHANNELS, rand), rand)
+    }
+  }
+
+  let arrivalChance: number
+  if (surplus > 14) {
+    arrivalChance = 0.12
+  } else if (deficit > 0) {
+    arrivalChance = 0.34 + Math.min(0.38, deficit * 0.025)
+  } else {
+    arrivalChance = 0.3
+  }
+  arrivalChance = Math.min(0.88, arrivalChance + bias * 0.22)
+  if (rand() > arrivalChance) return
+
+  const count =
+    rand() < 0.1 + Math.max(0, bias) * 0.08
+      ? 3
+      : rand() < 0.28
+        ? 2
+        : 1
+
   for (let i = 0; i < count; i++) {
-    const queueId = pick(QUEUE_IDS, rand)
-    const channelKey = pick(CHANNELS, rand)
-    const icon = workItemIconFields(channelKey)
-    stateRef.queued.push({
-      id: nextWorkId(stateRef),
-      subject: subjectForChannel(stateRef, channelKey, rand),
-      channelKey,
-      queueId,
-      agentId: null,
-      status: 'queued',
-      ageSec: 10 + Math.floor(rand() * 90),
-      workItemId: null,
-      objectApiName: icon.objectApiName,
-      iconName: icon.iconName,
-      iconSprite: icon.iconSprite,
-      iconSymbol: icon.iconSymbol,
-    })
+    const queueId = pickWeightedQueue(stateRef, rand)
+    const backlog = queueBacklog(stateRef, queueId)
+    const target = QUEUE_TARGET_BACKLOG[queueId as (typeof QUEUE_IDS)[number]]
+    if (backlog >= target * 3.2 && rand() < 0.65) continue
+
+    pushQueuedWork(stateRef, queueId, pick(CHANNELS, rand), rand)
   }
 }
 
 function assignQueuedWork(stateRef: MockLiveState, rand: () => number): void {
-  const availableAgents = stateRef.agents
-    .filter(
-      (agent) =>
-        ACTIVE_STATUSES.has(agent.status) &&
-        agent.used < agent.max &&
-        agent.status !== 'away',
-    )
-    .sort(() => rand() - 0.5)
+  if (!stateRef.queued.length) return
 
-  if (!availableAgents.length || !stateRef.queued.length) return
+  const freeSlots = availableAgents(stateRef).reduce(
+    (sum, agent) => sum + (agent.max - agent.used),
+    0,
+  )
+  if (freeSlots <= 0) return
 
-  const assignments = rand() < 0.55 ? 1 : 0
-  for (let i = 0; i < assignments; i++) {
-    const queueIndex = stateRef.queued.findIndex((item) => {
-      const agent = availableAgents[i % availableAgents.length]
-      return item.queueId != null && agent.queueIds.includes(item.queueId)
-    })
-    if (queueIndex < 0) break
+  const totalBacklog = stateRef.queued.length
+  const totalTarget = totalQueueTarget()
+  const deficit = totalTarget - totalBacklog
+  const surplus = totalBacklog - totalTarget
+  const bias = stateRef.loadBias
 
-    const agent = availableAgents[i % availableAgents.length]
-    const [queuedItem] = stateRef.queued.splice(queueIndex, 1)
-    if (!queuedItem.queueId) continue
+  let maxAssignments: number
+  if (deficit > 8) {
+    maxAssignments = rand() < 0.55 ? 1 : 0
+  } else if (surplus > 5) {
+    maxAssignments = 2 + Math.floor(rand() * 4)
+  } else {
+    maxAssignments = rand() < 0.42 ? 0 : 1 + Math.floor(rand() * 2)
+  }
 
-    agent.work.push({
-      id: `${agent.id}-work-${agent.work.length}`,
-      recordId: null,
-      label: queuedItem.subject,
-      subject: queuedItem.subject,
-      channel: null,
-      channelKey: queuedItem.channelKey,
-      status: 'assigned',
-      queue: seedQueues.find((q) => q.id === queuedItem.queueId)?.name ?? null,
-      queueId: queuedItem.queueId,
-      ageMin: Math.max(1, Math.floor(queuedItem.ageSec / 60)),
-    })
-    syncAgentChannels(agent)
-    reconcileAgentStatus(agent)
+  const biasScale = 1 - bias * 0.28
+  maxAssignments = Math.max(
+    0,
+    Math.floor(maxAssignments * biasScale + (rand() < 0.12 ? -1 : 0)),
+  )
+
+  maxAssignments = Math.min(
+    stateRef.queued.length,
+    freeSlots,
+    maxAssignments,
+  )
+
+  for (let i = 0; i < maxAssignments; i++) {
+    const agents = availableAgents(stateRef).sort(() => rand() - 0.5)
+    if (!agents.length) break
+
+    let assigned = false
+    for (const agent of agents) {
+      const queueIndex = stateRef.queued.findIndex(
+        (item) => item.queueId != null && agent.queueIds.includes(item.queueId),
+      )
+      if (queueIndex < 0) continue
+
+      const [queuedItem] = stateRef.queued.splice(queueIndex, 1)
+      if (!queuedItem.queueId) continue
+
+      agent.work.push({
+        id: `${agent.id}-work-${agent.work.length}`,
+        recordId: null,
+        label: queuedItem.subject,
+        subject: queuedItem.subject,
+        channel: null,
+        channelKey: queuedItem.channelKey,
+        status: 'assigned',
+        queue: seedQueues.find((q) => q.id === queuedItem.queueId)?.name ?? null,
+        queueId: queuedItem.queueId,
+        ageMin: Math.max(1, Math.floor(queuedItem.ageSec / 60)),
+      })
+      syncAgentChannels(agent)
+      reconcileAgentStatus(agent)
+      assigned = true
+      break
+    }
+
+    if (!assigned) break
   }
 }
 
@@ -338,9 +473,9 @@ function shiftPresence(stateRef: MockLiveState, rand: () => number): void {
   }> = [
     { from: 'offline', to: 'online', chance: 0.12, limit: 1 },
     { from: 'away', to: 'online', chance: 0.22, limit: 1 },
-    { from: 'online', to: 'away', chance: 0.08, limit: 1 },
-    { from: 'online', to: 'offline', chance: 0.05, limit: 1 },
-    { from: 'busy', to: 'away', chance: 0.04, limit: 1 },
+    { from: 'online', to: 'away', chance: 0.1, limit: 1 },
+    { from: 'online', to: 'offline', chance: 0.07, limit: 1 },
+    { from: 'busy', to: 'away', chance: 0.06, limit: 1 },
   ]
 
   for (const transition of transitions) {
@@ -370,10 +505,11 @@ function evolveState(stateRef: MockLiveState): void {
   const rand = mulberry32(stateRef.evolutionStep * 9_173 + 42)
   stateRef.evolutionStep += 1
 
+  driftLoadBias(stateRef, rand)
   ageWork(stateRef, 25 + Math.floor(rand() * 35))
   completeSomeWork(stateRef, rand)
-  enqueueIncomingWork(stateRef, rand)
   assignQueuedWork(stateRef, rand)
+  enqueueIncomingWork(stateRef, rand)
   shiftPresence(stateRef, rand)
   refreshSkillBacklog(stateRef)
 
@@ -398,6 +534,20 @@ function prepareState(): MockLiveState {
   }
 
   return state
+}
+
+export function resetMockState(): void {
+  state = null
+  lastEvolveMs = 0
+}
+
+/** Regression helper: advance the live mock state by N refresh ticks. */
+export function simulateMockTicks(ticks: number): Queue[] {
+  const stateRef = prepareState()
+  for (let i = 0; i < ticks; i++) {
+    evolveState(stateRef)
+  }
+  return buildQueues(stateRef)
 }
 
 export function getMockAgents(): Agent[] {

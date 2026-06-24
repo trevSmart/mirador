@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { useMiradorData } from '../api/mirador-data-context'
 import { useMiradorStatus } from '../api/mirador-status-context'
 import { AgentRow } from '../components/AgentRow'
+import { SfIcon } from '../components/ds'
 import { PanelState } from '../components/PanelState'
 import { QueueRow } from '../components/QueueRow'
 import { FloorPanel } from './FloorPanel'
@@ -97,24 +98,61 @@ export function HomePanel() {
     >
       <div className="summary-grid">
         <section className="summary-card">
-          <p className="summary-card__label">Agents</p>
-          <p className="summary-card__value">{agents.length}</p>
-          <p className="summary-card__detail">
-            {statusCounts.online} en línia · {statusCounts.busy} ocupats ·{' '}
-            {statusCounts.away} absents · {statusCounts.offline} fora de línia
-          </p>
+          <div className="summary-card__body">
+            <div className="summary-card__lead">
+              <SfIcon
+                className="summary-card__icon"
+                sprite="standard"
+                symbol="customers"
+                sldsSize="small"
+                bg="var(--pa-ic-user)"
+              />
+              <div className="summary-card__text">
+                <p className="summary-card__label">Agents</p>
+                <p className="summary-card__detail">
+                  {statusCounts.online} en línia · {statusCounts.busy} ocupats ·{' '}
+                  {statusCounts.away} absents · {statusCounts.offline} fora de línia
+                </p>
+              </div>
+            </div>
+            <p className="summary-card__value">{agents.length}</p>
+          </div>
         </section>
 
         <section className="summary-card">
-          <p className="summary-card__label">Treball actiu</p>
-          <p className="summary-card__value">{totalAgentWork(agents)}</p>
-          <p className="summary-card__detail">Casos assignats als agents</p>
+          <div className="summary-card__body">
+            <div className="summary-card__lead">
+              <SfIcon
+                className="summary-card__icon"
+                name="work"
+                sldsSize="small"
+                bg="var(--pa-ic-work)"
+              />
+              <div className="summary-card__text">
+                <p className="summary-card__label">Treball actiu</p>
+                <p className="summary-card__detail">Casos assignats als agents</p>
+              </div>
+            </div>
+            <p className="summary-card__value">{totalAgentWork(agents)}</p>
+          </div>
         </section>
 
         <section className="summary-card">
-          <p className="summary-card__label">Cues</p>
-          <p className="summary-card__value">{queues.length}</p>
-          <p className="summary-card__detail">{totalQueueBacklog(queues)} treballs en cua</p>
+          <div className="summary-card__body">
+            <div className="summary-card__lead">
+              <SfIcon
+                className="summary-card__icon"
+                name="queue"
+                sldsSize="small"
+                bg="var(--pa-ic-queue)"
+              />
+              <div className="summary-card__text">
+                <p className="summary-card__label">Cues</p>
+                <p className="summary-card__detail">{totalQueueBacklog(queues)} treballs en cua</p>
+              </div>
+            </div>
+            <p className="summary-card__value">{queues.length}</p>
+          </div>
         </section>
       </div>
 
@@ -148,7 +186,7 @@ export function HomePanel() {
           </section>
 
           <section className="panel-section">
-            <h3 className="panel-section__title">Agents a la planta</h3>
+            <h3 className="panel-section__title">Agents al plànol</h3>
             {activeAgents.length > 0 ? (
               <div className="entity-list">
                 {activeAgents.map((agent) => (
@@ -156,7 +194,7 @@ export function HomePanel() {
                 ))}
               </div>
             ) : (
-              <p className="panel-section__empty">Cap agent assignat a aquesta planta.</p>
+              <p className="panel-section__empty">Cap agent assignat al plànol.</p>
             )}
           </section>
         </div>

@@ -45,14 +45,14 @@ export function FloorEditorPanel() {
 
   if (!fp.loaded) {
     return (
-      <PanelShell hideHeader className="panel-shell--floor">
+      <PanelShell hideHeader smoothScroll={false} className="panel-shell--floor">
         <p className="panel-state panel-state--muted">Carregant plànol…</p>
       </PanelShell>
     )
   }
 
   return (
-    <PanelShell hideHeader className="panel-shell--floor">
+    <PanelShell hideHeader smoothScroll={false} className="panel-shell--floor">
       <div className="floor-editor">
         <aside className="floor-editor__aside">
           <div className="floor-editor__aside-scroll" ref={asideScrollRef}>

@@ -70,6 +70,16 @@ export function agentTowerSegments(
     }))
 }
 
+export function towerSegmentLabel(
+  segment: TowerSegment,
+  queuesById: Map<string, Queue>,
+): string {
+  if (segment.queueId) {
+    return queuesById.get(segment.queueId)?.name ?? 'Sense cua'
+  }
+  return 'Sense cua'
+}
+
 function queueLabel(
   queueId: string | null,
   queueName: string | null | undefined,

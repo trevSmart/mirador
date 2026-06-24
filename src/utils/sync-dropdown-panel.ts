@@ -1,4 +1,4 @@
-const DROPDOWN_TRANSITION_MS = 180
+export const DROPDOWN_TRANSITION_MS = 180
 
 interface SyncDropdownState {
   closeTimeoutId?: ReturnType<typeof setTimeout> | null

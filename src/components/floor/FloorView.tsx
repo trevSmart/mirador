@@ -56,7 +56,14 @@ interface FloorViewProps {
   animations: boolean
 }
 
-export function FloorView({ floor, dir, agentsById, onSelectAgent, showAvatars, animations }: FloorViewProps) {
+export function FloorView({
+  floor,
+  dir,
+  agentsById,
+  onSelectAgent,
+  showAvatars,
+  animations,
+}: FloorViewProps) {
   // Rotate every element into the camera frame, then crop to the rotated room.
   const rotated = useMemo(() => {
     const cells = floor.cells.map(([c, r]) => rotateCell(c, r, dir, GRID_C))
@@ -82,31 +89,39 @@ export function FloorView({ floor, dir, agentsById, onSelectAgent, showAvatars, 
   const containerRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(1)
 
+  const gridW = cols * VIEW_CELL
+  const gridH = rows * VIEW_CELL
+
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
-    const gridW = cols * VIEW_CELL
-    const gridH = rows * VIEW_CELL
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0]
       if (!entry) return
       const cw = entry.contentRect.width
-      const ch = entry.contentRect.height
-      if (!gridW || !gridH) return
-      const next = Math.min(cw / gridW, ch / gridH)
+      if (!gridW) return
+      const next = cw / gridW
       if (!isFinite(next) || isNaN(next) || next === 0) return
       setScale((prev) => (prev === next ? prev : next))
     })
     observer.observe(el)
     return () => { observer.disconnect() }
-  }, [cols, rows])
+  }, [gridW])
 
   return (
     <div className="fv-fit" ref={containerRef}>
       <div
-        className="fv-grid"
-        style={{ width: cols * VIEW_CELL, height: rows * VIEW_CELL, transform: `scale(${scale})` }}
+        className="fv-grid-zoom"
+        style={{ width: gridW * scale, height: gridH * scale }}
       >
+        <div
+          className="fv-grid"
+          style={{
+            width: gridW,
+            height: gridH,
+            ['--fv-fit-scale' as string]: scale,
+          } as React.CSSProperties}
+        >
         {floor.background ? (
           <div
             className="fe-grid__bg"
@@ -121,7 +136,7 @@ export function FloorView({ floor, dir, agentsById, onSelectAgent, showAvatars, 
           return (
             <div
               key={cellKey(c, r)}
-              className="fv-cell"
+              className={`fv-cell${(c + r) % 2 === 0 ? '' : ' fv-cell--alt'}`}
               style={{
                 left: (c - minC) * VIEW_CELL,
                 top: (r - minR) * VIEW_CELL,
@@ -160,6 +175,7 @@ export function FloorView({ floor, dir, agentsById, onSelectAgent, showAvatars, 
             style={edgeStyle(o.c - minC, o.r - minR, o.edge, VIEW_CELL)}
           />
         ))}
+        </div>
       </div>
     </div>
   )
