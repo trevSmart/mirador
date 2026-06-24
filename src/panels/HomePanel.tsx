@@ -1,10 +1,11 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useMiradorData } from '../api/mirador-data-context'
 import { useMiradorStatus } from '../api/mirador-status-context'
 import { AgentRow } from '../components/AgentRow'
 import { PanelState } from '../components/PanelState'
 import { QueueRow } from '../components/QueueRow'
 import { FloorPanel } from './FloorPanel'
+import { useFloorSeatedAgentIds } from '../floor/floor-seated-agents'
 
 const SPLIT_KEY = 'mirador.home.split'
 const MIN_SPLIT = 0.25
@@ -36,10 +37,18 @@ export function HomePanel() {
   const { isLoading, error, refresh } = useMiradorStatus()
   const statusCounts = countAgentsByStatus(agents)
   const topQueues = sortQueuesByBacklog(queues).slice(0, 5)
-  const activeAgents = sortAgentsByPresence(agents).slice(0, 5)
 
   const layoutRef = useRef<HTMLDivElement>(null)
   const [split, setSplit] = useState<number>(loadSplit)
+  const seatedAgentIds = useFloorSeatedAgentIds()
+
+  const activeAgents = useMemo(() => {
+    const sorted = sortAgentsByPresence(agents)
+    const onFloor = seatedAgentIds.size > 0
+      ? sorted.filter((agent) => seatedAgentIds.has(agent.id))
+      : sorted
+    return onFloor.slice(0, 5)
+  }, [agents, seatedAgentIds])
 
   const startResize = useCallback((event: React.PointerEvent) => {
     event.preventDefault()
@@ -139,7 +148,7 @@ export function HomePanel() {
           </section>
 
           <section className="panel-section">
-            <h3 className="panel-section__title">Agents actius</h3>
+            <h3 className="panel-section__title">Agents a la planta</h3>
             {activeAgents.length > 0 ? (
               <div className="entity-list">
                 {activeAgents.map((agent) => (
@@ -147,7 +156,7 @@ export function HomePanel() {
                 ))}
               </div>
             ) : (
-              <p className="panel-section__empty">Cap agent connectat ara mateix.</p>
+              <p className="panel-section__empty">Cap agent assignat a aquesta planta.</p>
             )}
           </section>
         </div>

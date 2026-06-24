@@ -298,7 +298,7 @@ function assignQueuedWork(stateRef: MockLiveState, rand: () => number): void {
       channel: null,
       channelKey: queuedItem.channelKey,
       status: 'assigned',
-      queue: null,
+      queue: seedQueues.find((q) => q.id === queuedItem.queueId)?.name ?? null,
       queueId: queuedItem.queueId,
       ageMin: Math.max(1, Math.floor(queuedItem.ageSec / 60)),
     })

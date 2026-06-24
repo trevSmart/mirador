@@ -11,6 +11,17 @@ import {
   dissolveTabGroup,
   removePanelFromTabGroup,
 } from './tab-groups'
+import { getPanelTypeFromComponent, isPanelClosable } from '../panels/panel-actions'
+import type { IDockviewPanel } from 'dockview-react'
+
+function isClosablePanel(panel: IDockviewPanel): boolean {
+  const type = getPanelTypeFromComponent(panel.view.contentComponent)
+  return type ? isPanelClosable(type) : true
+}
+
+function closeClosablePanels(panels: readonly IDockviewPanel[]): void {
+  panels.filter(isClosablePanel).forEach((entry) => entry.api.close())
+}
 
 type MiradorTabContextMenuItem = BuiltInContextMenuItem | ReactContextMenuItemConfig
 type TabGroupChipContextMenuItem = BuiltInChipContextMenuItem | ReactContextMenuItemConfig
@@ -26,33 +37,51 @@ export function getMiradorTabContextMenuItems(
   })
   const tabGroups = api.getTabGroups({ groupId })
 
-  const items: MiradorTabContextMenuItem[] = [
-    {
+  const closable = isClosablePanel(panel)
+  const hasOtherClosablePanels = group.panels.some(
+    (entry) => entry !== panel && isClosablePanel(entry),
+  )
+  const hasClosablePanels = group.panels.some(isClosablePanel)
+
+  const items: MiradorTabContextMenuItem[] = []
+
+  if (closable) {
+    items.push({
       label: 'Tancar',
       action: () => panel.api.close(),
-    },
-    {
+    })
+  }
+
+  if (hasOtherClosablePanels) {
+    items.push({
       label: 'Tancar les altres',
       action: () => {
-        group.panels
-          .filter((entry) => entry !== panel)
-          .forEach((entry) => entry.api.close())
+        closeClosablePanels(group.panels.filter((entry) => entry !== panel))
       },
-    },
-    {
+    })
+  }
+
+  if (hasClosablePanels) {
+    items.push({
       label: 'Tancar totes',
       action: () => {
-        ;[...group.panels].forEach((entry) => entry.api.close())
+        closeClosablePanels(group.panels)
       },
-    },
-    'separator',
+    })
+  }
+
+  if (items.length > 0) {
+    items.push('separator')
+  }
+
+  items.push(
     {
       label: 'Crear grup de tabs',
       action: () => {
         createTabGroupWithPanel(api, groupId, panel.id)
       },
     },
-  ]
+  )
 
   for (const tabGroup of tabGroups) {
     if (currentTabGroup?.id === tabGroup.id) {

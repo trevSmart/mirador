@@ -149,9 +149,9 @@ export function createMockFloorPlan(): FloorPlanData {
       { c: 2, r: 3, agentId: 'a16' },
       { c: 4, r: 3, agentId: 'a17' },
       { c: 6, r: 3, agentId: 'a20' },
-      { c: 8, r: 3, agentId: 'a25' },
+      { c: 8, r: 3, agentId: 'a22' },
       { c: 10, r: 3, agentId: 'a29' },
-      { c: 12, r: 3, agentId: 'a30' },
+      { c: 12, r: 3, agentId: 'a32' },
     ],
     'office-b',
     [

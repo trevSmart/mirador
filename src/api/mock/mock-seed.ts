@@ -329,10 +329,14 @@ const AGENT_SPECS: AgentSpec[] = [
   },
   // --- OFFLINE agents ---
   {
-    id: 'a22', name: 'Berta Coll', role: 'Agent · Incidències', status: 'offline',
-    max: 5, used: 0, queueIds: ['in', 'ac'], loginMin: 0,
-    chans: { veu: 0, chat: 0, email: 0, wa: 0, cas: 0 },
-    work: [],
+    id: 'a22', name: 'Berta Coll', role: 'Agent · Incidències', status: 'online',
+    max: 5, used: 3, queueIds: ['in', 'ac'], loginMin: 48,
+    chans: { veu: 0, chat: 1, email: 0, wa: 0, cas: 2 },
+    work: [
+      { channelKey: 'cas', subject: 'Cas #48901', queueId: 'in', ageSec: 540 },
+      { channelKey: 'cas', subject: 'Cas #48902', queueId: 'in', ageSec: 1200 },
+      { channelKey: 'chat', subject: 'Xat web', queueId: 'in', ageSec: 95 },
+    ],
     skillIds: ['ca', 'es', 'tec'],
   },
   {
@@ -411,10 +415,13 @@ const AGENT_SPECS: AgentSpec[] = [
     skillIds: ['es', 'gdpr', 'acc'],
   },
   {
-    id: 'a32', name: 'Bru Llopis', role: 'Agent · Incidències', status: 'offline',
-    max: 5, used: 0, queueIds: ['in', 'st'], loginMin: 0,
-    chans: { veu: 0, chat: 0, email: 0, wa: 0, cas: 0 },
-    work: [],
+    id: 'a32', name: 'Bru Llopis', role: 'Agent · Incidències', status: 'online',
+    max: 5, used: 2, queueIds: ['in', 'st'], loginMin: 72,
+    chans: { veu: 1, chat: 0, email: 0, wa: 0, cas: 1 },
+    work: [
+      { channelKey: 'veu', subject: 'Trucada entrant', queueId: 'in', ageSec: 310 },
+      { channelKey: 'cas', subject: 'Cas #48910', queueId: 'in', ageSec: 890 },
+    ],
     skillIds: ['ca', 'tec'],
   },
   {

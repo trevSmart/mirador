@@ -19,6 +19,19 @@ export function getOpenPanelTypes(api: DockviewApi): PanelType[] {
     .filter((type): type is PanelType => type !== null)
 }
 
+export function isPanelClosable(type: PanelType): boolean {
+  return type !== 'home'
+}
+
+export function ensureHomePanel(api: DockviewApi): void {
+  const hasHome = api.panels.some(
+    (panel) => getPanelTypeFromComponent(panel.view.contentComponent) === 'home',
+  )
+  if (!hasHome) {
+    addPanelByType(api, 'home')
+  }
+}
+
 export function addPanelByType(api: DockviewApi, type: PanelType): void {
   // If a panel of this type is already open, reveal it instead of opening a
   // duplicate (or doing nothing).
