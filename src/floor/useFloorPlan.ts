@@ -22,7 +22,7 @@ import {
   toggleOpening,
   toggleSeat,
 } from './floor-plan-model'
-import type { Cell, Edge, Floor, FloorPlanData, FloorTool, Place } from './types'
+import type { Cell, Dir, Edge, Floor, FloorPlanData, FloorTool, Place } from './types'
 
 export interface SeatRef {
   c: number
@@ -183,6 +183,12 @@ export function useFloorPlan() {
         }
       })
     },
+    [updateActiveFloor],
+  )
+
+  const rotateFloor = useCallback(
+    (delta: 1 | -1) =>
+      updateActiveFloor((f) => ({ ...f, dir: (((f.dir + delta) % 4) + 4) % 4 as Dir })),
     [updateActiveFloor],
   )
 
@@ -405,6 +411,7 @@ export function useFloorPlan() {
     eraseCellAt,
     seatAt,
     applyEdge,
+    rotateFloor,
     // agents
     assignAgent,
     removeSeat,
