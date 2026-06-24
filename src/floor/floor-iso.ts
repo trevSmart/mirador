@@ -3,7 +3,8 @@
    grid cell maps to a rhombus, with depth ordering and edge visibility derived
    from the camera direction (0..3, each a 90° turn). */
 
-import type { Cell, Edge } from './types'
+import type { Cell, Edge, Dir } from './types'
+export type { Dir }
 
 export const TW = 34 // tile half-width (rhombus)
 export const TH = 17 // tile half-height
@@ -14,7 +15,6 @@ export const SEAT_MIN_H = 4
 export const SEAT_MAX_H = 88
 export const SHADOW_PAD = 1.31
 
-export type Dir = 0 | 1 | 2 | 3
 export type Point = [number, number]
 
 /** Project a grid cell to the centre of its rhombus, for camera direction `dir`. */

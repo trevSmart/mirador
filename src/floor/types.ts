@@ -8,6 +8,9 @@ export type FloorTool = 'cell' | 'seat' | 'door' | 'window' | 'divider' | 'erase
 /** Cell edge. O = Oest (west). */
 export type Edge = 'N' | 'S' | 'E' | 'O'
 
+/** Camera rotation for isometric view (0..3, each step = 90°). */
+export type Dir = 0 | 1 | 2 | 3
+
 export type OpeningKind = 'door' | 'window'
 
 /** Grid cell as a [column, row] tuple. */
@@ -46,6 +49,8 @@ export interface Floor {
   background: string | null
   /** Background opacity in the [0, 1] range. */
   backgroundOpacity: number
+  /** Saved camera rotation for this floor (0..3, 90° steps). */
+  dir: Dir
 }
 
 export interface Place {
