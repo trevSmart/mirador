@@ -252,17 +252,6 @@ export function AparencaSection({ draft, patch }: SectionProps) {
           }
         />
         <SettingsRow
-          title="Avatars sobre les torres"
-          hint="Mostra la foto de perfil a sobre de cada torre a la vista 3D; a la 2D controla les fotos als anells"
-          control={
-            <ToggleField
-              label="Avatars sobre les torres"
-              checked={draft.showAvatars}
-              onChange={(v) => patch({ showAvatars: v })}
-            />
-          }
-        />
-        <SettingsRow
           title="Animacions 3D"
           hint="Torres animades i beacons a la vista 3D"
           control={

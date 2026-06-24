@@ -1,10 +1,14 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+/* EXPERIMENTAL — Dev tab. A throwaway replica of the Floor panel that renders
+   the 3D view through the vectorial projection in `src/dev/`, with azimuth and
+   tilt sliders so we can see whether a dimetric angle breaks tower occlusion.
+   Registered with a single experimental line in `panels/registry.ts`. Remove
+   that line + delete `src/dev/` and this DevPanel to drop the experiment. */
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useMiradorData } from '../api/mirador-data-context'
 import type { Agent, PresenceStatus } from '../api/types'
-import { FloorView } from '../components/floor/FloorView'
 import { FloorZoomControl } from '../components/floor/FloorZoomControl'
 import { FLOOR_ZOOM_KEY, adjustFloorZoomFromWheel, loadFloorZoom } from '../components/floor/floor-zoom'
-import { PanelSuspenseFallback } from '../components/PanelSuspenseFallback'
 import { PanelShell } from '../components/PanelState'
 import { Select } from '../components/ds/Select'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
@@ -14,10 +18,8 @@ import { useSmoothScroll } from '../hooks/useSmoothScroll'
 import { usePreferences } from '../settings/preferences-context'
 import { presenceLabel } from '../utils/format'
 import type { Floor } from '../floor/types'
-
-const FloorView3D = lazy(() =>
-  import('../components/floor/FloorView3D').then(m => ({ default: m.FloorView3D }))
-)
+import { FloorView3DVec } from './FloorView3DVec'
+import { makeBasis } from './floor-iso-vec'
 
 const STATUS_ORDER: PresenceStatus[] = ['online', 'busy', 'away', 'offline']
 const STATUS_DOT: Record<PresenceStatus, string> = {
@@ -27,9 +29,10 @@ const STATUS_DOT: Record<PresenceStatus, string> = {
   offline: 'var(--text-disabled)',
 }
 
-type ViewMode = '2d' | '3d'
+const AZIMUTH_DEFAULT = 45
+const TILT_DEFAULT = 0.5
 
-export function FloorPanel() {
+export function DevPanel() {
   const { data, loaded } = useFloorPlanData()
   const { agents, queues } = useMiradorData()
   const { openAgent } = useDetailDrawer()
@@ -38,6 +41,8 @@ export function FloorPanel() {
   const wheelCleanupRef = useRef<(() => void) | null>(null)
   const [placeId, setPlaceId] = useState<string | null>(null)
   const [zoom, setZoom] = useState<number>(loadFloorZoom)
+  const [azimuth, setAzimuth] = useState<number>(AZIMUTH_DEFAULT)
+  const [tilt, setTilt] = useState<number>(TILT_DEFAULT)
 
   const setCanvasRef = useCallback(
     (element: HTMLDivElement | null) => {
@@ -47,30 +52,17 @@ export function FloorPanel() {
       }
       canvasScrollRef(element)
       if (!element) return
-
       const onWheel = (event: WheelEvent) => {
         if (!event.ctrlKey && !event.metaKey) return
         event.preventDefault()
         event.stopImmediatePropagation()
         setZoom((current) => adjustFloorZoomFromWheel(current, event.deltaY))
       }
-
       element.addEventListener('wheel', onWheel, { passive: false, capture: true })
       wheelCleanupRef.current = () => element.removeEventListener('wheel', onWheel)
     },
     [canvasScrollRef],
   )
-
-  // The view follows the user's default (Settings → Aparença). Changing the
-  // preference re-syncs the live view, even though Dockview keeps this panel
-  // mounted — handled by adjusting state during render when the default changes.
-  // A manual toggle here still wins until the default preference changes again.
-  const [view, setView] = useState<ViewMode>(prefs.defaultFloorView)
-  const [prevDefault, setPrevDefault] = useState<ViewMode>(prefs.defaultFloorView)
-  if (prevDefault !== prefs.defaultFloorView) {
-    setPrevDefault(prefs.defaultFloorView)
-    setView(prefs.defaultFloorView)
-  }
 
   useEffect(() => {
     const id = window.setTimeout(() => {
@@ -85,6 +77,7 @@ export function FloorPanel() {
 
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents])
   const queuesById = useMemo(() => new Map(queues.map((queue) => [queue.id, queue])), [queues])
+  const basis = useMemo(() => makeBasis(azimuth, tilt), [azimuth, tilt])
 
   const activePlace = useMemo(() => {
     if (!data || data.places.length === 0) return null
@@ -124,44 +117,27 @@ export function FloorPanel() {
     return { counts, vacant, total }
   }, [floors, agentsById])
 
-  const handleSelectAgent = (agent: Agent) => {
-    openAgent(agent.id)
-  }
+  const handleSelectAgent = (agent: Agent) => openAgent(agent.id)
 
   const renderFloorTile = (floor: Floor) => (
     <section key={floor.id} className="fv-stack__item">
       {multiFloor ? <h4 className="fv-stack__label">{floor.name}</h4> : null}
       <div className="fv-stack__render">
-        {view === '3d' ? (
-          <FloorView3D
-            floor={floor}
-            agentsById={agentsById}
-            queuesById={queuesById}
-            dir={floor.dir}
-            seatStyle="tower"
-            showAvatars={prefs.showAvatars}
-            animations={prefs.animations}
-            onSelectAgent={handleSelectAgent}
-          />
-        ) : (
-          <FloorView
-            floor={floor}
-            dir={floor.dir}
-            agentsById={agentsById}
-            showAvatars={prefs.showAvatars}
-            animations={prefs.animations}
-            onSelectAgent={handleSelectAgent}
-          />
-        )}
+        <FloorView3DVec
+          floor={floor}
+          agentsById={agentsById}
+          queuesById={queuesById}
+          basis={basis}
+          showAvatars={prefs.showAvatars}
+          animations={prefs.animations}
+          onSelectAgent={handleSelectAgent}
+        />
       </div>
     </section>
   )
 
   const floorStack = (
-    <div
-      className={`fv-stack${multiFloor ? ' fv-stack--multi' : ' fv-stack--single'}`}
-      style={stackStyle}
-    >
+    <div className={`fv-stack${multiFloor ? ' fv-stack--multi' : ' fv-stack--single'}`} style={stackStyle}>
       {floors.map(renderFloorTile)}
     </div>
   )
@@ -200,8 +176,8 @@ export function FloorPanel() {
             ) : (
               <span className="fv-place-name">{activePlace.name}</span>
             )}
-
             {!multiFloor ? <span className="fv-floor-name">{floors[0]!.name}</span> : null}
+            <span className="fv-place-name" style={{ opacity: 0.6 }}>· experiment vectorial</span>
           </div>
 
           <div className="fv-controls">
@@ -217,7 +193,28 @@ export function FloorPanel() {
               </span>
             </div>
 
-            <FloorZoomControl zoom={zoom} onChange={setZoom} />
+            <label className="fv-stat" title="Azimut de la projecció (45° = isomètric clàssic)" style={{ gap: 6 }}>
+              Azimut
+              <input type="range" min={30} max={60} step={1} value={azimuth} onChange={(e) => setAzimuth(Number(e.target.value))} />
+              <span style={{ width: 34, textAlign: 'right' }}>{azimuth}°</span>
+            </label>
+
+            <label className="fv-stat" title="Inclinació vertical (0.5 = 2:1 isomètric)" style={{ gap: 6 }}>
+              Inclinació
+              <input type="range" min={0.35} max={0.7} step={0.01} value={tilt} onChange={(e) => setTilt(Number(e.target.value))} />
+              <span style={{ width: 34, textAlign: 'right' }}>{tilt.toFixed(2)}</span>
+            </label>
+
+            <button
+              type="button"
+              className="fv-toggle__btn"
+              onClick={() => {
+                setAzimuth(AZIMUTH_DEFAULT)
+                setTilt(TILT_DEFAULT)
+              }}
+            >
+              Reset
+            </button>
 
             <div className="fv-toggle" role="group" aria-label="Avatars">
               <button
@@ -231,31 +228,12 @@ export function FloorPanel() {
               </button>
             </div>
 
-            <div className="fv-toggle" role="group" aria-label="Vista">
-              <button
-                type="button"
-                className={`fv-toggle__btn${view === '2d' ? ' fv-toggle__btn--on' : ''}`}
-                onClick={() => setView('2d')}
-              >
-                2D
-              </button>
-              <button
-                type="button"
-                className={`fv-toggle__btn${view === '3d' ? ' fv-toggle__btn--on' : ''}`}
-                onClick={() => setView('3d')}
-              >
-                3D
-              </button>
-            </div>
+            <FloorZoomControl zoom={zoom} onChange={setZoom} />
           </div>
         </header>
 
         <div className="fv-canvas" ref={setCanvasRef}>
-          {view === '3d' ? (
-            <Suspense fallback={<PanelSuspenseFallback />}>{floorStack}</Suspense>
-          ) : (
-            floorStack
-          )}
+          {floorStack}
         </div>
       </div>
     </PanelShell>
