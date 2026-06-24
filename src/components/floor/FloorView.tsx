@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
 import type { Agent, PresenceStatus } from '../../api/types'
 import { edgeStyle } from '../../floor/floor-geometry'
-import { cellKey } from '../../floor/floor-plan-model'
-import type { Floor } from '../../floor/types'
+import { cellKey, GRID_C } from '../../floor/floor-plan-model'
+import { rotateCell, rotateEdge, roomBounds2D } from '../../floor/floor-iso'
+import type { Dir, Floor } from '../../floor/types'
 import { useSalesforcePhoto } from '../../hooks/useSalesforcePhoto'
 import { agentInitials, presenceLabel } from '../../utils/format'
 import { Ring } from '../ds'
@@ -48,96 +49,96 @@ function FloorSeat({ agent, onSelect, showAvatars, animations }: FloorSeatProps)
 
 interface FloorViewProps {
   floor: Floor
+  dir?: Dir
   agentsById: Map<string, Agent>
   onSelectAgent: (agent: Agent) => void
   showAvatars: boolean
   animations: boolean
 }
 
-export function FloorView({ floor, agentsById, onSelectAgent, showAvatars, animations }: FloorViewProps) {
-  const seatByKey = useMemo(() => {
-    const map = new Map<string, Floor['seats'][number]>()
-    for (const seat of floor.seats) map.set(cellKey(seat.c, seat.r), seat)
-    return map
-  }, [floor.seats])
-
-  // Crop to the room: the supervision view shows only the drawn floor, not the
-  // full editor canvas. Everything is positioned relative to the cells' bounds.
-  const bounds = useMemo(() => {
-    if (floor.cells.length === 0) return { minC: 0, minR: 0, cols: 1, rows: 1 }
-    let minC = Infinity
-    let minR = Infinity
-    let maxC = -Infinity
-    let maxR = -Infinity
-    for (const [c, r] of floor.cells) {
-      minC = Math.min(minC, c)
-      minR = Math.min(minR, r)
-      maxC = Math.max(maxC, c)
-      maxR = Math.max(maxR, r)
+export function FloorView({ floor, dir = 0, agentsById, onSelectAgent, showAvatars, animations }: FloorViewProps) {
+  // Rotate every element into the camera frame, then crop to the rotated room.
+  const rotated = useMemo(() => {
+    const cells = floor.cells.map(([c, r]) => rotateCell(c, r, dir, GRID_C))
+    const seatByKey = new Map<string, Floor['seats'][number]>()
+    for (const seat of floor.seats) {
+      const [rc, rr] = rotateCell(seat.c, seat.r, dir, GRID_C)
+      seatByKey.set(cellKey(rc, rr), { ...seat, c: rc, r: rr })
     }
-    return { minC, minR, cols: maxC - minC + 1, rows: maxR - minR + 1 }
-  }, [floor.cells])
+    const dividers = floor.dividers.map((d) => {
+      const [rc, rr] = rotateCell(d.c, d.r, dir, GRID_C)
+      return { ...d, c: rc, r: rr, edge: rotateEdge(d.edge, dir) }
+    })
+    const openings = floor.openings.map((o) => {
+      const [rc, rr] = rotateCell(o.c, o.r, dir, GRID_C)
+      return { ...o, c: rc, r: rr, edge: rotateEdge(o.edge, dir) }
+    })
+    return { cells, seatByKey, dividers, openings }
+  }, [floor, dir])
 
-  const { minC, minR } = bounds
+  const bounds = useMemo(() => roomBounds2D(floor.cells, dir, GRID_C), [floor.cells, dir])
+  const { minC, minR, cols, rows } = bounds
 
   return (
-    <div
-      className="fv-grid"
-      style={{ width: bounds.cols * VIEW_CELL, height: bounds.rows * VIEW_CELL }}
-    >
-      {floor.background ? (
-        <div
-          className="fe-grid__bg"
-          style={{ opacity: floor.backgroundOpacity }}
-          data-bg={floor.background}
-        />
-      ) : null}
-
-      {floor.cells.map(([c, r]) => {
-        const seat = seatByKey.get(cellKey(c, r))
-        const agent = seat?.agentId ? agentsById.get(seat.agentId) ?? null : null
-        return (
+    <div className="fv-fit">
+      <div
+        className="fv-grid"
+        style={{ width: cols * VIEW_CELL, height: rows * VIEW_CELL }}
+      >
+        {floor.background ? (
           <div
-            key={cellKey(c, r)}
-            className="fv-cell"
-            style={{
-              left: (c - minC) * VIEW_CELL,
-              top: (r - minR) * VIEW_CELL,
-              width: VIEW_CELL,
-              height: VIEW_CELL,
-            }}
-          >
-            {seat ? (
-              agent ? (
-                <FloorSeat
-                  agent={agent}
-                  onSelect={onSelectAgent}
-                  showAvatars={showAvatars}
-                  animations={animations}
-                />
-              ) : (
-                <span className="fv-seat fv-seat--vacant" title="Seient lliure" />
-              )
-            ) : null}
-          </div>
-        )
-      })}
+            className="fe-grid__bg"
+            style={{ opacity: floor.backgroundOpacity }}
+            data-bg={floor.background}
+          />
+        ) : null}
 
-      {floor.dividers.map((d) => (
-        <div
-          key={`div-${d.c}-${d.r}-${d.edge}`}
-          className="fe-edge fe-edge--divider"
-          style={edgeStyle(d.c - minC, d.r - minR, d.edge, VIEW_CELL)}
-        />
-      ))}
+        {rotated.cells.map(([c, r]) => {
+          const seat = rotated.seatByKey.get(cellKey(c, r))
+          const agent = seat?.agentId ? agentsById.get(seat.agentId) ?? null : null
+          return (
+            <div
+              key={cellKey(c, r)}
+              className="fv-cell"
+              style={{
+                left: (c - minC) * VIEW_CELL,
+                top: (r - minR) * VIEW_CELL,
+                width: VIEW_CELL,
+                height: VIEW_CELL,
+              }}
+            >
+              {seat ? (
+                agent ? (
+                  <FloorSeat
+                    agent={agent}
+                    onSelect={onSelectAgent}
+                    showAvatars={showAvatars}
+                    animations={animations}
+                  />
+                ) : (
+                  <span className="fv-seat fv-seat--vacant" title="Seient lliure" />
+                )
+              ) : null}
+            </div>
+          )
+        })}
 
-      {floor.openings.map((o) => (
-        <div
-          key={`op-${o.c}-${o.r}-${o.edge}`}
-          className={`fe-edge fe-edge--${o.kind}`}
-          style={edgeStyle(o.c - minC, o.r - minR, o.edge, VIEW_CELL)}
-        />
-      ))}
+        {rotated.dividers.map((d) => (
+          <div
+            key={`div-${d.c}-${d.r}-${d.edge}`}
+            className="fe-edge fe-edge--divider"
+            style={edgeStyle(d.c - minC, d.r - minR, d.edge, VIEW_CELL)}
+          />
+        ))}
+
+        {rotated.openings.map((o) => (
+          <div
+            key={`op-${o.c}-${o.r}-${o.edge}`}
+            className={`fe-edge fe-edge--${o.kind}`}
+            style={edgeStyle(o.c - minC, o.r - minR, o.edge, VIEW_CELL)}
+          />
+        ))}
+      </div>
     </div>
   )
 }
