@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
 import type { ChannelKey } from '../../api/types'
+import styles from './SfIcon.module.css'
 
 /* Salesforce Lightning Design System icons, rendered from the SLDS sprites
    shipped in `public/slds/`. Each set is one sprite file of <symbol id="…">;
@@ -8,9 +9,15 @@ import type { ChannelKey } from '../../api/types'
 
    Two visual families:
    - utility  → monochrome glyphs, painted with currentColor, no tile.
-   - standard / action / custom / doctype → white artwork on a colored tile. */
+   - standard / action / custom / doctype → white artwork on a colored tile.
+
+   Mides SLDS: 'xx-small' | 'x-small' | 'small' | 'medium' | 'large'
+   Per compatibilitat, `size` numèric (píxels) segueix funcionant. */
 
 export type SfSprite = 'utility' | 'standard' | 'action' | 'custom' | 'doctype'
+
+/** Mides nominals SLDS (replica les classes slds-icon_*). */
+export type SfIconSize = 'xx-small' | 'x-small' | 'small' | 'medium' | 'large'
 
 /** Sets whose artwork is white-on-tile (vs. monochrome utility glyphs). */
 const TILED_SPRITES: ReadonlySet<SfSprite> = new Set([
@@ -73,6 +80,23 @@ const CHANNEL: Record<ChannelKey, SfIconName> = {
   cas: 'case',
 }
 
+/** Mides SLDS nominals → píxels equivalents (valors de SLDS v2.30.4). */
+const SIZE_PX: Record<SfIconSize, number> = {
+  'xx-small': 14,   // 0.875rem
+  'x-small': 16,    // 1rem
+  small: 24,        // 1.5rem
+  medium: 32,       // 2rem
+  large: 48,        // 3rem
+}
+
+const SIZE_CLASS: Record<SfIconSize, string> = {
+  'xx-small': styles['size-xx-small'],
+  'x-small': styles['size-x-small'],
+  small: styles['size-small'],
+  medium: styles['size-medium'],
+  large: styles['size-large'],
+}
+
 interface SfIconProps {
   /** Named shortcut (voice/chat/case/queue/…). */
   name?: SfIconName
@@ -82,6 +106,12 @@ interface SfIconProps {
   sprite?: SfSprite
   /** Symbol id inside the sprite (e.g. 'account', 'refresh', 'edit'). */
   symbol?: string
+  /**
+   * Mida SLDS nominal: 'xx-small' | 'x-small' | 'small' | 'medium' | 'large'.
+   * Si s'usa `size` numèric (píxels), té prioritat per compatibilitat.
+   */
+  sldsSize?: SfIconSize
+  /** Mida en píxels (compatibilitat). Si no s'indica, s'usa `sldsSize` o 'medium'. */
   size?: number
   radius?: number
   /** Tile background (tiled sets) or glyph color (utility). Overrides default. */
@@ -108,16 +138,21 @@ function resolve({ name, channel, sprite, symbol }: SfIconProps): Resolved {
  * SfIcon — a Salesforce Lightning icon drawn from the SLDS sprites.
  *
  * Three ways to pick the glyph:
- *   <SfIcon name="queue" />                  // friendly shortcut
- *   <SfIcon channel="veu" />                 // Omni channel key
+ *   <SfIcon name="queue" />                    // friendly shortcut
+ *   <SfIcon channel="veu" />                   // Omni channel key
  *   <SfIcon sprite="utility" symbol="edit" />  // any icon of any set
+ *
+ * Mides SLDS:
+ *   <SfIcon name="queue" sldsSize="small" />   // 1rem / 16px
+ *   <SfIcon name="queue" size={32} />          // píxels (compatibilitat)
  */
 export function SfIcon({
   name,
   channel,
   sprite,
   symbol,
-  size = 30,
+  sldsSize,
+  size,
   radius,
   bg,
   tile,
@@ -125,40 +160,69 @@ export function SfIcon({
 }: SfIconProps) {
   const ic = resolve({ name, channel, sprite, symbol })
   const tiled = tile ?? TILED_SPRITES.has(ic.sprite)
+
+  // Resolució de mida: `size` numèric té prioritat, sinó `sldsSize`, sinó 'medium'
+  const resolvedSldsSize: SfIconSize | undefined =
+    size == null ? (sldsSize ?? 'medium') : undefined
+  const px = size ?? (resolvedSldsSize ? SIZE_PX[resolvedSldsSize] : 24)
+  const sizeClass = resolvedSldsSize ? SIZE_CLASS[resolvedSldsSize] : undefined
+
   const href = `/slds/${ic.sprite}.svg#${ic.symbol}`
-  const glyphPad = tiled ? Math.round(size * 0.2) : 0
+
+  // Amb mida SLDS nominal: el CSS gestiona les dimensions via classe
+  // Amb mida numèrica: apliquem width/height inline directament
+  const svgStyle: CSSProperties = sizeClass
+    ? {}
+    : { width: tiled ? px * 0.6 : px, height: tiled ? px * 0.6 : px }
 
   const svg = (
     <svg
-      width={size - glyphPad * 2}
-      height={size - glyphPad * 2}
-      fill={tiled ? '#fff' : 'currentColor'}
+      className={sizeClass ? styles.icon : undefined}
+      style={{ display: 'block', fill: tiled ? '#fff' : 'currentColor', ...svgStyle }}
       aria-hidden="true"
     >
       <use href={href} />
     </svg>
   )
 
+  const containerClasses = [
+    styles.container,
+    tiled ? styles.tiled : undefined,
+    sizeClass,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   if (!tiled) {
     return (
       <span
-        style={{ display: 'inline-grid', placeItems: 'center', color: bg ?? ic.tint, ...style }}
+        className={containerClasses}
+        style={{
+          color: bg ?? ic.tint,
+          ...(sizeClass ? {} : { width: px, height: px }),
+          ...style,
+        }}
       >
         {svg}
       </span>
     )
   }
 
+  const borderRadius =
+    radius != null
+      ? radius
+      : sizeClass
+        ? undefined // el CSS aplica 0.25rem per defecte
+        : Math.round(px * 0.27)
+
   return (
     <span
+      className={containerClasses}
       style={{
-        display: 'inline-grid',
-        placeItems: 'center',
-        flexShrink: 0,
-        width: size,
-        height: size,
-        borderRadius: radius != null ? radius : Math.round(size * 0.27),
         background: bg ?? ic.tint ?? 'var(--accent)',
+        ...(sizeClass
+          ? { borderRadius: radius != null ? radius : undefined }
+          : { width: px, height: px, borderRadius }),
         ...style,
       }}
     >

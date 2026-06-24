@@ -47,6 +47,21 @@ Here are common CLI commands that you'll use the most:
 
 Transform your ideas into custom Lightning apps that extend CRM workflows directly in Lightning Experience. Through natural conversations with Agentforce Vibes, implement custom objects and fields, complex business logic, and dynamic UI components. See [Build a Lightning App Using Agentforce Vibes](https://developer.salesforce.com/docs/platform/einstein-for-devs/guide/lexapp-overview.html).
 
+## Third-Party Licenses
+
+This project includes the following third-party assets:
+
+### Salesforce Lightning Design System (SLDS) — v2.30.4
+
+**Source code** (CSS, SCSS, design tokens)
+Copyright (c) 2015, Salesforce.com, Inc. All rights reserved.
+Licensed under the [BSD 3-Clause License](https://git.io/sfdc-license).
+
+**Icons and images**
+Copyright (c) 2015, Salesforce.com, Inc. All rights reserved.
+Licensed under [Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND 4.0)](https://creativecommons.org/licenses/by-nd/4.0/).
+Icons may be redistributed without modification. Credit: [Salesforce Lightning Design System](https://v1.lightningdesignsystem.com).
+
 ## Additional Resources
 
 - [Agentforce Vibes Developer Guide](https://developer.salesforce.com/docs/platform/einstein-for-devs/guide/einstein-overview.html)

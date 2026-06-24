@@ -5,15 +5,13 @@ import { PanelState } from '../components/PanelState'
 import { SkillRow } from '../components/SkillRow'
 import { sortSkillsByBacklog, totalSkillBacklog } from '../utils/agent-stats'
 
-export function SkillsPanel({ api }: IDockviewPanelProps) {
+export function SkillsPanel(_: IDockviewPanelProps) {
   const { skills } = useMiradorData()
   const { isLoading, error, refresh } = useMiradorStatus()
   const sortedSkills = sortSkillsByBacklog(skills)
 
   return (
     <PanelState
-      panelType="skills"
-      title={api.title}
       isLoading={isLoading}
       error={error}
       onRetry={refresh}
