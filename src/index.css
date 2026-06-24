@@ -2226,8 +2226,11 @@ body {
 
 /* Isometric 3D view */
 .fv3d-svg {
+  width: 100%;
+  height: 100%;
   max-width: 100%;
-  height: auto;
+  max-height: 100%;
+  display: block;
 }
 
 .fv3d-seat {
