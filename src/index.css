@@ -2719,6 +2719,124 @@ body {
   border-color: var(--accent);
 }
 
+/* ── Agent card grid ───────────────────────────────────────────────────── */
+.agents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--sp-3);
+}
+
+.agent-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-4) var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--surface-card);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  text-align: center;
+  transition: box-shadow var(--dur-base) var(--ease), border-color var(--dur-base) var(--ease);
+}
+
+.agent-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-lift);
+}
+
+.agent-card:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+  border-color: var(--accent);
+}
+
+.agent-card__avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.agent-card__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-full);
+  background: var(--pa-av-bg);
+  color: var(--pa-av-fg);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+}
+
+.agent-card__avatar--photo {
+  object-fit: cover;
+}
+
+.agent-card__status-dot {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--r-full);
+  border: 2px solid var(--surface-card);
+}
+
+.agent-card__name {
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.agent-card__role {
+  margin: 0;
+  font-size: var(--fs-2xs);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.agent-card__metrics {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+  width: 100%;
+  justify-content: center;
+}
+
+.agent-card__metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 32px;
+}
+
+.agent-card__metric-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-strong);
+  line-height: 1;
+}
+
+.agent-card__metric-label {
+  font-size: var(--fs-2xs);
+  color: var(--text-muted);
+  line-height: 1;
+}
+
 /* ── Settings modal ────────────────────────────────────────────────────── */
 .settings-backdrop {
   position: fixed;
