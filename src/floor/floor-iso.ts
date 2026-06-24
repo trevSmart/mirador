@@ -125,13 +125,34 @@ export function backLeftVisible(has: Has, dir: Dir): Has {
 }
 
 /* A back-facing exterior edge is only a *true* back wall when the room does not
-   continue behind it. In a concave (e.g. L/step-shaped) room an edge can be
-   parallel to the real back wall yet sit at an inner step: it has no immediate
-   neighbour, so backRight/LeftVisible accept it, but the floor carries on behind
-   and a full-height wall there would occlude tiles the camera should see. The
-   occlusion-aware predicates below keep the wall only when its projected quad
-   covers no farther floor tile. Geometry is screen-space, so it is dir-agnostic
-   once cells are projected. */
+   continue behind it. In a concave room (L/step, U/courtyard, donut…) an edge
+   can be parallel to the real back wall yet sit at an inner step or face an
+   interior void: it has no immediate neighbour, so backRight/LeftVisible accept
+   it, but the room carries on behind it. Two independent conditions must hold:
+
+   1. Silhouette: scanning outward from the edge along the direction it faces,
+      no room cell re-appears. If it does, the empty neighbour is an interior
+      gap (a courtyard or hole), not the exterior backdrop — even when a wall
+      there would hide nothing (it can be short enough to clear the far floor).
+   2. No occlusion: the wall's projected quad covers no farther floor tile. This
+      catches staircase offsets where a near wing's tall wall would paint over a
+      farther wing that sits beside it (not directly behind it in the grid).
+
+   Geometry for (2) is screen-space, so it is dir-agnostic once cells project. */
+
+/** Grid step (dc, dr) a back wall faces, i.e. toward its (empty) neighbour. */
+function backRightFacing(dir: Dir): [number, number] {
+  if (dir === 1) return [-1, 0]
+  if (dir === 2) return [-1, 0]
+  if (dir === 3) return [1, 0]
+  return [0, -1]
+}
+function backLeftFacing(dir: Dir): [number, number] {
+  if (dir === 1) return [0, 1]
+  if (dir === 2) return [0, 1]
+  if (dir === 3) return [0, -1]
+  return [-1, 0]
+}
 
 /** Numeric corners of a back-right wall quad (mirrors `backRightWall`). */
 function backRightWallPts(x: number, y: number): Point[] {
@@ -172,24 +193,42 @@ function convexOverlap(a: Point[], b: Point[]): boolean {
   return true
 }
 
+/** Silhouette test: scanning outward from (c, r) along (dc, dr), no room cell
+    re-appears within the grid — so the edge faces the exterior, not a void. */
+function onBackSilhouette(has: Has, c: number, r: number, dc: number, dr: number, maxC: number, maxR: number): boolean {
+  let cc = c + dc
+  let rr = r + dr
+  while (cc >= 0 && cc <= maxC && rr >= 0 && rr <= maxR) {
+    if (has(cc, rr)) return false
+    cc += dc
+    rr += dr
+  }
+  return true
+}
+
 function backWallTrue(
   base: Has,
+  facing: [number, number],
   wallPts: (x: number, y: number) => Point[],
+  has: Has,
   cells: Cell[],
   dir: Dir,
   maxC: number,
   maxR: number,
 ): Has {
   const cmp = depthCompare(dir)
+  const [fdc, fdr] = facing
   return (c, r) => {
     if (!base(c, r)) return false
+    // (1) Must sit on the room's exterior silhouette in its facing direction.
+    if (!onBackSilhouette(has, c, r, fdc, fdr, maxC, maxR)) return false
+    // (2) Must not occlude a farther floor tile.
     const [x, y] = projectCell(c, r, dir, maxC, maxR)
     const wall = wallPts(x, y)
     for (const cell of cells) {
       const [oc, or] = cell
       if (oc === c && or === r) continue
-      // Only farther tiles (drawn earlier) can be hidden by this wall.
-      if (cmp(cell, [c, r]) >= 0) continue
+      if (cmp(cell, [c, r]) >= 0) continue // only farther tiles can be hidden
       const [ox, oy] = projectCell(oc, or, dir, maxC, maxR)
       if (convexOverlap(wall, diamondPts(ox, oy))) return false
     }
@@ -197,14 +236,14 @@ function backWallTrue(
   }
 }
 
-/** Like `backRightVisible`, but also rejects inner-step edges whose wall would
-    occlude a farther floor tile (paint only true back walls). */
+/** Like `backRightVisible`, but paints only true back walls: rejects edges that
+    face an interior void (silhouette) or whose wall would hide farther floor. */
 export function backRightTrue(has: Has, cells: Cell[], dir: Dir, maxC: number, maxR: number): Has {
-  return backWallTrue(backRightVisible(has, dir), backRightWallPts, cells, dir, maxC, maxR)
+  return backWallTrue(backRightVisible(has, dir), backRightFacing(dir), backRightWallPts, has, cells, dir, maxC, maxR)
 }
-/** Like `backLeftVisible`, but rejects occluding inner-step edges. */
+/** Like `backLeftVisible`, but paints only true back walls (see `backRightTrue`). */
 export function backLeftTrue(has: Has, cells: Cell[], dir: Dir, maxC: number, maxR: number): Has {
-  return backWallTrue(backLeftVisible(has, dir), backLeftWallPts, cells, dir, maxC, maxR)
+  return backWallTrue(backLeftVisible(has, dir), backLeftFacing(dir), backLeftWallPts, has, cells, dir, maxC, maxR)
 }
 
 /** The grid edge that corresponds to the back-right / back-left wall, per dir. */
