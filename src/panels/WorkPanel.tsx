@@ -6,7 +6,7 @@ import { PanelState } from '../components/PanelState'
 import { WorkRow } from '../components/WorkRow'
 import { countWorkByStatus, partitionWorkByStatus } from '../utils/agent-stats'
 
-export function WorkPanel({ api }: IDockviewPanelProps) {
+export function WorkPanel(_: IDockviewPanelProps) {
   const { agents, queues, work } = useMiradorData()
   const { isLoading, error, refresh } = useMiradorStatus()
   const { assigned, queued } = partitionWorkByStatus(work)
@@ -23,8 +23,6 @@ export function WorkPanel({ api }: IDockviewPanelProps) {
 
   return (
     <PanelState
-      panelType="work"
-      title={api.title}
       isLoading={isLoading}
       error={error}
       onRetry={refresh}

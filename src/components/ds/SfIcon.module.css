@@ -1,0 +1,57 @@
+/* Replica les regles exactes de SLDS v2.30.4:
+   salesforce-lightning-design-system.css línies 3108-3121 i 7226-7253 */
+
+/* slds-icon_container */
+.container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 0.25rem;     /* $border-radius-medium SLDS */
+  line-height: 1;
+  background-color: transparent;
+}
+
+/* slds-icon */
+.icon {
+  display: block;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+}
+
+/* ── Mides SLDS oficials (valors de SLDS v2.30.4) ────────────────────────
+   xx-small   0.875rem   14px
+   x-small    1rem       16px
+   small      1.5rem     24px
+   (default)  2rem       32px
+   large      3rem       48px
+   ───────────────────────────────────────────────────────────────────── */
+
+.size-xx-small {
+  width: 0.875rem;
+  height: 0.875rem;
+  line-height: 1;
+}
+
+.size-x-small {
+  width: 1rem;
+  height: 1rem;
+  line-height: 1;
+}
+
+.size-small {
+  width: 1.5rem;
+  height: 1.5rem;
+  line-height: 1;
+}
+
+.size-medium {
+  width: 2rem;
+  height: 2rem;
+}
+
+.size-large {
+  width: 3rem;
+  height: 3rem;
+}

@@ -29,7 +29,6 @@ export function InsightsPanel({ api, containerApi }: IDockviewPanelProps) {
   return (
     <PanelState
       panelType="insights"
-      title={api.title}
       isLoading={isLoading}
       error={error}
       onRetry={refresh}

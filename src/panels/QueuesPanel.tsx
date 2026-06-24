@@ -5,15 +5,13 @@ import { PanelState } from '../components/PanelState'
 import { QueueRow } from '../components/QueueRow'
 import { sortQueuesByBacklog, totalQueueBacklog } from '../utils/agent-stats'
 
-export function QueuesPanel({ api }: IDockviewPanelProps) {
+export function QueuesPanel(_: IDockviewPanelProps) {
   const { queues } = useMiradorData()
   const { isLoading, error, refresh } = useMiradorStatus()
   const sortedQueues = sortQueuesByBacklog(queues)
 
   return (
     <PanelState
-      panelType="queues"
-      title={api.title}
       isLoading={isLoading}
       error={error}
       onRetry={refresh}

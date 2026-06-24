@@ -32,7 +32,7 @@ import {
   totalQueueBacklog,
 } from '../utils/agent-stats'
 
-export function HomePanel({ api }: IDockviewPanelProps) {
+export function HomePanel(_: IDockviewPanelProps) {
   const { agents, queues } = useMiradorData()
   const { isLoading, error, refresh } = useMiradorStatus()
   const statusCounts = countAgentsByStatus(agents)
@@ -81,8 +81,6 @@ export function HomePanel({ api }: IDockviewPanelProps) {
 
   return (
     <PanelState
-      panelType="home"
-      title={api.title}
       isLoading={isLoading}
       error={error}
       onRetry={refresh}

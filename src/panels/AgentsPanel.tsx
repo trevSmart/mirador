@@ -5,7 +5,7 @@ import { AgentRow } from '../components/AgentRow'
 import { PanelState } from '../components/PanelState'
 import { countAgentsByStatus, sortAgentsByPresence } from '../utils/agent-stats'
 
-export function AgentsPanel({ api }: IDockviewPanelProps) {
+export function AgentsPanel(_: IDockviewPanelProps) {
   const { agents } = useMiradorData()
   const { isLoading, error, refresh } = useMiradorStatus()
   const sortedAgents = sortAgentsByPresence(agents)
@@ -13,8 +13,6 @@ export function AgentsPanel({ api }: IDockviewPanelProps) {
 
   return (
     <PanelState
-      panelType="agents"
-      title={api.title}
       isLoading={isLoading}
       error={error}
       onRetry={refresh}
