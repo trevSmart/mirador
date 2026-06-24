@@ -17,7 +17,7 @@ import { useSmoothScroll } from '../hooks/useSmoothScroll'
 const noop = () => {}
 
 export function FloorEditorPanel() {
-  const { agents } = useMiradorData()
+  const { agents, queues } = useMiradorData()
   const fp = useFloorPlan()
   // The canvas and the floor list scroll inside the editor (not the panel
   // shell), so each gets its own Lenis instance for smooth wheel scrolling.
@@ -25,6 +25,7 @@ export function FloorEditorPanel() {
   const asideScrollRef = useSmoothScroll<HTMLDivElement>()
 
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents])
+  const queuesById = useMemo(() => new Map(queues.map((queue) => [queue.id, queue])), [queues])
 
   const placedAgentIds = useMemo(() => {
     const ids = new Set<string>()
@@ -90,6 +91,7 @@ export function FloorEditorPanel() {
                 <FloorView3D
                   floor={fp.activeFloor}
                   agentsById={agentsById}
+                  queuesById={queuesById}
                   dir={fp.activeFloor.dir}
                   seatStyle="tower"
                   showAvatars

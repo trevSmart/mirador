@@ -8,6 +8,7 @@ import { PanelShell } from '../components/PanelState'
 import { Select } from '../components/ds/Select'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { useFloorPlanData } from '../floor/useFloorPlanData'
+import { setFloorSeatedAgentIds } from '../floor/floor-seated-agents'
 import { usePreferences } from '../settings/preferences-context'
 import { presenceLabel } from '../utils/format'
 
@@ -44,7 +45,7 @@ function loadSeatStyle(): SeatStyle {
 
 export function FloorPanel() {
   const { data, loaded } = useFloorPlanData()
-  const { agents } = useMiradorData()
+  const { agents, queues } = useMiradorData()
   const { openAgent } = useDetailDrawer()
   const { prefs } = usePreferences()
   const [placeId, setPlaceId] = useState<string | null>(null)
@@ -72,6 +73,7 @@ export function FloorPanel() {
   }, [seatStyle])
 
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents])
+  const queuesById = useMemo(() => new Map(queues.map((queue) => [queue.id, queue])), [queues])
 
   const activePlace = useMemo(() => {
     if (!data || data.places.length === 0) return null
@@ -83,6 +85,14 @@ export function FloorPanel() {
     : 0
   const activeFloor = activePlace?.floors[safeFloorIndex] ?? null
   const dir = activeFloor?.dir ?? 0
+
+  useEffect(() => {
+    const ids = new Set<string>()
+    for (const seat of activeFloor?.seats ?? []) {
+      if (seat.agentId) ids.add(seat.agentId)
+    }
+    setFloorSeatedAgentIds(ids)
+  }, [activeFloor])
 
   const summary = useMemo(() => {
     const counts: Record<PresenceStatus, number> = { online: 0, busy: 0, away: 0, offline: 0 }
@@ -198,6 +208,7 @@ export function FloorPanel() {
               <FloorView3D
                 floor={activeFloor}
                 agentsById={agentsById}
+                queuesById={queuesById}
                 dir={dir}
                 seatStyle={seatStyle}
                 showAvatars={prefs.showAvatars}

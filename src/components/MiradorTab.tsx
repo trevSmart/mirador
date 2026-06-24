@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { IDockviewDefaultTabProps } from 'dockview-react'
-import { getPanelTypeFromComponent } from '../panels/panel-actions'
+import { getPanelTypeFromComponent, isPanelClosable } from '../panels/panel-actions'
 import { parseDetailPanelParams, isDetailPanelComponent } from '../detail/detail-panel'
 import { DetailTabIcon } from '../components/detail/DetailTabIcon'
 import { PanelIcon } from '../panels/PanelIcon'
@@ -52,6 +52,8 @@ export function MiradorTab({
   const wasActiveOnPress = useRef(false)
   const panel = containerApi.panels.find((item) => item.id === api.id)
   const panelType = getPanelTypeFromComponent(panel?.view.contentComponent)
+  const closable = panelType ? isPanelClosable(panelType) : true
+  const effectiveHideClose = hideClose || !closable
   const detailParams = isDetailPanelComponent(panel?.view.contentComponent)
     ? parseDetailPanelParams(panel?.params)
     : null
@@ -69,13 +71,16 @@ export function MiradorTab({
   const onClose = useCallback(
     (event: React.MouseEvent) => {
       event.preventDefault()
+      if (!closable) {
+        return
+      }
       if (closeActionOverride) {
         closeActionOverride()
       } else {
         api.close()
       }
     },
-    [api, closeActionOverride],
+    [api, closeActionOverride, closable],
   )
 
   const onBtnPointerDown = useCallback((event: React.PointerEvent) => {
@@ -116,13 +121,13 @@ export function MiradorTab({
 
   const handlePointerUp = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
-      if (isMiddleMouseButton.current && event.button === 1 && !hideClose) {
+      if (isMiddleMouseButton.current && event.button === 1 && !effectiveHideClose) {
         isMiddleMouseButton.current = false
         onClose(event)
       }
       onPointerUp?.(event)
     },
-    [onClose, hideClose, onPointerUp],
+    [onClose, effectiveHideClose, onPointerUp],
   )
 
   const handlePointerLeave = useCallback(
@@ -155,7 +160,7 @@ export function MiradorTab({
         ) : null}
         {title}
       </span>
-      {!hideClose ? (
+      {!effectiveHideClose ? (
         <div
           className="dv-default-tab-action"
           onPointerDown={onBtnPointerDown}

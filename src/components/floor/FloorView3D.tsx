@@ -1,6 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { useTowerHeightScale } from '../../hooks/useTowerHeightScale'
-import type { Agent, PresenceStatus } from '../../api/types'
+import type { Agent, Queue } from '../../api/types'
+import { agentTowerSegments, type TowerSegment } from '../../floor/agent-tower-segments'
 import {
   type Dir,
   DIV_H,
@@ -31,19 +32,14 @@ import { GRID_C, GRID_R, cellKey } from '../../floor/floor-plan-model'
 import type { Cell, Edge, Floor } from '../../floor/types'
 import { useSalesforcePhoto } from '../../hooks/useSalesforcePhoto'
 import { agentInitials } from '../../utils/format'
-import { colorFromString } from '../../utils/color-from-string'
 
 export type SeatStyle = 'tower' | 'avatar' | 'cube'
 
 const MAX_C = GRID_C - 1
 const MAX_R = GRID_R - 1
 
-const STATUS_COLOR: Record<PresenceStatus, string> = {
-  online: 'var(--status-ok)',
-  busy: 'var(--status-alert)',
-  away: 'var(--status-watch)',
-  offline: 'var(--text-disabled)',
-}
+const PEDESTAL_COLOR = 'var(--text-disabled)'
+const AVATAR_RING = 'var(--border-subtle)'
 
 const FLOOR_FILL = 'rgb(247,246,243)'
 const WALL_FILL = 'rgb(247,246,243)'
@@ -115,74 +111,122 @@ interface IsoSeatProps {
   style: SeatStyle
   showAvatars: boolean
   animations: boolean
+  queuesById: Map<string, Queue>
   onSelect: (agent: Agent) => void
 }
 
-const BASE_H = SEAT_MIN_H  // pedestal height matches idle agent tower height
-const CAP_OPACITY = 0.60  // top face opacity
-const BASE_OPACITY = 0.55 // pedestal face opacity
-const SHAFT_OPACITY = 0.18 // transparent shaft body
+const BASE_H = SEAT_MIN_H
+const CAP_OPACITY = 0.60
+const BASE_OPACITY = 0.55
+const SEGMENT_OPACITY = 0.78
 
-function towerFaces(x: number, y: number, h: number, color: string) {
-  // Three-section tower: opaque pedestal base + transparent shaft + opaque top cap.
-  // The pedestal is drawn first (behind), then the shaft on top with low opacity so
-  // the pedestal faces show through. Uses currentColor so CSS vars resolve at paint time.
-  const base = Math.min(BASE_H, h)
+function pedestalFaces(x: number, y: number, base: number) {
   return (
-    <g style={{ color }}>
-      {/* 1. Pedestal base — drawn first so shaft is painted over it and shows through */}
+    <g style={{ color: PEDESTAL_COLOR }}>
       <polygon points={leftFace(x, y, 0, base)} fill="currentColor" fillOpacity={BASE_OPACITY} />
       <polygon points={leftFace(x, y, 0, base)} fill="rgba(0,0,0,0.18)" />
       <polygon points={rightFace(x, y, 0, base)} fill="currentColor" fillOpacity={BASE_OPACITY} />
       <polygon points={rightFace(x, y, 0, base)} fill="rgba(0,0,0,0.08)" />
       <polygon points={diamondPoints(x, y, base)} fill="currentColor" fillOpacity={BASE_OPACITY} />
       <polygon points={diamondPoints(x, y, base)} fill="rgba(255,255,255,0.15)" />
-      {/* 2. Shaft — transparent, full height so pedestal shows through at the bottom */}
-      {h > base && (
-        <>
-          <polygon points={leftFace(x, y, base, h)} fill="currentColor" fillOpacity={SHAFT_OPACITY} />
-          <polygon points={leftFace(x, y, base, h)} fill="rgba(0,0,0,0.06)" />
-          <polygon points={rightFace(x, y, base, h)} fill="currentColor" fillOpacity={SHAFT_OPACITY} />
-          <polygon points={rightFace(x, y, base, h)} fill="rgba(0,0,0,0.03)" />
-        </>
-      )}
-      {/* 3. Top cap face — opaque */}
-      <polygon points={diamondPoints(x, y, h)} fill="currentColor" fillOpacity={CAP_OPACITY} />
-      <polygon points={diamondPoints(x, y, h)} fill="rgba(255,255,255,0.20)" stroke="currentColor" strokeOpacity={0.35} strokeWidth={0.5} />
     </g>
   )
 }
 
-function IsoSeat({ agent, x, y, style, showAvatars, animations, onSelect }: IsoSeatProps) {
-  const status = STATUS_COLOR[agent.status]
+function segmentFaces(x: number, y: number, h1: number, h2: number, color: string, isTop: boolean) {
+  return (
+    <g style={{ color }}>
+      <polygon points={leftFace(x, y, h1, h2)} fill="currentColor" fillOpacity={SEGMENT_OPACITY} />
+      <polygon points={leftFace(x, y, h1, h2)} fill="rgba(0,0,0,0.10)" />
+      <polygon points={rightFace(x, y, h1, h2)} fill="currentColor" fillOpacity={SEGMENT_OPACITY} />
+      <polygon points={rightFace(x, y, h1, h2)} fill="rgba(0,0,0,0.05)" />
+      {isTop ? (
+        <>
+          <polygon points={diamondPoints(x, y, h2)} fill="currentColor" fillOpacity={CAP_OPACITY} />
+          <polygon
+            points={diamondPoints(x, y, h2)}
+            fill="rgba(255,255,255,0.20)"
+            stroke="currentColor"
+            strokeOpacity={0.35}
+            strokeWidth={0.5}
+          />
+        </>
+      ) : null}
+    </g>
+  )
+}
+
+function segmentedTowerFaces(x: number, y: number, h: number, segments: TowerSegment[]) {
+  const base = Math.min(BASE_H, h)
+  const shaftH = h - base
+  let cursor = base
+  const parts: ReactNode[] = []
+
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i]!
+    const top = cursor + shaftH * seg.fraction
+    parts.push(
+      <g key={`${seg.queueId ?? 'unknown'}-${i}`}>
+        {segmentFaces(x, y, cursor, top, seg.color, i === segments.length - 1)}
+      </g>,
+    )
+    cursor = top
+  }
+
+  if (segments.length === 0 && h > base) {
+    parts.push(segmentFaces(x, y, base, h, PEDESTAL_COLOR, true))
+  }
+
+  return (
+    <>
+      {pedestalFaces(x, y, base)}
+      {parts}
+    </>
+  )
+}
+
+function towerTitle(agent: Agent, queuesById: Map<string, Queue>): string {
+  const segments = agentTowerSegments(agent, queuesById)
+  const load = `${agent.used}/${agent.max}`
+  if (segments.length === 0) return `${agent.name} · ${load}`
+  const breakdown = segments
+    .map((seg) => {
+      const name = seg.queueId ? (queuesById.get(seg.queueId)?.name ?? 'Sense cua') : 'Sense cua'
+      return `${name} ×${seg.count}`
+    })
+    .join(', ')
+  return `${agent.name} · ${load} · ${breakdown}`
+}
+
+function IsoSeat({ agent, x, y, style, showAvatars, animations, queuesById, onSelect }: IsoSeatProps) {
   const saturated = agent.max > 0 && agent.used >= agent.max
-  const title = `${agent.name} · ${agent.used}/${agent.max}`
+  const segments = agentTowerSegments(agent, queuesById)
+  const title = towerTitle(agent, queuesById)
+  const topColor = segments[segments.length - 1]?.color ?? PEDESTAL_COLOR
   const targetH = style === 'avatar' ? SEAT_MIN_H : seatHeight(agent)
   const h = useTowerHeightScale(targetH, style !== 'avatar')
 
-  let body: React.ReactNode
+  let body: ReactNode
   if (style === 'avatar') {
     const cy = y - SEAT_MIN_H
     body = (
       <>
         <ellipse cx={x} cy={y + TH * 0.2} rx={TW * 0.5} ry={TH * 0.5} fill="rgba(27,25,36,0.16)" />
-        <AvatarDisc agent={agent} cx={x} cy={cy} r={TH * 0.95} ring={status} showPhoto={showAvatars} />
+        <AvatarDisc agent={agent} cx={x} cy={cy} r={TH * 0.95} ring={AVATAR_RING} showPhoto={showAvatars} />
       </>
     )
   } else if (style === 'cube') {
-    const team = colorFromString(agent.role || agent.name)
     body = (
       <>
-        {towerFaces(x, y, h, team)}
-        <circle cx={x} cy={y - h} r={4} style={{ fill: status }} stroke="#fff" strokeWidth={1.2} />
+        {segmentedTowerFaces(x, y, h, segments)}
+        <circle cx={x} cy={y - h} r={4} style={{ fill: topColor }} stroke="#fff" strokeWidth={1.2} />
       </>
     )
   } else {
-    // tower
     body = (
       <>
-        {towerFaces(x, y, h, status)}
-        <AvatarDisc agent={agent} cx={x} cy={y - h - TH * 0.55} r={TH * 0.85} ring={status} showPhoto={showAvatars} />
+        {segmentedTowerFaces(x, y, h, segments)}
+        <AvatarDisc agent={agent} cx={x} cy={y - h - TH * 0.55} r={TH * 0.85} ring={AVATAR_RING} showPhoto={showAvatars} />
         {saturated ? (
           <>
             <line x1={x} y1={y - h} x2={x} y2={y - h - TH * 1.6} stroke="#E05641" strokeWidth={1.5} />
@@ -229,6 +273,7 @@ function VacantSeat({ x, y }: { x: number; y: number }) {
 interface FloorView3DProps {
   floor: Floor
   agentsById: Map<string, Agent>
+  queuesById: Map<string, Queue>
   dir: Dir
   seatStyle: SeatStyle
   showAvatars: boolean
@@ -239,6 +284,7 @@ interface FloorView3DProps {
 export function FloorView3D({
   floor,
   agentsById,
+  queuesById,
   dir,
   seatStyle,
   showAvatars,
@@ -299,7 +345,7 @@ export function FloorView3D({
     return <polygon points={openingPoints(g0, g1, t0, t1, kind)} fill={fill} stroke={stroke} />
   }
 
-  const body: React.ReactNode[] = []
+  const body: ReactNode[] = []
   for (const [c, r] of ordered) {
     const [x, y] = pos(c, r)
     const key = cellKey(c, r)
@@ -370,6 +416,7 @@ export function FloorView3D({
             style={seatStyle}
             showAvatars={showAvatars}
             animations={animations}
+            queuesById={queuesById}
             onSelect={onSelectAgent}
           />,
         )

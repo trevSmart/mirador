@@ -19,6 +19,7 @@ import { DetailPanel } from '../panels/DetailPanel'
 import { PANEL_COMPONENTS, getPanelDefinition, type PanelType } from '../panels/registry'
 import {
   addPanelByType,
+  ensureHomePanel,
   getOpenPanelTypes,
 } from '../panels/panel-actions'
 
@@ -90,9 +91,13 @@ export function DockviewShell({ ref }: DockviewShellProps) {
     if (!loaded || event.api.panels.length === 0) {
       createDefaultLayout(event.api)
     }
+    ensureHomePanel(event.api)
 
     event.api.onDidAddPanel(() => syncOpenTypes(event.api))
-    event.api.onDidRemovePanel(() => syncOpenTypes(event.api))
+    event.api.onDidRemovePanel(() => {
+      ensureHomePanel(event.api)
+      syncOpenTypes(event.api)
+    })
     syncOpenTypes(event.api)
 
     layoutDisposableRef.current?.dispose()
