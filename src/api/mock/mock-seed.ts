@@ -42,6 +42,7 @@ type AgentSpec = {
   id: string
   name: string
   role: string
+  photo: string | null
   status: 'online' | 'busy' | 'away' | 'offline'
   max: number
   used: number
@@ -51,6 +52,9 @@ type AgentSpec = {
   work: { channelKey: ChannelKey; subject: string; queueId: string; ageSec: number }[]
   skillIds: string[]
 }
+
+const w = (n: number) => `https://randomuser.me/api/portraits/women/${n}.jpg`
+const m = (n: number) => `https://randomuser.me/api/portraits/men/${n}.jpg`
 
 const AGENT_SPECS: AgentSpec[] = [
   // --- ONLINE agents ---

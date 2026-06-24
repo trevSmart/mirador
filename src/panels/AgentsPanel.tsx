@@ -1,6 +1,6 @@
 import { useMiradorData } from '../api/mirador-data-context'
 import { useMiradorStatus } from '../api/mirador-status-context'
-import { AgentRow } from '../components/AgentRow'
+import { AgentCard } from '../components/AgentCard'
 import { PanelState } from '../components/PanelState'
 import { countAgentsByStatus, sortAgentsByPresence } from '../utils/agent-stats'
 
@@ -23,9 +23,9 @@ export function AgentsPanel() {
         {statusCounts.away} absents · {statusCounts.offline} fora de línia
       </p>
 
-      <div className="entity-list">
+      <div className="agents-grid">
         {sortedAgents.map((agent) => (
-          <AgentRow key={agent.id} agent={agent} showSkills />
+          <AgentCard key={agent.id} agent={agent} />
         ))}
       </div>
     </PanelState>
