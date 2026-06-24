@@ -119,7 +119,7 @@ export function cloneFloor(floor: Floor, name: string): Floor {
     dividers: floor.dividers.map((divider) => ({ ...divider })),
     background: floor.background,
     backgroundOpacity: floor.backgroundOpacity,
-    dir: 0,
+    dir: floor.dir,
   }
 }
 
