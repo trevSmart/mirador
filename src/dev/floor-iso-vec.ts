@@ -39,9 +39,10 @@ export interface IsoBasis {
 
 /**
  * Build a basis from an azimuth angle and a vertical foreshortening (tilt).
- *  - azimuthDeg = 45, tilt = 0.5  → exactly the official 2:1 isometric look.
- *  - azimuthDeg ≠ 45              → dimetric: `u` and `v` stop being mirrors,
- *    so grid diagonals no longer collapse onto a single screen column.
+ * Models camera orbit around the room centre:
+ *  - azimuthDeg (yaw)   → horizontal orbit; 45° = classic 2:1 isometric.
+ *  - tilt (pitch)       → vertical foreshortening / viewing elevation.
+ *  - azimuthDeg ≠ 45    → dimetric: `u` and `v` stop being mirrors on screen.
  */
 export function makeBasis(azimuthDeg: number, tilt = 0.5): IsoBasis {
   // Scale chosen so the classic 45° case reproduces TW/TH exactly.
@@ -185,49 +186,6 @@ export function computeBoundsVec(cells: Cell[], b: IsoBasis, topExtra = 0, pad =
     }
   }
   return { minX: minX - pad, minY: minY - pad, width: maxX - minX + pad * 2, height: maxY - minY + pad * 2 }
-}
-
-/** Mean (c, r) of the room — its rotation pivot, independent of the basis. */
-export function cellsCentroid(cells: Cell[]): [number, number] {
-  if (cells.length === 0) return [0, 0]
-  let sc = 0
-  let sr = 0
-  for (const [c, r] of cells) {
-    sc += c
-    sr += r
-  }
-  return [sc / cells.length, sr / cells.length]
-}
-
-/**
- * A viewBox kept symmetric around the room centroid's projected point, so that
- * point stays at the viewport centre for every azimuth/tilt — the room spins in
- * place instead of sliding as its silhouette (and bounding box) reshapes. Costs
- * some empty margin, the price of a stable pivot under `xMidYMid meet`.
- */
-export function computeBoundsCentered(
-  cells: Cell[],
-  b: IsoBasis,
-  centroid: [number, number],
-  topExtra = 0,
-  pad = 22,
-): IsoBounds {
-  if (cells.length === 0) return { minX: 0, minY: 0, width: 1, height: 1 }
-  const [px, py] = projectCellVec(centroid[0], centroid[1], b)
-  const topRise = Math.max(b.wallH, VEC_SEAT_MAX_H + topExtra)
-  let hw = 0
-  let hh = 0
-  for (const [c, r] of cells) {
-    const [x, y] = projectCellVec(c, r, b)
-    const cs = tileCorners(x, y, b)
-    for (const [cx, cy] of [cs.top, cs.right, cs.bottom, cs.left]) {
-      hw = Math.max(hw, Math.abs(cx - px))
-      hh = Math.max(hh, Math.abs(cy - topRise - py), Math.abs(cy + b.thk - py))
-    }
-  }
-  hw += pad
-  hh += pad
-  return { minX: px - hw, minY: py - hh, width: hw * 2, height: hh * 2 }
 }
 
 // ---------------------------------------------------------------------------

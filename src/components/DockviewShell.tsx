@@ -32,6 +32,14 @@ interface DockviewShellProps {
   ref?: Ref<DockviewShellHandle>
 }
 
+function closeLegacyInsightsPanels(api: DockviewApi): void {
+  for (const panel of [...api.panels]) {
+    if (panel.view.contentComponent === 'insights') {
+      panel.api.close()
+    }
+  }
+}
+
 function createDefaultLayout(api: DockviewApi): void {
   api.addPanel({
     id: 'home-initial',
@@ -94,6 +102,7 @@ export function DockviewShell({ ref }: DockviewShellProps) {
     if (!loaded || event.api.panels.length === 0) {
       createDefaultLayout(event.api)
     }
+    closeLegacyInsightsPanels(event.api)
     ensureHomePanel(event.api)
 
     // Dispose any prior subscriptions so a re-run of onReady (StrictMode

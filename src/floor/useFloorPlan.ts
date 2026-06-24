@@ -20,8 +20,6 @@ import {
   floorPlanSignature,
   makeId,
   seedFloor,
-  setBackground,
-  setBackgroundOpacity,
   toggleDivider,
   toggleOpening,
   toggleSeat,
@@ -44,6 +42,11 @@ function uniqueName(base: string, existing: string[]): string {
   let n = 2
   while (existing.includes(`${base} ${n}`)) n += 1
   return `${base} ${n}`
+}
+
+function placeIndex(d: FloorPlanData, placeId: string): number {
+  const pi = d.places.findIndex((p) => p.id === placeId)
+  return pi >= 0 ? pi : Math.max(0, d.places.findIndex((p) => p.id === d.activePlaceId))
 }
 
 export function useFloorPlan() {
@@ -217,18 +220,6 @@ export function useFloorPlan() {
     [updateActiveFloor],
   )
 
-  /* ── Background ─────────────────────────────────────────────────────── */
-  const changeBackground = useCallback(
-    (background: string | null) => updateActiveFloor((f) => setBackground(f, background)),
-    [updateActiveFloor],
-  )
-
-  // Live slider updates don't pollute undo history.
-  const changeBackgroundOpacity = useCallback(
-    (opacity: number) => updateActiveFloor((f) => setBackgroundOpacity(f, opacity), false),
-    [updateActiveFloor],
-  )
-
   /* ── Place / floor management ───────────────────────────────────────── */
   const selectPlace = useCallback((placeId: string) => {
     apply((d) => (d.activePlaceId === placeId ? d : { ...d, activePlaceId: placeId }), false)
@@ -236,10 +227,11 @@ export function useFloorPlan() {
     setSelectedSeat(null)
   }, [apply])
 
-  const selectFloor = useCallback((index: number) => {
+  const selectFloor = useCallback((placeId: string, index: number) => {
+    apply((d) => (d.activePlaceId === placeId ? d : { ...d, activePlaceId: placeId }), false)
     setActiveFloorIndex(index)
     setSelectedSeat(null)
-  }, [])
+  }, [apply])
 
   const addPlace = useCallback(() => {
     apply((d) => {
@@ -275,10 +267,10 @@ export function useFloorPlan() {
     }))
   }, [apply])
 
-  const addFloor = useCallback(() => {
+  const addFloor = useCallback((placeId: string) => {
     let newIndex = 0
     apply((d) => {
-      const pi = Math.max(0, d.places.findIndex((p) => p.id === d.activePlaceId))
+      const pi = placeIndex(d, placeId)
       const place = d.places[pi]
       if (!place) return d
       const names = place.floors.map((f) => f.name)
@@ -286,29 +278,29 @@ export function useFloorPlan() {
       const floors = [...place.floors, floor]
       newIndex = floors.length - 1
       const places = d.places.map((p, i) => (i === pi ? { ...p, floors } : p))
-      return { ...d, places }
+      return { ...d, places, activePlaceId: place.id }
     })
     setActiveFloorIndex(newIndex)
     setSelectedSeat(null)
   }, [apply])
 
-  const removeFloor = useCallback((index: number) => {
+  const removeFloor = useCallback((placeId: string, index: number) => {
     apply((d) => {
-      const pi = Math.max(0, d.places.findIndex((p) => p.id === d.activePlaceId))
+      const pi = placeIndex(d, placeId)
       const place = d.places[pi]
       if (!place || place.floors.length <= 1) return d
       const floors = place.floors.filter((_, i) => i !== index)
       const places = d.places.map((p, i) => (i === pi ? { ...p, floors } : p))
-      return { ...d, places }
+      return { ...d, places, activePlaceId: place.id }
     })
     setActiveFloorIndex((cur) => Math.max(0, cur > index ? cur - 1 : cur === index ? cur - 1 : cur))
     setSelectedSeat(null)
   }, [apply])
 
-  const duplicateFloor = useCallback((index: number) => {
+  const duplicateFloor = useCallback((placeId: string, index: number) => {
     let newIndex = index
     apply((d) => {
-      const pi = Math.max(0, d.places.findIndex((p) => p.id === d.activePlaceId))
+      const pi = placeIndex(d, placeId)
       const place = d.places[pi]
       const source = place?.floors[index]
       if (!place || !source) return d
@@ -317,17 +309,17 @@ export function useFloorPlan() {
       const floors = [...place.floors.slice(0, index + 1), copy, ...place.floors.slice(index + 1)]
       newIndex = index + 1
       const places = d.places.map((p, i) => (i === pi ? { ...p, floors } : p))
-      return { ...d, places }
+      return { ...d, places, activePlaceId: place.id }
     })
     setActiveFloorIndex(newIndex)
     setSelectedSeat(null)
   }, [apply])
 
-  const renameFloor = useCallback((index: number, name: string) => {
+  const renameFloor = useCallback((placeId: string, index: number, name: string) => {
     const trimmed = name.trim().slice(0, 40)
     if (!trimmed) return
     apply((d) => {
-      const pi = Math.max(0, d.places.findIndex((p) => p.id === d.activePlaceId))
+      const pi = placeIndex(d, placeId)
       const place = d.places[pi]
       if (!place || !place.floors[index]) return d
       const floors = place.floors.map((f, i) => (i === index ? { ...f, name: trimmed } : f))
@@ -336,10 +328,10 @@ export function useFloorPlan() {
     })
   }, [apply])
 
-  const reorderFloor = useCallback((from: number, to: number) => {
+  const reorderFloor = useCallback((placeId: string, from: number, to: number) => {
     if (from === to) return
     apply((d) => {
-      const pi = Math.max(0, d.places.findIndex((p) => p.id === d.activePlaceId))
+      const pi = placeIndex(d, placeId)
       const place = d.places[pi]
       if (!place) return d
       const floors = [...place.floors]
@@ -347,7 +339,7 @@ export function useFloorPlan() {
       const [moved] = floors.splice(from, 1)
       floors.splice(to, 0, moved)
       const places = d.places.map((p, i) => (i === pi ? { ...p, floors } : p))
-      return { ...d, places }
+      return { ...d, places, activePlaceId: place.id }
     })
     setActiveFloorIndex(to)
   }, [apply])
@@ -425,9 +417,6 @@ export function useFloorPlan() {
     // agents
     assignAgent,
     removeSeat,
-    // background
-    changeBackground,
-    changeBackgroundOpacity,
     // structure
     selectPlace,
     selectFloor,

@@ -41,12 +41,10 @@ const STATUS_DOT: Record<PresenceStatus, string> = {
   offline: 'var(--text-disabled)',
 }
 
-// Drag sensitivity (degrees / px and tilt-units / px).
+// Drag sensitivity (degrees / px and tilt-units / px) + click-vs-drag threshold.
 const DRAG_AZ_PER_PX = 0.25
 const DRAG_TILT_PER_PX = 0.0018
-// Must move past this many px within this many ms of pressing to begin orbiting.
-const ORBIT_THRESHOLD_PX = 4
-const ORBIT_START_WINDOW_MS = 300
+const DRAG_THRESHOLD = 3
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
 
@@ -77,11 +75,10 @@ function RoomRender({
   onSelectAgent,
 }: RoomRenderProps) {
   const [dragging, setDragging] = useState(false)
-  // Pointer origin (+ press timestamp) and the az/tilt captured at press. `active`
-  // only flips once the pointer clears the distance threshold *within* a short
-  // time window, so neither a plain click (selecting a tower) nor an involuntary
-  // long-press-with-drift starts a rotation. After the window it `expired`s.
-  const orbitRef = useRef<{ x: number; y: number; t: number; az: number; tilt: number; active: boolean; expired: boolean } | null>(null)
+  // Pointer origin + the az/tilt captured at press. `active` only flips once the
+  // pointer moves past a threshold, so plain clicks (selecting a tower) are never
+  // swallowed by the orbit capture.
+  const orbitRef = useRef<{ x: number; y: number; az: number; tilt: number; active: boolean } | null>(null)
 
   const basis = useMemo(() => makeBasis(rotation.az, rotation.tilt), [rotation.az, rotation.tilt])
 
@@ -89,7 +86,7 @@ function RoomRender({
     (event: React.PointerEvent<HTMLDivElement>) => {
       if (event.button !== 0) return
       onFocus(floor.id)
-      orbitRef.current = { x: event.clientX, y: event.clientY, t: event.timeStamp, az: rotation.az, tilt: rotation.tilt, active: false, expired: false }
+      orbitRef.current = { x: event.clientX, y: event.clientY, az: rotation.az, tilt: rotation.tilt, active: false }
     },
     [floor.id, onFocus, rotation.az, rotation.tilt],
   )
@@ -97,25 +94,15 @@ function RoomRender({
   const onMove = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
       const start = orbitRef.current
-      if (!start || start.expired) return
+      if (!start) return
       const dx = event.clientX - start.x
       const dy = event.clientY - start.y
-
       if (!start.active) {
-        const movedEnough = Math.hypot(dx, dy) >= ORBIT_THRESHOLD_PX
-        const inWindow = event.timeStamp - start.t <= ORBIT_START_WINDOW_MS
-        if (movedEnough && inWindow) {
-          start.active = true
-          setDragging(true)
-          event.currentTarget.setPointerCapture(event.pointerId)
-        } else if (!inWindow) {
-          start.expired = true
-          return
-        } else {
-          return
-        }
+        if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return
+        start.active = true
+        setDragging(true)
+        event.currentTarget.setPointerCapture(event.pointerId)
       }
-
       // Horizontal → azimuth (orbit around), vertical → tilt (drag down = flatter).
       onRotate({
         az: clamp(start.az - dx * DRAG_AZ_PER_PX, ROOM_AZ_MIN, ROOM_AZ_MAX),
@@ -237,8 +224,8 @@ export function DevPanel() {
   const stackStyle = {
     '--fv-zoom': zoom,
     '--fv-render-zoom': zoom,
-    // Centre the rooms horizontally in the canvas (overrides the shared
-    // .fv-stack flex-start without touching official CSS).
+    // Centre each room horizontally in the rooms container (overrides the shared
+    // .fv-stack flex-start without touching the official CSS).
     justifyContent: 'center',
   } as React.CSSProperties
 

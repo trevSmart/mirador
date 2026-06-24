@@ -1,7 +1,4 @@
-import {
-  DEFAULT_BG_OPACITY,
-  FLOOR_SCHEMA_VERSION,
-} from '../../floor/floor-plan-model'
+import { FLOOR_SCHEMA_VERSION } from '../../floor/floor-plan-model'
 import type { Cell, Edge, Floor, FloorPlanData, Opening, OpeningKind, Place, Seat } from '../../floor/types'
 
 const MOCK_PLACE_ID = 'mock-place-cc'
@@ -52,7 +49,6 @@ function buildFloor(
   width: number,
   height: number,
   seatDefs: SeatDef[],
-  background: string,
   openingDefs: OpeningDef[],
 ): Floor {
   return {
@@ -62,8 +58,6 @@ function buildFloor(
     seats: seatsAt(originC, originR, seatDefs),
     openings: roomOpenings(originC, originR, openingDefs),
     dividers: [],
-    background,
-    backgroundOpacity: DEFAULT_BG_OPACITY,
     dir: 0,
   }
 }
@@ -91,7 +85,6 @@ export function createMockFloorPlan(): FloorPlanData {
       { c: 10, r: 3, agentId: 'a23' },
       { c: 12, r: 3, agentId: 'a33' },
     ],
-    'office-c',
     [
       { lc: 7, lr: 4, edge: 'S', kind: 'door' },
       { lc: 1, lr: 4, edge: 'S', kind: 'door' },
@@ -121,7 +114,6 @@ export function createMockFloorPlan(): FloorPlanData {
       { c: 4, r: 2, agentId: 'a31' },
       { c: 6, r: 2, agentId: null },
     ],
-    'office-a',
     [
       { lc: 6, lr: 3, edge: 'S', kind: 'door' },
       { lc: 0, lr: 1, edge: 'O', kind: 'door' },
@@ -153,7 +145,6 @@ export function createMockFloorPlan(): FloorPlanData {
       { c: 10, r: 3, agentId: 'a29' },
       { c: 12, r: 3, agentId: 'a32' },
     ],
-    'office-b',
     [
       { lc: 7, lr: 4, edge: 'S', kind: 'door' },
       { lc: 12, lr: 4, edge: 'S', kind: 'door' },
