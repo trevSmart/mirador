@@ -23,7 +23,7 @@ const OBJECT_TINTS: Record<string, string> = {
 
 const CHANNEL_ICON: Record<ChannelKey, ResolvedObjectIcon> = {
   veu: { sprite: 'standard', symbol: 'call', tint: 'var(--pa-ic-voice)' },
-  chat: { sprite: 'standard', symbol: 'live_chat', tint: 'var(--pa-ic-chat)' },
+  chat: { sprite: 'standard', symbol: 'messaging_session', tint: 'var(--pa-ic-chat)' },
   email: { sprite: 'standard', symbol: 'email', tint: 'var(--pa-ic-email)' },
   wa: { sprite: 'standard', symbol: 'messaging_session', tint: 'var(--pa-ic-whatsapp)' },
   cas: { sprite: 'standard', symbol: 'case', tint: 'var(--pa-ic-case)' },
@@ -93,11 +93,9 @@ export function workItemIconFields(channelKey: ChannelKey): {
     objectApiName:
       channelKey === 'veu'
         ? 'VoiceCall'
-        : channelKey === 'chat'
-          ? 'LiveChatTranscript'
-          : channelKey === 'wa'
-            ? 'MessagingSession'
-            : channelKey === 'email'
+        : channelKey === 'chat' || channelKey === 'wa'
+          ? 'MessagingSession'
+          : channelKey === 'email'
               ? 'EmailMessage'
               : 'Case',
     iconName: `${icon.sprite}:${icon.symbol}`,
