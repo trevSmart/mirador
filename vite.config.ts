@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite'
-import react from '@vitejs/plugin-react'
+import react, { reactCompilerPreset } from '@vitejs/plugin-react'
+import babel from '@rolldown/plugin-babel'
 import { createApiMiddleware } from './src/server/api-middleware'
 
 // https://vite.dev/config/
@@ -22,6 +23,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       react(),
+      babel({ presets: [reactCompilerPreset()] }),
       {
         name: 'mirador-api',
         configureServer(server) {
