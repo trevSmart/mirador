@@ -45,10 +45,6 @@ export interface Floor {
   seats: Seat[]
   openings: Opening[]
   dividers: Divider[]
-  /** Background image id, or null for none. */
-  background: string | null
-  /** Background opacity in the [0, 1] range. */
-  backgroundOpacity: number
   /** Saved camera rotation for this floor (0..3, 90° steps). */
   dir: Dir
 }

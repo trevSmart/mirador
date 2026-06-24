@@ -8,15 +8,7 @@ export const GRID_C = 50
 export const GRID_R = 50
 export const SEED_SIZE = 4
 export const UNDO_LIMIT = 10
-export const DEFAULT_BG_OPACITY = 0.45
 export const FLOOR_SCHEMA_VERSION = 2
-
-/** Allowed background image ids (whitelist), mirroring the PoC's curated set. */
-export const BACKGROUND_OPTIONS: ReadonlyArray<{ id: string; label: string }> = [
-  { id: 'office-a', label: 'Oficina A' },
-  { id: 'office-b', label: 'Oficina B' },
-  { id: 'office-c', label: 'Oficina C' },
-]
 
 const EDGE_DELTA: Record<Edge, [number, number]> = {
   N: [0, -1],
@@ -103,8 +95,6 @@ export function seedFloor(name: string): Floor {
     seats: [],
     openings: [],
     dividers: [],
-    background: null,
-    backgroundOpacity: DEFAULT_BG_OPACITY,
     dir: 0,
   }
 }
@@ -117,8 +107,6 @@ export function cloneFloor(floor: Floor, name: string): Floor {
     seats: floor.seats.map((seat) => ({ ...seat })),
     openings: floor.openings.map((opening) => ({ ...opening })),
     dividers: floor.dividers.map((divider) => ({ ...divider })),
-    background: floor.background,
-    backgroundOpacity: floor.backgroundOpacity,
     dir: floor.dir,
   }
 }
@@ -280,17 +268,6 @@ export function eraseEdge(floor: Floor, c: number, r: number, edge: Edge): Floor
   return { ...floor, openings, dividers }
 }
 
-export function setBackground(floor: Floor, background: string | null): Floor {
-  if (floor.background === background) return floor
-  return { ...floor, background }
-}
-
-export function setBackgroundOpacity(floor: Floor, opacity: number): Floor {
-  const next = clamp(opacity, 0, 1)
-  if (floor.backgroundOpacity === next) return floor
-  return { ...floor, backgroundOpacity: next }
-}
-
 /* ── Sanitisation ─────────────────────────────────────────────────────── */
 
 /** Validate and clean a single floor from any (possibly untrusted) input. */
@@ -361,7 +338,6 @@ export function sanitizeFloor(raw: unknown): Floor {
     dividers.push(canon)
   }
 
-  const opacity = num(source.backgroundOpacity)
   const rawDir = num(source.dir)
   const dir: Dir = rawDir === 1 || rawDir === 2 || rawDir === 3 ? rawDir : 0
   return {
@@ -371,8 +347,6 @@ export function sanitizeFloor(raw: unknown): Floor {
     seats,
     openings,
     dividers,
-    background: typeof source.background === 'string' ? source.background : null,
-    backgroundOpacity: opacity === null ? DEFAULT_BG_OPACITY : clamp(opacity, 0, 1),
     dir,
   }
 }

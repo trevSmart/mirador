@@ -70,10 +70,10 @@ export function FloorToolbar({
 
       {floor ? (
         <span className="fe-toolbar__meta" aria-label="Recompte d'elements">
-          <span>{floor.cells.length} cel·les</span>
-          <span>{floor.seats.length} seients</span>
-          <span>{floor.openings.length} obertures</span>
-          <span>{floor.dividers.length} separadors</span>
+          <span>
+            {floor.seats.filter((seat) => seat.agentId).length} agents en{' '}
+            {floor.seats.length} seients
+          </span>
         </span>
       ) : null}
 

@@ -125,14 +125,6 @@ export function FloorView({
             ['--fv-fit-scale' as string]: scale,
           } as React.CSSProperties}
         >
-        {floor.background ? (
-          <div
-            className="fe-grid__bg"
-            style={{ opacity: floor.backgroundOpacity }}
-            data-bg={floor.background}
-          />
-        ) : null}
-
         {rotated.cells.map(([c, r]) => {
           const seat = rotated.seatByKey.get(cellKey(c, r))
           const agent = seat?.agentId ? agentsById.get(seat.agentId) ?? null : null

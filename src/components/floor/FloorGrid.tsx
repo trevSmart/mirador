@@ -205,14 +205,6 @@ export function FloorGrid({
       onPointerUp={endSession}
       onPointerCancel={endSession}
     >
-      {floor.background ? (
-        <div
-          className="fe-grid__bg"
-          style={{ opacity: floor.backgroundOpacity }}
-          data-bg={floor.background}
-        />
-      ) : null}
-
       {floor.cells.map(([c, r]) => {
         const seat = seatByKey.get(cellKey(c, r))
         const agent = seat?.agentId ? agentsById.get(seat.agentId) ?? null : null

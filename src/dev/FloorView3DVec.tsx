@@ -25,8 +25,7 @@ import {
   backRightOpeningEdge,
   backRightTrue,
   backRightWallVec,
-  cellsCentroid,
-  computeBoundsCentered,
+  computeBoundsVec,
   depthCompareVec,
   diamondPointsVec,
   dividerFaceVec,
@@ -417,12 +416,7 @@ export function FloorView3DVec({ floor, agentsById, queuesById, basis, showAvata
   const svgIdPrefix = `fvvec-${floor.id}`
   const floorGrainId = `${svgIdPrefix}-floor-grain`
   const floorSheenId = `${svgIdPrefix}-floor-sheen`
-  // viewBox kept symmetric around the room centroid in BOTH axes, so the pivot
-  // stays put at the viewport centre for any azimuth/tilt and the room spins in
-  // place. (Horizontal-only recentring wasn't enough: the centroid's projected
-  // Y also moves with the azimuth, so the vertical framing drifted too.)
-  const centroid = useMemo(() => cellsCentroid(plan.cells), [plan])
-  const bounds = useMemo(() => computeBoundsCentered(plan.cells, basis, centroid, VEC_TH * 2), [plan, basis, centroid])
+  const bounds = useMemo(() => computeBoundsVec(plan.cells, basis, VEC_TH * 2), [plan, basis])
 
   const brVis = useMemo(() => backRightTrue(has, plan.cells, 0, GRID_MAX, GRID_MAX), [has, plan])
   const blVis = useMemo(() => backLeftTrue(has, plan.cells, 0, GRID_MAX, GRID_MAX), [has, plan])

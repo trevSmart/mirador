@@ -798,7 +798,7 @@ textarea,
   justify-content: center;
   height: 100%;
   padding: 0 var(--sp-2);
-  color: var(--dv-activegroup-visiblepanel-tab-color);
+  color: var(--text-strong);
 }
 
 .add-panel-control__action {
@@ -819,7 +819,7 @@ textarea,
 }
 
 .add-panel-control__action:hover {
-  background-color: var(--dv-icon-hover-background-color, var(--accent-tint));
+  background-color: var(--tab-hover-bg);
 }
 
 .add-panel-control__dropdown {
@@ -872,13 +872,13 @@ textarea,
   --dv-tab-close-icon-size: 11px;
   --dv-tabs-and-actions-container-background-color: var(--surface-raised);
   --dv-group-view-background-color: var(--surface-raised);
-  --dv-activegroup-visiblepanel-tab-background-color: var(--accent-tint);
+  --dv-activegroup-visiblepanel-tab-background-color: var(--pa-accent);
   --dv-activegroup-hiddenpanel-tab-background-color: var(--surface-well);
-  --dv-inactivegroup-visiblepanel-tab-background-color: var(--accent-tint);
+  --dv-inactivegroup-visiblepanel-tab-background-color: var(--pa-accent);
   --dv-inactivegroup-hiddenpanel-tab-background-color: var(--surface-well);
-  --dv-activegroup-visiblepanel-tab-color: var(--text-strong);
+  --dv-activegroup-visiblepanel-tab-color: var(--accent-fg);
   --dv-activegroup-hiddenpanel-tab-color: var(--text-body);
-  --dv-inactivegroup-visiblepanel-tab-color: var(--text-strong);
+  --dv-inactivegroup-visiblepanel-tab-color: var(--accent-fg);
   --dv-inactivegroup-hiddenpanel-tab-color: var(--text-body);
   --dv-tab-divider-color: transparent;
   --dv-separator-border: var(--border-subtle);
@@ -891,8 +891,7 @@ textarea,
   --dv-tab-border-radius: var(--r-sm);
   --dv-tab-margin: 4px 2px 0;
   --dv-floating-group-border: 1px solid var(--border-subtle);
-  --tab-hover-bg: color-mix(in srgb, var(--pa-accent) 22%, var(--surface-card));
-  --tab-hover-active-bg: color-mix(in srgb, var(--pa-accent) 32%, var(--surface-card));
+  --tab-hover-bg: rgba(27, 25, 36, .04);
 }
 
 .dockview-container > div {
@@ -914,9 +913,11 @@ textarea,
    unselected tabs default to a washed-out grey that's hard to read, so lift
    every tab to a legible weight. */
 .app-chrome .dockview-container .dockview-theme-light-spaced {
-  --dv-activegroup-visiblepanel-tab-color: var(--text-strong);
+  --dv-activegroup-visiblepanel-tab-background-color: var(--pa-accent);
+  --dv-inactivegroup-visiblepanel-tab-background-color: var(--pa-accent);
+  --dv-activegroup-visiblepanel-tab-color: var(--accent-fg);
+  --dv-inactivegroup-visiblepanel-tab-color: var(--accent-fg);
   --dv-activegroup-hiddenpanel-tab-color: var(--text-strong);
-  --dv-inactivegroup-visiblepanel-tab-color: var(--text-strong);
   --dv-inactivegroup-hiddenpanel-tab-color: var(--text-strong);
   --dv-tab-font-size: var(--fs-sm);
   --dv-tabs-and-actions-container-font-size: var(--fs-sm);
@@ -980,7 +981,11 @@ textarea,
 }
 
 .dockview-container .dv-tab {
-  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+
+.dockview-container .dv-tab.dv-active-tab .mirador-tab__icon {
+  color: inherit;
 }
 
 /* Dockview sets tab backgrounds with 6-class selectors; match that depth so hover wins. */
@@ -988,14 +993,6 @@ textarea,
 .app-chrome .dockview-container .dv-tabs-overflow-container .dv-tab.dv-inactive-tab:hover {
   background-color: var(--tab-hover-bg);
   color: var(--text-strong);
-  box-shadow: inset 0 0 0 1px var(--accent-line);
-}
-
-.app-chrome .dockview-container .dv-groupview .dv-tabs-container > .dv-tab.dv-active-tab:hover,
-.app-chrome .dockview-container .dv-tabs-overflow-container .dv-tab.dv-active-tab:hover {
-  background-color: var(--tab-hover-active-bg);
-  color: var(--text-strong);
-  box-shadow: inset 0 -2px 0 var(--pa-accent);
 }
 
 .dockview-container .dv-tab .dv-default-tab .dv-default-tab-action:hover {
@@ -1587,12 +1584,22 @@ textarea,
 }
 
 /* ── Insights banner (Panorama ops-summary) ── */
-.panel-shell--insights {
+.panel-shell--home {
   padding: 0;
 }
 
-.panel-shell--insights .panel-state {
-  padding: var(--sp-5) var(--sp-8);
+.panel-shell--home .summary-grid,
+.panel-shell--home .home-layout {
+  padding-left: var(--sp-8);
+  padding-right: var(--sp-8);
+}
+
+.panel-shell--home .summary-grid {
+  padding-top: var(--sp-5);
+}
+
+.panel-shell--home .home-layout {
+  padding-bottom: var(--sp-8);
 }
 
 .insights-banner {
@@ -1816,8 +1823,11 @@ textarea,
   overflow: hidden;
 }
 
+/* The aside lives on the left, the canvas on the right, with a draggable
+   resizer in between that drives the left column via --fe-split. */
 .floor-editor {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, var(--fe-split, 0.43fr)) auto minmax(0, 1fr);
   height: 100%;
   min-height: 0;
 }
@@ -1825,11 +1835,35 @@ textarea,
 .floor-editor__main {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
   min-width: 0;
   /* Without min-height:0 a column flex item refuses to shrink below its
      content, so the canvas grows instead of scrolling. */
   min-height: 0;
+}
+
+.floor-editor__resizer {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sp-6);
+  cursor: col-resize;
+  touch-action: none;
+  background: var(--surface-raised);
+  border-right: 1px solid var(--border-subtle);
+}
+
+.floor-editor__resizer-grip {
+  width: 3px;
+  height: 48px;
+  border-radius: var(--r-pill);
+  background: var(--border-subtle);
+  transition: background var(--dur-base) var(--ease);
+}
+
+.floor-editor__resizer:hover .floor-editor__resizer-grip,
+.floor-editor__resizer:active .floor-editor__resizer-grip {
+  background: var(--text-muted);
 }
 
 .floor-editor__canvas {
@@ -1840,14 +1874,11 @@ textarea,
 }
 
 .floor-editor__aside {
-  flex: 0 0 300px;
-  width: 300px;
   display: flex;
   flex-direction: column;
+  min-width: 0;
   min-height: 0;
-  border-right: 1px solid var(--border-subtle);
   background: var(--surface-raised);
-  order: -1;
 }
 
 .floor-editor__aside-scroll {
@@ -1868,6 +1899,16 @@ textarea,
   border-radius: 0;
   overflow: hidden;
   background: var(--fv-canvas-wash);
+}
+
+@media (max-width: 900px) {
+  .floor-editor {
+    grid-template-columns: 1fr;
+  }
+
+  .floor-editor__resizer {
+    display: none;
+  }
 }
 
 /* Toolbar */
@@ -1984,26 +2025,6 @@ textarea,
   cursor: cell;
 }
 
-.fe-grid__bg {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: inherit;
-}
-
-/* Placeholder background fills until real plan images ship. */
-.fe-grid__bg[data-bg='office-a'] {
-  background: linear-gradient(135deg, #cfe4f2, #e7d9f5);
-}
-
-.fe-grid__bg[data-bg='office-b'] {
-  background: linear-gradient(135deg, #d8efe2, #f3e7cf);
-}
-
-.fe-grid__bg[data-bg='office-c'] {
-  background: linear-gradient(135deg, #f2dce0, #dfe2f5);
-}
-
 .fe-cell {
   position: absolute;
   display: grid;
@@ -2016,8 +2037,8 @@ textarea,
   position: relative;
   display: grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
   border-radius: var(--r-full);
   border: 2px solid var(--border-strong);
   background: var(--surface-card);
@@ -2025,9 +2046,9 @@ textarea,
 }
 
 .fe-seat .agent-avatar {
-  width: 20px;
-  height: 20px;
-  font-size: 8px;
+  width: 26px;
+  height: 26px;
+  font-size: 10px;
 }
 
 .fe-seat--empty {
@@ -2137,14 +2158,119 @@ textarea,
   border-color: var(--accent);
 }
 
-.fe-place-list,
-.fe-floor-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
+.fe-add-btn--inline {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  font-size: 10px;
 }
 
-.fe-place,
+/* Tree panel */
+.fe-tree-panel {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--surface-card);
+  overflow: hidden;
+}
+
+.fe-tree-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-well);
+}
+
+/* Tree */
+.fe-tree {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-2);
+}
+
+.fe-tree > [role='none']:not(:last-child) {
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: var(--sp-1);
+  padding-bottom: var(--sp-1);
+}
+
+.fe-tree__place {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-2);
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.fe-tree__place:hover {
+  background: var(--surface-well);
+}
+
+.fe-tree__place--active {
+  background: var(--surface-well);
+}
+
+.fe-tree__chevron {
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-xs);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.fe-tree__chevron:hover {
+  background: var(--surface-well);
+  color: var(--text-strong);
+}
+
+.fe-tree__place--expanded .fe-tree__chevron {
+  transform: rotate(90deg);
+}
+
+.fe-tree__children {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 var(--sp-1) var(--sp-2) var(--sp-4);
+}
+
+.fe-tree .fe-floor {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.fe-tree .fe-floor:hover {
+  background: var(--surface-well);
+}
+
+.fe-tree .fe-floor--on {
+  background: var(--accent-tint);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.fe-tree .fe-floor--drop {
+  box-shadow: inset 0 2px 0 var(--accent);
+}
+
 .fe-floor {
   display: flex;
   align-items: center;
@@ -2157,12 +2283,10 @@ textarea,
   transition: border-color var(--dur-fast) var(--ease);
 }
 
-.fe-place:hover,
 .fe-floor:hover {
   border-color: var(--border-strong);
 }
 
-.fe-place--on,
 .fe-floor--on {
   border-color: var(--accent);
   box-shadow: inset 0 0 0 1px var(--accent);
@@ -2250,55 +2374,6 @@ textarea,
   border-radius: var(--r-xs);
   background: var(--surface-card);
   color: var(--text-strong);
-}
-
-/* Background controls */
-.fe-bg-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-}
-
-.fe-bg-chip {
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-pill);
-  background: var(--surface-card);
-  color: var(--text-body);
-  font-size: var(--fs-xs);
-  padding: 4px 10px;
-  cursor: pointer;
-}
-
-.fe-bg-chip--on {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-tint);
-}
-
-.fe-bg-chip:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.fe-opacity {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  font-size: var(--fs-xs);
-  color: var(--text-body);
-}
-
-.fe-opacity input[type='range'] {
-  flex: 1 1 auto;
-  accent-color: var(--accent);
-}
-
-.fe-opacity__value {
-  font-family: var(--font-mono);
-  font-size: calc(1em + var(--mono-fs-nudge));
-  color: var(--text-muted);
-  min-width: 34px;
-  text-align: right;
 }
 
 /* Agent palette */

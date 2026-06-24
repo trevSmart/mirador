@@ -1,12 +1,18 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
+import type { IDockviewPanelProps } from 'dockview-react'
 import { useMiradorData } from '../api/mirador-data-context'
 import { useMiradorStatus } from '../api/mirador-status-context'
+import { useAuth } from '../auth/auth-context'
 import { AgentRow } from '../components/AgentRow'
 import { SfIcon, FadeValue } from '../components/ds'
+import { InsightsBanner } from '../components/InsightsBanner'
 import { PanelState } from '../components/PanelState'
 import { QueueRow } from '../components/QueueRow'
 import { FloorPanel } from './FloorPanel'
 import { useFloorSeatedAgentIds } from '../floor/floor-seated-agents'
+import { addPanelByType } from './panel-actions'
+import type { PanelType } from './registry'
+import { computeHealthInsights } from '../utils/health-insights'
 
 const SPLIT_KEY = 'mirador.home.split'
 const MIN_SPLIT = 0.25
@@ -33,11 +39,24 @@ import {
   totalQueueBacklog,
 } from '../utils/agent-stats'
 
-export function HomePanel() {
+export function HomePanel({ containerApi }: IDockviewPanelProps) {
   const { agents, queues } = useMiradorData()
   const { isLoading, error, refresh } = useMiradorStatus()
+  const { isMockMode } = useAuth()
   const statusCounts = countAgentsByStatus(agents)
   const topQueues = sortQueuesByBacklog(queues).slice(0, 5)
+
+  const health = useMemo(
+    () =>
+      computeHealthInsights(agents, queues, {
+        includeExtendedMetrics: isMockMode,
+      }),
+    [agents, isMockMode, queues],
+  )
+
+  const handleOpenPanel = (panel: PanelType) => {
+    addPanelByType(containerApi, panel)
+  }
 
   const layoutRef = useRef<HTMLDivElement>(null)
   const [split, setSplit] = useState<number>(loadSplit)
@@ -95,7 +114,10 @@ export function HomePanel() {
       onRetry={refresh}
       isEmpty={agents.length === 0 && queues.length === 0}
       emptyMessage="No hi ha agents ni cues disponibles."
+      shellClassName="panel-shell--home"
     >
+      <InsightsBanner health={health} queueCount={queues.length} onOpenPanel={handleOpenPanel} />
+
       <div className="summary-grid">
         <section className="summary-card">
           <div className="summary-card__body">

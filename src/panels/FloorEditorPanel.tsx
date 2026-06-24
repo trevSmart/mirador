@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo } from 'react'
+import { lazy, Suspense, useCallback, useMemo, useRef, useState } from 'react'
 import { useMiradorData } from '../api/mirador-data-context'
 import { AgentAssignPalette } from '../components/floor/AgentAssignPalette'
 import { FloorGrid } from '../components/floor/FloorGrid'
@@ -16,6 +16,24 @@ import { useSmoothScroll } from '../hooks/useSmoothScroll'
 /** The editor preview is display-only; seat taps do nothing there. */
 const noop = () => {}
 
+const SPLIT_KEY = 'mirador.floor-editor.split'
+const MIN_SPLIT = 0.25
+const MAX_SPLIT = 0.75
+
+/** Left-column (aside) fraction (0..1) persisted between sessions. */
+function loadSplit(): number {
+  try {
+    const raw = localStorage.getItem(SPLIT_KEY)
+    if (raw) {
+      const value = Number.parseFloat(raw)
+      if (Number.isFinite(value)) return Math.min(MAX_SPLIT, Math.max(MIN_SPLIT, value))
+    }
+  } catch {
+    /* ignore */
+  }
+  return 0.3
+}
+
 export function FloorEditorPanel() {
   const { agents, queues } = useMiradorData()
   const fp = useFloorPlan()
@@ -23,6 +41,40 @@ export function FloorEditorPanel() {
   // shell), so each gets its own Lenis instance for smooth wheel scrolling.
   const canvasScrollRef = useSmoothScroll<HTMLDivElement>()
   const asideScrollRef = useSmoothScroll<HTMLDivElement>()
+
+  const layoutRef = useRef<HTMLDivElement>(null)
+  const [split, setSplit] = useState<number>(loadSplit)
+
+  const startResize = useCallback((event: React.PointerEvent) => {
+    event.preventDefault()
+    const layout = layoutRef.current
+    if (!layout) return
+
+    const onMove = (move: PointerEvent) => {
+      const rect = layout.getBoundingClientRect()
+      const fraction = (move.clientX - rect.left) / rect.width
+      setSplit(Math.min(MAX_SPLIT, Math.max(MIN_SPLIT, fraction)))
+    }
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      setSplit((current) => {
+        try {
+          localStorage.setItem(SPLIT_KEY, String(current))
+        } catch {
+          /* ignore */
+        }
+        return current
+      })
+    }
+
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }, [])
 
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents])
   const queuesById = useMemo(() => new Map(queues.map((queue) => [queue.id, queue])), [queues])
@@ -51,16 +103,21 @@ export function FloorEditorPanel() {
     )
   }
 
+  // Single CSS var drives the left column; the right stays at 1fr, so the
+  // ratio is split / (1 - split). The media query can still override cleanly.
+  const layoutStyle = {
+    ['--fe-split']: `${split / (1 - split)}fr`,
+  } as React.CSSProperties
+
   return (
     <PanelShell hideHeader smoothScroll={false} className="panel-shell--floor">
-      <div className="floor-editor">
+      <div className="floor-editor" ref={layoutRef} style={layoutStyle}>
         <aside className="floor-editor__aside">
           <div className="floor-editor__aside-scroll" ref={asideScrollRef}>
             <FloorSidebar
               places={fp.places}
               activePlace={fp.activePlace}
               activeFloorIndex={fp.activeFloorIndex}
-              activeFloor={fp.activeFloor}
               onSelectPlace={fp.selectPlace}
               onAddPlace={fp.addPlace}
               onRemovePlace={fp.removePlace}
@@ -71,8 +128,6 @@ export function FloorEditorPanel() {
               onDuplicateFloor={fp.duplicateFloor}
               onRenameFloor={fp.renameFloor}
               onReorderFloor={fp.reorderFloor}
-              onChangeBackground={fp.changeBackground}
-              onChangeBackgroundOpacity={fp.changeBackgroundOpacity}
             />
             {fp.tool === 'seat' && fp.selectedSeat ? (
               <AgentAssignPalette
@@ -102,6 +157,16 @@ export function FloorEditorPanel() {
             </div>
           ) : null}
         </aside>
+
+        <div
+          className="floor-editor__resizer"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Ajusta la proporció de les columnes"
+          onPointerDown={startResize}
+        >
+          <span className="floor-editor__resizer-grip" aria-hidden="true" />
+        </div>
 
         <div className="floor-editor__main">
           <FloorToolbar

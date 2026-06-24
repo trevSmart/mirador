@@ -8,7 +8,6 @@ import { PanelSuspenseFallback } from '../components/PanelSuspenseFallback'
 export type PanelType =
   | 'home'
   | 'wallboard'
-  | 'insights'
   | 'agents'
   | 'queues'
   | 'skills'
@@ -31,7 +30,6 @@ export interface PanelDefinition {
 export const PANEL_DEFINITIONS: PanelDefinition[] = [
   { type: 'home',        title: 'Home',         icon: { sprite: 'standard', symbol: 'home' },               component: lazy(() => import('./HomePanel').then(m => ({ default: m.HomePanel }))) },
   { type: 'wallboard',  title: 'Wallboard',    icon: { sprite: 'standard', symbol: 'metrics' },            component: lazy(() => import('./WallboardPanel').then(m => ({ default: m.WallboardPanel }))) },
-  { type: 'insights',   title: 'Insights',     icon: { sprite: 'standard', symbol: 'customer_portal_users' }, component: lazy(() => import('./InsightsPanel').then(m => ({ default: m.InsightsPanel }))) },
   { type: 'agents',     title: 'Agents',       icon: { sprite: 'standard', symbol: 'customers' },         component: lazy(() => import('./AgentsPanel').then(m => ({ default: m.AgentsPanel }))) },
   { type: 'queues',     title: 'Queues',       icon: { name: 'queue' },                                   component: lazy(() => import('./QueuesPanel').then(m => ({ default: m.QueuesPanel }))) },
   { type: 'skills',     title: 'Skills',       icon: { name: 'skill' },                                   component: lazy(() => import('./SkillsPanel').then(m => ({ default: m.SkillsPanel }))) },
