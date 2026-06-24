@@ -48,10 +48,11 @@ export function FloorPanel() {
       const onWheel = (event: WheelEvent) => {
         if (!event.ctrlKey && !event.metaKey) return
         event.preventDefault()
+        event.stopImmediatePropagation()
         setZoom((current) => adjustFloorZoomFromWheel(current, event.deltaY))
       }
 
-      element.addEventListener('wheel', onWheel, { passive: false })
+      element.addEventListener('wheel', onWheel, { passive: false, capture: true })
       wheelCleanupRef.current = () => element.removeEventListener('wheel', onWheel)
     },
     [canvasScrollRef],
@@ -94,7 +95,7 @@ export function FloorPanel() {
 
   const stackStyle = {
     '--fv-zoom': zoom,
-    '--fv-render-zoom': multiFloor ? 1 : zoom,
+    '--fv-render-zoom': zoom,
   } as React.CSSProperties
 
   useEffect(() => {

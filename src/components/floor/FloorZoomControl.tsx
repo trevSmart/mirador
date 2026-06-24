@@ -4,6 +4,7 @@ import { syncDropdownPanel } from '../../utils/sync-dropdown-panel'
 
 export const FLOOR_ZOOM_MIN = 0.5
 export const FLOOR_ZOOM_MAX = 2
+export const FLOOR_ZOOM_DEFAULT = 1
 /** Fine nudge for +/- buttons; slider is fully continuous. */
 export const FLOOR_ZOOM_STEP = 0.05
 export const FLOOR_ZOOM_KEY = 'mirador.floor.zoom'
@@ -20,7 +21,7 @@ export function loadFloorZoom(): number {
   } catch {
     /* ignore */
   }
-  return 1
+  return FLOOR_ZOOM_DEFAULT
 }
 
 function clampZoom(value: number): number {
@@ -76,6 +77,15 @@ function FloorZoomSlider({ zoom, onChange }: FloorZoomSliderProps) {
       <span className="fv-zoom__value" aria-hidden="true">
         {pct}%
       </span>
+      <ButtonIcon
+        className="fv-icon-btn"
+        aria-label="Restableix el zoom al 100%"
+        title="100%"
+        icon="utility:refresh"
+        size={14}
+        disabled={pct === 100}
+        onClick={() => onChange(FLOOR_ZOOM_DEFAULT)}
+      />
     </div>
   )
 }

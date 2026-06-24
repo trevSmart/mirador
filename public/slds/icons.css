@@ -38,6 +38,7 @@
 /* ── Colors estàndard SLDS per a les icones usades a l'app ─────────────── */
 
 .slds-icon-standard-agent-home       { background-color: rgb(3,   45,  96);  }
+.slds-icon-standard-home             { background-color: rgb(255, 83,  138); }
 .slds-icon-standard-voice-call       { background-color: rgb(59,  167, 85);  }
 .slds-icon-standard-live-chat        { background-color: rgb(255, 93,  45);  }
 .slds-icon-standard-email            { background-color: rgb(147, 147, 147); }
@@ -49,5 +50,7 @@
 .slds-icon-standard-work-order-item  { background-color: rgb(27,  150, 255); }
 .slds-icon-standard-service-territory{ background-color: rgb(88,  103, 232); }
 .slds-icon-standard-maintenance-plan { background-color: rgb(16,  124, 173); }
+.slds-icon-standard-business-unit    { background-color: rgb(88,  103, 232); }
 .slds-icon-standard-customer-portal-users { background-color: rgb(27,  150, 255); }
 .slds-icon-standard-customers            { background-color: rgb(6,   165, 154); }
+.slds-icon-custom-custom83           { background-color: rgb(231, 128, 111); }

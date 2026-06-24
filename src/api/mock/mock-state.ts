@@ -421,7 +421,7 @@ function assignQueuedWork(stateRef: MockLiveState, rand: () => number): void {
       if (!queuedItem.queueId) continue
 
       agent.work.push({
-        id: `${agent.id}-work-${agent.work.length}`,
+        id: nextWorkId(stateRef),
         recordId: null,
         label: queuedItem.subject,
         subject: queuedItem.subject,
