@@ -124,6 +124,89 @@ export function backLeftVisible(has: Has, dir: Dir): Has {
   return (c, r) => !has(c - 1, r)
 }
 
+/* A back-facing exterior edge is only a *true* back wall when the room does not
+   continue behind it. In a concave (e.g. L/step-shaped) room an edge can be
+   parallel to the real back wall yet sit at an inner step: it has no immediate
+   neighbour, so backRight/LeftVisible accept it, but the floor carries on behind
+   and a full-height wall there would occlude tiles the camera should see. The
+   occlusion-aware predicates below keep the wall only when its projected quad
+   covers no farther floor tile. Geometry is screen-space, so it is dir-agnostic
+   once cells are projected. */
+
+/** Numeric corners of a back-right wall quad (mirrors `backRightWall`). */
+function backRightWallPts(x: number, y: number): Point[] {
+  return [[x, y - TH], [x + TW, y], [x + TW, y - WALL_H], [x, y - TH - WALL_H]]
+}
+/** Numeric corners of a back-left wall quad (mirrors `backLeftWall`). */
+function backLeftWallPts(x: number, y: number): Point[] {
+  return [[x, y - TH], [x - TW, y], [x - TW, y - WALL_H], [x, y - TH - WALL_H]]
+}
+/** Numeric corners of a tile-top rhombus (mirrors `diamondPoints`, h = 0). */
+function diamondPts(x: number, y: number): Point[] {
+  return [[x, y - TH], [x + TW, y], [x, y + TH], [x - TW, y]]
+}
+
+/** Separating-axis overlap test for two convex polygons. Edge contact (no area
+    in common) counts as *not* overlapping, so flush back-row walls survive. */
+function convexOverlap(a: Point[], b: Point[]): boolean {
+  const EPS = 1e-6
+  for (const poly of [a, b]) {
+    for (let i = 0; i < poly.length; i++) {
+      const p = poly[i]
+      const q = poly[(i + 1) % poly.length]
+      const axis: Point = [-(q[1] - p[1]), q[0] - p[0]]
+      let minA = Infinity, maxA = -Infinity, minB = Infinity, maxB = -Infinity
+      for (const [px, py] of a) {
+        const d = px * axis[0] + py * axis[1]
+        if (d < minA) minA = d
+        if (d > maxA) maxA = d
+      }
+      for (const [px, py] of b) {
+        const d = px * axis[0] + py * axis[1]
+        if (d < minB) minB = d
+        if (d > maxB) maxB = d
+      }
+      if (maxA <= minB + EPS || maxB <= minA + EPS) return false
+    }
+  }
+  return true
+}
+
+function backWallTrue(
+  base: Has,
+  wallPts: (x: number, y: number) => Point[],
+  cells: Cell[],
+  dir: Dir,
+  maxC: number,
+  maxR: number,
+): Has {
+  const cmp = depthCompare(dir)
+  return (c, r) => {
+    if (!base(c, r)) return false
+    const [x, y] = projectCell(c, r, dir, maxC, maxR)
+    const wall = wallPts(x, y)
+    for (const cell of cells) {
+      const [oc, or] = cell
+      if (oc === c && or === r) continue
+      // Only farther tiles (drawn earlier) can be hidden by this wall.
+      if (cmp(cell, [c, r]) >= 0) continue
+      const [ox, oy] = projectCell(oc, or, dir, maxC, maxR)
+      if (convexOverlap(wall, diamondPts(ox, oy))) return false
+    }
+    return true
+  }
+}
+
+/** Like `backRightVisible`, but also rejects inner-step edges whose wall would
+    occlude a farther floor tile (paint only true back walls). */
+export function backRightTrue(has: Has, cells: Cell[], dir: Dir, maxC: number, maxR: number): Has {
+  return backWallTrue(backRightVisible(has, dir), backRightWallPts, cells, dir, maxC, maxR)
+}
+/** Like `backLeftVisible`, but rejects occluding inner-step edges. */
+export function backLeftTrue(has: Has, cells: Cell[], dir: Dir, maxC: number, maxR: number): Has {
+  return backWallTrue(backLeftVisible(has, dir), backLeftWallPts, cells, dir, maxC, maxR)
+}
+
 /** The grid edge that corresponds to the back-right / back-left wall, per dir. */
 export function backRightEdge(dir: Dir): Edge {
   return dir === 0 ? 'N' : dir === 3 ? 'E' : 'O'
