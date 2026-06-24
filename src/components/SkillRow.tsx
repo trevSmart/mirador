@@ -1,5 +1,6 @@
 import type { Skill } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
+import { FadeValue, MetricPill } from './ds'
 
 interface SkillRowProps {
   skill: Skill
@@ -25,20 +26,14 @@ export function SkillRow({ skill }: SkillRowProps) {
         <div>
           <h3 className="skill-row__name" title={skill.name}>{skill.name}</h3>
           <p className="skill-row__meta">
-            {skill.type ?? 'Sense tipus'} · {skill.agents} agents qualificats
+            {skill.type ?? 'Sense tipus'} · <FadeValue value={skill.agents} /> agents qualificats
           </p>
         </div>
       </div>
 
       <div className="skill-row__metrics">
-        <div className="metric-pill">
-          <span className="metric-pill__label">Backlog</span>
-          <span className="metric-pill__value">{skill.backlog}</span>
-        </div>
-        <div className="metric-pill">
-          <span className="metric-pill__label">Agents</span>
-          <span className="metric-pill__value">{skill.agents}</span>
-        </div>
+        <MetricPill label="Backlog" value={skill.backlog} />
+        <MetricPill label="Agents" value={skill.agents} />
       </div>
     </article>
   )

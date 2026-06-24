@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react'
 import type { Agent } from '../../api/types'
 import { AgentAvatar } from '../AgentRow'
+import { FadeValue } from '../ds/FadeValue'
 import { StatusBadge } from '../StatusBadge'
 
 type StatTone = 'ok' | 'watch' | 'alert'
 
-export function DrawerSection({ title, children }: { title: string; children: ReactNode }) {
+export function DrawerSection({ title, children }: { title: ReactNode; children: ReactNode }) {
   return (
     <section className="dd-section">
       <h4 className="dd-section__title">{title}</h4>
@@ -19,11 +20,19 @@ export function StatGrid({ children }: { children: ReactNode }) {
 }
 
 export function Stat({ label, value, tone }: { label: string; value: ReactNode; tone?: StatTone }) {
-  return (
-    <div className="dd-stat">
-      <span className="dd-stat__value" data-tone={tone ?? 'none'}>
+  const toneAttr = tone ?? 'none'
+  const animated =
+    typeof value === 'string' || typeof value === 'number' ? (
+      <FadeValue className="dd-stat__value" data-tone={toneAttr} value={value} />
+    ) : (
+      <span className="dd-stat__value" data-tone={toneAttr}>
         {value}
       </span>
+    )
+
+  return (
+    <div className="dd-stat">
+      {animated}
       <span className="dd-stat__label">{label}</span>
     </div>
   )

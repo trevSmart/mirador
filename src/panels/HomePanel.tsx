@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { useMiradorData } from '../api/mirador-data-context'
 import { useMiradorStatus } from '../api/mirador-status-context'
 import { AgentRow } from '../components/AgentRow'
-import { SfIcon } from '../components/ds'
+import { SfIcon, FadeValue } from '../components/ds'
 import { PanelState } from '../components/PanelState'
 import { QueueRow } from '../components/QueueRow'
 import { FloorPanel } from './FloorPanel'
@@ -110,12 +110,14 @@ export function HomePanel() {
               <div className="summary-card__text">
                 <p className="summary-card__label">Agents</p>
                 <p className="summary-card__detail">
-                  {statusCounts.online} en línia · {statusCounts.busy} ocupats ·{' '}
-                  {statusCounts.away} absents · {statusCounts.offline} fora de línia
+                  <FadeValue value={statusCounts.online} /> en línia ·{' '}
+                  <FadeValue value={statusCounts.busy} /> ocupats ·{' '}
+                  <FadeValue value={statusCounts.away} /> absents ·{' '}
+                  <FadeValue value={statusCounts.offline} /> fora de línia
                 </p>
               </div>
             </div>
-            <p className="summary-card__value">{agents.length}</p>
+            <FadeValue as="p" className="summary-card__value" value={agents.length} />
           </div>
         </section>
 
@@ -133,7 +135,7 @@ export function HomePanel() {
                 <p className="summary-card__detail">Casos assignats als agents</p>
               </div>
             </div>
-            <p className="summary-card__value">{totalAgentWork(agents)}</p>
+            <FadeValue as="p" className="summary-card__value" value={totalAgentWork(agents)} />
           </div>
         </section>
 
@@ -148,10 +150,12 @@ export function HomePanel() {
               />
               <div className="summary-card__text">
                 <p className="summary-card__label">Cues</p>
-                <p className="summary-card__detail">{totalQueueBacklog(queues)} treballs en cua</p>
+                <p className="summary-card__detail">
+                  <FadeValue value={totalQueueBacklog(queues)} /> treballs en cua
+                </p>
               </div>
             </div>
-            <p className="summary-card__value">{queues.length}</p>
+            <FadeValue as="p" className="summary-card__value" value={queues.length} />
           </div>
         </section>
       </div>

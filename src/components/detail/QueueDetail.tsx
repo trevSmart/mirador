@@ -4,7 +4,7 @@ import { useDetailDrawer } from '../../detail/detail-drawer-context'
 import { sortAgentsByPresence } from '../../utils/agent-stats'
 import { channelLabel, formatSeconds } from '../../utils/format'
 import { resolveWorkItemIcon } from '../../utils/salesforce-object-icon'
-import { Badge, PressureBar, SfIcon } from '../ds'
+import { Badge, FadeValue, PressureBar, SfIcon } from '../ds'
 import { DetailRow, DrawerSection, EmptyHint, MiniAgentRow, Stat, StatGrid } from './parts'
 
 const BACKLOG_FULL = 20
@@ -24,7 +24,9 @@ export function QueueDetail({ queue }: { queue: Queue }) {
         <div className="dd-head__id">
           <h2 className="dd-head__name">{queue.name}</h2>
           <span className="dd-head__sub">Cua</span>
-          <Badge tone="neutral">{queue.online} en línia</Badge>
+          <Badge tone="neutral">
+            <FadeValue value={queue.online} /> en línia
+          </Badge>
         </div>
       </header>
 
@@ -38,7 +40,13 @@ export function QueueDetail({ queue }: { queue: Queue }) {
         </StatGrid>
       </DrawerSection>
 
-      <DrawerSection title={`En espera (${waiting.length})`}>
+      <DrawerSection
+        title={
+          <>
+            En espera (<FadeValue value={waiting.length} />)
+          </>
+        }
+      >
         {waiting.length === 0 ? (
           <EmptyHint>Res en espera.</EmptyHint>
         ) : (
@@ -50,7 +58,11 @@ export function QueueDetail({ queue }: { queue: Queue }) {
                   key={item.id}
                   leading={<SfIcon sprite={icon.sprite} symbol={icon.symbol} sldsSize="medium" bg={icon.tint} />}
                   title={item.subject}
-                  meta={`${channelLabel(item.channelKey)} · ${formatSeconds(item.ageSec)}`}
+                  meta={
+                    <>
+                      {channelLabel(item.channelKey)} · <FadeValue value={formatSeconds(item.ageSec)} />
+                    </>
+                  }
                 />
               )
             })}
@@ -58,7 +70,13 @@ export function QueueDetail({ queue }: { queue: Queue }) {
         )}
       </DrawerSection>
 
-      <DrawerSection title={`Agents assignats (${members.length})`}>
+      <DrawerSection
+        title={
+          <>
+            Agents assignats (<FadeValue value={members.length} />)
+          </>
+        }
+      >
         {members.length === 0 ? (
           <EmptyHint>Cap agent assignat.</EmptyHint>
         ) : (

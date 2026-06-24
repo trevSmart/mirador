@@ -2,6 +2,7 @@ import type { Agent, PresenceStatus } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { agentInitials } from '../utils/format'
 import { useSalesforcePhoto } from '../hooks/useSalesforcePhoto'
+import { FadeValue } from './ds'
 import { StatusBadge } from './StatusBadge'
 
 const STATUS_COLOR: Record<PresenceStatus, string> = {
@@ -55,15 +56,17 @@ export function AgentCard({ agent }: { agent: Agent }) {
 
       <div className="agent-card__metrics">
         <span className="agent-card__metric">
-          <span className="agent-card__metric-value">{agent.work.length}</span>
+          <FadeValue className="agent-card__metric-value" value={agent.work.length} />
           <span className="agent-card__metric-label">actiu</span>
         </span>
         <span className="agent-card__metric">
-          <span className="agent-card__metric-value">{agent.used}/{agent.max}</span>
+          <span className="agent-card__metric-value">
+            <FadeValue value={agent.used} />/<FadeValue value={agent.max} />
+          </span>
           <span className="agent-card__metric-label">cap.</span>
         </span>
         <span className="agent-card__metric">
-          <span className="agent-card__metric-value">{agent.queueIds.length}</span>
+          <FadeValue className="agent-card__metric-value" value={agent.queueIds.length} />
           <span className="agent-card__metric-label">cues</span>
         </span>
       </div>

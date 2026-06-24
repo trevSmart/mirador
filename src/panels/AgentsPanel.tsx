@@ -1,6 +1,7 @@
 import { useMiradorData } from '../api/mirador-data-context'
 import { useMiradorStatus } from '../api/mirador-status-context'
 import { AgentCard } from '../components/AgentCard'
+import { FadeValue } from '../components/ds'
 import { PanelState } from '../components/PanelState'
 import { countAgentsByStatus, sortAgentsByPresence } from '../utils/agent-stats'
 
@@ -19,8 +20,9 @@ export function AgentsPanel() {
       emptyMessage="No hi ha agents Omni disponibles."
     >
       <p className="panel-summary">
-        {agents.length} agents · {statusCounts.online} en línia · {statusCounts.busy} ocupats ·{' '}
-        {statusCounts.away} absents · {statusCounts.offline} fora de línia
+        <FadeValue value={agents.length} /> agents · <FadeValue value={statusCounts.online} /> en línia ·{' '}
+        <FadeValue value={statusCounts.busy} /> ocupats · <FadeValue value={statusCounts.away} /> absents ·{' '}
+        <FadeValue value={statusCounts.offline} /> fora de línia
       </p>
 
       <div className="agents-grid">
