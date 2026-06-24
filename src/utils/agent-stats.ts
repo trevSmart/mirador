@@ -64,6 +64,49 @@ export function sortAgentsByPresence(agents: Agent[]): Agent[] {
   })
 }
 
+/** Pick a small set that includes each presence status when available. */
+export function pickRepresentativeAgents(agents: Agent[], limit: number): Agent[] {
+  if (agents.length <= limit) {
+    return sortAgentsByPresence(agents)
+  }
+
+  const buckets: Record<PresenceStatus, Agent[]> = {
+    online: [],
+    busy: [],
+    away: [],
+    offline: [],
+  }
+  for (const agent of agents) {
+    buckets[agent.status].push(agent)
+  }
+  for (const status of Object.keys(buckets) as PresenceStatus[]) {
+    buckets[status].sort((left, right) => left.name.localeCompare(right.name, 'ca'))
+  }
+
+  const picked: Agent[] = []
+  const pickedIds = new Set<string>()
+  const showcaseOrder: PresenceStatus[] = ['offline', 'away', 'busy', 'online']
+
+  for (const status of showcaseOrder) {
+    const next = buckets[status].find((agent) => !pickedIds.has(agent.id))
+    if (!next) continue
+    picked.push(next)
+    pickedIds.add(next.id)
+    if (picked.length >= limit) {
+      return picked
+    }
+  }
+
+  for (const agent of sortAgentsByPresence(agents)) {
+    if (pickedIds.has(agent.id)) continue
+    picked.push(agent)
+    pickedIds.add(agent.id)
+    if (picked.length >= limit) break
+  }
+
+  return picked
+}
+
 export function totalSkillBacklog(skills: Skill[]): number {
   return skills.reduce((total, skill) => total + skill.backlog, 0)
 }

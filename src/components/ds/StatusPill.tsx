@@ -17,6 +17,7 @@ interface StatusPillProps {
   status?: PresenceStatus
   color?: string
   label?: string
+  compact?: boolean
   style?: CSSProperties
 }
 
@@ -24,7 +25,13 @@ interface StatusPillProps {
  * StatusPill — uppercase micro pill with a leading dot.
  * Pass a presence key (online/busy/away/offline) or a custom color+label.
  */
-export function StatusPill({ status = 'online', color, label, style = {} }: StatusPillProps) {
+export function StatusPill({
+  status = 'online',
+  color,
+  label,
+  compact = false,
+  style = {},
+}: StatusPillProps) {
   const p = PRESENCE[status] ?? PRESENCE.online
   const c = color ?? p.color
   const text = label ?? p.label
@@ -33,20 +40,28 @@ export function StatusPill({ status = 'online', color, label, style = {} }: Stat
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: 5,
+        gap: compact ? 4 : 5,
         fontFamily: 'var(--font-body)',
-        fontSize: 10.5,
+        fontSize: compact ? 9 : 10.5,
         fontWeight: 600,
         letterSpacing: '.03em',
         textTransform: 'uppercase',
-        padding: '3px 8px',
+        padding: compact ? '1px 5px' : '3px 8px',
         borderRadius: 'var(--r-pill)',
         color: c,
         background: `color-mix(in srgb, ${c} 12%, transparent)`,
+        lineHeight: 1.2,
         ...style,
       }}
     >
-      <i style={{ width: 6, height: 6, borderRadius: '50%', background: c }} />
+      <i
+        style={{
+          width: compact ? 5 : 6,
+          height: compact ? 5 : 6,
+          borderRadius: '50%',
+          background: c,
+        }}
+      />
       {text}
     </span>
   )

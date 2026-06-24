@@ -22,7 +22,7 @@ export function AgentsPanel() {
       <p className="panel-summary">
         <FadeValue value={agents.length} /> agents · <FadeValue value={statusCounts.online} /> en línia ·{' '}
         <FadeValue value={statusCounts.busy} /> ocupats · <FadeValue value={statusCounts.away} /> absents ·{' '}
-        <FadeValue value={statusCounts.offline} /> fora de línia
+        <FadeValue value={statusCounts.offline} /> desconnectats
       </p>
 
       <div className="agents-grid">

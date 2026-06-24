@@ -25,7 +25,7 @@ const PRESENCE_LABELS: Record<PresenceStatus, string> = {
   online: 'En línia',
   busy: 'Ocupat',
   away: 'Absent',
-  offline: 'Fora de línia',
+  offline: 'Desconnectat',
 }
 
 export function presenceLabel(status: PresenceStatus): string {

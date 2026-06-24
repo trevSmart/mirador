@@ -50,7 +50,7 @@ export function AgentCard({ agent }: { agent: Agent }) {
 
       <p className="agent-card__name">{agent.name}</p>
 
-      <StatusBadge status={agent.status} />
+      <StatusBadge status={agent.status} compact />
 
       <p className="agent-card__role">{agent.role}</p>
 
