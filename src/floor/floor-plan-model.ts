@@ -2,14 +2,14 @@
    No React, no DOM: every function takes state and returns new immutable state,
    so the rules stay testable in isolation and the hook stays thin. */
 
-import type { Cell, Divider, Edge, Floor, FloorPlanData, OpeningKind, Place, Seat } from './types'
+import type { Cell, Dir, Divider, Edge, Floor, FloorPlanData, OpeningKind, Place, Seat } from './types'
 
-export const GRID_C = 23
-export const GRID_R = 16
+export const GRID_C = 50
+export const GRID_R = 50
 export const SEED_SIZE = 4
 export const UNDO_LIMIT = 10
 export const DEFAULT_BG_OPACITY = 0.45
-export const FLOOR_SCHEMA_VERSION = 1
+export const FLOOR_SCHEMA_VERSION = 2
 
 /** Allowed background image ids (whitelist), mirroring the PoC's curated set. */
 export const BACKGROUND_OPTIONS: ReadonlyArray<{ id: string; label: string }> = [
@@ -105,6 +105,7 @@ export function seedFloor(name: string): Floor {
     dividers: [],
     background: null,
     backgroundOpacity: DEFAULT_BG_OPACITY,
+    dir: 0,
   }
 }
 
@@ -118,6 +119,7 @@ export function cloneFloor(floor: Floor, name: string): Floor {
     dividers: floor.dividers.map((divider) => ({ ...divider })),
     background: floor.background,
     backgroundOpacity: floor.backgroundOpacity,
+    dir: 0,
   }
 }
 
@@ -305,6 +307,8 @@ export function sanitizeFloor(raw: unknown): Floor {
   }
 
   const opacity = num(source.backgroundOpacity)
+  const rawDir = num(source.dir)
+  const dir: Dir = rawDir === 1 || rawDir === 2 || rawDir === 3 ? rawDir : 0
   return {
     id: typeof source.id === 'string' && source.id ? source.id : makeId('floor'),
     name: typeof source.name === 'string' && source.name.trim() ? source.name.trim().slice(0, 40) : 'Planta',
@@ -314,6 +318,7 @@ export function sanitizeFloor(raw: unknown): Floor {
     dividers,
     background: typeof source.background === 'string' ? source.background : null,
     backgroundOpacity: opacity === null ? DEFAULT_BG_OPACITY : clamp(opacity, 0, 1),
+    dir,
   }
 }
 
@@ -321,6 +326,7 @@ export function sanitizeFloor(raw: unknown): Floor {
 export function sanitizeFloorPlan(raw: unknown): FloorPlanData | null {
   if (!raw || typeof raw !== 'object') return null
   const data = raw as Record<string, unknown>
+  if (data.v !== FLOOR_SCHEMA_VERSION) return null   // discard old/unknown schema
   if (!Array.isArray(data.places)) return null
 
   const places: Place[] = []
