@@ -1,0 +1,57 @@
+/* EXPERIMENTAL — Dev tab only. Per-room (per-floor) perspective rotation,
+   persisted in localStorage so each sala keeps its own azimuth/tilt across
+   reloads. Delete `src/dev/` to drop the experiment. */
+
+export interface RoomRotation {
+  az: number
+  tilt: number
+}
+
+export const ROOM_AZ_DEFAULT = 45
+export const ROOM_TILT_DEFAULT = 0.5
+// Kept strictly inside (0, 90) so both basis vectors point down-screen, which
+// the depth ordering and back-wall logic in floor-iso-vec assume.
+export const ROOM_AZ_MIN = 15
+export const ROOM_AZ_MAX = 75
+export const ROOM_TILT_MIN = 0.3
+export const ROOM_TILT_MAX = 0.75
+
+const STORAGE_KEY = 'mirador.dev.floor-rotation.v1'
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value))
+}
+
+export function defaultRotation(): RoomRotation {
+  return { az: ROOM_AZ_DEFAULT, tilt: ROOM_TILT_DEFAULT }
+}
+
+export function sanitizeRotation(raw: Partial<RoomRotation> | null | undefined): RoomRotation {
+  const az = typeof raw?.az === 'number' && Number.isFinite(raw.az) ? raw.az : ROOM_AZ_DEFAULT
+  const tilt = typeof raw?.tilt === 'number' && Number.isFinite(raw.tilt) ? raw.tilt : ROOM_TILT_DEFAULT
+  return { az: clamp(az, ROOM_AZ_MIN, ROOM_AZ_MAX), tilt: clamp(tilt, ROOM_TILT_MIN, ROOM_TILT_MAX) }
+}
+
+/** Load the whole `{ [floorId]: {az, tilt} }` map, sanitized. */
+export function loadRoomRotations(): Record<string, RoomRotation> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw) as Record<string, Partial<RoomRotation>>
+    const out: Record<string, RoomRotation> = {}
+    for (const [id, value] of Object.entries(parsed ?? {})) {
+      if (value && typeof value === 'object') out[id] = sanitizeRotation(value)
+    }
+    return out
+  } catch {
+    return {}
+  }
+}
+
+export function saveRoomRotations(map: Record<string, RoomRotation>): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(map))
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
