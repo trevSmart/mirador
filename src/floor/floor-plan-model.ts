@@ -128,14 +128,67 @@ export function defaultFloorPlan(): FloorPlanData {
   return { v: FLOOR_SCHEMA_VERSION, activePlaceId: place.id, places: [place] }
 }
 
+/* ── Connectivity (the room must stay one 4-connected block, no islands) ── */
+
+/** True when every cell is reachable from the first via 4-connected steps. */
+export function isConnected(cells: Cell[]): boolean {
+  if (cells.length <= 1) return true
+  const all = makeCellSet(cells)
+  const seen = new Set<string>()
+  const [start] = cells
+  const stack: Cell[] = [start]
+  seen.add(cellKey(start[0], start[1]))
+  while (stack.length > 0) {
+    const [c, r] = stack.pop() as Cell
+    for (const [nc, nr] of [
+      [c + 1, r],
+      [c - 1, r],
+      [c, r + 1],
+      [c, r - 1],
+    ] as Cell[]) {
+      const key = cellKey(nc, nr)
+      if (all.has(key) && !seen.has(key)) {
+        seen.add(key)
+        stack.push([nc, nr])
+      }
+    }
+  }
+  return seen.size === cells.length
+}
+
+/** True when a rectangle's cells are adjacent to (or overlap) the existing area. */
+function rectTouchesArea(floor: Floor, c0: number, c1: number, r0: number, r1: number): boolean {
+  const cellSet = makeCellSet(floor.cells)
+  for (let r = r0; r <= r1; r += 1) {
+    for (let c = c0; c <= c1; c += 1) {
+      if (
+        cellSet.has(cellKey(c, r)) ||
+        cellSet.has(cellKey(c + 1, r)) ||
+        cellSet.has(cellKey(c - 1, r)) ||
+        cellSet.has(cellKey(c, r + 1)) ||
+        cellSet.has(cellKey(c, r - 1))
+      ) {
+        return true
+      }
+    }
+  }
+  return false
+}
+
 /* ── Tools (floor-level, immutable) ───────────────────────────────────── */
 
-/** Add every cell inside the rectangle spanned by start/end (additive, clamped). */
+/** Add every cell inside the rectangle spanned by start/end (additive, clamped).
+    The room must stay one connected block: a rectangle that does not touch the
+    existing area is rejected wholesale (the first rectangle on an empty floor
+    seeds freely). */
 export function addCellRect(floor: Floor, start: Cell, end: Cell): Floor {
   const c0 = clamp(Math.min(start[0], end[0]), 0, GRID_C - 1)
   const c1 = clamp(Math.max(start[0], end[0]), 0, GRID_C - 1)
   const r0 = clamp(Math.min(start[1], end[1]), 0, GRID_R - 1)
   const r1 = clamp(Math.max(start[1], end[1]), 0, GRID_R - 1)
+
+  // Reject a disconnected rectangle (unless this is the first area painted).
+  if (floor.cells.length > 0 && !rectTouchesArea(floor, c0, c1, r0, r1)) return floor
 
   const cellSet = makeCellSet(floor.cells)
   const cells = [...floor.cells]
@@ -155,10 +208,12 @@ export function addCellRect(floor: Floor, start: Cell, end: Cell): Floor {
   return sanitizeFloor({ ...floor, cells })
 }
 
-/** Remove a cell along with its seat and any orphaned openings/dividers. */
+/** Remove a cell along with its seat and any orphaned openings/dividers.
+    An erase that would split the room into separate islands is rejected. */
 export function eraseCell(floor: Floor, c: number, r: number): Floor {
   if (!hasCell(floor, c, r)) return floor
   const cells = floor.cells.filter(([cc, rr]) => !(cc === c && rr === r))
+  if (!isConnected(cells)) return floor
   const seats = floor.seats.filter((seat) => !(seat.c === c && seat.r === r))
   return sanitizeFloor({ ...floor, cells, seats })
 }

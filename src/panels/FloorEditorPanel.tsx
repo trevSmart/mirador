@@ -4,12 +4,21 @@ import { AgentAssignPalette } from '../components/floor/AgentAssignPalette'
 import { FloorGrid } from '../components/floor/FloorGrid'
 import { FloorSidebar } from '../components/floor/FloorSidebar'
 import { FloorToolbar } from '../components/floor/FloorToolbar'
+import { FloorView3D } from '../components/floor/FloorView3D'
 import { PanelShell } from '../components/PanelState'
 import { useFloorPlan } from '../floor/useFloorPlan'
+import { useSmoothScroll } from '../hooks/useSmoothScroll'
+
+/** The editor preview is display-only; seat taps do nothing there. */
+const noop = () => {}
 
 export function FloorEditorPanel() {
   const { agents } = useMiradorData()
   const fp = useFloorPlan()
+  // The canvas and the floor list scroll inside the editor (not the panel
+  // shell), so each gets its own Lenis instance for smooth wheel scrolling.
+  const canvasScrollRef = useSmoothScroll<HTMLDivElement>()
+  const asideScrollRef = useSmoothScroll<HTMLDivElement>()
 
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents])
 
@@ -40,6 +49,52 @@ export function FloorEditorPanel() {
   return (
     <PanelShell hideHeader className="panel-shell--floor">
       <div className="floor-editor">
+        <aside className="floor-editor__aside">
+          <div className="floor-editor__aside-scroll" ref={asideScrollRef}>
+            <FloorSidebar
+              places={fp.places}
+              activePlace={fp.activePlace}
+              activeFloorIndex={fp.activeFloorIndex}
+              activeFloor={fp.activeFloor}
+              onSelectPlace={fp.selectPlace}
+              onAddPlace={fp.addPlace}
+              onRemovePlace={fp.removePlace}
+              onRenamePlace={fp.renamePlace}
+              onSelectFloor={fp.selectFloor}
+              onAddFloor={fp.addFloor}
+              onRemoveFloor={fp.removeFloor}
+              onDuplicateFloor={fp.duplicateFloor}
+              onRenameFloor={fp.renameFloor}
+              onReorderFloor={fp.reorderFloor}
+              onChangeBackground={fp.changeBackground}
+              onChangeBackgroundOpacity={fp.changeBackgroundOpacity}
+            />
+            {fp.tool === 'seat' && fp.selectedSeat ? (
+              <AgentAssignPalette
+                seat={fp.selectedSeat}
+                currentAgentId={selectedSeatAgentId}
+                agents={agents}
+                placedAgentIds={placedAgentIds}
+                onAssign={fp.assignAgent}
+                onRemoveSeat={fp.removeSeat}
+              />
+            ) : null}
+          </div>
+          {fp.activeFloor && fp.activeFloor.cells.length > 0 ? (
+            <div className="floor-editor__preview" aria-label="Previsualització de la sala">
+              <FloorView3D
+                floor={fp.activeFloor}
+                agentsById={agentsById}
+                dir={fp.activeFloor.dir}
+                seatStyle="tower"
+                showAvatars
+                animations={false}
+                onSelectAgent={noop}
+              />
+            </div>
+          ) : null}
+        </aside>
+
         <div className="floor-editor__main">
           <FloorToolbar
             tool={fp.tool}
@@ -54,7 +109,7 @@ export function FloorEditorPanel() {
             onSave={fp.save}
             onReset={fp.reset}
           />
-          <div className="floor-editor__canvas">
+          <div className="floor-editor__canvas" ref={canvasScrollRef}>
             {fp.activeFloor ? (
               <FloorGrid
                 floor={fp.activeFloor}
@@ -71,37 +126,6 @@ export function FloorEditorPanel() {
             )}
           </div>
         </div>
-
-        <aside className="floor-editor__aside">
-          <FloorSidebar
-            places={fp.places}
-            activePlace={fp.activePlace}
-            activeFloorIndex={fp.activeFloorIndex}
-            activeFloor={fp.activeFloor}
-            onSelectPlace={fp.selectPlace}
-            onAddPlace={fp.addPlace}
-            onRemovePlace={fp.removePlace}
-            onRenamePlace={fp.renamePlace}
-            onSelectFloor={fp.selectFloor}
-            onAddFloor={fp.addFloor}
-            onRemoveFloor={fp.removeFloor}
-            onDuplicateFloor={fp.duplicateFloor}
-            onRenameFloor={fp.renameFloor}
-            onReorderFloor={fp.reorderFloor}
-            onChangeBackground={fp.changeBackground}
-            onChangeBackgroundOpacity={fp.changeBackgroundOpacity}
-          />
-          {fp.tool === 'seat' && fp.selectedSeat ? (
-            <AgentAssignPalette
-              seat={fp.selectedSeat}
-              currentAgentId={selectedSeatAgentId}
-              agents={agents}
-              placedAgentIds={placedAgentIds}
-              onAssign={fp.assignAgent}
-              onRemoveSeat={fp.removeSeat}
-            />
-          ) : null}
-        </aside>
       </div>
     </PanelShell>
   )

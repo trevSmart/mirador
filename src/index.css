@@ -317,9 +317,9 @@ body {
 }
 
 .app-header__clock {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-variant-numeric: tabular-nums;
-  font-size: calc(var(--fs-title) + var(--mono-fs-nudge));
+  font-size: calc(var(--fs-title) - 1px);
   font-weight: var(--fw-regular);
   color: var(--text-strong);
   white-space: nowrap;
@@ -693,7 +693,7 @@ body {
   flex-direction: column;
   --dv-spacing-padding: 0;
   --dv-tabs-and-actions-container-height: var(--tabbar-h);
-  --dv-tabs-and-actions-container-font-size: var(--fs-sm);
+  --dv-tabs-and-actions-container-font-size: calc(var(--fs-sm) + 0.1px);
   --dv-tabs-and-actions-container-background-color: var(--surface-raised);
   --dv-group-view-background-color: var(--surface-raised);
   --dv-activegroup-visiblepanel-tab-background-color: var(--accent-tint);
@@ -726,6 +726,18 @@ body {
 .app-chrome .dockview-container .dv-shell.dockview-theme-light-spaced {
   padding: 0;
   background-color: transparent;
+}
+
+/* The light-spaced theme redefines the tab-color tokens on its own theme root
+   (deeper in the tree than .dockview-container), so var() resolution there wins
+   over our values above. Re-assert them on the theme element itself — the
+   unselected tabs default to a washed-out grey that's hard to read, so lift
+   every tab to a legible weight. */
+.app-chrome .dockview-container .dockview-theme-light-spaced {
+  --dv-activegroup-visiblepanel-tab-color: var(--text-strong);
+  --dv-activegroup-hiddenpanel-tab-color: var(--text-strong);
+  --dv-inactivegroup-visiblepanel-tab-color: var(--text-strong);
+  --dv-inactivegroup-hiddenpanel-tab-color: var(--text-strong);
 }
 
 /* Match every dockview surface to the header (--surface-raised). The
@@ -1522,6 +1534,9 @@ body {
   flex-direction: column;
   flex: 1 1 auto;
   min-width: 0;
+  /* Without min-height:0 a column flex item refuses to shrink below its
+     content, so the canvas grows instead of scrolling. */
+  min-height: 0;
 }
 
 .floor-editor__canvas {
@@ -1536,11 +1551,28 @@ body {
   width: 300px;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--border-subtle);
+  background: var(--surface-raised);
+  order: -1;
+}
+
+.floor-editor__aside-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
   gap: var(--sp-5);
   padding: var(--sp-5);
-  overflow: auto;
-  border-left: 1px solid var(--border-subtle);
-  background: var(--surface-raised);
+}
+
+.floor-editor__preview {
+  flex: 0 0 200px;
+  height: 200px;
+  padding: var(--sp-4);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-canvas);
 }
 
 /* Toolbar */
@@ -1645,7 +1677,7 @@ body {
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-sm);
   box-shadow: var(--shadow);
-  touch-action: none;
+  touch-action: pan-x pan-y;
   user-select: none;
 }
 
