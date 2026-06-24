@@ -151,3 +151,40 @@ export function computeIsoBounds(
   }
   return { minX: minX - pad, minY: minY - pad, width: maxX - minX + pad * 2, height: maxY - minY + pad * 2 }
 }
+
+/** Rotate a cell 90°·dir clockwise inside an n×n square grid. */
+export function rotateCell(c: number, r: number, dir: Dir, n: number): [number, number] {
+  if (dir === 1) return [n - 1 - r, c]
+  if (dir === 2) return [n - 1 - c, n - 1 - r]
+  if (dir === 3) return [r, n - 1 - c]
+  return [c, r]
+}
+
+/** Rotate a wall edge label 90°·dir clockwise (N→E→S→O). */
+export function rotateEdge(edge: Edge, dir: Dir): Edge {
+  const order: Edge[] = ['N', 'E', 'S', 'O']
+  const i = order.indexOf(edge)
+  if (i < 0) return edge
+  return order[(i + dir) % 4]
+}
+
+/** Bounding box of cells after rotation, as grid extents. */
+export function roomBounds2D(
+  cells: Cell[],
+  dir: Dir,
+  n: number,
+): { minC: number; minR: number; cols: number; rows: number } {
+  if (cells.length === 0) return { minC: 0, minR: 0, cols: 1, rows: 1 }
+  let minC = Infinity
+  let minR = Infinity
+  let maxC = -Infinity
+  let maxR = -Infinity
+  for (const [c, r] of cells) {
+    const [rc, rr] = rotateCell(c, r, dir, n)
+    minC = Math.min(minC, rc)
+    minR = Math.min(minR, rr)
+    maxC = Math.max(maxC, rc)
+    maxR = Math.max(maxR, rr)
+  }
+  return { minC, minR, cols: maxC - minC + 1, rows: maxR - minR + 1 }
+}
