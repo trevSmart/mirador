@@ -3,11 +3,11 @@ import { useAuth } from '../auth/auth-context'
 import { usePreferences } from '../settings/preferences-context'
 import { MiradorApiError } from './mirador-client'
 import { useMiradorApi } from './mirador-api-context'
+import { MiradorDataContext } from './mirador-data-context'
 import {
-  MiradorDataContext,
-  type MiradorDataContextValue,
+  MiradorStatusContext,
   type RefreshOptions,
-} from './mirador-data-context'
+} from './mirador-status-context'
 import type { Agent, Queue, Skill, WorkItem } from './types'
 
 export function MiradorDataProvider({ children }: { children: ReactNode }) {
@@ -123,23 +123,22 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
     }
   }, [client, isAuthenticated, refresh, prefs.autoRefresh, prefs.refreshInterval])
 
-  const value = useMemo<MiradorDataContextValue>(
-    () => ({
-      agents,
-      queues,
-      skills,
-      work,
-      isLoading,
-      isRefreshing,
-      error,
-      refresh,
-    }),
-    [agents, error, isLoading, isRefreshing, queues, refresh, skills, work],
+  // Separate memos: data changes don't trigger status consumers, and vice versa.
+  const dataValue = useMemo(
+    () => ({ agents, queues, skills, work }),
+    [agents, queues, skills, work],
+  )
+
+  const statusValue = useMemo(
+    () => ({ isLoading, isRefreshing, error, refresh }),
+    [error, isLoading, isRefreshing, refresh],
   )
 
   return (
-    <MiradorDataContext.Provider value={value}>
-      {children}
+    <MiradorDataContext.Provider value={dataValue}>
+      <MiradorStatusContext.Provider value={statusValue}>
+        {children}
+      </MiradorStatusContext.Provider>
     </MiradorDataContext.Provider>
   )
 }

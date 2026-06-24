@@ -1,6 +1,7 @@
 import type { IDockviewPanelProps } from 'dockview-react'
 import { useCallback, useRef, useState } from 'react'
 import { useMiradorData } from '../api/mirador-data-context'
+import { useMiradorStatus } from '../api/mirador-status-context'
 import { AgentRow } from '../components/AgentRow'
 import { PanelState } from '../components/PanelState'
 import { QueueRow } from '../components/QueueRow'
@@ -32,7 +33,8 @@ import {
 } from '../utils/agent-stats'
 
 export function HomePanel({ api }: IDockviewPanelProps) {
-  const { agents, queues, isLoading, error, refresh } = useMiradorData()
+  const { agents, queues } = useMiradorData()
+  const { isLoading, error, refresh } = useMiradorStatus()
   const statusCounts = countAgentsByStatus(agents)
   const topQueues = sortQueuesByBacklog(queues).slice(0, 5)
   const activeAgents = sortAgentsByPresence(agents).slice(0, 5)
