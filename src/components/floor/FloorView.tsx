@@ -49,14 +49,14 @@ function FloorSeat({ agent, onSelect, showAvatars, animations }: FloorSeatProps)
 
 interface FloorViewProps {
   floor: Floor
-  dir?: Dir
+  dir: Dir
   agentsById: Map<string, Agent>
   onSelectAgent: (agent: Agent) => void
   showAvatars: boolean
   animations: boolean
 }
 
-export function FloorView({ floor, dir = 0, agentsById, onSelectAgent, showAvatars, animations }: FloorViewProps) {
+export function FloorView({ floor, dir, agentsById, onSelectAgent, showAvatars, animations }: FloorViewProps) {
   // Rotate every element into the camera frame, then crop to the rotated room.
   const rotated = useMemo(() => {
     const cells = floor.cells.map(([c, r]) => rotateCell(c, r, dir, GRID_C))

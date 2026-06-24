@@ -3,11 +3,9 @@ import { useMiradorData } from '../api/mirador-data-context'
 import type { Agent, PresenceStatus } from '../api/types'
 import { FloorView } from '../components/floor/FloorView'
 import { FloorView3D, type SeatStyle } from '../components/floor/FloorView3D'
-import { ButtonIcon } from '../components/ds/ButtonIcon'
 import { PanelShell } from '../components/PanelState'
 import { Select } from '../components/ds/Select'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
-import type { Dir } from '../floor/floor-iso'
 import { useFloorPlanData } from '../floor/useFloorPlanData'
 import { usePreferences } from '../settings/preferences-context'
 import { presenceLabel } from '../utils/format'
@@ -25,11 +23,6 @@ const SEAT_STYLES: Array<{ value: SeatStyle; label: string }> = [
   { value: 'avatar', label: 'Només avatar' },
   { value: 'cube', label: 'Cub per equip' },
 ]
-
-// Rotate-axis-y icon path, shared visual language with the Panorama floor editor.
-// Left button uses it as drawn; right button mirrors it horizontally.
-const ROTATE_ICON_PATH =
-  'M11.2797426,14.9868494 L10.1464466,13.8535534 C9.95118446,13.6582912 9.95118446,13.3417088 10.1464466,13.1464466 C10.3417088,12.9511845 10.6582912,12.9511845 10.8535534,13.1464466 L12.8535534,15.1464466 C13.0488155,15.3417088 13.0488155,15.6582912 12.8535534,15.8535534 L10.8535534,17.8535534 C10.6582912,18.0488155 10.3417088,18.0488155 10.1464466,17.8535534 C9.95118446,17.6582912 9.95118446,17.3417088 10.1464466,17.1464466 L11.3044061,15.9884871 C6.13483244,15.8167229 2,13.7413901 2,11 C2,8.13669069 6.51079147,6 12,6 C17.4892085,6 22,8.13669069 22,11 C22,12.5021775 20.7611164,13.8263891 18.6925542,14.7433738 C18.4401046,14.8552836 18.1447329,14.7413536 18.0328231,14.4889039 C17.9209133,14.2364543 18.0348433,13.9410827 18.2872929,13.8291729 C20.0336708,13.0550111 21,12.0221261 21,11 C21,8.89274656 17.0042017,7 12,7 C6.99579829,7 3,8.89274656 3,11 C3,13.0051086 6.6178104,14.8160018 11.2797426,14.9868494 Z'
 
 type ViewMode = '2d' | '3d'
 const SEAT_STYLE_KEY = 'mirador.floor.seatStyle'
@@ -64,7 +57,6 @@ export function FloorPanel() {
   }
 
   const [seatStyle, setSeatStyle] = useState<SeatStyle>(loadSeatStyle)
-  const [dir, setDir] = useState<Dir>(0)
 
   useEffect(() => {
     try {
@@ -85,6 +77,7 @@ export function FloorPanel() {
     ? Math.min(Math.max(0, floorIndex), activePlace.floors.length - 1)
     : 0
   const activeFloor = activePlace?.floors[safeFloorIndex] ?? null
+  const dir = activeFloor?.dir ?? 0
 
   const summary = useMemo(() => {
     const counts: Record<PresenceStatus, number> = { online: 0, busy: 0, away: 0, offline: 0 }
@@ -166,39 +159,13 @@ export function FloorPanel() {
             </div>
 
             {view === '3d' ? (
-              <>
-                <Select
-                  className="fv-select"
-                  ariaLabel="Estil de seient"
-                  value={seatStyle}
-                  options={SEAT_STYLES}
-                  onChange={(s) => setSeatStyle(s)}
-                />
-                <div className="fv-rotate">
-                  <ButtonIcon
-                    className="fv-icon-btn"
-                    title="Gira a l'esquerra"
-                    aria-label="Gira a l'esquerra"
-                    onClick={() => setDir((d) => (((d + 3) % 4) as Dir))}
-                  >
-                    <svg width={18} height={18} viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
-                      <path d={ROTATE_ICON_PATH} />
-                    </svg>
-                  </ButtonIcon>
-                  <ButtonIcon
-                    className="fv-icon-btn"
-                    title="Gira a la dreta"
-                    aria-label="Gira a la dreta"
-                    onClick={() => setDir((d) => (((d + 1) % 4) as Dir))}
-                  >
-                    <svg width={18} height={18} viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
-                      <g transform="translate(24 0) scale(-1 1)">
-                        <path d={ROTATE_ICON_PATH} />
-                      </g>
-                    </svg>
-                  </ButtonIcon>
-                </div>
-              </>
+              <Select
+                className="fv-select"
+                ariaLabel="Estil de seient"
+                value={seatStyle}
+                options={SEAT_STYLES}
+                onChange={(s) => setSeatStyle(s)}
+              />
             ) : null}
 
             <div className="fv-toggle" role="group" aria-label="Vista">
@@ -234,6 +201,7 @@ export function FloorPanel() {
           ) : (
             <FloorView
               floor={activeFloor}
+              dir={dir}
               agentsById={agentsById}
               showAvatars={prefs.showAvatars}
               animations={prefs.animations}

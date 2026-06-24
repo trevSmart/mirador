@@ -726,6 +726,8 @@ body {
 .app-chrome .dockview-container .dv-shell.dockview-theme-light-spaced {
   padding: 0;
   background-color: transparent;
+  /* light-spaced sets this to transparent; restore borders between docked groups */
+  --dv-separator-border: var(--border-subtle);
 }
 
 /* Match every dockview surface to the header (--surface-raised). The
@@ -2205,11 +2207,6 @@ body {
   background: var(--surface-card);
   color: var(--accent);
   box-shadow: var(--shadow);
-}
-
-.fv-rotate {
-  display: inline-flex;
-  gap: var(--sp-1);
 }
 
 .fv-icon-btn {
