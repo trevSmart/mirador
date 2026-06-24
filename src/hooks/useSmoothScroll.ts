@@ -53,6 +53,8 @@ export function useSmoothScroll<T extends HTMLElement>() {
       lerp: 0.18,
       smoothWheel: true,
       wheelMultiplier: 2.6,
+      // macOS zoom uses ⌘+wheel (metaKey); Lenis only skips ctrlKey by default.
+      virtualScroll: (data) => !data.event.ctrlKey && !data.event.metaKey,
     })
     lenisByElement.set(element, lenis)
 

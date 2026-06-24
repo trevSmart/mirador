@@ -45,7 +45,7 @@ interface NamedIcon {
 }
 
 const NAMED: Record<SfIconName, NamedIcon> = {
-  home:        { sprite: 'standard', symbol: 'agent_home' },
+  home:        { sprite: 'standard', symbol: 'home' },
   insights:    { sprite: 'utility',  symbol: 'metrics' },
   voice:       { sprite: 'standard', symbol: 'voice_call' },
   chat:        { sprite: 'standard', symbol: 'messaging_session' },
@@ -57,8 +57,8 @@ const NAMED: Record<SfIconName, NamedIcon> = {
   user:        { sprite: 'standard', symbol: 'user' },
   work:        { sprite: 'standard', symbol: 'work_order_item' },
   agent:       { sprite: 'custom',   symbol: 'custom103' },
-  floor:       { sprite: 'standard', symbol: 'service_territory' },
-  floorEditor: { sprite: 'standard', symbol: 'maintenance_plan' },
+  floor:       { sprite: 'standard', symbol: 'business_unit' },
+  floorEditor: { sprite: 'custom',   symbol: 'custom83' },
 }
 
 const CHANNEL: Record<ChannelKey, SfIconName> = {

@@ -112,7 +112,10 @@ export function FloorView({
     <div className="fv-fit" ref={containerRef}>
       <div
         className="fv-grid-zoom"
-        style={{ width: gridW * scale, height: gridH * scale }}
+        style={{
+          ['--fv-grid-w' as string]: `${gridW * scale}px`,
+          ['--fv-grid-h' as string]: `${gridH * scale}px`,
+        } as React.CSSProperties}
       >
         <div
           className="fv-grid"

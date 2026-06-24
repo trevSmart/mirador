@@ -27,14 +27,14 @@ export interface PanelDefinition {
 }
 
 export const PANEL_DEFINITIONS: PanelDefinition[] = [
-  { type: 'home',        title: 'Home',         icon: { name: 'home' },                                   component: lazy(() => import('./HomePanel').then(m => ({ default: m.HomePanel }))) },
+  { type: 'home',        title: 'Home',         icon: { sprite: 'standard', symbol: 'home' },               component: lazy(() => import('./HomePanel').then(m => ({ default: m.HomePanel }))) },
   { type: 'insights',   title: 'Insights',     icon: { sprite: 'standard', symbol: 'customer_portal_users' }, component: lazy(() => import('./InsightsPanel').then(m => ({ default: m.InsightsPanel }))) },
   { type: 'agents',     title: 'Agents',       icon: { sprite: 'standard', symbol: 'customers' },         component: lazy(() => import('./AgentsPanel').then(m => ({ default: m.AgentsPanel }))) },
   { type: 'queues',     title: 'Queues',       icon: { name: 'queue' },                                   component: lazy(() => import('./QueuesPanel').then(m => ({ default: m.QueuesPanel }))) },
   { type: 'skills',     title: 'Skills',       icon: { name: 'skill' },                                   component: lazy(() => import('./SkillsPanel').then(m => ({ default: m.SkillsPanel }))) },
   { type: 'work',       title: 'Work',         icon: { name: 'work' },                                    component: lazy(() => import('./WorkPanel').then(m => ({ default: m.WorkPanel }))) },
-  { type: 'floor',      title: 'Floor',        icon: { name: 'floor' },                                   component: lazy(() => import('./FloorPanel').then(m => ({ default: m.FloorPanel }))) },
-  { type: 'floorEditor', title: 'Floor editor', icon: { name: 'floorEditor' },                             component: lazy(() => import('./FloorEditorPanel').then(m => ({ default: m.FloorEditorPanel }))) },
+  { type: 'floor',      title: 'Floor',        icon: { sprite: 'standard', symbol: 'business_unit' },      component: lazy(() => import('./FloorPanel').then(m => ({ default: m.FloorPanel }))) },
+  { type: 'floorEditor', title: 'Floor editor', icon: { sprite: 'custom', symbol: 'custom83' },              component: lazy(() => import('./FloorEditorPanel').then(m => ({ default: m.FloorEditorPanel }))) },
 ]
 
 function withPanelErrorBoundary(
