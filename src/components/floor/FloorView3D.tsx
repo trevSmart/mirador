@@ -13,10 +13,10 @@ import {
   TW,
   WALL_H,
   backLeftEdge,
-  backLeftVisible,
+  backLeftTrue,
   backLeftWall,
   backRightEdge,
-  backRightVisible,
+  backRightTrue,
   backRightWall,
   computeIsoBounds,
   depthCompare,
@@ -518,8 +518,8 @@ export function FloorView3D({
 
   const rfVis = rightFaceVisible(has, dir)
   const lfVis = leftFaceVisible(has, dir)
-  const brVis = backRightVisible(has, dir)
-  const blVis = backLeftVisible(has, dir)
+  const brVis = backRightTrue(has, floor.cells, dir, MAX_C, MAX_R)
+  const blVis = backLeftTrue(has, floor.cells, dir, MAX_C, MAX_R)
   const brEdge = backRightEdge(dir)
   const blEdge = backLeftEdge(dir)
 

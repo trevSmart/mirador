@@ -2688,15 +2688,8 @@ body {
   display: grid;
   place-items: center;
   background-color: #f8f7f4;
-  background-image:
-    linear-gradient(165deg, rgba(255, 255, 255, 0.28) 0%, transparent 42%, rgba(27, 25, 36, 0.022) 100%),
-    radial-gradient(circle at 22% 18%, rgba(255, 255, 255, 0.18) 0, transparent 38%);
   /* Very subtle tile separators — present, but barely there. */
   box-shadow: inset 0 0 0 1px rgba(27, 25, 36, 0.035);
-}
-
-.fv-cell--alt {
-  background-color: #f5f4f1;
 }
 
 .fv-seat {
@@ -2875,11 +2868,20 @@ body {
 }
 
 .fv3d-svg {
-  width: calc(100% * var(--fv-render-zoom, 1));
+  /* In multi-floor mode the tile (.fv-stack__item) already scales by the zoom,
+     so the SVG just fills it. Re-applying the zoom here would size the SVG to
+     280·z² inside a 280·z wide, overflow:hidden wrap, clipping the floor. */
+  width: 100%;
   height: auto;
   max-width: none;
   display: block;
   transition: width 0.35s var(--ease);
+}
+
+/* Single-floor mode: the tile fills the canvas at a fixed size, so the SVG
+   itself carries the zoom and the canvas scrolls to reveal the larger floor. */
+.fv-stack--single .fv3d-svg {
+  width: calc(100% * var(--fv-render-zoom, 1));
 }
 
 .fv3d-seat {
