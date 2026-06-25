@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import type { IDockviewPanelProps } from 'dockview-react'
-import autoAnimate from '@formkit/auto-animate'
 import { useMiradorData } from '../api/mirador-data-context'
 import { useMiradorStatus } from '../api/mirador-status-context'
 import { useAuth } from '../auth/auth-context'
@@ -17,6 +16,7 @@ import { useFloorSeatedAgentIds } from '../floor/floor-seated-agents'
 import { addPanelByType } from './panel-actions'
 import type { PanelType } from './registry'
 import { computeHealthInsights } from '../utils/health-insights'
+import { useGridAutoAnimate } from '../utils/home-grid-reorder'
 
 const SPLIT_KEY = 'mirador.home.split'
 const MIN_SPLIT = 0.25
@@ -74,24 +74,6 @@ const PRESENCE_DOT: Record<PresenceStatus, string> = {
 }
 
 const AGENT_FILTERS: AgentFilter[] = ['all', 'online', 'busy', 'away', 'offline']
-
-const REORDER_ANIM = {
-  duration: 180,
-  easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
-} as const
-
-/** Attach auto-animate without the hook's setState re-render (avoids racing the queue grid). */
-function useGridAutoAnimate<T extends HTMLElement>() {
-  const destroyRef = useRef<(() => void) | null>(null)
-  return useCallback((node: T | null) => {
-    destroyRef.current?.()
-    destroyRef.current = null
-    if (node) {
-      const controller = autoAnimate(node, REORDER_ANIM)
-      destroyRef.current = controller.destroy ?? null
-    }
-  }, [])
-}
 
 /** Read a persisted sort key, falling back when missing or unknown. */
 function loadSort<T extends string>(storageKey: string, allowed: readonly T[], fallback: T): T {
@@ -178,77 +160,8 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
   const layoutRef = useRef<HTMLDivElement>(null)
   const [split, setSplit] = useState<number>(loadSplit)
   const seatedAgentIds = useFloorSeatedAgentIds()
-  const bindQueueGrid = useGridAutoAnimate<HTMLDivElement>()
-  const bindAgentGrid = useGridAutoAnimate<HTMLDivElement>()
-  const queueGridNodeRef = useRef<HTMLDivElement | null>(null)
-  const agentGridNodeRef = useRef<HTMLDivElement | null>(null)
-  const prevQueueOrderRef = useRef<string[]>([])
-  const prevAgentOrderRef = useRef<string[]>([])
-
-  const logDebug = useCallback(
-    (hypothesisId: string, location: string, message: string, data: Record<string, unknown>) => {
-      // #region agent log
-      fetch('http://127.0.0.1:7333/ingest/aef0babf-25a3-4500-a89c-9b3825b08c07', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'ddfece' },
-        body: JSON.stringify({
-          sessionId: 'ddfece',
-          runId: 'pre-fix',
-          hypothesisId,
-          location,
-          message,
-          data,
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {})
-      // #endregion
-    },
-    [],
-  )
-
-  const inspectGridAnimations = useCallback(
-    (grid: 'queue' | 'agent', el: HTMLDivElement | null, order: string[]) => {
-      if (!el) return
-      const childStates = Array.from(el.children).map((child) => ({
-        transform: child instanceof HTMLElement ? child.style.transform : '',
-        runningAnimations: child.getAnimations().filter((a) => a.playState === 'running').length,
-        hasTgt: '__aa_tgt' in child,
-        hasDel: '__aa_del' in child,
-      }))
-      logDebug('H-C,H-D', 'HomePanel.tsx:inspectGridAnimations', `${grid} animation state`, {
-        grid,
-        order,
-        childStates,
-      })
-    },
-    [logDebug],
-  )
-
-  const attachQueueGrid = useCallback(
-    (node: HTMLDivElement | null) => {
-      queueGridNodeRef.current = node
-      bindQueueGrid(node)
-      logDebug('H-B', 'HomePanel.tsx:attachQueueGrid', 'queue grid ref attached', {
-        attached: Boolean(node),
-        childCount: node?.children.length ?? 0,
-        position: node?.style.position ?? null,
-      })
-    },
-    [bindQueueGrid, logDebug],
-  )
-
-  const attachAgentGrid = useCallback(
-    (node: HTMLDivElement | null) => {
-      agentGridNodeRef.current = node
-      bindAgentGrid(node)
-      logDebug('H-B', 'HomePanel.tsx:attachAgentGrid', 'agent grid ref attached', {
-        attached: Boolean(node),
-        childCount: node?.children.length ?? 0,
-        position: node?.style.position ?? null,
-      })
-    },
-    [bindAgentGrid, logDebug],
-  )
+  const attachQueueGrid = useGridAutoAnimate<HTMLDivElement>()
+  const attachAgentGrid = useGridAutoAnimate<HTMLDivElement>()
 
   const seatedAgents = useMemo(
     () =>
@@ -267,42 +180,6 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
         : seatedAgents.filter((agent) => agent.status === agentFilter)
     return sortAgents(filtered, agentSort).slice(0, 5)
   }, [seatedAgents, agentFilter, agentSort])
-
-  useEffect(() => {
-    const order = topQueues.map((queue) => queue.id)
-    const prev = prevQueueOrderRef.current
-    const orderChanged = prev.length > 0 && prev.join(',') !== order.join(',')
-    logDebug('H-A', 'HomePanel.tsx:queueOrderEffect', 'queue order snapshot', {
-      queueSort,
-      order,
-      prev,
-      orderChanged,
-    })
-    if (orderChanged) {
-      requestAnimationFrame(() => {
-        inspectGridAnimations('queue', queueGridNodeRef.current, order)
-      })
-    }
-    prevQueueOrderRef.current = order
-  }, [topQueues, queueSort, logDebug, inspectGridAnimations])
-
-  useEffect(() => {
-    const order = activeAgents.map((agent) => agent.id)
-    const prev = prevAgentOrderRef.current
-    const orderChanged = prev.length > 0 && prev.join(',') !== order.join(',')
-    logDebug('H-A', 'HomePanel.tsx:agentOrderEffect', 'agent order snapshot', {
-      agentSort,
-      order,
-      prev,
-      orderChanged,
-    })
-    if (orderChanged) {
-      requestAnimationFrame(() => {
-        inspectGridAnimations('agent', agentGridNodeRef.current, order)
-      })
-    }
-    prevAgentOrderRef.current = order
-  }, [activeAgents, agentSort, logDebug, inspectGridAnimations])
 
   const startResize = useCallback((event: React.PointerEvent) => {
     event.preventDefault()

@@ -56,7 +56,7 @@ export function QueueDetail({ queue }: { queue: Queue }) {
               return (
                 <DetailRow
                   key={item.id}
-                  leading={<SfIcon sprite={icon.sprite} symbol={icon.symbol} sldsSize="medium" bg={icon.tint} />}
+                  leading={<SfIcon sprite={icon.sprite} symbol={icon.symbol} sldsSize="small" bg={icon.tint} />}
                   title={item.subject}
                   meta={
                     <>
