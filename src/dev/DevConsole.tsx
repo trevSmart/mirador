@@ -66,12 +66,12 @@ export function DevConsole() {
 
   const bodyRef = useRef<HTMLDivElement>(null)
 
-  /* Auto-scroll to bottom when new entries arrive and not minimized */
+  /* Auto-scroll to bottom when new entries arrive, on open, and when expanded */
   useEffect(() => {
-    if (!minimized && bodyRef.current) {
+    if (visible && !minimized && bodyRef.current) {
       bodyRef.current.scrollTop = bodyRef.current.scrollHeight
     }
-  }, [entries, minimized])
+  }, [entries, minimized, visible])
 
   const onResizeStart = useResizeDrag(setHeight)
 
