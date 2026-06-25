@@ -40,6 +40,10 @@ function useResizeDrag(onResize: (px: number) => void) {
   return onMouseDown
 }
 
+/** Alçada del panell quan està minimitzat (coincideix amb l'alçada del header).
+   Cal un valor numèric explícit perquè la transició CSS pugui animar. */
+const MINIMIZED_HEIGHT_PX = 32
+
 // ── Main component ───────────────────────────────────────────────────────────
 
 export function DevConsole() {
@@ -71,6 +75,21 @@ export function DevConsole() {
 
   const onResizeStart = useResizeDrag(setHeight)
 
+  const toggleMinimized = useCallback(() => {
+    if (minimized) expand()
+    else minimize()
+  }, [minimized, expand, minimize])
+
+  /* Qualsevol clic al header commuta, EXCEPTE sobre un control interactiu
+     (input o botó), que conserva la seva pròpia acció. */
+  const onHeadClick = useCallback(
+    (e: React.MouseEvent) => {
+      if ((e.target as HTMLElement).closest('button, input')) return
+      toggleMinimized()
+    },
+    [toggleMinimized],
+  )
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return entries.filter((e) => {
@@ -85,7 +104,7 @@ export function DevConsole() {
   return (
     <div
       className={`dev-console${minimized ? ' dev-console--minimized' : ''}`}
-      style={minimized ? undefined : { height }}
+      style={{ height: minimized ? MINIMIZED_HEIGHT_PX : height }}
     >
       {/* Drag handle */}
       {!minimized && (
@@ -96,8 +115,20 @@ export function DevConsole() {
         />
       )}
 
-      {/* Header */}
-      <div className="dev-console__head">
+      {/* Header — qualsevol clic minimitza o restaura la consola */}
+      <div
+        className="dev-console__head"
+        onClick={onHeadClick}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            toggleMinimized()
+          }
+        }}
+        aria-label={minimized ? 'Expandeix la consola' : 'Minimitza la consola'}
+      >
         <span className="dev-console__title">Console</span>
 
         {/* Minimized preview: last entry */}
@@ -164,7 +195,7 @@ export function DevConsole() {
         {/* Expand / minimize toggle */}
         <button
           className="dev-console__toggle"
-          onClick={minimized ? expand : minimize}
+          onClick={toggleMinimized}
           aria-label={minimized ? 'Expandeix la consola' : 'Minimitza la consola'}
           title={minimized ? 'Expandeix' : 'Minimitza'}
         >

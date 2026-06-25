@@ -33,6 +33,25 @@ export function sortQueuesByBacklog(queues: Queue[]): Queue[] {
   return [...queues].sort((left, right) => right.backlog - left.backlog)
 }
 
+export type QueueSortKey = 'backlog' | 'longest' | 'avg' | 'online' | 'name'
+
+/** Sort queues by the chosen criterion, breaking ties alphabetically. */
+export function sortQueues(queues: Queue[], key: QueueSortKey): Queue[] {
+  const byName = (left: Queue, right: Queue) => left.name.localeCompare(right.name, 'ca')
+  switch (key) {
+    case 'name':
+      return [...queues].sort(byName)
+    case 'longest':
+      return [...queues].sort((left, right) => right.longest - left.longest || byName(left, right))
+    case 'avg':
+      return [...queues].sort((left, right) => right.avg - left.avg || byName(left, right))
+    case 'online':
+      return [...queues].sort((left, right) => right.online - left.online || byName(left, right))
+    default:
+      return [...queues].sort((left, right) => right.backlog - left.backlog || byName(left, right))
+  }
+}
+
 export function sortAgentsByName(agents: Agent[]): Agent[] {
   return [...agents].sort((left, right) => left.name.localeCompare(right.name, 'ca'))
 }
@@ -62,6 +81,25 @@ export function sortAgentsByPresence(agents: Agent[]): Agent[] {
     }
     return left.name.localeCompare(right.name, 'ca')
   })
+}
+
+export type AgentSortKey = 'presence' | 'work' | 'capacity' | 'name'
+
+/** Sort agents by the chosen criterion, breaking ties alphabetically. */
+export function sortAgents(agents: Agent[], key: AgentSortKey): Agent[] {
+  const byName = (left: Agent, right: Agent) => left.name.localeCompare(right.name, 'ca')
+  switch (key) {
+    case 'name':
+      return sortAgentsByName(agents)
+    case 'work':
+      return [...agents].sort((left, right) => right.used - left.used || byName(left, right))
+    case 'capacity':
+      return [...agents].sort(
+        (left, right) => right.max - right.used - (left.max - left.used) || byName(left, right),
+      )
+    default:
+      return sortAgentsByPresence(agents)
+  }
 }
 
 /** Pick a small set that includes each presence status when available. */
