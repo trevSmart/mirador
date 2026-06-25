@@ -21,58 +21,64 @@ import {
   getMockWork,
 } from './mock-state'
 
+/** Registra l'inici i el final (amb durada) d'una crida mock, igual que el client real. */
+async function withApiLog<T>(
+  method: string,
+  path: string,
+  fn: () => T | Promise<T>,
+): Promise<T> {
+  const startedAt = Date.now()
+  devLog.api(method, path, 'iniciant… (mock)')
+  const result = await fn()
+  const elapsed = Date.now() - startedAt
+  devLog.api(method, path, `200 · ${elapsed}ms (mock)`)
+  return result
+}
+
 export function createMockMiradorClient(): MiradorClient {
   return {
-    getCapabilities: async () => {
-      devLog.api('GET', '/capabilities', 'mock')
-      return MOCK_CAPABILITIES
-    },
-    getAgents: async (scope: AgentScope = 'connected') => {
-      devLog.api('GET', `/agents?scope=${scope}`, 'mock')
-      const roster = getMockAgents()
-      const filtered =
-        scope === 'connected'
-          ? roster.filter((agent) => agent.status !== 'offline')
-          : roster
-      return { agents: filtered } satisfies AgentsResponse
-    },
-    getAgentSkills: async (userId) => {
-      devLog.api('GET', `/agents/${userId}/skills`, 'mock')
-      return { skills: getAgentSkills(userId) } satisfies AgentSkillsResponse
-    },
-    updateAgentSkills: async (userId) => {
-      devLog.api('PUT', `/agents/${userId}/skills`, 'mock')
-      return { ok: true } satisfies UpdateSkillsResponse
-    },
-    getSkillAgents: async (skillId) => {
-      devLog.api('GET', `/skills/${skillId}/agents`, 'mock')
-      return { agents: getMockSkillAgents(skillId) } satisfies SkillAgentsResponse
-    },
-    getQueues: async () => {
-      devLog.api('GET', '/queues', 'mock')
-      return { queues: getMockQueues() } satisfies QueuesResponse
-    },
-    getSkills: async () => {
-      devLog.api('GET', '/skills', 'mock')
-      return { skills: getMockSkills() } satisfies SkillsResponse
-    },
-    getWork: async () => {
-      devLog.api('GET', '/work', 'mock')
-      return { work: getMockWork() } satisfies WorkResponse
-    },
-    getSnapshot: async (scope: AgentScope = 'all') => {
-      devLog.api('GET', `/snapshot?scope=${scope}`, 'mock')
-      const roster = getMockAgents()
-      const agents =
-        scope === 'connected'
-          ? roster.filter((agent) => agent.status !== 'offline')
-          : roster
-      return {
-        agents,
-        queues: getMockQueues(),
-        skills: getMockSkills(),
-        work: getMockWork(),
-      } satisfies SnapshotResponse
-    },
+    getCapabilities: () =>
+      withApiLog('GET', '/capabilities', () => MOCK_CAPABILITIES),
+    getAgents: (scope: AgentScope = 'connected') =>
+      withApiLog('GET', `/agents?scope=${scope}`, () => {
+        const roster = getMockAgents()
+        const filtered =
+          scope === 'connected'
+            ? roster.filter((agent) => agent.status !== 'offline')
+            : roster
+        return { agents: filtered } satisfies AgentsResponse
+      }),
+    getAgentSkills: (userId) =>
+      withApiLog('GET', `/agents/${userId}/skills`, () => ({
+        skills: getAgentSkills(userId),
+      })),
+    updateAgentSkills: (userId) =>
+      withApiLog('PUT', `/agents/${userId}/skills`, () => ({
+        ok: true,
+      })),
+    getSkillAgents: (skillId) =>
+      withApiLog('GET', `/skills/${skillId}/agents`, () => ({
+        agents: getMockSkillAgents(skillId),
+      })),
+    getQueues: () =>
+      withApiLog('GET', '/queues', () => ({ queues: getMockQueues() })),
+    getSkills: () =>
+      withApiLog('GET', '/skills', () => ({ skills: getMockSkills() })),
+    getWork: () =>
+      withApiLog('GET', '/work', () => ({ work: getMockWork() })),
+    getSnapshot: (scope: AgentScope = 'all') =>
+      withApiLog('GET', `/snapshot?scope=${scope}`, () => {
+        const roster = getMockAgents()
+        const agents =
+          scope === 'connected'
+            ? roster.filter((agent) => agent.status !== 'offline')
+            : roster
+        return {
+          agents,
+          queues: getMockQueues(),
+          skills: getMockSkills(),
+          work: getMockWork(),
+        } satisfies SnapshotResponse
+      }),
   }
 }

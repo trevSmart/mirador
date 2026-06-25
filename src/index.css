@@ -1243,12 +1243,11 @@ textarea,
   display: grid;
   grid-template-columns: minmax(0, var(--home-split, 1.6fr)) auto minmax(0, 1fr);
   gap: 0;
-  align-items: start;
+  align-items: stretch;
 }
 
 .home-floor {
-  height: 640px;
-  min-height: 0;
+  min-height: 640px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-md);
   background: var(--surface-card);
@@ -1299,6 +1298,36 @@ textarea,
   }
 }
 
+.panel-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-4);
+}
+
+.panel-section__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.panel-section__header .panel-section__title {
+  margin: 0;
+}
+
+.panel-section__sort {
+  font-size: var(--fs-sm);
+}
+
+.panel-section__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-4);
+}
+
 .panel-section__title {
   margin: 0 0 var(--sp-4);
   font-family: var(--font-display);
@@ -1326,6 +1355,13 @@ textarea,
 .entity-list.entity-list--grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  overflow: visible;
+}
+
+.entity-list.entity-list--grid > .agent-row,
+.entity-list.entity-list--grid > .queue-row {
+  position: relative;
+  z-index: 0;
 }
 
 .agent-row,
@@ -1380,7 +1416,7 @@ textarea,
 }
 
 .agent-row__name {
-  font-size: var(--fs-body);
+  font-size: calc(var(--fs-body) + 1px);
   font-weight: var(--fw-semibold);
   color: var(--text-strong);
   text-decoration: none;
@@ -1444,10 +1480,11 @@ textarea,
 .agent-row__channel {
   flex: 1;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 3px;
-  padding: var(--sp-2) 0 5px;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: 5px 0;
   border-radius: var(--r-xs);
   background: var(--surface-well);
   transition: opacity var(--dur-value) var(--ease);
@@ -4919,6 +4956,10 @@ textarea,
   color: #c9c6d3;
   min-height: 32px;
   user-select: none;
+  transition: height .12s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dev-console { transition: none; }
 }
 
 /* Resize drag handle */
@@ -4944,6 +4985,7 @@ textarea,
   height: 32px;
   flex-shrink: 0;
   border-bottom: 1px solid rgba(255, 255, 255, .07);
+  cursor: pointer;
 }
 
 .dev-console--minimized .dev-console__head {
@@ -4960,7 +5002,7 @@ textarea,
   font-weight: 600;
   letter-spacing: .06em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, .35);
+  color: rgba(255, 255, 255, .55);
   flex-shrink: 0;
 }
 
@@ -4977,7 +5019,7 @@ textarea,
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  color: rgba(255, 255, 255, .5);
+  color: rgba(255, 255, 255, .62);
 }
 
 /* Toolbar */
@@ -5007,7 +5049,7 @@ textarea,
   background: rgba(0, 128, 190, .08);
 }
 .dev-console__search::placeholder {
-  color: rgba(255, 255, 255, .25);
+  color: rgba(255, 255, 255, .42);
 }
 
 /* Level filter buttons */
@@ -5021,7 +5063,7 @@ textarea,
   border-radius: 3px;
   border: 1px solid rgba(255, 255, 255, .10);
   background: transparent;
-  color: rgba(255, 255, 255, .3);
+  color: rgba(255, 255, 255, .52);
   font: inherit;
   font-size: 10px;
   cursor: pointer;
@@ -5054,7 +5096,7 @@ textarea,
   border-radius: 3px;
   border: 1px solid rgba(255, 255, 255, .10);
   background: transparent;
-  color: rgba(255, 255, 255, .4);
+  color: rgba(255, 255, 255, .62);
   font: inherit;
   font-size: 10px;
   cursor: pointer;
@@ -5072,7 +5114,7 @@ textarea,
   height: 20px;
   border: none;
   background: transparent;
-  color: rgba(255, 255, 255, .3);
+  color: rgba(255, 255, 255, .55);
   font-size: 9px;
   cursor: pointer;
   display: flex;
@@ -5116,7 +5158,7 @@ textarea,
 }
 
 .dev-console__ts {
-  color: rgba(255, 255, 255, .25);
+  color: rgba(255, 255, 255, .5);
   flex-shrink: 0;
   font-size: 10.5px;
   font-variant-numeric: tabular-nums;

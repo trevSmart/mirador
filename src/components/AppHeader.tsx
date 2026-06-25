@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { useMiradorStatus } from '../api/mirador-status-context'
 import { useAuth } from '../auth/auth-context'
 import panoramaLogo from '../assets/panorama/logo/panorama-logo.png'
@@ -13,6 +14,29 @@ export function AppHeader() {
   const { isRefreshing, refresh } = useMiradorStatus()
   const { enabled: devMode } = useDeveloperMode()
   const { visible: consoleVisible, toggle: toggleConsole } = useDevConsole()
+
+  // Keep the icon spinning in whole turns: start as soon as a refresh begins,
+  // but only stop on a rotation boundary (animationiteration) so it never
+  // freezes mid-turn even when the fetch resolves near-instantly.
+  const [spinning, setSpinning] = useState(false)
+  const stopRequestedRef = useRef(false)
+
+  useEffect(() => {
+    if (isRefreshing) {
+      stopRequestedRef.current = false
+      setSpinning(true)
+    } else {
+      // Refresh finished — let the current rotation complete before stopping.
+      stopRequestedRef.current = true
+    }
+  }, [isRefreshing])
+
+  const handleSpinIteration = () => {
+    if (stopRequestedRef.current) {
+      stopRequestedRef.current = false
+      setSpinning(false)
+    }
+  }
 
   return (
     <header className="app-header">
@@ -60,8 +84,9 @@ export function AppHeader() {
 
         <button
           type="button"
-          className={`app-header__button app-header__button--icon${isRefreshing ? ' app-header__button--spinning' : ''}`}
+          className={`app-header__button app-header__button--icon${spinning ? ' app-header__button--spinning' : ''}`}
           onClick={() => void refresh({ silent: true })}
+          onAnimationIteration={handleSpinIteration}
           disabled={!isAuthenticated || isRefreshing}
           title="Actualitza les dades d'Omni"
           aria-label="Actualitza les dades d'Omni"

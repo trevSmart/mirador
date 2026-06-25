@@ -80,11 +80,13 @@ export function createMiradorClient(getSession: SessionGetter): MiradorClient {
     }
 
     const startedAt = Date.now()
+    devLog.api(method, path, 'iniciant…')
     let response: Response
     try {
       response = await fetch(url, { ...init, headers })
     } catch (networkError) {
-      devLog.api(method, path, 'network error')
+      const elapsed = Date.now() - startedAt
+      devLog.api(method, path, `error de xarxa · ${elapsed}ms`)
       throw networkError
     }
     const elapsed = Date.now() - startedAt

@@ -12,7 +12,7 @@ import {
 import type { Agent, Queue, Skill, WorkItem } from './types'
 
 /** Minimum time between refresh executions (rate limit). */
-const MIN_REFRESH_GAP_MS = 3_000
+const MIN_REFRESH_GAP_MS = 1_500
 
 export function MiradorDataProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth()

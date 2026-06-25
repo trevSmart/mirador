@@ -53,7 +53,7 @@ function AgentRing({ agent, color }: AgentRingProps) {
       used={agent.used}
       max={agent.max}
       color={color}
-      size={44}
+      size={50}
       photo={photoSrc}
       initials={agentInitials(agent.name)}
       breathe={agent.status === 'busy'}
