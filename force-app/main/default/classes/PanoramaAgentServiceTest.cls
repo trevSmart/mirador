@@ -2,10 +2,21 @@
 private class PanoramaAgentServiceTest {
     @IsTest
     static void mapsPresenceLabels() {
-        System.assertEquals('online', PanoramaAgentService.mapPresenceStatus('Available'));
-        System.assertEquals('busy', PanoramaAgentService.mapPresenceStatus('Busy'));
-        System.assertEquals('away', PanoramaAgentService.mapPresenceStatus('On Break'));
-        System.assertEquals('offline', PanoramaAgentService.mapPresenceStatus('Offline'));
+        // DeveloperName-driven mapping for the org's real Panorama_* statuses.
+        System.assertEquals('online', PanoramaAgentService.mapPresenceStatus('Panorama_Available', 'Available'));
+        System.assertEquals('online', PanoramaAgentService.mapPresenceStatus('AvailableforVoice', 'Available for Voice'));
+        System.assertEquals('away', PanoramaAgentService.mapPresenceStatus('Panorama_Away', 'Away'));
+        System.assertEquals('busy', PanoramaAgentService.mapPresenceStatus('Panorama_Busy', 'Busy'));
+        System.assertEquals('offline', PanoramaAgentService.mapPresenceStatus('Panorama_Offline', 'Offline'));
+
+        // Falls back to MasterLabel when DeveloperName is unhelpful.
+        System.assertEquals('away', PanoramaAgentService.mapPresenceStatus('Custom_01', 'On Break'));
+        System.assertEquals('busy', PanoramaAgentService.mapPresenceStatus(null, 'Ocupat'));
+        System.assertEquals('offline', PanoramaAgentService.mapPresenceStatus(null, 'Unavailable'));
+
+        // Fail-safe: an unrecognized status is treated as offline, never online.
+        System.assertEquals('offline', PanoramaAgentService.mapPresenceStatus('Status_X', 'Reunió de equip'));
+        System.assertEquals('offline', PanoramaAgentService.mapPresenceStatus(null, null));
     }
 
     @IsTest
