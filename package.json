@@ -11,7 +11,8 @@
     "lint:fix": "eslint . --fix",
     "preview": "vite preview",
     "stop": "node scripts/stop-server.js",
-    "knip": "knip"
+    "knip": "knip",
+    "precommit": "npm run lint"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",

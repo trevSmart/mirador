@@ -1,73 +1,114 @@
-# Salesforce DX Project
+# Mirador
 
-Salesforce DX is a development approach that brings source-driven development, team collaboration, and continuous integration to the Salesforce Platform. Instead of working directly in an org through a web browser, you work with metadata as source files in a local DX project, track changes in version control, and deploy through automated processes.
+Mirador is a contact-center observability dashboard. A React 19 + Vite single-page
+app surfaces a live view of agents, queues, skills, and work items, reading a
+domain-oriented JSON API served by Apex REST from a Salesforce org.
 
-This project template gets you started with the tools and structure you need to build Salesforce applications using source control, scratch orgs, and the Salesforce CLI.
+The repository is a dual project:
 
-## Prerequisites
+- **`src/`** — the SPA (TypeScript, React 19, Vite 8).
+- **`force-app/`** — the Salesforce DX metadata: Apex classes implementing the REST
+  API, External Client App (ECA) OAuth definitions, and skill types.
 
-Before you start, make sure you have:
+> Working in this repo with an AI agent? See [AGENTS.md](AGENTS.md) for the
+> architecture map and conventions.
 
-- **Salesforce CLI** - Download from [developer.salesforce.com/tools/salesforcecli](https://developer.salesforce.com/tools/salesforcecli). See [Install Salesforce CLI](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_install_cli.htm) for details.
-- **VS Code with Salesforce Extension Pack** - See [Installation Instructions](https://developer.salesforce.com/docs/platform/sfvscode-extensions/guide/install.html) for details. Includes the Agentforce Vibes extension.
-- **A development org** - Sign up for a free Developer Edition org [here](https://developer.salesforce.com/signup).
-- **Dev Hub enabled** (optional, required to create scratch orgs) - You can enable Dev Hub in your development org under Setup > Dev Hub.  See [Provide Developers Access to Salesforce DX Tools](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_setup_dx_tools.htm).
+## Quick start
 
-## Project Structure
+```bash
+npm install
+npm run dev:mock     # run the UI with mock data — no Salesforce org needed
+```
 
-Your DX project follows this structure:
+Then open http://localhost:3000.
 
-- **`force-app/main/default/`** - Your metadata source files live in this default package directory. You can configure additional package directories in the `sfdx-project.json` file.
-- **`config/`** - Scratch org definitions and project settings
-- **`scripts/`** - Automation scripts for common tasks
-- **`sfdx-project.json`** - Project manifest that defines package directories, namespace, API version, and other project-level settings
+To run against a real org, create a `.env` (see `.env.example`) and use
+`npm run dev` instead — this requires the Apex REST API deployed to your org and a
+configured External Client App.
 
-See [Salesforce DX Project Configuration](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_ws_config.htm).
+## Data sources: mock vs. Salesforce
 
-## Get Started
+The app runs against either mock data or a real Salesforce org. Resolution order:
 
-Ready to start developing? The [Get Started with Salesforce DX](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_get_started_dx.htm) guide walks you through your first project, from creating a scratch org to creating a simple Apex class or LWC to deploying your code to a sandbox.
+1. Server env `MIRADOR_DATA_SOURCE` (`mock` | `salesforce`, default `salesforce`),
+   exposed to the SPA via `GET /api/config`.
+2. The user preference `mockOverride` (Settings modal) can force mock at runtime.
 
-## Common Salesforce CLI Commands
+In mock mode no authentication is required; the app uses a self-contained fake
+backend in `src/api/mock/`. Use `npm run dev:mock` to develop UI without an org.
 
-Here are common CLI commands that you'll use the most:
+## Scripts
 
-- `sf org login web`: Authorize an org
-- `sf org open`: Open your org in a browser
-- `sf org create scratch`: Create a scratch org
-- `sf project deploy start`: Deploy metadata to your org
-- `sf project retrieve start`: Retrieve metadata from your org
-- `sf template generate <artifact>`: Scaffold new components, such as Apex classes and triggers, LWC components, Lightning apps, and more
-- `sf apex <command>`: Run Apex tests, run anonymous Apex blocks, and view logs
-- `sf data <command>`: Work with test data
-- `sf alias <command>`: Manage org aliases
-- `sf config <command>`: Configure CLI settings
+```bash
+npm run dev          # Vite dev server on :3000 (real Salesforce data by default)
+npm run dev:mock     # dev server forced to mock data
+npm run build        # tsc -b && vite build
+npm run preview      # serve the production build on :3000
+npm run lint         # eslint .
+npm run lint:fix     # eslint . --fix
+npm run knip         # report unused files/exports/deps
+npm run precommit    # lint (run by the Husky pre-commit hook)
+npm run stop         # kill the dev server
+```
 
-## Use Agentforce Vibes to Build Lightning Apps
+Type-checking runs as part of `npm run build` (`tsc -b`).
 
-Transform your ideas into custom Lightning apps that extend CRM workflows directly in Lightning Experience. Through natural conversations with Agentforce Vibes, implement custom objects and fields, complex business logic, and dynamic UI components. See [Build a Lightning App Using Agentforce Vibes](https://developer.salesforce.com/docs/platform/einstein-for-devs/guide/lexapp-overview.html).
+## Architecture (frontend)
 
-## Third-Party Licenses
+The app is a tree of React context providers (see `src/App.tsx`):
+preferences → auth → API client → data → dockview host → drawers/modals → UI.
 
-This project includes the following third-party assets:
+- **`src/api/`** — typed REST client (`mirador-client.ts`), domain contracts
+  (`types.ts`), the mock backend (`mock/`), and `MiradorDataProvider` which loads a
+  snapshot, polls in the background, and coalesces/rate-limits refreshes.
+- **`src/auth/`** — OAuth 2.0 Authorization Code + PKCE against a Salesforce
+  External Client App (public SPA flow, no client secret in the browser).
+- **`src/server/`** — Vite dev-server middleware serving `/api/config`,
+  `/api/oauth/token` (token proxy), and `/api/salesforce/photo` (photo proxy).
+- **`src/panels/` + `src/dockview/`** — the dockable workspace. `registry.ts` is the
+  single source of truth for panels (home, wallboard, agents, queues, skills, work,
+  floor, floor editor, and an experimental dev panel).
+- **`src/floor/` + `src/components/floor/`** — 2D/3D isometric floor plan.
+- **`src/components/ds/`** — in-house design-system primitives (SLDS-based).
+- **`src/settings/`** — user preferences (persisted to localStorage) and the
+  settings modal.
 
-### Salesforce Lightning Design System (SLDS) — v2.30.4
+The dev server must be running for the `/api/*` endpoints to exist — the SPA cannot
+authenticate from a bare static build.
 
-**Source code** (CSS, SCSS, design tokens)
-Copyright (c) 2015, Salesforce.com, Inc. All rights reserved.
-Licensed under the [BSD 3-Clause License](https://git.io/sfdc-license).
+## Salesforce backend (`force-app/main/default/`)
 
-**Icons and images**
-Copyright (c) 2015, Salesforce.com, Inc. All rights reserved.
-Licensed under [Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND 4.0)](https://creativecommons.org/licenses/by-nd/4.0/).
-Icons may be redistributed without modification. Credit: [Salesforce Lightning Design System](https://v1.lightningdesignsystem.com).
+- `classes/` — the Apex REST entry point (`PanoramaRestHandler` / `MiradorApi`,
+  mapped to `/mirador/v1/*`) and the domain services that produce the response
+  shapes consumed by the SPA.
+- `externalClientApps/` + `extlClntApp*OauthSets/` — ECA OAuth configuration.
+- `skilltypes/` — `PanoramaLanguage` and `PanoramaExpertise` skill types.
 
-## Additional Resources
+The HTTP contract is documented in [docs/mirador-REST-API.md](docs/mirador-REST-API.md);
+authentication setup in [docs/salesforce-authentication.md](docs/salesforce-authentication.md).
 
-- [Agentforce Vibes Developer Guide](https://developer.salesforce.com/docs/platform/einstein-for-devs/guide/einstein-overview.html)
-- [Salesforce CLI Installation Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_intro.htm)
-- [Salesforce DX Developer Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/)
-- [Salesforce CLI Command Reference](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/)
-- [Salesforce CLI Plugin Development Guide](https://developer.salesforce.com/docs/platform/salesforce-cli-plugin/guide/conceptual-overview.html)
-- [Salesforce VS Code Extensions Documentation](https://developer.salesforce.com/tools/vscode/)
+Common Salesforce CLI commands:
 
+```bash
+sf org login web                 # authorize an org
+sf project deploy start          # deploy metadata
+sf project retrieve start        # retrieve metadata
+sf apex run test                 # run Apex tests
+sf org open                      # open the org in a browser
+```
+
+## Tech stack
+
+React 19 (with the React Compiler), Vite 8, TypeScript, `dockview-react`, ESLint 10,
+Prettier, Knip. Backend: Salesforce Apex (API version 66.0).
+
+## Third-party licenses
+
+Salesforce Lightning Design System (SLDS) — v2.30.4.
+
+- **Source** (CSS, SCSS, design tokens): Copyright (c) 2015, Salesforce.com, Inc.
+  Licensed under the [BSD 3-Clause License](https://git.io/sfdc-license).
+- **Icons and images**: Copyright (c) 2015, Salesforce.com, Inc. Licensed under
+  [CC BY-ND 4.0](https://creativecommons.org/licenses/by-nd/4.0/). Icons may be
+  redistributed without modification. Credit:
+  [Salesforce Lightning Design System](https://v1.lightningdesignsystem.com).

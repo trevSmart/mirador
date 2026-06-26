@@ -212,7 +212,10 @@ public with sharing class PanoramaAgentService {
             dto.recordUrl = buildRecordUrl(orgUrl, u.Id);
             dto.status = usp == null
                 ? 'offline'
-                : mapPresenceStatus(usp.ServicePresenceStatus?.MasterLabel);
+                : mapPresenceStatus(
+                    usp.ServicePresenceStatus?.DeveloperName,
+                    usp.ServicePresenceStatus?.MasterLabel
+                );
             dto.max = usp != null && usp.ConfiguredCapacity != null && usp.ConfiguredCapacity > 0
                 ? Integer.valueOf(usp.ConfiguredCapacity)
                 : 5;
@@ -393,22 +396,49 @@ public with sharing class PanoramaAgentService {
         return base + '/' + trimmed;
     }
 
+    /**
+     * Normalize an Omni-Channel presence status into one of the four states the
+     * UI understands: online | busy | away | offline.
+     *
+     * Classification prefers the status DeveloperName because it is a stable,
+     * language-independent identifier; MasterLabel is a display label that can
+     * be translated or renamed by the org. An unrecognized status defaults to
+     * 'offline' (fail-safe): never report an unknown status as available, which
+     * would hide an agent who is actually unreachable.
+     */
     @TestVisible
-    private static String mapPresenceStatus(String masterLabel) {
-        if (String.isBlank(masterLabel)) {
-            return 'offline';
+    private static String mapPresenceStatus(String developerName, String masterLabel) {
+        String classified = classifyPresence(developerName);
+        if (classified == null) {
+            classified = classifyPresence(masterLabel);
         }
-        String normalized = masterLabel.toLowerCase();
-        if (normalized.contains('busy') || normalized.contains('occupied') || normalized.contains('ocupat')) {
+        return classified == null ? 'offline' : classified;
+    }
+
+    @TestVisible
+    private static String classifyPresence(String value) {
+        if (String.isBlank(value)) {
+            return null;
+        }
+        String s = value.toLowerCase();
+        if (s.contains('busy') || s.contains('occupied') || s.contains('ocupat') || s.contains('ocupad')) {
             return 'busy';
         }
-        if (normalized.contains('away') || normalized.contains('break') || normalized.contains('absent')) {
+        if (s.contains('away') || s.contains('break') || s.contains('absent')
+            || s.contains('ausent') || s.contains('descans') || s.contains('pausa')) {
             return 'away';
         }
-        if (normalized.contains('offline') || normalized.contains('unavailable')) {
+        // Check 'unavailable'/offline before 'available'/online so that
+        // "Unavailable" is not swallowed by the 'available' substring match.
+        if (s.contains('offline') || s.contains('unavailable')
+            || s.contains('desconnect') || s.contains('desconect') || s.contains('no disponible')) {
             return 'offline';
         }
-        return 'online';
+        if (s.contains('available') || s.contains('online')
+            || s.contains('disponible') || s.contains('en linia') || s.contains('en línia')) {
+            return 'online';
+        }
+        return null;
     }
 
     private static Integer minutesSince(Datetime startedAt) {
