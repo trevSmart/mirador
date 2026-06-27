@@ -36,6 +36,9 @@ export function GlobalShortcutsProvider({ children }: { children: ReactNode }) {
          del sistema/navegador. */
       if (event.metaKey || event.ctrlKey || event.altKey) return
 
+      /* Ignora repeticions per tecla mantinguda: una pulsació, una acció. */
+      if (event.repeat) return
+
       const key = event.key.toLowerCase()
       const shortcut = SHORTCUTS.find((s) => s.key === key)
       if (!shortcut) return
