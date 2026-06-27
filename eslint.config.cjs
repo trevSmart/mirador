@@ -67,5 +67,13 @@ module.exports = defineConfig([
         rules: {
             '@typescript-eslint/require-await': 'off'
         }
+    },
+
+    // Dev console interceptor: directly wraps console methods by design
+    {
+        files: ['src/dev/dev-log.ts'],
+        rules: {
+            'no-console': 'off'
+        }
     }
 ]);
