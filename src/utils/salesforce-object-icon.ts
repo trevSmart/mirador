@@ -1,5 +1,6 @@
 import type { ChannelKey } from '../api/types'
 import type { SfSprite } from '../components/ds/SfIcon'
+import { channelLabel } from './format'
 
 export interface ResolvedObjectIcon {
   sprite: SfSprite
@@ -79,6 +80,27 @@ export function resolveWorkItemIcon(item: WorkItemIconInput): ResolvedObjectIcon
   }
 
   return CHANNEL_ICON[item.channelKey] ?? DEFAULT_ICON
+}
+
+const OBJECT_LABELS: Record<string, string> = {
+  VoiceCall: 'Trucada de veu',
+  Case: 'Cas',
+  MessagingSession: 'Missatgeria',
+  EmailMessage: 'Correu',
+  LiveChatTranscript: 'Xat en directe',
+  Lead: 'Oportunitat',
+}
+
+/** Human-readable label for a work item's backing SObject. Falls back to the
+    raw objectApiName, and finally to the channel label when none is set. */
+export function objectLabel(item: {
+  objectApiName?: string | null
+  channelKey: ChannelKey
+}): string {
+  if (item.objectApiName) {
+    return OBJECT_LABELS[item.objectApiName] ?? item.objectApiName
+  }
+  return channelLabel(item.channelKey)
 }
 
 /** Mock/API seed helper — icon fields for a channel-backed work item. */

@@ -24,7 +24,11 @@ export function parseDetailPanelParams(params: unknown): DetailPanelParams | nul
     return null
   }
   const { kind, id } = params as Partial<DetailPanelParams>
-  if ((kind !== 'agent' && kind !== 'queue' && kind !== 'skill') || typeof id !== 'string' || !id) {
+  if (
+    (kind !== 'agent' && kind !== 'queue' && kind !== 'skill' && kind !== 'work') ||
+    typeof id !== 'string' ||
+    !id
+  ) {
     return null
   }
   return { kind, id }

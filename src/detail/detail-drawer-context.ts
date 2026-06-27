@@ -4,7 +4,7 @@
 
 import { createContext, useContext } from 'react'
 
-export type DetailKind = 'agent' | 'queue' | 'skill'
+export type DetailKind = 'agent' | 'queue' | 'skill' | 'work'
 
 export interface DetailTarget {
   kind: DetailKind
@@ -16,6 +16,7 @@ export interface DetailDrawerContextValue {
   openAgent: (id: string) => void
   openQueue: (id: string) => void
   openSkill: (id: string) => void
+  openWork: (id: string) => void
   openAsTab: (target: DetailTarget) => void
   close: () => void
 }

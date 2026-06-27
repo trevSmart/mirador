@@ -204,3 +204,14 @@ Common Salesforce CLI commands: `sf project deploy start`,
   them aligned.
 - The `dev` panel and `src/dev/` are explicitly experimental and removable; don't
   build production features on them.
+- **Dockview destroys panel DOM nodes outside React's reconciler.** When a panel
+  is closed or replaced, Dockview rips its node out of the DOM directly, so React
+  **never** calls that node's callback ref with `null` — any cleanup that lives in
+  a callback-ref/`useRef` teardown will silently not run. This bit
+  `useSmoothScroll`: orphaned Lenis `requestAnimationFrame` loops leaked on load
+  (several panels are created and discarded during layout bootstrap) and pegged the
+  CPU at 100%. The fix is to make per-element resources self-terminating rather
+  than relying on React cleanup — e.g. the raf loop checks `element.isConnected`
+  each frame and tears itself down once the element leaves the document. Apply the
+  same pattern (self-cleanup guarded on DOM connectivity) for any imperative
+  resource attached to a Dockview panel element.

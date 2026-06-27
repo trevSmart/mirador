@@ -1,16 +1,18 @@
-import type { Agent, Queue, Skill } from '../api/types'
+import type { Agent, Queue, Skill, WorkItem } from '../api/types'
 import type { DetailTarget } from './detail-drawer-context'
 
 export interface MiradorEntityData {
   agents: Agent[]
   queues: Queue[]
   skills: Skill[]
+  work: WorkItem[]
 }
 
 const FALLBACK_TITLE: Record<DetailTarget['kind'], string> = {
   agent: 'Agent',
   queue: 'Cua',
   skill: 'Skill',
+  work: 'Treball',
 }
 
 export function resolveDetailTitle(target: DetailTarget, data: MiradorEntityData): string {
@@ -21,5 +23,7 @@ export function resolveDetailTitle(target: DetailTarget, data: MiradorEntityData
       return data.queues.find((queue) => queue.id === target.id)?.name ?? FALLBACK_TITLE.queue
     case 'skill':
       return data.skills.find((skill) => skill.id === target.id)?.name ?? FALLBACK_TITLE.skill
+    case 'work':
+      return data.work.find((item) => item.id === target.id)?.subject ?? FALLBACK_TITLE.work
   }
 }

@@ -13,29 +13,21 @@ interface WorkRowProps {
 
 export function WorkRow({ item, agentName, queueName }: WorkRowProps) {
   const icon = resolveWorkItemIcon(item)
-  const { openAgent, openQueue } = useDetailDrawer()
-  const target = item.agentId
-    ? () => openAgent(item.agentId as string)
-    : item.queueId
-      ? () => openQueue(item.queueId as string)
-      : null
+  const { openWork } = useDetailDrawer()
+  const target = () => openWork(item.id)
 
   return (
     <article
-      className={`work-row${target ? ' work-row--clickable' : ''}`}
-      {...(target
-        ? {
-            role: 'button',
-            tabIndex: 0,
-            onClick: target,
-            onKeyDown: (event: ReactKeyboardEvent) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault()
-                target()
-              }
-            },
-          }
-        : {})}
+      className="work-row work-row--clickable"
+      role="button"
+      tabIndex={0}
+      onClick={target}
+      onKeyDown={(event: ReactKeyboardEvent) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          target()
+        }
+      }}
     >
       <div className="work-row__main">
         <SfIcon sprite={icon.sprite} symbol={icon.symbol} size={32} bg={icon.tint} />
