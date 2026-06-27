@@ -5482,10 +5482,32 @@ textarea,
   color: #c9c6d3;
 }
 
+/* Tinta molt subtil del text segons el nivell: el color base es barreja amb el
+   to del badge a baixa proporció, prou per insinuar el tipus sense cridar. */
+.dev-console__line--log .dev-console__msg {
+  color: color-mix(in oklab, #c9c6d3 78%, #9aa0a6);
+}
+
+.dev-console__line--info .dev-console__msg {
+  color: color-mix(in oklab, #c9c6d3 78%, #6cb6ff);
+}
+
 .dev-console__line--warn .dev-console__msg {
-  color: #f0b429;
+  color: color-mix(in oklab, #c9c6d3 78%, #f0b429);
 }
 
 .dev-console__line--error .dev-console__msg {
-  color: #ff6b6b;
+  color: color-mix(in oklab, #c9c6d3 78%, #ff6b6b);
+}
+
+.dev-console__line--action .dev-console__msg {
+  color: color-mix(in oklab, #c9c6d3 78%, #7ee787);
+}
+
+.dev-console__line--api .dev-console__msg {
+  color: color-mix(in oklab, #c9c6d3 78%, #c9a0ff);
+}
+
+.dev-console__line--query .dev-console__msg {
+  color: color-mix(in oklab, #c9c6d3 78%, #4dd0e1);
 }
