@@ -3,7 +3,7 @@ export type ChannelKey = 'veu' | 'chat' | 'email' | 'wa' | 'cas'
 export type WorkStatus = 'assigned' | 'queued'
 export type AgentScope = 'connected' | 'all'
 
-export interface ChannelCounts {
+interface ChannelCounts {
   veu: number
   chat: number
   email: number
@@ -93,7 +93,7 @@ export interface Capabilities {
   liveUpdates: boolean
 }
 
-export interface AgentSkillChange {
+interface AgentSkillChange {
   skillId: string
   level?: number
   remove?: boolean

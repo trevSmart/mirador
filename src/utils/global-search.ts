@@ -1,7 +1,7 @@
 import type { Agent, AgentWorkItem, ChannelKey, Queue, Skill } from '../api/types'
 import { channelLabel } from './format'
 
-export type SearchItemKind = 'agent' | 'queue' | 'skill' | 'work'
+type SearchItemKind = 'agent' | 'queue' | 'skill' | 'work'
 
 export interface SearchItemRef {
   kind: SearchItemKind
@@ -31,7 +31,7 @@ function workSearchText(work: AgentWorkItem, agentName: string): string {
     .toLowerCase()
 }
 
-export function collectWorkItems(agents: Agent[]): SearchWorkHit[] {
+function collectWorkItems(agents: Agent[]): SearchWorkHit[] {
   const items: SearchWorkHit[] = []
   for (const agent of agents) {
     if (!Array.isArray(agent.work)) continue

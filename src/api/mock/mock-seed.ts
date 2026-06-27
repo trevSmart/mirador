@@ -598,18 +598,6 @@ export const queues: Queue[] = buildQueues(agents)
 export const skills: Skill[] = SKILL_DEFS.slice()
 export const work: WorkItem[] = buildWork(agents)
 
-export function getSkillAgents(skillId: string): Agent[] {
-  const skill = skills.find((s) => s.id === skillId)
-  if (!skill) return []
-  return skillAgentSlice(skill, agents).map((agent) => {
-    const spec = AGENT_SPECS.find((s) => s.id === agent.id)
-    return {
-      ...agent,
-      skills: spec ? agentSkillRows(spec) : [],
-    }
-  })
-}
-
 export function getAgentSkills(agentId: string): AgentSkill[] {
   const spec = AGENT_SPECS.find((s) => s.id === agentId)
   return spec ? agentSkillRows(spec) : []

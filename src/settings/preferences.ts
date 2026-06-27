@@ -7,7 +7,6 @@
 import { FLOOR_CANVAS_TINTS, type FloorCanvasTint } from './floor-canvas-wash'
 
 export type FloorViewMode = '2d' | '3d'
-export type { FloorCanvasTint }
 export type Lang = 'ca' | 'es' | 'en'
 export type TimeFormat = '24h' | '12h'
 
@@ -88,7 +87,7 @@ function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback
 }
 
 /** Coerce any stored / partial blob into a complete, valid Preferences object. */
-export function sanitizePreferences(raw: Partial<Preferences> | null | undefined): Preferences {
+function sanitizePreferences(raw: Partial<Preferences> | null | undefined): Preferences {
   const d = PREFERENCES_DEFAULTS
   const p = raw ?? {}
   const refresh = clampInt(p.refreshInterval, d.refreshInterval, 1, 3600)

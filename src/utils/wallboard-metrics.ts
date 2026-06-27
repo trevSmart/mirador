@@ -41,7 +41,7 @@ export function workItemStatus(work: WorkItem[]): WorkItemStatusBucket[] {
 
 /* ── Card 2 · Agent Primary Capacity Status ────────────────────────────── */
 
-export type CapacityStatusKey = 'Online' | 'Idle' | 'Busy' | 'At Capacity' | 'Offline'
+type CapacityStatusKey = 'Online' | 'Idle' | 'Busy' | 'At Capacity' | 'Offline'
 
 export interface CapacityStatusBucket {
   label: CapacityStatusKey

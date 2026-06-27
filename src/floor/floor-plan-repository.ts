@@ -11,7 +11,7 @@ import { createMockFloorPlan } from '../api/mock/mock-floor-plan'
 import { sanitizeFloorPlan } from './floor-plan-model'
 import type { FloorPlanData } from './types'
 
-export interface FloorPlanRepository {
+interface FloorPlanRepository {
   load(): Promise<FloorPlanData | null>
   save(data: FloorPlanData): Promise<void>
 }
@@ -80,17 +80,10 @@ class MockFloorPlanRepository implements FloorPlanRepository {
 const localStorageRepository = new LocalStorageFloorPlanRepository()
 const mockRepository = new MockFloorPlanRepository()
 
-/** The single repository instance the app consumes for Salesforce / local plans. */
-export const floorPlanRepository: FloorPlanRepository = localStorageRepository
-
 export function loadFloorPlan(isMockMode: boolean): Promise<FloorPlanData | null> {
   return isMockMode ? mockRepository.load() : localStorageRepository.load()
 }
 
 export function saveFloorPlan(data: FloorPlanData, isMockMode: boolean): Promise<void> {
   return isMockMode ? mockRepository.save(data) : localStorageRepository.save(data)
-}
-
-export function resetMockFloorPlan(): void {
-  mockRepository.reset()
 }

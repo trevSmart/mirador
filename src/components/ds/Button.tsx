@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react'
 
-export type ButtonVariant = 'primary' | 'ghost' | 'subtle' | 'danger'
-export type ButtonSize = 'sm' | 'md'
+type ButtonVariant = 'primary' | 'ghost' | 'subtle' | 'danger'
+type ButtonSize = 'sm' | 'md'
 
 interface VariantDef {
   background: string

@@ -20,7 +20,7 @@ export function loadFloorZoom(): number {
   return FLOOR_ZOOM_DEFAULT
 }
 
-export function clampZoom(value: number): number {
+function clampZoom(value: number): number {
   return Math.min(FLOOR_ZOOM_MAX, Math.max(FLOOR_ZOOM_MIN, value))
 }
 

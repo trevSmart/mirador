@@ -1,7 +1,7 @@
 import supervisorAvatar from './avatars/m3.jpg'
 import type { SalesforceUserInfo } from '../../auth/types'
 
-export const MOCK_SUPERVISOR = {
+const MOCK_SUPERVISOR = {
   name: 'Marc Ribera',
   title: 'Operations Supervisor',
 } as const

@@ -45,7 +45,7 @@ function isSfSprite(value: string | null | undefined): value is SfSprite {
 }
 
 /** Parse a Lightning icon name (standard:case, custom:custom78). */
-export function parseIconName(iconName: string): { sprite: SfSprite; symbol: string } | null {
+function parseIconName(iconName: string): { sprite: SfSprite; symbol: string } | null {
   const colon = iconName.indexOf(':')
   if (colon <= 0) return null
   const sprite = iconName.slice(0, colon)

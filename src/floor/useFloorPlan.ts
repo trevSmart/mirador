@@ -435,5 +435,3 @@ export function useFloorPlan() {
     reset,
   }
 }
-
-export type FloorPlanController = ReturnType<typeof useFloorPlan>

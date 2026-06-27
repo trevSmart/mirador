@@ -1,6 +1,6 @@
 import type { PresenceStatus } from '../api/types'
 
-export type DetailRecentKind = 'agent' | 'queue' | 'skill'
+type DetailRecentKind = 'agent' | 'queue' | 'skill'
 
 export interface DetailRecentEntry {
   kind: DetailRecentKind
