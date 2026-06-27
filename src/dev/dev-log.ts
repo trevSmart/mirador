@@ -53,7 +53,7 @@ function safeText(...args: unknown[]): string {
       try {
         return JSON.stringify(a)
       } catch {
-        return String(a)
+        return Object.prototype.toString.call(a)
       }
     })
     .join(' ')
@@ -134,7 +134,7 @@ export const devLog = {
     })
 
     window.addEventListener('unhandledrejection', (e) => {
-      const reason = e.reason
+      const reason: unknown = e.reason
       const msg =
         reason instanceof Error
           ? (reason.stack ?? reason.message)

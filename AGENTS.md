@@ -227,6 +227,10 @@ Common Salesforce CLI commands: `sf project deploy start`,
   through `useDataStatus().error`.
 - **Lint/format:** run `npm run lint` and respect Prettier (`.prettierrc`).
   `dist/`, `tmp/`, `public/`, `.sfdx/` are lint-ignored.
+- **Never bypass an ESLint or Knip rule** (no `eslint-disable` comments, no `knip`
+  ignores) to make an issue go away — fix the underlying problem instead. If a
+  bypass genuinely is the right call in a specific case, ask the user for
+  confirmation first.
 
 ## Gotchas
 

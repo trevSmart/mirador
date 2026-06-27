@@ -51,7 +51,7 @@ interface PanelStateProps {
   title?: string
   isLoading: boolean
   error: string | null
-  onRetry?: () => void
+  onRetry?: () => void | Promise<void>
   emptyMessage?: string
   isEmpty?: boolean
   children: ReactNode

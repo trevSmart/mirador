@@ -59,5 +59,13 @@ module.exports = defineConfig([
                 ...globals.node
             }
         }
+    },
+
+    // Test files: async mocks/fixtures commonly omit `await` by design
+    {
+        files: ['src/**/*.test.{ts,tsx}'],
+        rules: {
+            '@typescript-eslint/require-await': 'off'
+        }
     }
 ]);
