@@ -229,7 +229,7 @@ export function DevConsole() {
                   className={`dev-console__filter dev-console__filter--${level}${filters.has(level) ? ' dev-console__filter--active' : ''}`}
                   onClick={(e) => (e.metaKey || e.ctrlKey ? soloFilter(level) : toggleFilter(level))}
                   aria-pressed={filters.has(level)}
-                  title={`Mostra/amaga ${level} · ⌘+clic per veure'n només aquest`}
+                  title={`Mostra/amaga ${level} · ⌘/Ctrl+clic per veure'n només aquest`}
                 >
                   {level}
                 </button>
