@@ -204,14 +204,18 @@ Common Salesforce CLI commands: `sf project deploy start`,
   them aligned.
 - The `dev` panel and `src/dev/` are explicitly experimental and removable; don't
   build production features on them.
-- **Dockview destroys panel DOM nodes outside React's reconciler.** When a panel
-  is closed or replaced, Dockview rips its node out of the DOM directly, so React
-  **never** calls that node's callback ref with `null` — any cleanup that lives in
-  a callback-ref/`useRef` teardown will silently not run. This bit
-  `useSmoothScroll`: orphaned Lenis `requestAnimationFrame` loops leaked on load
-  (several panels are created and discarded during layout bootstrap) and pegged the
-  CPU at 100%. The fix is to make per-element resources self-terminating rather
-  than relying on React cleanup — e.g. the raf loop checks `element.isConnected`
-  each frame and tears itself down once the element leaves the document. Apply the
-  same pattern (self-cleanup guarded on DOM connectivity) for any imperative
-  resource attached to a Dockview panel element.
+- **The document root must stay `overflow: hidden`** (`html, body, #root` in
+  `index.css`). Mirador is a fixed-viewport dashboard — every panel scrolls
+  internally and the window must never scroll. If the root is allowed to scroll, at
+  fractional device-pixel ratios (browser zoom ≠ 100% → e.g. dpr 1.8) sub-pixel
+  rounding can leave total content ~1px taller than the viewport, flickering the
+  window scrollbar on and off. Each toggle changes the layout width by the
+  scrollbar's ~16px, which cascades through Dockview; **Dockview's own
+  `ResizeObserver` reacts to the size change and recomputes every frame**, turning
+  it into a self-sustaining infinite reflow loop that repaints the scrollbars
+  forever and pegs the CPU at 100%. It only reproduces at non-100% zoom, which
+  makes it easy to misattribute — note that Lenis's always-rescheduling `raf` is a
+  red herring here (a paused debugger lands on it because it runs every frame, but
+  disabling Lenis entirely does not stop the loop; removing/re-adding a Dockview
+  container in devtools does, because it forces a clean relayout). Don't reintroduce
+  root scrolling.

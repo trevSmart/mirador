@@ -1,7 +1,8 @@
 import { useMiradorData } from '../../api/mirador-data-context'
 import type { WorkItem } from '../../api/types'
+import { useRecordDetail } from '../../api/use-record-detail'
 import { useDetailDrawer } from '../../detail/detail-drawer-context'
-import { channelLabel, formatSeconds, workStatusLabel } from '../../utils/format'
+import { channelLabel, formatDateTime, formatSeconds, workStatusLabel } from '../../utils/format'
 import { objectLabel, resolveWorkItemIcon } from '../../utils/salesforce-object-icon'
 import { Badge, FadeValue, SfIcon } from '../ds'
 import { DetailRow, DrawerSection, EmptyHint, MiniAgentRow, Stat, StatGrid } from './parts'
@@ -17,6 +18,8 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
   const icon = resolveWorkItemIcon(item)
   const agent = item.agentId ? agents.find((a) => a.id === item.agentId) : undefined
   const queue = item.queueId ? queues.find((q) => q.id === item.queueId) : undefined
+
+  const { detail, isLoading, error } = useRecordDetail(item.workItemId)
 
   return (
     <>
@@ -57,7 +60,24 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
       </DrawerSection>
 
       <DrawerSection title="Detalls">
-        <EmptyHint>Els detalls específics d&apos;aquest objecte s&apos;afegiran properament.</EmptyHint>
+        {!item.workItemId ? (
+          <EmptyHint>Sense registre associat.</EmptyHint>
+        ) : isLoading ? (
+          <EmptyHint>Carregant…</EmptyHint>
+        ) : error ? (
+          <EmptyHint>{error}</EmptyHint>
+        ) : detail ? (
+          <StatGrid>
+            <Stat label="Creat" value={formatDateTime(detail.createdDate)} />
+            <Stat label="Modificat" value={formatDateTime(detail.lastModifiedDate)} />
+            {detail.caseNumber ? <Stat label="Número de cas" value={detail.caseNumber} /> : null}
+            {detail.subject && detail.subject !== item.subject ? (
+              <Stat label="Assumpte" value={detail.subject} />
+            ) : null}
+          </StatGrid>
+        ) : (
+          <EmptyHint>No s&apos;han trobat detalls del registre.</EmptyHint>
+        )}
       </DrawerSection>
     </>
   )

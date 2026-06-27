@@ -11,4 +11,9 @@ global with sharing class MiradorApi {
     global static void handlePut() {
         PanoramaRestHandler.handlePut(API_PREFIX);
     }
+
+    @HttpPost
+    global static void handlePost() {
+        PanoramaRestHandler.handlePost(API_PREFIX);
+    }
 }

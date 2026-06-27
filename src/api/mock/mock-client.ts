@@ -5,6 +5,9 @@ import type {
   AgentSkillsResponse,
   AgentsResponse,
   QueuesResponse,
+  RecordDetail,
+  RecordDetailsRequest,
+  RecordDetailsResponse,
   SkillAgentsResponse,
   SkillsResponse,
   SnapshotResponse,
@@ -34,6 +37,26 @@ async function withApiLog<T>(
   devLog.api(method, path, `200 · ${elapsed}ms (mock)`)
   return result
 }
+
+/** Deterministic mock record detail derived from the id, so the drawer can be
+    exercised in mock mode. Cases (ids starting with 500) get a CaseNumber;
+    messaging sessions (0Mw) get a Subject. */
+function mockRecordDetail(id: string): RecordDetail {
+  const created = new Date(MOCK_RECORD_EPOCH).toISOString()
+  const modified = new Date(MOCK_RECORD_EPOCH + 3_600_000).toISOString()
+  const isCase = id.startsWith('500')
+  const isMessaging = id.startsWith('0Mw')
+  return {
+    id,
+    objectApiName: isCase ? 'Case' : isMessaging ? 'MessagingSession' : null,
+    createdDate: created,
+    lastModifiedDate: modified,
+    caseNumber: isCase ? `0${id.slice(-7)}` : null,
+    subject: isMessaging ? 'Sessió de missatgeria (mock)' : null,
+  }
+}
+
+const MOCK_RECORD_EPOCH = Date.UTC(2026, 0, 15, 9, 30)
 
 export function createMockMiradorClient(): MiradorClient {
   return {
@@ -80,5 +103,9 @@ export function createMockMiradorClient(): MiradorClient {
           work: getMockWork(),
         } satisfies SnapshotResponse
       }),
+    getRecordDetails: (body: RecordDetailsRequest) =>
+      withApiLog('POST', '/records/details', () => ({
+        records: body.ids.map(mockRecordDetail),
+      } satisfies RecordDetailsResponse)),
   }
 }
