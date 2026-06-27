@@ -1,26 +1,22 @@
-/* EXPERIMENTAL — Dev tab only. Self-contained vectorial reformulation of the
-   isometric projection used by the Floor view. The whole point of this file is
-   to express the floor geometry in terms of two independent basis vectors
+/* Vectorial reformulation of the isometric projection used by the Floor view.
+   It expresses the floor geometry in terms of two independent basis vectors
    `u` (one step in column c) and `v` (one step in row r) instead of the fixed
-   `±TW / ±TH` offsets the official `floor-iso.ts` hardcodes.
+   `±TW / ±TH` offsets the legacy `floor-iso.ts` hardcodes.
 
-   With `u` and `v` free to be *non-mirror* vectors we can tilt the azimuth away
-   from the symmetric 45° and check whether towers stop lining up perfectly.
+   With `u` and `v` free to be *non-mirror* vectors the azimuth can tilt away
+   from the symmetric 45°, which powers the per-room drag-to-orbit camera. */
 
-   Nothing here is imported by the official app except read-only helpers we pull
-   IN from `../floor/*`. Delete `src/dev/` and the experiment is gone. */
-
-import { backLeftTrue, backRightTrue, openingQuad, rotateCell } from '../floor/floor-iso'
-import type { Cell, Dir, Edge, Floor, Opening } from '../floor/types'
+import { backLeftTrue, backRightTrue, openingQuad, rotateCell } from './floor-iso'
+import type { Cell, Dir, Edge, Floor, Opening } from './types'
 
 export type Point = [number, number]
 
 // Tile metrics that reproduce the official look at azimuth 45° / tilt 0.5.
 export const VEC_TW = 34
 export const VEC_TH = 17
-export const VEC_THK = 6
-export const VEC_WALL_H = 104
-export const VEC_DIV_H = 14
+const VEC_THK = 6
+const VEC_WALL_H = 104
+const VEC_DIV_H = 14
 export const VEC_SEAT_MIN_H = 4
 export const VEC_SEAT_MAX_H = 88
 
@@ -63,7 +59,7 @@ export function projectCellVec(c: number, r: number, b: IsoBasis): Point {
   return [c * b.ux + r * b.vx, c * b.uy + r * b.vy]
 }
 
-export interface TileCorners {
+interface TileCorners {
   top: Point
   right: Point
   bottom: Point
@@ -71,7 +67,7 @@ export interface TileCorners {
 }
 
 /** The four corners of a cell's parallelogram (the generalised rhombus). */
-export function tileCorners(x: number, y: number, b: IsoBasis): TileCorners {
+function tileCorners(x: number, y: number, b: IsoBasis): TileCorners {
   const hux = b.ux / 2
   const huy = b.uy / 2
   const hvx = b.vx / 2

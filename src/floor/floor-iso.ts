@@ -1,57 +1,27 @@
-/* Floor viewer — isometric (2.5D) projection helpers.
-   Pure geometry, no React/DOM. Reimplements the panorama PoC's projection: a
-   grid cell maps to a rhombus, with depth ordering and edge visibility derived
-   from the camera direction (0..3, each a 90° turn). */
+/* Floor viewer — isometric (2.5D) grid helpers. Pure geometry, no React/DOM.
+
+   Since the 3D render moved to the basis-vector projection in `floor-iso-vec.ts`,
+   this module now only keeps:
+   - the 2D grid rotation helpers used by `FloorView` (`rotateCell`, `rotateEdge`,
+     `roomBounds2D`);
+   - the camera-direction-aware back-wall topology (`backLeftTrue` / `backRightTrue`)
+     and the opening quad (`openingQuad`), which `floor-iso-vec` reuses at dir 0. */
 
 import type { Cell, Edge, Dir } from './types'
 export type { Dir }
 
-export const TW = 34 // tile half-width (rhombus)
-export const TH = 17 // tile half-height
-export const THK = 6 // floor slab thickness
-export const WALL_H = 104 // exterior wall height
-export const DIV_H = 14 // interior divider height
-export const SEAT_MIN_H = 4
-export const SEAT_MAX_H = 88
-export const SHADOW_PAD = 1.31
+const TW = 34 // tile half-width (rhombus)
+const TH = 17 // tile half-height
+const WALL_H = 104 // exterior wall height
 
 export type Point = [number, number]
 
 /** Project a grid cell to the centre of its rhombus, for camera direction `dir`. */
-export function projectCell(c: number, r: number, dir: Dir, maxC: number, maxR: number): Point {
+function projectCell(c: number, r: number, dir: Dir, maxC: number, maxR: number): Point {
   if (dir === 1) return [(maxR - r - c) * TW, (maxR + c - r) * TH]
   if (dir === 2) return [(maxR - r - c) * TW, (maxR - r + c) * TH]
   if (dir === 3) return [(r + c - maxC) * TW, (r + maxR - c) * TH]
   return [(c - r) * TW, (c + r) * TH]
-}
-
-/** Points string for a rhombus centred at (x, y - h). */
-export function diamondPoints(x: number, y: number, h = 0): string {
-  return `${x},${y - h - TH} ${x + TW},${y - h} ${x},${y - h + TH} ${x - TW},${y - h}`
-}
-
-/** A vertical face quad (right/left side of a slab/tower) between heights h1..h2. */
-export function rightFace(x: number, y: number, h1: number, h2: number): string {
-  return `${x},${y + TH - h1} ${x + TW},${y - h1} ${x + TW},${y - h2} ${x},${y + TH - h2}`
-}
-export function leftFace(x: number, y: number, h1: number, h2: number): string {
-  return `${x - TW},${y - h1} ${x},${y + TH - h1} ${x},${y + TH - h2} ${x - TW},${y - h2}`
-}
-
-/** Downward slab side faces (floor thickness), from the tile edge down by THK. */
-export function slabRightFace(x: number, y: number): string {
-  return `${x + TW},${y} ${x},${y + TH} ${x},${y + TH + THK} ${x + TW},${y + THK}`
-}
-export function slabLeftFace(x: number, y: number): string {
-  return `${x - TW},${y} ${x},${y + TH} ${x},${y + TH + THK} ${x - TW},${y + THK}`
-}
-
-/** Back wall quads rising WALL_H from the far edges of a tile. */
-export function backRightWall(x: number, y: number): string {
-  return `${x},${y - TH} ${x + TW},${y} ${x + TW},${y - WALL_H} ${x},${y - TH - WALL_H}`
-}
-export function backLeftWall(x: number, y: number): string {
-  return `${x},${y - TH} ${x - TW},${y} ${x - TW},${y - WALL_H} ${x},${y - TH - WALL_H}`
 }
 
 function lerp(a: Point, b: Point, t: number): Point {
@@ -78,46 +48,18 @@ export function openingQuad(
   }
 }
 
-export function openingQuadPoints(quad: OpeningQuad): string {
-  const { bl, br, tr, tl } = quad
-  return `${bl[0]},${bl[1]} ${br[0]},${br[1]} ${tr[0]},${tr[1]} ${tl[0]},${tl[1]}`
-}
-
-/** Opening (door/window) frame as a quad on a wall, given its ground+top edges. */
-export function openingPoints(
-  g0: Point,
-  g1: Point,
-  t0: Point,
-  t1: Point,
-  kind: 'door' | 'window',
-): string {
-  return openingQuadPoints(openingQuad(g0, g1, t0, t1, kind))
-}
-
 type Has = (c: number, r: number) => boolean
 
 /* Edge-visibility predicates, recomputed per camera direction. Each returns true
-   when the corresponding face/wall should be drawn (no neighbouring cell). */
+   when the corresponding back wall faces an empty neighbour. */
 
-export function rightFaceVisible(has: Has, dir: Dir): Has {
-  if (dir === 1) return (c, r) => !has(c, r - 1)
-  if (dir === 2) return (c, r) => !has(c, r - 1)
-  if (dir === 3) return (c, r) => !has(c, r + 1)
-  return (c, r) => !has(c + 1, r)
-}
-export function leftFaceVisible(has: Has, dir: Dir): Has {
-  if (dir === 1) return (c, r) => !has(c + 1, r)
-  if (dir === 2) return (c, r) => !has(c + 1, r)
-  if (dir === 3) return (c, r) => !has(c - 1, r)
-  return (c, r) => !has(c, r + 1)
-}
-export function backRightVisible(has: Has, dir: Dir): Has {
+function backRightVisible(has: Has, dir: Dir): Has {
   if (dir === 1) return (c, r) => !has(c - 1, r)
   if (dir === 2) return (c, r) => !has(c - 1, r)
   if (dir === 3) return (c, r) => !has(c + 1, r)
   return (c, r) => !has(c, r - 1)
 }
-export function backLeftVisible(has: Has, dir: Dir): Has {
+function backLeftVisible(has: Has, dir: Dir): Has {
   if (dir === 1) return (c, r) => !has(c, r + 1)
   if (dir === 2) return (c, r) => !has(c, r + 1)
   if (dir === 3) return (c, r) => !has(c, r - 1)
@@ -154,15 +96,15 @@ function backLeftFacing(dir: Dir): [number, number] {
   return [-1, 0]
 }
 
-/** Numeric corners of a back-right wall quad (mirrors `backRightWall`). */
+/** Numeric corners of a back-right wall quad. */
 function backRightWallPts(x: number, y: number): Point[] {
   return [[x, y - TH], [x + TW, y], [x + TW, y - WALL_H], [x, y - TH - WALL_H]]
 }
-/** Numeric corners of a back-left wall quad (mirrors `backLeftWall`). */
+/** Numeric corners of a back-left wall quad. */
 function backLeftWallPts(x: number, y: number): Point[] {
   return [[x, y - TH], [x - TW, y], [x - TW, y - WALL_H], [x, y - TH - WALL_H]]
 }
-/** Numeric corners of a tile-top rhombus (mirrors `diamondPoints`, h = 0). */
+/** Numeric corners of a tile-top rhombus. */
 function diamondPts(x: number, y: number): Point[] {
   return [[x, y - TH], [x + TW, y], [x, y + TH], [x - TW, y]]
 }
@@ -236,62 +178,22 @@ function backWallTrue(
   }
 }
 
-/** Like `backRightVisible`, but paints only true back walls: rejects edges that
-    face an interior void (silhouette) or whose wall would hide farther floor. */
+/** Paints only true back walls: rejects edges that face an interior void
+    (silhouette) or whose wall would hide farther floor. */
 export function backRightTrue(has: Has, cells: Cell[], dir: Dir, maxC: number, maxR: number): Has {
   return backWallTrue(backRightVisible(has, dir), backRightFacing(dir), backRightWallPts, has, cells, dir, maxC, maxR)
 }
-/** Like `backLeftVisible`, but paints only true back walls (see `backRightTrue`). */
+/** Like `backRightTrue`, for the back-left wall. */
 export function backLeftTrue(has: Has, cells: Cell[], dir: Dir, maxC: number, maxR: number): Has {
   return backWallTrue(backLeftVisible(has, dir), backLeftFacing(dir), backLeftWallPts, has, cells, dir, maxC, maxR)
 }
 
-/** The grid edge that corresponds to the back-right / back-left wall, per dir. */
-export function backRightEdge(dir: Dir): Edge {
-  return dir === 0 ? 'N' : dir === 3 ? 'E' : 'O'
-}
-export function backLeftEdge(dir: Dir): Edge {
-  return dir === 0 ? 'O' : dir === 2 ? 'S' : dir === 1 ? 'S' : 'N'
-}
-
 /** Comparator that orders cells far → near for the painter's algorithm. */
-export function depthCompare(dir: Dir): (a: Cell, b: Cell) => number {
+function depthCompare(dir: Dir): (a: Cell, b: Cell) => number {
   if (dir === 1) return (a, b) => a[0] - a[1] - (b[0] - b[1]) || a[0] - b[0]
   if (dir === 2) return (a, b) => a[0] - a[1] - (b[0] - b[1]) || a[0] - b[0]
   if (dir === 3) return (a, b) => a[1] - a[0] - (b[1] - b[0]) || a[1] - b[1]
   return (a, b) => a[0] + a[1] - (b[0] + b[1]) || a[0] - b[0]
-}
-
-export interface IsoBounds {
-  minX: number
-  minY: number
-  width: number
-  height: number
-}
-
-/** Bounding box that fits the whole floor (tiles + walls + tallest tower). */
-export function computeIsoBounds(
-  cells: Cell[],
-  dir: Dir,
-  maxC: number,
-  maxR: number,
-  topExtra = 0,
-  pad = 22,
-): IsoBounds {
-  if (cells.length === 0) return { minX: 0, minY: 0, width: 1, height: 1 }
-  let minX = Infinity
-  let maxX = -Infinity
-  let minY = Infinity
-  let maxY = -Infinity
-  const topRise = Math.max(WALL_H, SEAT_MAX_H + topExtra)
-  for (const [c, r] of cells) {
-    const [x, y] = projectCell(c, r, dir, maxC, maxR)
-    minX = Math.min(minX, x - TW)
-    maxX = Math.max(maxX, x + TW)
-    minY = Math.min(minY, y - TH - topRise)
-    maxY = Math.max(maxY, y + TH + THK)
-  }
-  return { minX: minX - pad, minY: minY - pad, width: maxX - minX + pad * 2, height: maxY - minY + pad * 2 }
 }
 
 /** Rotate a cell 90°·dir clockwise inside an n×n square grid. */

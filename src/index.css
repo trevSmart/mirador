@@ -200,7 +200,7 @@
   /* avatars, dots, rings */
 
   --h-topbar: 58px;
-  --h-tabbar: 38px;
+  --h-tabbar: 34px;
 
   /* ════════════════════════════════════════════════════
      PANORAMA · EFFECTS — shadow, motion, blur
@@ -928,9 +928,14 @@ textarea,
   --dv-tab-close-icon-size: 11px;
   --dv-tabs-and-actions-container-background-color: var(--surface-raised);
   --dv-group-view-background-color: var(--surface-raised);
-  --dv-activegroup-visiblepanel-tab-background-color: var(--pa-accent);
+  /* Selected (visible-panel) tab: a soft pale-blue wash instead of the full
+     --pa-accent, so it reads far less intense. The fill is too light for white
+     text, so the selected tab uses dark text (--text-strong) like the others
+     and is distinguished by its blue tint alone. */
+  --dv-selected-tab-bg: color-mix(in srgb, var(--pa-accent) 24%, white);
+  --dv-activegroup-visiblepanel-tab-background-color: var(--dv-selected-tab-bg);
   --dv-activegroup-hiddenpanel-tab-background-color: var(--surface-well);
-  --dv-inactivegroup-visiblepanel-tab-background-color: var(--pa-accent);
+  --dv-inactivegroup-visiblepanel-tab-background-color: var(--dv-selected-tab-bg);
   --dv-inactivegroup-hiddenpanel-tab-background-color: var(--surface-well);
   --dv-activegroup-visiblepanel-tab-color: var(--accent-fg);
   --dv-activegroup-hiddenpanel-tab-color: var(--text-body);
@@ -945,7 +950,7 @@ textarea,
   --dv-scrollbar-background-color: var(--scrollbar-thumb);
   --dv-border-radius: var(--r-sm);
   --dv-tab-border-radius: var(--r-sm);
-  --dv-tab-margin: 4px 2px 0;
+  --dv-tab-margin: 1px 2px 0;
   --dv-floating-group-border: 1px solid var(--border-subtle);
   --tab-hover-bg: rgba(27, 25, 36, .04);
 }
@@ -969,14 +974,19 @@ textarea,
    unselected tabs default to a washed-out grey that's hard to read, so lift
    every tab to a legible weight. */
 .app-chrome .dockview-container .dockview-theme-light-spaced {
-  --dv-activegroup-visiblepanel-tab-background-color: var(--pa-accent);
-  --dv-inactivegroup-visiblepanel-tab-background-color: var(--pa-accent);
-  --dv-activegroup-visiblepanel-tab-color: var(--accent-fg);
-  --dv-inactivegroup-visiblepanel-tab-color: var(--accent-fg);
+  --dv-activegroup-visiblepanel-tab-background-color: var(--dv-selected-tab-bg);
+  --dv-inactivegroup-visiblepanel-tab-background-color: var(--dv-selected-tab-bg);
+  --dv-activegroup-visiblepanel-tab-color: var(--text-strong);
+  --dv-inactivegroup-visiblepanel-tab-color: var(--text-strong);
   --dv-activegroup-hiddenpanel-tab-color: var(--text-strong);
   --dv-inactivegroup-hiddenpanel-tab-color: var(--text-strong);
   --dv-tab-font-size: var(--fs-sm);
   --dv-tabs-and-actions-container-font-size: var(--fs-sm);
+  /* light-spaced forces a 44px tab-strip height on its own theme root, overriding
+     the value on .dockview-container. Re-assert it here so the strip shrinks to
+     --tabbar-h. Keep --dv-spacing-padding from the theme: it's what gives the
+     tabs their pill background (hover/active), so zeroing it flattens them. */
+  --dv-tabs-and-actions-container-height: var(--tabbar-h);
 }
 
 /* Match every dockview surface to the header (--surface-raised). The
@@ -1029,15 +1039,28 @@ textarea,
   color: var(--text-body);
 }
 
+/* Bump the panel (SLDS) tab icons over the x-small default (1rem = 16px). */
+.mirador-tab__icon .slds-icon {
+  width: 18px;
+  height: 18px;
+}
+
 .mirador-tab__icon--detail .agent-avatar,
 .mirador-tab__icon--detail .agent-avatar--photo {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   font-size: 7px;
 }
 
 .dockview-container .dv-tab {
   transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  /* Default theme padding is 0.25rem 0.5rem (8px sides), which leaves the icon
+     hugging the pill edge — give the content more horizontal breathing room. */
+  padding-left: 10px;
+  padding-right: 10px;
+  /* 1px tighter than the shared --dv-tab-border-radius (--r-sm = 10px), without
+     affecting the add-panel "+" button that reuses that variable. */
+  border-radius: 9px;
 }
 
 .dockview-container .dv-tab.dv-active-tab .mirador-tab__icon {
@@ -2738,65 +2761,6 @@ textarea,
 }
 
 .fv-zoom__slider input[type='range']:focus-visible::-moz-range-thumb {
-  box-shadow: var(--ring-focus);
-}
-
-/* Sliders prims del DevPanel (Azimut / Inclinació) */
-.fv-stat input[type='range'] {
-  width: 100px;
-  height: 12px;
-  margin: 0;
-  -webkit-appearance: none;
-  appearance: none;
-  background: transparent;
-  cursor: pointer;
-}
-
-.fv-stat input[type='range']::-webkit-slider-runnable-track {
-  height: 5px;
-  border-radius: 999px;
-  background: var(--border-subtle);
-}
-
-.fv-stat input[type='range']::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 12px;
-  height: 12px;
-  margin-top: -3.5px;
-  border: none;
-  border-radius: var(--r-full);
-  background: var(--accent);
-  box-shadow: 0 0 0 1px rgba(27, 25, 36, 0.08);
-}
-
-.fv-stat input[type='range']::-moz-range-track {
-  height: 5px;
-  border-radius: 999px;
-  background: var(--border-subtle);
-  border: none;
-}
-
-.fv-stat input[type='range']::-moz-range-progress {
-  height: 5px;
-  border-radius: 999px;
-  background: var(--border-subtle);
-}
-
-.fv-stat input[type='range']::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
-  border: none;
-  border-radius: var(--r-full);
-  background: var(--accent);
-  box-shadow: 0 0 0 1px rgba(27, 25, 36, 0.08);
-}
-
-.fv-stat input[type='range']:focus-visible::-webkit-slider-thumb {
-  box-shadow: var(--ring-focus);
-}
-
-.fv-stat input[type='range']:focus-visible::-moz-range-thumb {
   box-shadow: var(--ring-focus);
 }
 
