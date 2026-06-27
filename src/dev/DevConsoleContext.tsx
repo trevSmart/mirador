@@ -162,6 +162,30 @@ export function DevConsoleProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
+  /* Solo: ⌘/Ctrl+clic per construir una selecció acumulativa.
+     - Des de l'estat "tots actius", el primer clic deixa només aquest nivell.
+     - Mentre ja s'està en mode solo (subconjunt parcial), cada clic afegeix
+       o treu el nivell, permetent triar-ne diversos sense reiniciar.
+     - Si el resultat queda buit, es restauren tots els nivells. */
+  const soloFilter = useCallback((level: LogLevel) => {
+    setFilters((prev) => {
+      const isFullSet = prev.size === DEFAULT_FILTERS.size
+      let next: Set<LogLevel>
+      if (isFullSet) {
+        // Primer solo: aïlla aquest nivell.
+        next = new Set<LogLevel>([level])
+      } else {
+        // Ja en mode solo: afegeix/treu del subconjunt.
+        next = new Set(prev)
+        if (next.has(level)) next.delete(level)
+        else next.add(level)
+        if (next.size === 0) next = new Set(DEFAULT_FILTERS)
+      }
+      persist(STORAGE.filters, JSON.stringify([...next]))
+      return next
+    })
+  }, [])
+
   const setSearch = useCallback((q: string) => {
     setSearchState(q)
   }, [])
@@ -184,6 +208,7 @@ export function DevConsoleProvider({ children }: { children: ReactNode }) {
     expand,
     setHeight,
     toggleFilter,
+    soloFilter,
     setSearch,
     clear,
   }
