@@ -148,8 +148,6 @@ export function FloorEditorPanel() {
                   floor={fp.activeFloor}
                   agentsById={agentsById}
                   queuesById={queuesById}
-                  dir={fp.activeFloor.dir}
-                  seatStyle="tower"
                   showAvatars
                   animations={false}
                   onSelectAgent={noop}

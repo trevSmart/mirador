@@ -141,8 +141,6 @@ export function FloorPanel() {
             floor={floor}
             agentsById={agentsById}
             queuesById={queuesById}
-            dir={floor.dir}
-            seatStyle="tower"
             showAvatars={prefs.showAvatars}
             animations={prefs.animations}
             onSelectAgent={handleSelectAgent}
