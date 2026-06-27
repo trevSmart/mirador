@@ -104,7 +104,7 @@ export function isSalesforceConfigured(config: PublicOAuthConfig): boolean {
   return Boolean(config.sfClientId)
 }
 
-export async function refreshAccessSession(
+async function refreshAccessSession(
   session: OAuthSession,
 ): Promise<OAuthSession> {
   if (!session.refreshToken) {
@@ -181,15 +181,6 @@ export async function startLogin(config?: PublicOAuthConfig): Promise<void> {
 
   const loginUrl = `${oauthConfig.sfLoginUrl.replace(/\/$/, '')}/services/oauth2/authorize?${params}`
   window.location.assign(loginUrl)
-}
-
-export async function ensureAuthenticated(): Promise<OAuthSession> {
-  const session = await getValidAccessSession()
-  if (session) {
-    return session
-  }
-  await startLogin()
-  throw new OAuthError('Redirecting to Salesforce login')
 }
 
 export async function handleOAuthCallback(): Promise<OAuthSession> {
@@ -278,11 +269,6 @@ export function logout(): void {
   localStorage.removeItem(PKCE_STATE_KEY)
   localStorage.removeItem(PKCE_VERIFIER_KEY)
   window.location.assign('/')
-}
-
-export function buildPhotoProxyUrl(instanceUrl: string, photoPath: string): string {
-  const host = new URL(instanceUrl).host
-  return `/api/salesforce/photo?host=${encodeURIComponent(host)}&path=${encodeURIComponent(photoPath)}`
 }
 
 export function buildPhotoProxyUrlFromAbsoluteUrl(photoUrl: string): string {

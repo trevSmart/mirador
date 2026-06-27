@@ -4,7 +4,7 @@
 
 import { SfIcon } from '../ds/SfIcon'
 
-export interface StatItem {
+interface StatItem {
   label: string
   /** Pre-formatted display value, or null for the "—" placeholder. */
   value: string | null

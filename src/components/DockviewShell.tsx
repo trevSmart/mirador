@@ -24,7 +24,7 @@ import {
   getOpenPanelTypes,
 } from '../panels/panel-actions'
 
-export interface DockviewShellHandle {
+interface DockviewShellHandle {
   addPanel: (type: PanelType) => void
   getOpenPanelTypes: () => PanelType[]
 }

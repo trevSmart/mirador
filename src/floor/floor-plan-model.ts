@@ -6,7 +6,7 @@ import type { Cell, Dir, Divider, Edge, Floor, FloorPlanData, OpeningKind, Place
 
 export const GRID_C = 50
 export const GRID_R = 50
-export const SEED_SIZE = 4
+const SEED_SIZE = 4
 export const UNDO_LIMIT = 10
 export const FLOOR_SCHEMA_VERSION = 2
 
@@ -28,11 +28,6 @@ export function cellKey(c: number, r: number): string {
   return `${c},${r}`
 }
 
-export function parseKey(key: string): Cell {
-  const [c, r] = key.split(',').map(Number)
-  return [c, r]
-}
-
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
 }
@@ -50,30 +45,30 @@ function asArray(value: unknown): unknown[] {
 }
 
 /** Build a lookup set of "c,r" keys for the floor's cells. */
-export function makeCellSet(cells: Cell[]): Set<string> {
+function makeCellSet(cells: Cell[]): Set<string> {
   return new Set(cells.map(([c, r]) => cellKey(c, r)))
 }
 
-export function hasCell(floor: Floor, c: number, r: number): boolean {
+function hasCell(floor: Floor, c: number, r: number): boolean {
   return floor.cells.some(([cc, rr]) => cc === c && rr === r)
 }
 
 /** An edge is exterior when there is no cell on the other side of it. */
-export function isExteriorEdge(cellSet: Set<string>, c: number, r: number, edge: Edge): boolean {
+function isExteriorEdge(cellSet: Set<string>, c: number, r: number, edge: Edge): boolean {
   if (!cellSet.has(cellKey(c, r))) return false
   const [dc, dr] = EDGE_DELTA[edge]
   return !cellSet.has(cellKey(c + dc, r + dr))
 }
 
 /** An edge is interior when both adjacent cells exist. */
-export function isInteriorEdge(cellSet: Set<string>, c: number, r: number, edge: Edge): boolean {
+function isInteriorEdge(cellSet: Set<string>, c: number, r: number, edge: Edge): boolean {
   if (!cellSet.has(cellKey(c, r))) return false
   const [dc, dr] = EDGE_DELTA[edge]
   return cellSet.has(cellKey(c + dc, r + dr))
 }
 
 /** Normalise a divider edge to its canonical owner (always edge E or S). */
-export function canonicalDivider(c: number, r: number, edge: Edge): Divider {
+function canonicalDivider(c: number, r: number, edge: Edge): Divider {
   if (edge === 'E' || edge === 'S') return { c, r, edge }
   if (edge === 'O') return { c: c - 1, r, edge: 'E' }
   return { c, r: r - 1, edge: 'S' } // N
@@ -119,7 +114,7 @@ export function defaultFloorPlan(): FloorPlanData {
 /* ── Connectivity (the room must stay one 4-connected block, no islands) ── */
 
 /** True when every cell is reachable from the first via 4-connected steps. */
-export function isConnected(cells: Cell[]): boolean {
+function isConnected(cells: Cell[]): boolean {
   if (cells.length <= 1) return true
   const all = makeCellSet(cells)
   const seen = new Set<string>()
@@ -277,7 +272,7 @@ export function eraseEdge(floor: Floor, c: number, r: number, edge: Edge): Floor
 /* ── Sanitisation ─────────────────────────────────────────────────────── */
 
 /** Validate and clean a single floor from any (possibly untrusted) input. */
-export function sanitizeFloor(raw: unknown): Floor {
+function sanitizeFloor(raw: unknown): Floor {
   const source = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
 
   const cellSet = new Set<string>()

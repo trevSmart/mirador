@@ -2,9 +2,9 @@ import type { Agent, Queue } from '../api/types'
 import { formatDurationSec } from './format'
 import { totalQueueBacklog } from './agent-stats'
 
-export type HealthLevel = 'ok' | 'watch' | 'alert'
+type HealthLevel = 'ok' | 'watch' | 'alert'
 
-export type InsightTargetPanel = 'agents' | 'queues'
+type InsightTargetPanel = 'agents' | 'queues'
 
 export interface HealthPillar {
   id: string

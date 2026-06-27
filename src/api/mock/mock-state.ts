@@ -588,20 +588,6 @@ function prepareState(): MockLiveState {
   return state
 }
 
-export function resetMockState(): void {
-  state = null
-  lastEvolveMs = 0
-}
-
-/** Regression helper: advance the live mock state by N refresh ticks. */
-export function simulateMockTicks(ticks: number): Queue[] {
-  const stateRef = prepareState()
-  for (let i = 0; i < ticks; i++) {
-    evolveState(stateRef)
-  }
-  return buildQueues(stateRef)
-}
-
 export function getMockAgents(): Agent[] {
   const live = prepareState()
   return live.agents.map((agent) => ({

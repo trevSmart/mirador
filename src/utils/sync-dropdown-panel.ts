@@ -28,7 +28,3 @@ export function syncDropdownPanel(
     el.hidden = true
   }, DROPDOWN_TRANSITION_MS)
 }
-
-export function isDropdownPanelOpen(el: HTMLElement | null | undefined): boolean {
-  return Boolean(el && !el.hidden && el.classList.contains('is-open'))
-}

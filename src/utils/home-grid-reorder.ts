@@ -3,7 +3,7 @@ import autoAnimate, { getTransitionSizes, type AutoAnimationPlugin } from '@form
 
 type Coords = { top: number; left: number; width: number; height: number }
 
-export const HOME_GRID_REORDER = {
+const HOME_GRID_REORDER = {
   duration: 280,
   easing: 'cubic-bezier(0.34, 1.24, 0.64, 1)',
 } as const

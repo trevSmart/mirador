@@ -15,7 +15,7 @@ export type PanelType =
   | 'floor'
   | 'floorEditor'
 
-export type PanelIcon =
+type PanelIcon =
   | { name: SfIconName }
   | { sprite: SfSprite; symbol: string }
 

@@ -1,4 +1,3 @@
-import type { ChannelKey } from '../api/types'
 import type { SfIconName } from '../components/ds/SfIcon'
 
 /** Salesforce Lightning object icon backgrounds (aligned with Panorama). */
@@ -14,18 +13,6 @@ const SF_ICON_COLORS: Partial<Record<SfIconName, string>> = {
   work: '#6CA1E9',
 }
 
-const CHANNEL_ICON: Record<ChannelKey, SfIconName> = {
-  veu: 'voice',
-  chat: 'chat',
-  email: 'email',
-  wa: 'whatsapp',
-  cas: 'case',
-}
-
 export function sfIconColor(name: SfIconName): string {
   return SF_ICON_COLORS[name] ?? '#5867E8'
-}
-
-export function channelSfIconName(channel: ChannelKey): SfIconName {
-  return CHANNEL_ICON[channel]
 }

@@ -5,7 +5,7 @@ import { SfIcon, type SfSprite } from '../ds/SfIcon'
    a title, a period badge ("Current" / "Last Hour"), an overflow menu, and
    the filter sub-line — matching the standard Omni-Supervisor wallboard. */
 
-export type WallboardPeriod = 'Current' | 'Last Hour'
+type WallboardPeriod = 'Current' | 'Last Hour'
 
 interface WallboardCardProps {
   title: string

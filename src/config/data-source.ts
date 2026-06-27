@@ -1,8 +1,8 @@
 import type { PublicOAuthConfig } from '../auth/types'
 
-export type DataSource = 'mock' | 'salesforce'
+type DataSource = 'mock' | 'salesforce'
 
-export function getDataSource(config: PublicOAuthConfig | null): DataSource {
+function getDataSource(config: PublicOAuthConfig | null): DataSource {
   if (config?.dataSource === 'mock' || config?.dataSource === 'salesforce') {
     return config.dataSource
   }

@@ -11,10 +11,6 @@ export function detailPanelId(target: DetailTarget): string {
   return `detail-${target.kind}-${target.id}`
 }
 
-export function detailTargetsMatch(a: DetailTarget, b: DetailTarget): boolean {
-  return a.kind === b.kind && a.id === b.id
-}
-
 export function isDetailPanelComponent(component: string | undefined): boolean {
   return component === DETAIL_PANEL_COMPONENT
 }

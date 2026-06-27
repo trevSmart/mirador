@@ -126,7 +126,8 @@
   --scrollbar-thumb: rgba(27, 25, 36, .28);
   --scrollbar-thumb-hover: rgba(27, 25, 36, .42);
 
-  --accent: var(--pa-accent);
+  --accent: #0080BE;
+  --accent-soft: rgba(0, 128, 190, .10);
   --accent-fg: #FFFFFF;
   --accent-tint: var(--pa-accent-soft);
   --accent-line: var(--pa-accent-line);
@@ -932,7 +933,7 @@ textarea,
      --pa-accent, so it reads far less intense. The fill is too light for white
      text, so the selected tab uses dark text (--text-strong) like the others
      and is distinguished by its blue tint alone. */
-  --dv-selected-tab-bg: color-mix(in srgb, var(--pa-accent) 24%, white);
+  --dv-selected-tab-bg: rgba(0, 128, 190, 0.1);
   --dv-activegroup-visiblepanel-tab-background-color: var(--dv-selected-tab-bg);
   --dv-activegroup-hiddenpanel-tab-background-color: var(--surface-well);
   --dv-inactivegroup-visiblepanel-tab-background-color: var(--dv-selected-tab-bg);
@@ -976,8 +977,8 @@ textarea,
 .app-chrome .dockview-container .dockview-theme-light-spaced {
   --dv-activegroup-visiblepanel-tab-background-color: var(--dv-selected-tab-bg);
   --dv-inactivegroup-visiblepanel-tab-background-color: var(--dv-selected-tab-bg);
-  --dv-activegroup-visiblepanel-tab-color: var(--text-strong);
-  --dv-inactivegroup-visiblepanel-tab-color: var(--text-strong);
+  --dv-activegroup-visiblepanel-tab-color: var(--accent);
+  --dv-inactivegroup-visiblepanel-tab-color: var(--accent);
   --dv-activegroup-hiddenpanel-tab-color: var(--text-strong);
   --dv-inactivegroup-hiddenpanel-tab-color: var(--text-strong);
   --dv-tab-font-size: var(--fs-sm);
@@ -987,6 +988,11 @@ textarea,
      --tabbar-h. Keep --dv-spacing-padding from the theme: it's what gives the
      tabs their pill background (hover/active), so zeroing it flattens them. */
   --dv-tabs-and-actions-container-height: var(--tabbar-h);
+  /* The theme also forces --dv-tab-margin to 0.5rem 0.25rem (8px top/bottom) — and
+     since the pill stretches to (strip height − vertical margins), those 8px are
+     the external gap above/below the pill. Halve them; --h-tabbar drops in step so
+     the pill keeps its height (internal padding unchanged). */
+  --dv-tab-margin: 4px 0.25rem;
 }
 
 /* Match every dockview surface to the header (--surface-raised). The
@@ -1065,6 +1071,12 @@ textarea,
 
 .dockview-container .dv-tab.dv-active-tab .mirador-tab__icon {
   color: inherit;
+}
+
+.dockview-container .dv-tab.dv-active-tab {
+  color: var(--accent);
+  background: var(--accent-soft, rgba(0, 128, 190, 0.1));
+  font-weight: 600;
 }
 
 /* Dockview sets tab backgrounds with 6-class selectors; match that depth so hover wins. */
