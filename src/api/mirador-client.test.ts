@@ -1,6 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMiradorClient } from './mirador-client'
 import { devLog } from '../dev/dev-log'
+
+const originalFetch = globalThis.fetch
 
 const session = {
   instanceUrl: 'https://example.my.salesforce.com',
@@ -12,6 +14,10 @@ function mockFetch(impl: () => unknown) {
 }
 
 describe('createMiradorClient dev-log error reporting', () => {
+  afterEach(() => {
+    globalThis.fetch = originalFetch
+  })
+
   beforeEach(() => {
     devLog.clear()
   })
