@@ -27,11 +27,12 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
   const recordQuery = useEntity(recordDetailResource, item.workItemId)
   const detail = recordQuery.data ?? null
   const isLoading = recordQuery.isLoading
-  const error = recordQuery.isError
-    ? recordQuery.error instanceof MiradorApiError
-      ? recordQuery.error.message
-      : 'No s\'han pogut carregar els detalls del registre'
-    : null
+  const error =
+    recordQuery.isError && recordQuery.data === undefined
+      ? recordQuery.error instanceof MiradorApiError
+        ? recordQuery.error.message
+        : 'No s\'han pogut carregar els detalls del registre'
+      : null
 
   return (
     <>
