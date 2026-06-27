@@ -5,7 +5,7 @@ import type { LogLevel } from './dev-log'
 
 // ── Level meta ───────────────────────────────────────────────────────────────
 
-const LEVELS: LogLevel[] = ['log', 'info', 'warn', 'error', 'action', 'api']
+const LEVELS: LogLevel[] = ['log', 'info', 'warn', 'error', 'action', 'api', 'query']
 
 function formatTime(ts: number): string {
   const d = new Date(ts)

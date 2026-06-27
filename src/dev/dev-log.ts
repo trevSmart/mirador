@@ -3,7 +3,14 @@
    unhandled errors, and explicit app-level events. Subscribers are notified
    synchronously on each new entry or clear. */
 
-export type LogLevel = 'log' | 'info' | 'warn' | 'error' | 'action' | 'api'
+export type LogLevel =
+  | 'log'
+  | 'info'
+  | 'warn'
+  | 'error'
+  | 'action'
+  | 'api'
+  | 'query'
 
 export interface LogEntry {
   id: number
@@ -50,6 +57,17 @@ function safeText(...args: unknown[]): string {
       }
     })
     .join(' ')
+}
+
+/* Longitud màxima del cos serialitzat d'una resposta de query abans de
+   retallar-lo. Les respostes de TanStack (snapshots) poden ser enormes; la
+   consola només n'ha de mostrar una previsualització llegible. */
+const MAX_PAYLOAD_CHARS = 600
+
+function truncate(text: string): string {
+  return text.length > MAX_PAYLOAD_CHARS
+    ? `${text.slice(0, MAX_PAYLOAD_CHARS)}… (${text.length} chars)`
+    : text
 }
 
 // ── Core log ─────────────────────────────────────────────────────────────────
@@ -149,6 +167,15 @@ export const devLog = {
     const tail =
       statusOrDetail !== undefined ? ` → ${safeText(statusOrDetail)}` : ''
     push('api', `${method} ${path}${tail}`)
+  },
+
+  /* Log a TanStack Query cache event (resolved data or error). The payload is
+     truncated so large snapshots don't flood the console; the full object is
+     always available via the React Query store. */
+  query(status: string, key: string, payload?: unknown): void {
+    const tail =
+      payload !== undefined ? ` → ${truncate(safeText(payload))}` : ''
+    push('query', `${status} ${key}${tail}`)
   },
 
   /* Snapshot of the current buffer (newest last). */
