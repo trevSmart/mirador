@@ -17,7 +17,14 @@ export function DetailDrawer() {
   // in an effect, so closing keeps the previous content until the slide-out ends.
   const [shown, setShown] = useState<DetailTarget | null>(detail)
   const [prevDetail, setPrevDetail] = useState<DetailTarget | null>(detail)
+  // When navigating between records with the drawer already open, keep the
+  // outgoing record mounted underneath while the incoming one slides in over
+  // it, so the panel never shows an empty gap mid-transition. `leaving` holds
+  // the previous target during that overlap; it's cleared when the slide ends.
+  const [leaving, setLeaving] = useState<DetailTarget | null>(null)
   if (detail !== prevDetail) {
+    const isNav = detail != null && prevDetail != null && shown != null
+    setLeaving(isNav ? shown : null)
     setPrevDetail(detail)
     if (detail) setShown(detail)
   }
@@ -30,19 +37,21 @@ export function DetailDrawer() {
     return () => document.removeEventListener('keydown', onKey)
   }, [close])
 
-  let content: ReactNode = <p className="dd-empty">No s'ha trobat l'element.</p>
-  if (shown?.kind === 'agent') {
-    const agent = agents.find((a) => a.id === shown.id)
-    if (agent) content = <AgentDetail agent={agent} />
-  } else if (shown?.kind === 'queue') {
-    const queue = queues.find((q) => q.id === shown.id)
-    if (queue) content = <QueueDetail queue={queue} />
-  } else if (shown?.kind === 'skill') {
-    const skill = skills.find((s) => s.id === shown.id)
-    if (skill) content = <SkillDetail skill={skill} />
-  } else if (shown?.kind === 'work') {
-    const item = work.find((w) => w.id === shown.id)
-    if (item) content = <WorkItemDetail item={item} />
+  function renderContent(target: DetailTarget | null): ReactNode {
+    if (target?.kind === 'agent') {
+      const agent = agents.find((a) => a.id === target.id)
+      if (agent) return <AgentDetail agent={agent} />
+    } else if (target?.kind === 'queue') {
+      const queue = queues.find((q) => q.id === target.id)
+      if (queue) return <QueueDetail queue={queue} />
+    } else if (target?.kind === 'skill') {
+      const skill = skills.find((s) => s.id === target.id)
+      if (skill) return <SkillDetail skill={skill} />
+    } else if (target?.kind === 'work') {
+      const item = work.find((w) => w.id === target.id)
+      if (item) return <WorkItemDetail item={item} />
+    }
+    return <p className="dd-empty">No s'ha trobat l'element.</p>
   }
 
   return (
@@ -73,7 +82,22 @@ export function DetailDrawer() {
             <SfIcon sprite="utility" symbol="close" size={16} />
           </button>
         </div>
-        <div className="detail-drawer__scroll">{content}</div>
+        <div className="detail-drawer__scroll">
+          {leaving && (
+            <div key={`${leaving.kind}:${leaving.id}`} className="detail-drawer__content--leaving" aria-hidden="true">
+              {renderContent(leaving)}
+            </div>
+          )}
+          <div
+            key={shown ? `${shown.kind}:${shown.id}` : 'empty'}
+            className={leaving ? 'detail-drawer__content--nav' : undefined}
+            onAnimationEnd={(e) => {
+              if (e.target === e.currentTarget) setLeaving(null)
+            }}
+          >
+            {renderContent(shown)}
+          </div>
+        </div>
       </aside>
     </>
   )

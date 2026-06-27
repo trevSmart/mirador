@@ -367,7 +367,7 @@ private class PanoramaAgentServiceTest {
         Map<Id, Case> noSub = new Map<Id, Case>{ caseId => noSubject };
 
         System.assertEquals('Broken thing', PanoramaWorkService.subjectFor(caseId, withSub, 'Phone'));
-        System.assertEquals('Case 00042', PanoramaWorkService.subjectFor(caseId, noSub, 'Phone'));
+        System.assertEquals('00042', PanoramaWorkService.subjectFor(caseId, noSub, 'Phone'));
         System.assertEquals('Phone', PanoramaWorkService.subjectFor(null, new Map<Id, Case>(), 'Phone'));
         System.assertEquals('Work item', PanoramaWorkService.subjectFor(null, new Map<Id, Case>(), null));
     }

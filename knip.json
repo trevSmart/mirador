@@ -2,5 +2,14 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "tags": [
     "-lintignore"
+  ],
+  "ignore": [
+    "dist/**",
+    "docs/**"
+  ],
+  "ignoreDependencies": [
+    "@fontsource/inter",
+    "@fontsource/jetbrains-mono",
+    "@fontsource/space-grotesk"
   ]
 }

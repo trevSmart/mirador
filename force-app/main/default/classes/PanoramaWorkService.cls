@@ -165,7 +165,7 @@ public with sharing class PanoramaWorkService {
             if (!String.isBlank(c.Subject)) {
                 return c.Subject;
             }
-            return 'Case ' + c.CaseNumber;
+            return c.CaseNumber;
         }
         return String.isBlank(channelLabel) ? 'Work item' : channelLabel;
     }
