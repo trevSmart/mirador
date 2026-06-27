@@ -15,6 +15,7 @@ export interface DevConsoleContextValue {
   expand: () => void
   setHeight: (px: number) => void
   toggleFilter: (level: LogLevel) => void
+  soloFilter: (level: LogLevel) => void
   setSearch: (q: string) => void
   clear: () => void
 }
