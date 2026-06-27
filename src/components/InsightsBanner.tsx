@@ -40,28 +40,44 @@ export function InsightsBanner({ health, queueCount, onOpenPanel }: InsightsBann
       </div>
 
       <div className="insights-banner__pillars">
-        {health.pillars.map((pillar) => (
-          <button
-            key={pillar.id}
-            type="button"
-            className={`insights-pillar${pillar.state !== 'ok' ? ` insights-pillar--${pillar.state}` : ''}`}
-            onClick={() => onOpenPanel?.(pillar.targetPanel)}
-          >
-            <span className="insights-pillar__arrow" aria-hidden="true">
-              →
-            </span>
-            <FadeValue
-              as="div"
-              className={`insights-pillar__value ${pillarValueClass(pillar.value)}`.trim()}
-              value={pillar.value}
-            />
-            <div className="insights-pillar__label">{pillar.label}</div>
-            <div className="insights-pillar__status">
-              <i style={{ background: `var(--status-${pillar.state})` }} aria-hidden="true" />
-              <span>{pillar.statusMessage}</span>
+        {health.pillars.map((pillar) =>
+          pillar.comingSoon ? (
+            <div
+              key={pillar.id}
+              className="insights-pillar insights-pillar--soon"
+              aria-disabled="true"
+            >
+              <div className={`insights-pillar__value ${pillarValueClass(pillar.value)}`.trim()}>
+                {pillar.value}
+              </div>
+              <div className="insights-pillar__label">{pillar.label}</div>
+              <div className="insights-pillar__status">
+                <span className="insights-pillar__badge">Pròximament</span>
+              </div>
             </div>
-          </button>
-        ))}
+          ) : (
+            <button
+              key={pillar.id}
+              type="button"
+              className={`insights-pillar${pillar.state !== 'ok' ? ` insights-pillar--${pillar.state}` : ''}`}
+              onClick={() => onOpenPanel?.(pillar.targetPanel)}
+            >
+              <span className="insights-pillar__arrow" aria-hidden="true">
+                →
+              </span>
+              <FadeValue
+                as="div"
+                className={`insights-pillar__value ${pillarValueClass(pillar.value)}`.trim()}
+                value={pillar.value}
+              />
+              <div className="insights-pillar__label">{pillar.label}</div>
+              <div className="insights-pillar__status">
+                <i style={{ background: `var(--status-${pillar.state})` }} aria-hidden="true" />
+                <span>{pillar.statusMessage}</span>
+              </div>
+            </button>
+          ),
+        )}
       </div>
     </header>
   )

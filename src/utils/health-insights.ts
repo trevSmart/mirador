@@ -13,6 +13,8 @@ export interface HealthPillar {
   value: string | number
   state: HealthLevel
   statusMessage: string
+  /** Pilar encara no implementat: es mostra amb un badge "Pròximament" i no compta per al veredicte. */
+  comingSoon?: boolean
 }
 
 export interface HealthInsights {
@@ -20,8 +22,6 @@ export interface HealthInsights {
   backlog: number
   longest: number
   utilization: number
-  helpFlags: number
-  sla: number
   pillars: HealthPillar[]
   worst: HealthLevel
   title: string
@@ -74,11 +74,7 @@ function buildVerdict(pillars: HealthPillar[], worst: HealthLevel): Pick<HealthI
   }
 }
 
-export function computeHealthInsights(
-  agents: Agent[],
-  queues: Queue[],
-  { includeExtendedMetrics = true, helpFlags = 0 }: { includeExtendedMetrics?: boolean; helpFlags?: number } = {},
-): HealthInsights {
+export function computeHealthInsights(agents: Agent[], queues: Queue[]): HealthInsights {
   const online = agents.filter((agent) => agent.status === 'online').length
   const backlog = totalQueueBacklog(queues)
   const longest = queues.length ? Math.max(0, ...queues.map((queue) => queue.longest || 0)) : 0
@@ -87,9 +83,8 @@ export function computeHealthInsights(
     .reduce((sum, agent) => sum + (agent.max || 0), 0)
   const totalUsed = agents.reduce((sum, agent) => sum + (agent.used || 0), 0)
   const utilization = totalCapacity > 0 ? Math.round((totalUsed / totalCapacity) * 100) : 0
-  const sla = Math.max(70, Math.min(99, 98 - Math.round(backlog * 0.9) - (longest > 180 ? 6 : 0)))
 
-  const allPillars: HealthPillar[] = [
+  const pillars: HealthPillar[] = [
     {
       id: 'wait',
       targetPanel: 'queues',
@@ -115,34 +110,31 @@ export function computeHealthInsights(
       state: level(utilization, 82, 93),
       statusMessage: utilization >= 93 ? 'al límit' : utilization >= 82 ? 'ajustada' : 'folgada',
     },
+    // SLA i Ajuda encara no tenen una font de dades real: es mostren amb un
+    // badge "Pròximament" en lloc d'inventar valors, i no influeixen el veredicte.
     {
       id: 'sla',
       targetPanel: 'queues',
       label: 'SLA',
-      value: `${sla}%`,
-      state: sla >= 90 ? 'ok' : sla >= 80 ? 'watch' : 'alert',
-      statusMessage: sla >= 90 ? 'complint' : sla >= 80 ? 'al caire' : 'incomplint',
+      value: '—',
+      state: 'ok',
+      statusMessage: 'sense dades encara',
+      comingSoon: true,
     },
     {
       id: 'help',
       targetPanel: 'agents',
       label: 'Ajuda',
-      value: helpFlags,
-      state: helpFlags === 0 ? 'ok' : helpFlags <= 1 ? 'watch' : 'alert',
-      statusMessage:
-        helpFlags === 0
-          ? 'cap petició'
-          : helpFlags === 1
-            ? '1 agent espera'
-            : `${helpFlags} agents esperen`,
+      value: '—',
+      state: 'ok',
+      statusMessage: 'sense dades encara',
+      comingSoon: true,
     },
   ]
 
-  const pillars = includeExtendedMetrics
-    ? allPillars
-    : allPillars.filter((pillar) => pillar.id !== 'sla' && pillar.id !== 'help')
-
-  const worst = pillars.reduce<HealthLevel>(
+  // El veredicte i la pitjor severitat només consideren pilars amb dades reals.
+  const livePillars = pillars.filter((pillar) => !pillar.comingSoon)
+  const worst = livePillars.reduce<HealthLevel>(
     (current, pillar) => worstLevel(current, pillar.state),
     'ok',
   )
@@ -152,10 +144,8 @@ export function computeHealthInsights(
     backlog,
     longest,
     utilization,
-    helpFlags,
-    sla,
     pillars,
     worst,
-    ...buildVerdict(pillars, worst),
+    ...buildVerdict(livePillars, worst),
   }
 }
