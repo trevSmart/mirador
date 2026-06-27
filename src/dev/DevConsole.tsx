@@ -1,7 +1,7 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useDevConsole } from './useDevConsole'
 import { useDeveloperMode } from '../hooks/useDeveloperMode'
-import type { LogLevel } from './dev-log'
+import type { LogEntry, LogLevel } from './dev-log'
 
 // ── Level meta ───────────────────────────────────────────────────────────────
 
@@ -52,6 +52,76 @@ const MINIMIZED_PREVIEW_COUNT = 3
    retallada per `overflow:hidden` i és la que es veu sortir per dalt mentre el
    bloc llisca amunt en arribar una entrada nova (efecte teletip). */
 const MINIMIZED_RENDER_COUNT = MINIMIZED_PREVIEW_COUNT + 1
+
+// ── Single log line ──────────────────────────────────────────────────────────
+
+/* Una entrada del cos. Per defecte el missatge queda col·lapsat a una sola línia
+   (line-clamp via CSS); el botó d'expandir només apareix quan el text REALMENT
+   desborda, mesurat comparant scrollHeight/clientHeight en estat col·lapsat. La
+   mesura es difereix a un useLayoutEffect i només es refà quan canvia el text o
+   es torna a col·lapsar, així no recalculem en va per cada entrada nova. */
+function LogLine({ entry, minimized }: { entry: LogEntry; minimized: boolean }) {
+  const [expanded, setExpanded] = useState(false)
+  const [overflowing, setOverflowing] = useState(false)
+  const msgRef = useRef<HTMLSpanElement>(null)
+  const lineRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    const el = msgRef.current
+    // Mentre està expandit el clamp no aplica, així que no és mesurable: conservem
+    // l'últim valor d'overflow (que per força era true perquè el botó hi era).
+    // I mentre la consola està minimitzada el cos té `display:none`, on totes les
+    // mesures donen 0; per això hi depenem de `minimized` i remesurem en obrir-la.
+    if (!el || expanded || minimized) return
+    setOverflowing(el.scrollHeight - el.clientHeight > 1)
+  }, [entry.text, expanded, minimized])
+
+  /* En expandir, el missatge creix cap avall dins el cos (scroll propi). Si
+     l'entrada era a prop de la vora inferior, el contingut nou quedaria tallat
+     sota el límit visible sense cap indici. Portem la línia sencera a la vista
+     perquè el text expandit i el desplaçament de les entrades de sota siguin
+     evidents. Només en obrir; en col·lapsar es manté la posició. */
+  useLayoutEffect(() => {
+    if (expanded) lineRef.current?.scrollIntoView({ block: 'nearest' })
+  }, [expanded])
+
+  const toggle = useCallback(() => setExpanded((v) => !v), [])
+
+  return (
+    <div ref={lineRef} className={`dev-console__line dev-console__line--${entry.level}`}>
+      <span className="dev-console__ts">{formatTime(entry.ts)}</span>
+      <span className={`dev-console__badge dev-console__badge--${entry.level}`}>
+        {entry.level}
+      </span>
+      <span
+        ref={msgRef}
+        className={`dev-console__msg${expanded ? '' : ' dev-console__msg--collapsed'}`}
+      >
+        {entry.text}
+      </span>
+      {(overflowing || expanded) && (
+        <button
+          className={`dev-console__expand${expanded ? ' dev-console__expand--open' : ''}`}
+          onClick={toggle}
+          aria-expanded={expanded}
+          title={expanded ? 'Col·lapsa el missatge' : 'Expandeix el missatge'}
+          aria-label={expanded ? 'Col·lapsa el missatge' : 'Expandeix el missatge'}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+          </svg>
+        </button>
+      )}
+    </div>
+  )
+}
 
 // ── Main component ───────────────────────────────────────────────────────────
 
@@ -245,25 +315,67 @@ export function DevConsole() {
             />
             <div className="dev-console__actions">
               <button
-                className={`dev-console__action-btn${scrollLocked ? ' dev-console__action-btn--on' : ''}`}
+                className={`dev-console__action-btn dev-console__action-btn--icon${scrollLocked ? ' dev-console__action-btn--on' : ''}`}
                 onClick={toggleScrollLock}
                 title={scrollLocked ? 'Desbloqueja el scroll automàtic' : 'Bloqueja el scroll automàtic'}
                 aria-pressed={scrollLocked}
+                aria-label={scrollLocked ? 'Desbloqueja el scroll automàtic' : 'Bloqueja el scroll automàtic'}
               >
-                {scrollLocked ? 'Locked' : 'Lock'}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+                  />
+                </svg>
               </button>
               <button
-                className="dev-console__action-btn"
+                className="dev-console__action-btn dev-console__action-btn--icon"
                 onClick={copyAll}
                 title="Copia els logs al portapapers"
+                aria-label="Copia els logs al portapapers"
               >
-                Copy
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z"
+                  />
+                </svg>
               </button>
               <button
-                className="dev-console__action-btn"
+                className="dev-console__action-btn dev-console__action-btn--text-icon"
                 onClick={clear}
                 title="Esborra els logs"
               >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9.75 14.25 12m0 0 2.25 2.25M14.25 12l2.25-2.25M14.25 12 12 14.25m-2.58 4.92-6.374-6.375a1.125 1.125 0 0 1 0-1.59L9.42 4.83c.21-.211.497-.33.795-.33H19.5a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25h-9.284c-.298 0-.585-.119-.795-.33Z"
+                  />
+                </svg>
                 Clear
               </button>
               <button
@@ -272,7 +384,16 @@ export function DevConsole() {
                 title="Tanca la consola"
                 aria-label="Tanca"
               >
-                ✕
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
             </div>
@@ -303,7 +424,9 @@ export function DevConsole() {
                 <span className={`dev-console__badge dev-console__badge--${entry.level}`}>
                   {entry.level}
                 </span>
-                <span className="dev-console__msg">{entry.text}</span>
+                <span className="dev-console__msg dev-console__msg--collapsed">
+                  {entry.text}
+                </span>
               </div>
             ))}
           </div>
@@ -322,13 +445,7 @@ export function DevConsole() {
           <div className="dev-console__empty">Cap activitat registrada.</div>
         ) : (
           filtered.map((entry) => (
-            <div key={entry.id} className={`dev-console__line dev-console__line--${entry.level}`}>
-              <span className="dev-console__ts">{formatTime(entry.ts)}</span>
-              <span className={`dev-console__badge dev-console__badge--${entry.level}`}>
-                {entry.level}
-              </span>
-              <span className="dev-console__msg">{entry.text}</span>
-            </div>
+            <LogLine key={entry.id} entry={entry} minimized={minimized} />
           ))
         )}
       </div>

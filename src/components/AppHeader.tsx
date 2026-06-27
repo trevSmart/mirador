@@ -51,19 +51,14 @@ export function AppHeader() {
           </span>
         ) : null}
         {devMode ? (
-          <span className="app-header__dev" title="Mode desenvolupador actiu">
-            DEV
-          </span>
-        ) : null}
-        {devMode ? (
           <button
             type="button"
-            className={`app-header__button app-header__button--console${consoleVisible ? ' app-header__button--console-active' : ''}`}
+            className={`app-header__dev${consoleVisible ? ' app-header__dev--active' : ''}`}
             onClick={toggleConsole}
             title={consoleVisible ? 'Amaga la consola' : 'Mostra la consola'}
             aria-pressed={consoleVisible}
           >
-            Console
+            DEV
           </button>
         ) : null}
       </div>
