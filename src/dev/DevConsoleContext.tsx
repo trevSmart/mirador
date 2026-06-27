@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { devLog, type LogEntry, type LogLevel } from './dev-log'
 import { DevConsoleContext, type DevConsoleContextValue } from './dev-console-context'
 import { useDeveloperMode } from '../hooks/useDeveloperMode'
+import { useRegisterModal } from '../modals/useRegisterModal'
 
 // ── Persistence helpers ──────────────────────────────────────────────────────
 
@@ -72,6 +73,9 @@ export function DevConsoleProvider({ children }: { children: ReactNode }) {
   const [height, setHeightState] = useState(() => readInt(STORAGE.height, DEFAULT_HEIGHT))
   const [filters, setFilters] = useState<Set<LogLevel>>(readFilters)
   const [search, setSearchState] = useState('')
+
+  // Registra l'estat obert al registre de modals
+  useRegisterModal('dev-console', visible)
 
   /* Boot: install interceptors once at mount */
   const booted = useRef(false)
