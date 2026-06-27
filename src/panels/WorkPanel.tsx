@@ -1,14 +1,15 @@
 import { useMemo } from 'react'
-import { useMiradorData } from '../api/mirador-data-context'
-import { useMiradorStatus } from '../api/mirador-status-context'
+import { useAgents, useDataStatus, useQueues, useWork } from '../api/data-hooks'
 import { FadeValue } from '../components/ds'
 import { PanelState } from '../components/PanelState'
 import { WorkRow } from '../components/WorkRow'
 import { countWorkByStatus, partitionWorkByStatus } from '../utils/agent-stats'
 
 export function WorkPanel() {
-  const { agents, queues, work } = useMiradorData()
-  const { isLoading, error, refresh } = useMiradorStatus()
+  const agents = useAgents()
+  const queues = useQueues()
+  const work = useWork()
+  const { isLoading, error, refresh } = useDataStatus()
   const { assigned, queued } = partitionWorkByStatus(work)
   const statusCounts = countWorkByStatus(work)
 

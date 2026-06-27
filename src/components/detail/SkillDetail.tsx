@@ -1,4 +1,4 @@
-import { useMiradorData } from '../../api/mirador-data-context'
+import { useAgents } from '../../api/data-hooks'
 import type { Skill } from '../../api/types'
 import { useDetailDrawer } from '../../detail/detail-drawer-context'
 import { sortAgentsByPresence } from '../../utils/agent-stats'
@@ -7,7 +7,7 @@ import { SfIcon, Badge } from '../ds'
 import { DrawerSection, EmptyHint, MiniAgentRow, Stat, StatGrid } from './parts'
 
 export function SkillDetail({ skill }: { skill: Skill }) {
-  const { agents } = useMiradorData()
+  const agents = useAgents()
   const { openAgent } = useDetailDrawer()
 
   const qualified = sortAgentsByPresence(

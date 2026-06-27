@@ -1,4 +1,4 @@
-import { useMiradorData } from '../../api/mirador-data-context'
+import { useQueues } from '../../api/data-hooks'
 import type { Agent, ChannelKey, PresenceStatus } from '../../api/types'
 import { useDetailDrawer } from '../../detail/detail-drawer-context'
 import { useSalesforcePhoto } from '../../hooks/useSalesforcePhoto'
@@ -18,7 +18,7 @@ const STATUS_COLOR: Record<PresenceStatus, string> = {
 const CHANNELS: ChannelKey[] = ['veu', 'chat', 'email', 'wa', 'cas']
 
 export function AgentDetail({ agent }: { agent: Agent }) {
-  const { queues } = useMiradorData()
+  const queues = useQueues()
   const { openQueue } = useDetailDrawer()
   const photo = useSalesforcePhoto(agent.photo)
   const color = STATUS_COLOR[agent.status]

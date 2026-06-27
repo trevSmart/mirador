@@ -1,4 +1,4 @@
-import { useMiradorData } from '../../api/mirador-data-context'
+import { useAgents, useQueues, useSkills, useWork } from '../../api/data-hooks'
 import type { DetailTarget } from '../../detail/detail-drawer-context'
 import { colorFromString } from '../../utils/color-from-string'
 import { resolveWorkItemIcon } from '../../utils/salesforce-object-icon'
@@ -6,7 +6,10 @@ import { AgentAvatar } from '../AgentRow'
 import { SfIcon } from '../ds'
 
 export function DetailTabIcon({ target }: { target: DetailTarget }) {
-  const { agents, queues, skills, work } = useMiradorData()
+  const agents = useAgents()
+  const queues = useQueues()
+  const skills = useSkills()
+  const work = useWork()
 
   if (target.kind === 'agent') {
     const agent = agents.find((entry) => entry.id === target.id)

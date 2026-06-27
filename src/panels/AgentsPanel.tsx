@@ -1,13 +1,12 @@
-import { useMiradorData } from '../api/mirador-data-context'
-import { useMiradorStatus } from '../api/mirador-status-context'
+import { useAgents, useDataStatus } from '../api/data-hooks'
 import { AgentCard } from '../components/AgentCard'
 import { FadeValue } from '../components/ds'
 import { PanelState } from '../components/PanelState'
 import { countAgentsByStatus, sortAgentsByPresence } from '../utils/agent-stats'
 
 export function AgentsPanel() {
-  const { agents } = useMiradorData()
-  const { isLoading, error, refresh } = useMiradorStatus()
+  const agents = useAgents()
+  const { isLoading, error, refresh } = useDataStatus()
   const sortedAgents = sortAgentsByPresence(agents)
   const statusCounts = countAgentsByStatus(agents)
 

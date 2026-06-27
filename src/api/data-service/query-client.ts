@@ -7,8 +7,8 @@ import { QueryClient } from '@tanstack/react-query'
  * - `staleTime` keeps recently fetched entities fresh so reopening the same
  *   detail twice does not refetch.
  * - `retry: 1` mirrors the single session-recovery retry in mirador-client.ts.
- * - `refetchOnWindowFocus` is off because the app already polls via
- *   MiradorDataProvider; we don't want a second, uncoordinated refetch trigger.
+ * - `refetchOnWindowFocus` is off because the snapshot query already polls via
+ *   refetchInterval (see data-hooks.ts); we don't want a second trigger.
  */
 export function makeQueryClient(): QueryClient {
   return new QueryClient({

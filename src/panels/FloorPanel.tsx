@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useMiradorData } from '../api/mirador-data-context'
+import { useAgents, useQueues } from '../api/data-hooks'
 import type { Agent, PresenceStatus } from '../api/types'
 import { FloorView } from '../components/floor/FloorView'
 import { FloorZoomControl } from '../components/floor/FloorZoomControl'
@@ -31,7 +31,8 @@ type ViewMode = '2d' | '3d'
 
 export function FloorPanel() {
   const { data, loaded } = useFloorPlanData()
-  const { agents, queues } = useMiradorData()
+  const agents = useAgents()
+  const queues = useQueues()
   const { openAgent } = useDetailDrawer()
   const { prefs, save } = usePreferences()
   const canvasScrollRef = useSmoothScroll<HTMLDivElement>()

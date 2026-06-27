@@ -8,7 +8,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent,
 } from 'react'
-import { useMiradorData } from '../api/mirador-data-context'
+import { useAgents, useQueues, useSkills } from '../api/data-hooks'
 import { devLog } from '../dev/dev-log'
 import type { Agent, PresenceStatus, Queue, Skill } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
@@ -243,7 +243,9 @@ function resolveRecentEntry(
 }
 
 export function GlobalSearch() {
-  const { agents, queues, skills } = useMiradorData()
+  const agents = useAgents()
+  const queues = useQueues()
+  const skills = useSkills()
   const { openAgent, openQueue, openSkill } = useDetailDrawer()
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)

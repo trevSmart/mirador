@@ -12,7 +12,7 @@ import { defineResource } from '../resource'
 
 /**
  * The snapshot is the single bulk source for agents/queues/skills/work. The
- * polling provider (MiradorDataProvider) keeps these primed in the cache, so
+ * snapshot query (data-hooks.ts) keeps these primed in the cache, so
  * individual reads normally hit the cache. The per-resource `fetch` below is the
  * cold-cache fallback: it pulls the snapshot once (concurrent fallbacks coalesce
  * into a single call) and extracts the requested record.
@@ -84,10 +84,26 @@ export const workItemResource = defineResource<
   },
 })
 
+/** Query key for the bulk snapshot (the live agents/queues/skills/work feed). */
+export const snapshotKey = ['salesforce', 'snapshot'] as const
+
+/**
+ * Fetches the snapshot and hydrates the per-entity cache in one go. Used as the
+ * `queryFn` of the snapshot query (see data-hooks.ts), so every poll both
+ * refreshes the collections and re-primes the per-id entity caches.
+ */
+export async function fetchSnapshot(
+  client: MiradorClient,
+  queryClient: QueryClient,
+): Promise<SnapshotResponse> {
+  const snapshot = await client.getSnapshot('all')
+  primeSnapshot(queryClient, snapshot)
+  return snapshot
+}
+
 /**
  * Seeds the cache with every entity in a freshly fetched snapshot so later
- * `useEntity(agentResource, id)` reads resolve from cache without a fetch. Called
- * by MiradorDataProvider after each successful snapshot load.
+ * `useEntity(agentResource, id)` reads resolve from cache without a fetch.
  */
 export function primeSnapshot(
   queryClient: QueryClient,

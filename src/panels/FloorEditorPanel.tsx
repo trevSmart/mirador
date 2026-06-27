@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useMemo, useRef, useState } from 'react'
-import { useMiradorData } from '../api/mirador-data-context'
+import { useAgents, useQueues } from '../api/data-hooks'
 import { AgentAssignPalette } from '../components/floor/AgentAssignPalette'
 import { FloorGrid } from '../components/floor/FloorGrid'
 import { FloorSidebar } from '../components/floor/FloorSidebar'
@@ -35,7 +35,8 @@ function loadSplit(): number {
 }
 
 export function FloorEditorPanel() {
-  const { agents, queues } = useMiradorData()
+  const agents = useAgents()
+  const queues = useQueues()
   const fp = useFloorPlan()
   // The canvas and the floor list scroll inside the editor (not the panel
   // shell), so each gets its own Lenis instance for smooth wheel scrolling.

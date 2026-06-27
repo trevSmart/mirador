@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
 import type { IDockviewPanelProps } from 'dockview-react'
-import { useMiradorData } from '../api/mirador-data-context'
+import { useAgents, useQueues, useSkills, useWork } from '../api/data-hooks'
 import { AgentDetail } from '../components/detail/AgentDetail'
 import { QueueDetail } from '../components/detail/QueueDetail'
 import { SkillDetail } from '../components/detail/SkillDetail'
@@ -9,7 +9,10 @@ import type { DetailPanelParams } from '../detail/detail-panel'
 import { resolveDetailTitle } from '../detail/resolve-detail-meta'
 
 export function DetailPanel({ api, params }: IDockviewPanelProps<DetailPanelParams>) {
-  const { agents, queues, skills, work } = useMiradorData()
+  const agents = useAgents()
+  const queues = useQueues()
+  const skills = useSkills()
+  const work = useWork()
   const target = { kind: params.kind, id: params.id }
   const title = resolveDetailTitle(target, { agents, queues, skills, work })
 

@@ -1,6 +1,6 @@
 import { recordDetailResource, useEntity } from '../../api/data-service'
 import { MiradorApiError } from '../../api/mirador-client'
-import { useMiradorData } from '../../api/mirador-data-context'
+import { useAgents, useQueues } from '../../api/data-hooks'
 import type { WorkItem } from '../../api/types'
 import { useDetailDrawer } from '../../detail/detail-drawer-context'
 import { channelLabel, formatDateTime, formatSeconds, workStatusLabel } from '../../utils/format'
@@ -13,7 +13,8 @@ import { DetailRow, DrawerSection, EmptyHint, MiniAgentRow, Stat, StatGrid } fro
    A type-specific endpoint per SObject (VoiceCall, Case, …) will enrich this
    later — see the placeholder section below. */
 export function WorkItemDetail({ item }: { item: WorkItem }) {
-  const { agents, queues } = useMiradorData()
+  const agents = useAgents()
+  const queues = useQueues()
   const { openAgent, openQueue } = useDetailDrawer()
 
   const icon = resolveWorkItemIcon(item)
