@@ -35,7 +35,9 @@ export function DataServiceProvider({ children }: { children: ReactNode }) {
     const cache = queryClient.getQueryCache()
     return cache.subscribe((event) => {
       if (event.type !== 'updated') return
-      const key = JSON.stringify(event.query.queryKey)
+      if (!devLog.isCapturing) return
+
+      const key = event.query.queryHash ?? JSON.stringify(event.query.queryKey)
       if (event.action.type === 'success') {
         devLog.query('success', key, event.action.data)
       } else if (event.action.type === 'error') {
