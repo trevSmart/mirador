@@ -1,6 +1,7 @@
+import { recordDetailResource, useEntity } from '../../api/data-service'
+import { MiradorApiError } from '../../api/mirador-client'
 import { useMiradorData } from '../../api/mirador-data-context'
 import type { WorkItem } from '../../api/types'
-import { useRecordDetail } from '../../api/use-record-detail'
 import { useDetailDrawer } from '../../detail/detail-drawer-context'
 import { channelLabel, formatDateTime, formatSeconds, workStatusLabel } from '../../utils/format'
 import { objectLabel, resolveWorkItemIcon } from '../../utils/salesforce-object-icon'
@@ -19,7 +20,17 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
   const agent = item.agentId ? agents.find((a) => a.id === item.agentId) : undefined
   const queue = item.queueId ? queues.find((q) => q.id === item.queueId) : undefined
 
-  const { detail, isLoading, error } = useRecordDetail(item.workItemId)
+  // Reads through the Data Service cache: reopening the same work item (or two
+  // items sharing a record) reuses the cached detail instead of refetching, and
+  // concurrent opens coalesce into a single /records/details call.
+  const recordQuery = useEntity(recordDetailResource, item.workItemId)
+  const detail = recordQuery.data ?? null
+  const isLoading = recordQuery.isLoading
+  const error = recordQuery.isError
+    ? recordQuery.error instanceof MiradorApiError
+      ? recordQuery.error.message
+      : 'No s\'han pogut carregar els detalls del registre'
+    : null
 
   return (
     <>

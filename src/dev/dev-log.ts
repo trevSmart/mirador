@@ -133,6 +133,12 @@ export const devLog = {
     return _capturing
   },
 
+  /* Log an explicit error (not a console.* call). Always recorded, even when
+     capturing is off, so failures surface in the dev console regardless. */
+  error(...args: unknown[]): void {
+    push('error', ...args)
+  },
+
   /* Log an explicit app-level action (not a console.* call). */
   action(label: string, detail?: unknown): void {
     push('action', detail !== undefined ? `${label} ${safeText(detail)}` : label)

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../auth/auth-context'
 import { usePreferences } from '../settings/preferences-context'
 import { devLog } from '../dev/dev-log'
+import { primeSnapshot } from './data-service'
 import { MiradorApiError } from './mirador-client'
 import { useMiradorApi } from './mirador-api-context'
 import { MiradorDataContext } from './mirador-data-context'
@@ -17,6 +19,7 @@ const MIN_REFRESH_GAP_MS = 1_500
 export function MiradorDataProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth()
   const client = useMiradorApi()
+  const queryClient = useQueryClient()
   const { prefs } = usePreferences()
   const isActive = isAuthenticated && Boolean(client)
   const [agents, setAgents] = useState<Agent[]>([])
@@ -68,6 +71,10 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
       setQueues(snapshot.queues)
       setSkills(snapshot.skills)
       setWork(snapshot.work)
+      // Seed the Data Service cache so per-entity reads (useEntity) resolve from
+      // cache without an extra fetch. The context above stays the source for
+      // existing consumers; this hydrates the new layer in parallel.
+      primeSnapshot(queryClient, snapshot)
       if (silent) {
         setError(null)
       }
@@ -94,7 +101,7 @@ export function MiradorDataProvider({ children }: { children: ReactNode }) {
         setIsLoading(false)
       }
     }
-  }, [clearData, client])
+  }, [clearData, client, queryClient])
 
   const dispatchRefreshRef = useRef<(options?: RefreshOptions) => void>(() => {})
 

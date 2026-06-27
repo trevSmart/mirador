@@ -1,4 +1,5 @@
-import { defineConfig, loadEnv } from 'vite'
+import { loadEnv } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
 import { createApiMiddleware } from './src/server/api-middleware'
@@ -40,6 +41,11 @@ export default defineConfig(({ mode }) => {
     },
     preview: {
       port: 3000,
+    },
+    test: {
+      environment: 'jsdom',
+      globals: true,
+      setupFiles: ['./vitest.setup.ts'],
     },
   }
 })
