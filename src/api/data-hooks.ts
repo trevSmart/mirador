@@ -96,11 +96,12 @@ export function useDataStatus(): DataStatus {
     [queryClient],
   )
 
-  const error = query.error
-    ? query.error instanceof MiradorApiError
-      ? query.error.message
-      : 'No s\'han pogut carregar les dades de Salesforce'
-    : null
+  const error =
+    query.error && query.data === undefined
+      ? query.error instanceof MiradorApiError
+        ? query.error.message
+        : 'No s\'han pogut carregar les dades de Salesforce'
+      : null
 
   return {
     isLoading: query.isLoading,
