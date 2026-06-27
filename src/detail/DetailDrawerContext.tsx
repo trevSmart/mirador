@@ -9,7 +9,7 @@
 
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { devLog } from '../dev/dev-log'
-import { useMiradorData } from '../api/mirador-data-context'
+import { useAgents, useQueues, useSkills, useWork } from '../api/data-hooks'
 import { useDockviewHost } from '../dockview/dockview-host-context'
 import { openDetailTab } from '../panels/detail-tab-actions'
 import { recordDetailOpen } from '../utils/detail-recent-store'
@@ -27,7 +27,10 @@ export function DetailDrawerProvider({ children }: { children: ReactNode }) {
 
   // Registra l'estat obert al registre de modals (obert quan detail !== null)
   useRegisterModal('detail-drawer', detail !== null)
-  const { agents, queues, skills, work } = useMiradorData()
+  const agents = useAgents()
+  const queues = useQueues()
+  const skills = useSkills()
+  const work = useWork()
   const { getApi } = useDockviewHost()
 
   const open = useCallback((kind: DetailKind, id: string) => {

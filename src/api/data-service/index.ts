@@ -21,4 +21,6 @@ export {
   skillResource,
   workItemResource,
   primeSnapshot,
+  fetchSnapshot,
+  snapshotKey,
 } from './resources/snapshot'

@@ -3488,6 +3488,7 @@ textarea,
     opacity: 1;
     transform: translateX(0);
   }
+
   to {
     opacity: 0;
     transform: translateX(-12%);
@@ -3506,22 +3507,26 @@ textarea,
   from {
     transform: translateX(100%);
   }
+
   to {
     transform: translateX(0);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   /* Collapse the slide to an instant swap, but keep a non-zero duration so the
      animationend handler still fires and clears the outgoing layer. */
   .detail-drawer__content--nav,
   .detail-drawer__content--leaving {
     animation-duration: 1ms;
   }
+
   @keyframes dd-content-in {
     from {
       transform: none;
     }
+
     to {
       transform: none;
     }
@@ -5063,7 +5068,8 @@ textarea,
   z-index: 8000;
   display: flex;
   flex-direction: column;
-  background: #0e0d12;
+  background: rgba(14, 13, 18, .9);
+  backdrop-filter: blur(5px);
   border-top: 1px solid rgba(255, 255, 255, .10);
   font-family: var(--font-mono);
   font-size: 12.5px;
@@ -5187,6 +5193,7 @@ textarea,
   from {
     transform: translateY(var(--enter-from));
   }
+
   to {
     transform: translateY(0);
   }
@@ -5306,18 +5313,23 @@ textarea,
 .dev-console__filter--log.dev-console__filter--active:hover {
   background: rgba(193, 199, 208, .16);
 }
+
 .dev-console__filter--info.dev-console__filter--active:hover {
   background: rgba(108, 182, 255, .16);
 }
+
 .dev-console__filter--warn.dev-console__filter--active:hover {
   background: rgba(240, 180, 41, .16);
 }
+
 .dev-console__filter--error.dev-console__filter--active:hover {
   background: rgba(255, 107, 107, .16);
 }
+
 .dev-console__filter--action.dev-console__filter--active:hover {
   background: rgba(126, 231, 135, .16);
 }
+
 .dev-console__filter--api.dev-console__filter--active:hover {
   background: rgba(201, 160, 255, .16);
 }

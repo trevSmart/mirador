@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
-import { useMiradorData } from '../api/mirador-data-context'
-import { useMiradorStatus } from '../api/mirador-status-context'
+import { useAgents, useDataStatus, useQueues, useWork } from '../api/data-hooks'
 import { useAuth } from '../auth/auth-context'
 import { PanelState } from '../components/PanelState'
 import { SfIcon } from '../components/ds/SfIcon'
@@ -30,8 +29,10 @@ function fmt(sec: number | null): string | null {
    standard Omni Supervisor wallboard. A grid of real-time metric cards;
    metrics with no Mirador source are derived/mocked (see wallboard-metrics). */
 export function WallboardPanel() {
-  const { agents, queues, work } = useMiradorData()
-  const { isLoading, error, refresh } = useMiradorStatus()
+  const agents = useAgents()
+  const queues = useQueues()
+  const work = useWork()
+  const { isLoading, error, refresh } = useDataStatus()
   const { isMockMode } = useAuth()
 
   const m = useMemo(() => {

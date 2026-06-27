@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { useMiradorData } from '../../api/mirador-data-context'
+import { useAgents, useQueues, useSkills, useWork } from '../../api/data-hooks'
 import { useDetailDrawer, type DetailTarget } from '../../detail/detail-drawer-context'
 import { SfIcon } from '../ds'
 import { AgentDetail } from './AgentDetail'
@@ -9,7 +9,10 @@ import { WorkItemDetail } from './WorkItemDetail'
 
 export function DetailDrawer() {
   const { detail, close, openAsTab } = useDetailDrawer()
-  const { agents, queues, skills, work } = useMiradorData()
+  const agents = useAgents()
+  const queues = useQueues()
+  const skills = useSkills()
+  const work = useWork()
 
   const open = detail !== null
   // Retain the last target while closing so content doesn't blank out mid-animation.

@@ -5,7 +5,7 @@
    `panels/registry.ts`. Remove that line + delete `src/dev/` to drop it. */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useMiradorData } from '../api/mirador-data-context'
+import { useAgents, useQueues } from '../api/data-hooks'
 import type { Agent, Queue, PresenceStatus } from '../api/types'
 import { FloorZoomControl } from '../components/floor/FloorZoomControl'
 import { DEV_ZOOM_KEY, DEV_ZOOM_MAX, DEV_ZOOM_MIN, adjustDevZoomFromWheel, loadDevZoom } from './dev-zoom'
@@ -148,7 +148,8 @@ function RoomRender({
 
 export function DevPanel() {
   const { data, loaded } = useFloorPlanData()
-  const { agents, queues } = useMiradorData()
+  const agents = useAgents()
+  const queues = useQueues()
   const { openAgent } = useDetailDrawer()
   const { prefs, save } = usePreferences()
   const canvasScrollRef = useSmoothScroll<HTMLDivElement>()

@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { IDockviewPanelProps } from 'dockview-react'
-import { useMiradorData } from '../api/mirador-data-context'
-import { useMiradorStatus } from '../api/mirador-status-context'
+import { useAgents, useDataStatus, useQueues } from '../api/data-hooks'
 import { AgentRow } from '../components/AgentRow'
 import { SfIcon, Chip } from '../components/ds'
 import { Select, type SelectOption } from '../components/ds/Select'
@@ -84,8 +83,9 @@ function loadSort<T extends string>(storageKey: string, allowed: readonly T[], f
 }
 
 export function HomePanel({ containerApi }: IDockviewPanelProps) {
-  const { agents, queues } = useMiradorData()
-  const { isLoading, error, refresh } = useMiradorStatus()
+  const agents = useAgents()
+  const queues = useQueues()
+  const { isLoading, error, refresh } = useDataStatus()
 
   const [queueSort, setQueueSort] = useState<QueueSortKey>(() =>
     loadSort(

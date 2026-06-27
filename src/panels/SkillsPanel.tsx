@@ -1,13 +1,12 @@
-import { useMiradorData } from '../api/mirador-data-context'
-import { useMiradorStatus } from '../api/mirador-status-context'
+import { useDataStatus, useSkills } from '../api/data-hooks'
 import { FadeValue } from '../components/ds'
 import { PanelState } from '../components/PanelState'
 import { SkillRow } from '../components/SkillRow'
 import { sortSkillsByBacklog, totalSkillBacklog } from '../utils/agent-stats'
 
 export function SkillsPanel() {
-  const { skills } = useMiradorData()
-  const { isLoading, error, refresh } = useMiradorStatus()
+  const skills = useSkills()
+  const { isLoading, error, refresh } = useDataStatus()
   const sortedSkills = sortSkillsByBacklog(skills)
 
   return (

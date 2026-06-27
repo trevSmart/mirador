@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useMiradorStatus } from '../api/mirador-status-context'
+import { useDataStatus } from '../api/data-hooks'
 import { useAuth } from '../auth/auth-context'
 import panoramaLogo from '../assets/panorama/logo/panorama-logo.png'
 import { useDevConsole } from '../dev/useDevConsole'
@@ -11,7 +11,7 @@ import { UserMenu } from './UserMenu'
 
 export function AppHeader() {
   const { authError, isAuthenticated, isLoading, isMockMode, isSalesforceEnabled } = useAuth()
-  const { isRefreshing, refresh } = useMiradorStatus()
+  const { isRefreshing, refresh } = useDataStatus()
   const { enabled: devMode } = useDeveloperMode()
   const { visible: consoleVisible, toggle: toggleConsole } = useDevConsole()
 
@@ -88,7 +88,7 @@ export function AppHeader() {
         <button
           type="button"
           className={`app-header__button app-header__button--icon${spinning ? ' app-header__button--spinning' : ''}`}
-          onClick={() => void refresh({ silent: true })}
+          onClick={() => void refresh()}
           onAnimationIteration={handleSpinIteration}
           disabled={!isAuthenticated || isRefreshing}
           title="Actualitza les dades d'Omni"

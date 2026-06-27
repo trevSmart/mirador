@@ -1,4 +1,4 @@
-import { useMiradorData } from '../../api/mirador-data-context'
+import { useAgents, useWork } from '../../api/data-hooks'
 import type { Queue } from '../../api/types'
 import { useDetailDrawer } from '../../detail/detail-drawer-context'
 import { sortAgentsByPresence } from '../../utils/agent-stats'
@@ -10,7 +10,8 @@ import { DetailRow, DrawerSection, EmptyHint, MiniAgentRow, Stat, StatGrid } fro
 const BACKLOG_FULL = 20
 
 export function QueueDetail({ queue }: { queue: Queue }) {
-  const { agents, work } = useMiradorData()
+  const agents = useAgents()
+  const work = useWork()
   const { openAgent, openWork } = useDetailDrawer()
 
   const waiting = work.filter((item) => item.status === 'queued' && item.queueId === queue.id)

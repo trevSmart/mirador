@@ -1,13 +1,12 @@
-import { useMiradorData } from '../api/mirador-data-context'
-import { useMiradorStatus } from '../api/mirador-status-context'
+import { useDataStatus, useQueues } from '../api/data-hooks'
 import { FadeValue } from '../components/ds'
 import { PanelState } from '../components/PanelState'
 import { QueueRow } from '../components/QueueRow'
 import { sortQueuesByBacklog, totalQueueBacklog } from '../utils/agent-stats'
 
 export function QueuesPanel() {
-  const { queues } = useMiradorData()
-  const { isLoading, error, refresh } = useMiradorStatus()
+  const queues = useQueues()
+  const { isLoading, error, refresh } = useDataStatus()
   const sortedQueues = sortQueuesByBacklog(queues)
 
   return (
