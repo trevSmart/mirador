@@ -9,7 +9,7 @@ export function loadDockviewLayout(api: DockviewApi): boolean {
   }
 
   try {
-    api.fromJSON(JSON.parse(raw))
+    api.fromJSON(JSON.parse(raw) as Parameters<DockviewApi['fromJSON']>[0])
     return true
   } catch {
     localStorage.removeItem(STORAGE_KEY)

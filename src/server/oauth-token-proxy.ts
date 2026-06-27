@@ -11,7 +11,7 @@ interface TokenRequestBody {
 
 async function readJsonBody(req: IncomingMessage): Promise<TokenRequestBody> {
   const chunks: Buffer[] = []
-  for await (const chunk of req) {
+  for await (const chunk of req as AsyncIterable<Buffer>) {
     chunks.push(Buffer.from(chunk))
   }
   const text = Buffer.concat(chunks).toString('utf8')
