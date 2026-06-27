@@ -43,19 +43,19 @@ function App({ initialAuthError = null }: { initialAuthError?: string | null }) 
           <MiradorApiProvider>
             <MiradorDataProvider>
               <DockviewHostProvider>
-                <DetailDrawerProvider>
-                  <SettingsModalProvider>
-                    <DevConsoleProvider>
-                      <ModalRegistryProvider>
+                <ModalRegistryProvider>
+                  <DetailDrawerProvider>
+                    <SettingsModalProvider>
+                      <DevConsoleProvider>
                         <GlobalShortcutsProvider>
                           <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} />}>
                             <AppContent />
                           </ErrorBoundary>
                         </GlobalShortcutsProvider>
-                      </ModalRegistryProvider>
-                    </DevConsoleProvider>
-                  </SettingsModalProvider>
-                </DetailDrawerProvider>
+                      </DevConsoleProvider>
+                    </SettingsModalProvider>
+                  </DetailDrawerProvider>
+                </ModalRegistryProvider>
               </DockviewHostProvider>
             </MiradorDataProvider>
           </MiradorApiProvider>
