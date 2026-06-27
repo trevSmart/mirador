@@ -92,15 +92,18 @@ Detecció de camp de text: `document.activeElement` és `INPUT`, `TEXTAREA`, o t
 Regla: **registre per fora** (perquè els overlays s'hi registrin), **shortcuts per dins** (amb accés als hooks d'acció com `useSettingsModal`).
 
 ```
-DetailDrawerProvider
-  SettingsModalProvider
-    DevConsoleProvider
-      ModalRegistryProvider        ← nou
-        GlobalShortcutsProvider    ← nou
+ModalRegistryProvider          ← nou (envolta els overlays)
+  DetailDrawerProvider
+    SettingsModalProvider
+      DevConsoleProvider
+        GlobalShortcutsProvider  ← nou (dins dels providers d'acció)
           AppContent (header, panels, overlays)
 ```
 
-L'ordre exacte s'ajustarà en implementar, mantenint la regla anterior.
+`ModalRegistryProvider` ha d'anar **per sobre** dels providers d'overlay perquè
+aquests criden `useRegisterModal` → `useModalRegistry` al seu body; si el
+registry no és un avantpassat, l'app llança en runtime. `GlobalShortcutsProvider`
+queda per dins de tots (necessita `useSettingsModal` i `useModalRegistry`).
 
 ## Error handling
 
