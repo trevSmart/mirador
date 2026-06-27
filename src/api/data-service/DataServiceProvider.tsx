@@ -39,6 +39,10 @@ export function DataServiceProvider({ children }: { children: ReactNode }) {
 
       const key = event.query.queryHash ?? JSON.stringify(event.query.queryKey)
       if (event.action.type === 'success') {
+        // `manual` success = setQueryData (snapshot priming), not a network
+        // response. Skip it so a single refresh logs one snapshot line instead
+        // of one per primed entity.
+        if (event.action.manual) return
         devLog.query('success', key, event.action.data)
       } else if (event.action.type === 'error') {
         devLog.query('error', key, event.action.error)
