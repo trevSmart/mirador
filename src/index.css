@@ -1258,6 +1258,20 @@ textarea,
   gap: var(--sp-6);
 }
 
+/* Home: the shell stops scrolling as a whole so each column owns its own
+   scroll. The banner stays fixed at the top and the layout takes the rest of
+   the height; the right column (grids) scrolls independently from the left
+   (room renders), which stays put. */
+.panel-shell--home {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel-shell--home .insights-banner {
+  flex: none;
+}
+
 /* Home: floor render on the left, queues + agents stacked on the right, with
    a draggable resizer in between that drives the left column via --home-split. */
 .home-layout {
@@ -1265,10 +1279,12 @@ textarea,
   grid-template-columns: minmax(0, var(--home-split, 1.6fr)) auto minmax(0, 1fr);
   gap: 0;
   align-items: stretch;
+  flex: 1;
+  min-height: 0;
 }
 
 .home-floor {
-  min-height: 640px;
+  min-height: 0;
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-md);
   background: var(--surface-card);
@@ -1303,11 +1319,39 @@ textarea,
   display: flex;
   flex-direction: column;
   gap: var(--sp-6);
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.home-side::-webkit-scrollbar {
+  width: 6px;
+}
+
+.home-side::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.home-side::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: var(--r-pill);
+}
+
+.home-side::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
 }
 
 @media (max-width: 900px) {
+  /* Stacked single column: restore the shell's global scroll so the whole
+     page flows naturally instead of trapping each column. */
+  .panel-shell--home {
+    overflow: auto;
+  }
+
   .home-layout {
     grid-template-columns: 1fr;
+    min-height: 0;
   }
 
   .home-resizer {
@@ -1316,6 +1360,10 @@ textarea,
 
   .home-floor {
     height: 420px;
+  }
+
+  .home-side {
+    overflow-y: visible;
   }
 }
 
@@ -1340,11 +1388,16 @@ textarea,
 
 .panel-section__sort {
   font-size: var(--fs-sm);
+  /* Push the sort control to the far right of the filter row, after the
+     filter chips. `auto` left-margin claims all the free space between the
+     last chip and the sort dropdown. */
+  margin-left: auto;
 }
 
 .panel-section__filters {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--sp-2);
   margin: 0 0 var(--sp-4);
 }
@@ -3175,21 +3228,22 @@ textarea,
 
 /* ── Header user menu ──────────────────────────────────────────────────── */
 .app-header__dev {
+  --dev-accent: #E0531F;
   font-family: var(--font-mono);
-  font-size: calc(10px + var(--mono-fs-nudge));
+  font-size: calc(12px + var(--mono-fs-nudge));
   font-weight: 700;
   letter-spacing: 0.06em;
-  color: var(--accent);
-  background: var(--accent-tint);
-  border: 1px solid var(--accent);
+  color: var(--dev-accent);
+  background: color-mix(in srgb, var(--dev-accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--dev-accent) 35%, transparent);
   border-radius: var(--r-pill);
-  padding: 2px 7px;
+  padding: 3px 9px;
   cursor: pointer;
   transition: background 0.12s, color 0.12s, border-color 0.12s;
 }
 
 .app-header__dev:hover {
-  background: var(--accent);
+  background: var(--dev-accent);
   color: var(--pa-bg, #fff);
 }
 
@@ -4249,6 +4303,13 @@ textarea,
   overscroll-behavior: contain;
   border: 1px solid var(--border-subtle);
   padding: var(--sp-1);
+}
+
+/* When there isn't room to expand rightwards, anchor the panel to the
+   trigger's right edge so it grows leftwards and stays on-screen. */
+.ds-select__panel--align-end {
+  left: auto;
+  right: 0;
 }
 
 .ds-select__option {

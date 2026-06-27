@@ -211,8 +211,6 @@ function buildFlatWork(stateRef: MockLiveState): WorkItem[] {
 }
 
 function buildQueues(stateRef: MockLiveState): Queue[] {
-  const seedById = new Map(seedQueues.map((queue) => [queue.id, queue]))
-
   return seedQueues.map((seedQueue) => {
     const queuedForQueue = stateRef.queued.filter(
       (item) => item.queueId === seedQueue.id,
@@ -235,7 +233,6 @@ function buildQueues(stateRef: MockLiveState): Queue[] {
       longest,
       avg,
       online,
-      color: seedById.get(seedQueue.id)?.color ?? seedQueue.color,
     }
   })
 }

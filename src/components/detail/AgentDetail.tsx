@@ -2,6 +2,7 @@ import { useQueues } from '../../api/data-hooks'
 import type { Agent, ChannelKey, PresenceStatus } from '../../api/types'
 import { useDetailDrawer } from '../../detail/detail-drawer-context'
 import { useSalesforcePhoto } from '../../hooks/useSalesforcePhoto'
+import { colorFromString } from '../../utils/color-from-string'
 import { agentInitials, channelLabel, formatMinutes } from '../../utils/format'
 import { resolveWorkItemIcon } from '../../utils/salesforce-object-icon'
 import { CapacityBar, FadeValue, Ring, SfIcon } from '../ds'
@@ -34,6 +35,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
           size={56}
           photo={photo}
           initials={agentInitials(agent.name)}
+          faceBg={colorFromString(agent.name)}
           breathe={agent.status === 'busy'}
         />
         <div className="dd-head__id">
@@ -102,7 +104,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
               return (
                 <DetailRow
                   key={queueId}
-                  leading={<SfIcon name="queue" size={28} bg={queue.color} />}
+                  leading={<SfIcon name="queue" size={28} bg={colorFromString(queue.name)} />}
                   title={queue.name}
                   meta={
                     <>

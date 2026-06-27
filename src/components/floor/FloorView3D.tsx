@@ -11,6 +11,7 @@ import { createPortal } from 'react-dom'
 import { FloorSeatTooltip } from './FloorSeatTooltip'
 import { useTowerHeightScale } from '../../hooks/useTowerHeightScale'
 import { useSalesforcePhoto } from '../../hooks/useSalesforcePhoto'
+import { colorFromString } from '../../utils/color-from-string'
 import { agentInitials } from '../../utils/format'
 import { agentTowerSegments, towerSegmentLabel, type TowerSegment } from '../../floor/agent-tower-segments'
 import type { Agent, Queue } from '../../api/types'
@@ -40,6 +41,7 @@ import {
   slabRightFaceVec,
   towerLeftFace,
   towerRightFace,
+  windowBeamQuad,
 } from '../../floor/floor-iso-vec'
 import {
   type RoomRotation,
@@ -53,11 +55,21 @@ import {
 
 const GRID_MAX = 49
 
-const PEDESTAL_COLOR = 'var(--text-disabled)'
+const PEDESTAL_COLOR = '#E2DFDA'
 const AVATAR_RING = 'var(--accent-30)'
-const FLOOR_FILL_A = '#F8F7F4'
-const FLOOR_FILL_B = '#F5F4F1'
-const WALL_FILL = 'rgb(247,246,243)'
+const FLOOR_FILL_A = '#FDFCFB'
+const FLOOR_FILL_B = '#FBFAF8'
+const WALL_FILL = 'rgb(252,251,249)'
+
+// Shared sun direction for every window's light shaft, expressed in cell units
+// (so it scales with the camera). Common direction → all beams stay parallel,
+// reading as one off-screen light source rather than per-wall spotlights.
+const SUN_X = 0.55
+const SUN_Y = 1.45
+const SUN_LENGTH = 2.6
+// Extra half-width the beam gains by the end of its throw (× the sill width),
+// so the light fans out as it crosses the floor.
+const SUN_SPREAD = 1.2
 
 // Base and cap are solid, outlined slabs with real thickness — they frame the
 // translucent shaft between them (the panorama capsule look).
@@ -70,6 +82,10 @@ const FACE_OPACITY_TOP = 0.22
 // Lit (right) vs. shaded (left) faces keep a faint dark wash for iso depth.
 const SHADE_LEFT = 'rgba(12,10,22,0.12)'
 const SHADE_RIGHT = 'rgba(12,10,22,0.04)'
+// The agent pedestal is a pale, near-floor-coloured slab, so the tower's dark
+// side-shading would read as a heavy grey block. Use much softer washes for it.
+const PEDESTAL_SHADE_LEFT = 'rgba(12,10,22,0.05)'
+const PEDESTAL_SHADE_RIGHT = 'rgba(12,10,22,0.015)'
 const BAND_STROKE_OPACITY = 0.55
 const BAND_STROKE_WIDTH = 0.85
 
@@ -121,9 +137,9 @@ function WindowGlass({ id, quad }: { id: string; quad: OpeningQuad }) {
     <g>
       <defs>
         <linearGradient id={gradId} x1={tl[0]} y1={tl[1]} x2={bl[0]} y2={bl[1]} gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="rgba(196, 228, 248, 0.44)" />
-          <stop offset="55%" stopColor="rgba(118, 172, 215, 0.34)" />
-          <stop offset="100%" stopColor="rgba(62, 108, 152, 0.28)" />
+          <stop offset="0%" stopColor="rgba(198, 230, 252, 0.42)" />
+          <stop offset="55%" stopColor="rgba(128, 184, 230, 0.32)" />
+          <stop offset="100%" stopColor="rgba(74, 126, 180, 0.26)" />
         </linearGradient>
       </defs>
       <polygon points={pane} fill={`url(#${gradId})`} />
@@ -132,6 +148,55 @@ function WindowGlass({ id, quad }: { id: string; quad: OpeningQuad }) {
       <polygon points={glint} fill="rgba(255, 255, 255, 0.28)" />
       <polygon points={pane} fill="none" stroke="rgba(48, 88, 128, 0.38)" strokeWidth={0.65} strokeLinejoin="miter" />
       <line x1={lerpPt(tl, tr, 0.04)[0]} y1={lerpPt(tl, tr, 0.04)[1]} x2={lerpPt(tl, tr, 0.96)[0]} y2={lerpPt(tl, tr, 0.96)[1]} stroke="rgba(48, 88, 128, 0.22)" strokeWidth={0.5} />
+    </g>
+  )
+}
+
+/** Cool-white pool of daylight cast on the floor by a window. A near-white wash
+   that lightens (screen) the tiles from the wall outward and dissolves into the
+   room — kept very faint so it reads as a soft glow, not a painted tile. Drawn
+   over the floor tiles but under the furniture/seats. */
+function WindowSunbeam({ id, points, near, far, blurId }: { id: string; points: string; near: [Point, Point]; far: [Point, Point]; blurId: string }) {
+  const gradId = `${id}-beam`
+  const nx = (near[0][0] + near[1][0]) / 2
+  const ny = (near[0][1] + near[1][1]) / 2
+  const fx = (far[0][0] + far[1][0]) / 2
+  const fy = (far[0][1] + far[1][1]) / 2
+  return (
+    <g style={{ mixBlendMode: 'multiply' }} filter={`url(#${blurId})`}>
+      <defs>
+        <linearGradient id={gradId} x1={nx} y1={ny} x2={fx} y2={fy} gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="rgba(214,226,240,0.055)" />
+          <stop offset="55%" stopColor="rgba(228,236,246,0.024)" />
+          <stop offset="100%" stopColor="rgba(240,245,250,0)" />
+        </linearGradient>
+      </defs>
+      <polygon points={points} fill={`url(#${gradId})`} />
+    </g>
+  )
+}
+
+/** The faint volume of light hanging in the air between a window and its floor
+   pool — a translucent shaft so the daylight reads as entering, not just lying
+   on the ground. `top` are the window-sill corners (up on the wall), `bottom`
+   the far edge of the floor pool; the gradient is brightest at the window. */
+function WindowAirShaft({ id, top, bottom, blurId }: { id: string; top: [Point, Point]; bottom: [Point, Point]; blurId: string }) {
+  const gradId = `${id}-air`
+  const tx = (top[0][0] + top[1][0]) / 2
+  const ty = (top[0][1] + top[1][1]) / 2
+  const bx = (bottom[0][0] + bottom[1][0]) / 2
+  const by = (bottom[0][1] + bottom[1][1]) / 2
+  const points = `${top[0][0]},${top[0][1]} ${top[1][0]},${top[1][1]} ${bottom[1][0]},${bottom[1][1]} ${bottom[0][0]},${bottom[0][1]}`
+  return (
+    <g style={{ mixBlendMode: 'multiply' }} filter={`url(#${blurId})`}>
+      <defs>
+        <linearGradient id={gradId} x1={tx} y1={ty} x2={bx} y2={by} gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="rgba(222,232,244,0.12)" />
+          <stop offset="70%" stopColor="rgba(234,240,248,0.05)" />
+          <stop offset="100%" stopColor="rgba(244,248,252,0)" />
+        </linearGradient>
+      </defs>
+      <polygon points={points} fill={`url(#${gradId})`} />
     </g>
   )
 }
@@ -193,7 +258,7 @@ function AvatarDisc({
       <clipPath id={clipId}>
         <circle cx={cx} cy={cy} r={r} />
       </clipPath>
-      <circle cx={cx} cy={cy} r={r} fill="var(--pa-av-bg, #E9E7F0)" />
+      <circle cx={cx} cy={cy} r={r} fill={colorFromString(agent.name)} />
       {photo ? (
         <image
           href={photo}
@@ -236,13 +301,13 @@ function TowerFaceGradient({ id, x, y, h }: { id: string; x: number; y: number; 
 
 /** A solid slab band (base or cap) with real thickness: two side faces + a top
    diamond, all opaque and ringed with a stronger-hue outline. */
-function bandFaces(x: number, y: number, b: IsoBasis, h1: number, h2: number, color: string) {
+function bandFaces(x: number, y: number, b: IsoBasis, h1: number, h2: number, color: string, shadeLeft = SHADE_LEFT, shadeRight = SHADE_RIGHT) {
   return (
     <g style={{ color }}>
       <polygon points={towerLeftFace(x, y, b, h1, h2)} fill="currentColor" fillOpacity={BAND_OPACITY} stroke="currentColor" strokeOpacity={BAND_STROKE_OPACITY} strokeWidth={BAND_STROKE_WIDTH} strokeLinejoin="round" />
-      <polygon className="fv3d-noedge" points={towerLeftFace(x, y, b, h1, h2)} fill={SHADE_LEFT} />
+      <polygon className="fv3d-noedge" points={towerLeftFace(x, y, b, h1, h2)} fill={shadeLeft} />
       <polygon points={towerRightFace(x, y, b, h1, h2)} fill="currentColor" fillOpacity={BAND_OPACITY} stroke="currentColor" strokeOpacity={BAND_STROKE_OPACITY} strokeWidth={BAND_STROKE_WIDTH} strokeLinejoin="round" />
-      <polygon className="fv3d-noedge" points={towerRightFace(x, y, b, h1, h2)} fill={SHADE_RIGHT} />
+      <polygon className="fv3d-noedge" points={towerRightFace(x, y, b, h1, h2)} fill={shadeRight} />
       <polygon points={diamondPointsVec(x, y, b, h2)} fill="currentColor" fillOpacity={BAND_OPACITY} stroke="currentColor" strokeOpacity={BAND_STROKE_OPACITY} strokeWidth={BAND_STROKE_WIDTH} strokeLinejoin="round" />
       <polygon className="fv3d-noedge" points={diamondPointsVec(x, y, b, h2)} fill="rgba(255,255,255,0.12)" />
     </g>
@@ -287,7 +352,7 @@ function segmentedTowerFaces(x: number, y: number, b: IsoBasis, h: number, segme
 
   return (
     <>
-      <g key="pedestal">{bandFaces(x, y, b, 0, base, PEDESTAL_COLOR)}</g>
+      <g key="pedestal">{bandFaces(x, y, b, 0, base, PEDESTAL_COLOR, PEDESTAL_SHADE_LEFT, PEDESTAL_SHADE_RIGHT)}</g>
       {parts}
       {capH > 0 ? <g key="cap">{bandFaces(x, y, b, shaftTop, h, topColor)}</g> : null}
     </>
@@ -525,6 +590,9 @@ export function FloorView3D({ floor, agentsById, queuesById, showAvatars, animat
   const svgIdPrefix = `fv3d-${floor.id}`
   const floorGrainId = `${svgIdPrefix}-floor-grain`
   const floorSheenId = `${svgIdPrefix}-floor-sheen`
+  const wallSheenRightId = `${svgIdPrefix}-wall-sheen-r`
+  const wallSheenLeftId = `${svgIdPrefix}-wall-sheen-l`
+  const beamBlurId = `${svgIdPrefix}-beam-blur`
   const bounds = useMemo(() => computeBoundsVec(plan.cells, basis, VEC_TH * 2), [plan, basis])
 
   const brVis = useMemo(() => backRightTrue(has, plan.cells, 0, GRID_MAX, GRID_MAX), [has, plan])
@@ -551,6 +619,8 @@ export function FloorView3D({ floor, agentsById, queuesById, showAvatars, animat
   }
 
   const body: ReactNode[] = []
+  const sunbeams: ReactNode[] = []
+  const airbeams: ReactNode[] = []
   for (const [c, r] of ordered) {
     const [x, y] = pos(c, r)
     const key = `${c},${r}`
@@ -558,24 +628,59 @@ export function FloorView3D({ floor, agentsById, queuesById, showAvatars, animat
     if (brVis(c, r)) {
       body.push(<polygon key={`wbr-${key}`} points={backRightWallVec(x, y, basis)} fill={WALL_FILL} />)
       body.push(<polygon key={`wbr2-${key}`} points={backRightWallVec(x, y, basis)} fill="rgba(27,25,36,.032)" stroke="rgba(27,25,36,.05)" strokeWidth={0.5} />)
+      body.push(<polygon key={`wbrs-${key}`} points={backRightWallVec(x, y, basis)} fill={`url(#${wallSheenRightId})`} />)
       const op = openingPolys(c, r, 'N', x, y)
       if (op) body.push(op)
     }
     if (blVis(c, r)) {
       body.push(<polygon key={`wbl-${key}`} points={backLeftWallVec(x, y, basis)} fill={WALL_FILL} />)
       body.push(<polygon key={`wbl2-${key}`} points={backLeftWallVec(x, y, basis)} fill="rgba(27,25,36,.05)" stroke="rgba(27,25,36,.06)" strokeWidth={0.5} />)
+      body.push(<polygon key={`wbls-${key}`} points={backLeftWallVec(x, y, basis)} fill={`url(#${wallSheenLeftId})`} />)
       const op = openingPolys(c, r, 'O', x, y)
       if (op) body.push(op)
     }
 
-    if (!has(c + 1, r)) body.push(<polygon key={`rf-${key}`} points={slabRightFaceVec(x, y, basis)} fill="rgba(27,25,36,.05)" />)
-    if (!has(c, r + 1)) body.push(<polygon key={`lf-${key}`} points={slabLeftFaceVec(x, y, basis)} fill="rgba(27,25,36,.08)" />)
+    // Slab-thickness side faces are tinted to match the back wall they run
+    // parallel to, then darkened by a constant delta so the floor edge always
+    // reads as an arris (a shade below its wall), not the same plane.
+    // slabRight ‖ back-LEFT wall (vector v); slabLeft ‖ back-RIGHT wall (vector u).
+    if (!has(c + 1, r)) {
+      body.push(<polygon key={`rf-${key}`} points={slabRightFaceVec(x, y, basis)} fill={WALL_FILL} />)
+      body.push(<polygon key={`rf2-${key}`} points={slabRightFaceVec(x, y, basis)} fill="rgba(27,25,36,.12)" />)
+    }
+    if (!has(c, r + 1)) {
+      body.push(<polygon key={`lf-${key}`} points={slabLeftFaceVec(x, y, basis)} fill={WALL_FILL} />)
+      body.push(<polygon key={`lf2-${key}`} points={slabLeftFaceVec(x, y, basis)} fill="rgba(27,25,36,.102)" />)
+    }
 
     const tilePoints = diamondPointsVec(x, y, basis, 0)
     body.push(<polygon key={`t-${key}`} points={tilePoints} fill={(c + r) % 2 === 0 ? FLOOR_FILL_A : FLOOR_FILL_B} />)
     body.push(<polygon key={`tg-${key}`} points={tilePoints} fill={`url(#${floorGrainId})`} opacity={0.5} />)
     body.push(<polygon key={`ts-${key}`} points={tilePoints} fill={`url(#${floorSheenId})`} />)
     body.push(<polygon key={`t2-${key}`} points={tilePoints} fill="none" stroke="rgba(27,25,36,.065)" />)
+
+    // Daylight beams are collected separately and drawn as one layer over the
+    // whole floor (below seats), so a beam can stretch across several tiles
+    // without later-painted neighbour tiles clipping it.
+    for (const edge of ['N', 'O'] as const) {
+      const visible = edge === 'N' ? brVis(c, r) : blVis(c, r)
+      if (!visible || openingByKey.get(`${c},${r},${edge}`) !== 'window') continue
+      const beam = windowBeamQuad(x, y, basis, edge, SUN_X, SUN_Y, SUN_LENGTH, 0.62, SUN_SPREAD)
+      sunbeams.push(<WindowSunbeam key={`beam-${key}-${edge}`} id={`${svgIdPrefix}-beam-${c}-${r}-${edge}`} blurId={beamBlurId} {...beam} />)
+      // Faint volumetric shaft "in the air": from the window opening on the wall
+      // down to the floor pool's far edge.
+      const [g0, g1, t0, t1] = edge === 'N' ? backRightOpeningEdge(x, y, basis) : backLeftOpeningEdge(x, y, basis)
+      const oq = openingQuad(g0, g1, t0, t1, 'window')
+      airbeams.push(
+        <WindowAirShaft
+          key={`air-${key}-${edge}`}
+          id={`${svgIdPrefix}-air-${c}-${r}-${edge}`}
+          top={[oq.bl, oq.br]}
+          bottom={beam.far}
+          blurId={beamBlurId}
+        />,
+      )
+    }
 
     for (const d of dividersByKey.get(key) ?? []) {
       body.push(<polygon key={`dv-${key}-${d.edge}`} points={dividerFaceVec(x, y, basis, d.edge)} fill="rgba(47,158,143,.30)" stroke="rgba(47,158,143,.75)" strokeWidth={1.2} />)
@@ -612,11 +717,15 @@ export function FloorView3D({ floor, agentsById, queuesById, showAvatars, animat
       >
         <svg className="fv3d-svg" viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`} preserveAspectRatio="xMidYMid meet" style={{ aspectRatio: `${bounds.width} / ${bounds.height}` }} xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <filter id={`${svgIdPrefix}-shadow`} x="-30%" y="-30%" width="160%" height="160%">
-              <feGaussianBlur stdDeviation="14" />
+            <filter id={`${svgIdPrefix}-shadow`} x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="24" />
             </filter>
             <filter id={`${svgIdPrefix}-glow`} x="-80%" y="-80%" width="260%" height="260%">
               <feGaussianBlur stdDeviation="5.5" />
+            </filter>
+            {/* Soft edges for the daylight beams so they don't read as hard polygons. */}
+            <filter id={beamBlurId} x="-25%" y="-25%" width="150%" height="150%">
+              <feGaussianBlur stdDeviation="3.5" />
             </filter>
             <pattern id={floorGrainId} width="10" height="10" patternUnits="userSpaceOnUse">
               <rect width="10" height="10" fill="transparent" />
@@ -627,11 +736,27 @@ export function FloorView3D({ floor, agentsById, queuesById, showAvatars, animat
               <stop offset="0%" stopColor="rgba(255,255,255,0.07)" />
               <stop offset="100%" stopColor="rgba(27,25,36,0.03)" />
             </linearGradient>
+            {/* Vertical light wash for the back walls: brighter near the top
+               (catches the overhead light) fading to a soft shade at the floor.
+               The right-facing wall reads a touch lighter than the left, matching
+               the floor's SHADE_LEFT/RIGHT balance so the two planes separate. */}
+            <linearGradient id={wallSheenRightId} gradientUnits="objectBoundingBox" x1="0.5" y1="0" x2="0.5" y2="1">
+              <stop offset="0%" stopColor="rgba(255,255,255,0.05)" />
+              <stop offset="55%" stopColor="rgba(255,255,255,0)" />
+              <stop offset="100%" stopColor="rgba(27,25,36,0.03)" />
+            </linearGradient>
+            <linearGradient id={wallSheenLeftId} gradientUnits="objectBoundingBox" x1="0.5" y1="0" x2="0.5" y2="1">
+              <stop offset="0%" stopColor="rgba(255,255,255,0.03)" />
+              <stop offset="55%" stopColor="rgba(255,255,255,0)" />
+              <stop offset="100%" stopColor="rgba(27,25,36,0.05)" />
+            </linearGradient>
           </defs>
-          <g filter={`url(#${svgIdPrefix}-shadow)`} fill="rgba(27,25,36,.10)">
+          <g filter={`url(#${svgIdPrefix}-shadow)`} fill="rgba(27,25,36,.17)">
             {shadows}
           </g>
           {body}
+          {sunbeams}
+          {airbeams}
           {showAvatars && hoveredAgent && hoverPos ? (
             // key per agent → fresh mount when moving avatar→avatar, so the height
             // hook starts at the final height instead of sliding from the previous.

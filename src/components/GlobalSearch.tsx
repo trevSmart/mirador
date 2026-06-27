@@ -109,7 +109,7 @@ function SearchAgentItem({ agent, active, onSelect }: SearchAgentItemProps) {
 }
 
 interface SearchQueueItemProps {
-  queue: Pick<Queue, 'id' | 'name' | 'color' | 'backlog' | 'online'>
+  queue: Pick<Queue, 'id' | 'name' | 'backlog' | 'online'>
   active: boolean
   onSelect: () => void
 }
@@ -123,7 +123,7 @@ function SearchQueueItem({ queue, active, onSelect }: SearchQueueItemProps) {
       aria-selected={active}
       onClick={onSelect}
     >
-      <SfIconTile name="queue" size={30} bg={queue.color} />
+      <SfIconTile name="queue" size={30} bg={colorFromString(queue.name)} />
       <span className="si-main">
         <div className="si-title">{queue.name}</div>
         <div className="si-meta">
@@ -517,7 +517,6 @@ export function GlobalSearch() {
                     queue={{
                       id: resolved.id,
                       name: resolved.title,
-                      color: queues.find((q) => q.id === resolved.id)?.color ?? 'var(--pa-ic-queue)',
                       backlog: resolved.backlog ?? 0,
                       online: resolved.online ?? 0,
                     }}

@@ -2,6 +2,7 @@ import { useAgents, useWork } from '../../api/data-hooks'
 import type { Queue } from '../../api/types'
 import { useDetailDrawer } from '../../detail/detail-drawer-context'
 import { sortAgentsByPresence } from '../../utils/agent-stats'
+import { colorFromString } from '../../utils/color-from-string'
 import { channelLabel, formatSeconds } from '../../utils/format'
 import { resolveWorkItemIcon } from '../../utils/salesforce-object-icon'
 import { Badge, FadeValue, PressureBar, SfIcon } from '../ds'
@@ -21,7 +22,7 @@ export function QueueDetail({ queue }: { queue: Queue }) {
   return (
     <>
       <header className="dd-head">
-        <SfIcon name="queue" size={56} bg={queue.color} />
+        <SfIcon name="queue" size={56} bg={colorFromString(queue.name)} />
         <div className="dd-head__id">
           <h2 className="dd-head__name">{queue.name}</h2>
           <span className="dd-head__sub">Cua</span>

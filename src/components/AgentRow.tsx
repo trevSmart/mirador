@@ -1,6 +1,7 @@
 import type { Agent, ChannelKey, PresenceStatus } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { useSalesforcePhoto } from '../hooks/useSalesforcePhoto'
+import { colorFromString } from '../utils/color-from-string'
 import { agentInitials, formatMinutes } from '../utils/format'
 import { CapacityBar, FadeValue, MetricPill, Ring, SfIcon } from './ds'
 import { StatusBadge } from './StatusBadge'
@@ -34,7 +35,11 @@ export function AgentAvatar({ name, photo = null }: AgentAvatarProps) {
   }
 
   return (
-    <span className="agent-avatar" aria-hidden="true">
+    <span
+      className="agent-avatar"
+      style={{ background: colorFromString(name) }}
+      aria-hidden="true"
+    >
       {agentInitials(name)}
     </span>
   )

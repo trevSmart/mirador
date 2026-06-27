@@ -242,7 +242,6 @@ private class PanoramaAgentServiceTest {
         System.assert(target.longest >= 0);
         System.assert(target.avg >= 0);
         System.assert(target.online >= 0);
-        System.assertNotEquals(null, target.color);
     }
 
     /**

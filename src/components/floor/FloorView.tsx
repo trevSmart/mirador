@@ -5,6 +5,7 @@ import { cellKey, GRID_C } from '../../floor/floor-plan-model'
 import { rotateCell, rotateEdge, roomBounds2D } from '../../floor/floor-iso'
 import type { Dir, Floor } from '../../floor/types'
 import { useSalesforcePhoto } from '../../hooks/useSalesforcePhoto'
+import { colorFromString } from '../../utils/color-from-string'
 import { agentInitials, presenceLabel } from '../../utils/format'
 import { Ring } from '../ds'
 
@@ -41,6 +42,7 @@ function FloorSeat({ agent, onSelect, showAvatars, animations }: FloorSeatProps)
         size={VIEW_CELL - 10}
         photo={showAvatars ? photo : null}
         initials={agentInitials(agent.name)}
+        faceBg={colorFromString(agent.name)}
         breathe={animations && agent.status === 'busy'}
       />
     </button>

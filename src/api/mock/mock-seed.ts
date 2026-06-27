@@ -13,14 +13,14 @@ import { workItemIconFields } from '../../utils/salesforce-object-icon'
 // `mock-state` applies small incremental changes so the contact center evolves
 // naturally over time without re-shuffling on hot-reload.
 
-type QueueDef = { id: string; name: string; color: string }
+type QueueDef = { id: string; name: string }
 
 const QUEUE_DEFS: QueueDef[] = [
-  { id: 'ac', name: 'Atenció Client', color: '#6A5BE8' },
-  { id: 'in', name: 'Incidències', color: '#E05641' },
-  { id: 've', name: 'Vendes', color: '#15A06A' },
-  { id: 'st', name: 'Suport Tècnic', color: '#D9981F' },
-  { id: 're', name: 'Retenció', color: '#A98AFF' },
+  { id: 'ac', name: 'Atenció Client' },
+  { id: 'in', name: 'Incidències' },
+  { id: 've', name: 'Vendes' },
+  { id: 'st', name: 'Suport Tècnic' },
+  { id: 're', name: 'Retenció' },
 ]
 
 const SKILL_DEFS: Skill[] = [
