@@ -87,8 +87,24 @@ public with sharing class PanoramaRestHandler {
                     writeJson(res, 400, new Map<String, Object>{ 'error' => 'Empty request body' });
                     return;
                 }
-                Map<String, Object> body = (Map<String, Object>) JSON.deserializeUntyped(req.requestBody.toString());
-                List<Object> raw = (List<Object>) body.get('ids');
+                Object parsed;
+                try {
+                    parsed = JSON.deserializeUntyped(req.requestBody.toString());
+                } catch (System.JSONException ex) {
+                    writeJson(res, 400, new Map<String, Object>{ 'error' => 'Invalid JSON body' });
+                    return;
+                }
+                if (!(parsed instanceof Map<String, Object>)) {
+                    writeJson(res, 400, new Map<String, Object>{ 'error' => 'Invalid request body' });
+                    return;
+                }
+                Map<String, Object> body = (Map<String, Object>) parsed;
+                Object idsObj = body.get('ids');
+                if (idsObj != null && !(idsObj instanceof List<Object>)) {
+                    writeJson(res, 400, new Map<String, Object>{ 'error' => 'Invalid ids list' });
+                    return;
+                }
+                List<Object> raw = (List<Object>) idsObj;
                 List<Id> recordIds = new List<Id>();
                 if (raw != null) {
                     for (Object o : raw) {
