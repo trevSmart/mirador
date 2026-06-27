@@ -54,7 +54,6 @@ export interface Agent {
 export interface Queue {
   id: string
   name: string
-  color: string
   backlog: number
   longest: number
   avg: number

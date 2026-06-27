@@ -3,6 +3,7 @@ import { MiradorApiError } from '../../api/mirador-client'
 import { useAgents, useQueues } from '../../api/data-hooks'
 import type { WorkItem } from '../../api/types'
 import { useDetailDrawer } from '../../detail/detail-drawer-context'
+import { colorFromString } from '../../utils/color-from-string'
 import { channelLabel, formatDateTime, formatSeconds, workStatusLabel } from '../../utils/format'
 import { objectLabel, resolveWorkItemIcon } from '../../utils/salesforce-object-icon'
 import { Badge, FadeValue, SfIcon } from '../ds'
@@ -60,7 +61,7 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
             {agent ? <MiniAgentRow agent={agent} onClick={() => openAgent(agent.id)} /> : null}
             {queue ? (
               <DetailRow
-                leading={<SfIcon name="queue" sldsSize="small" bg={queue.color} />}
+                leading={<SfIcon name="queue" sldsSize="small" bg={colorFromString(queue.name)} />}
                 title={queue.name}
                 meta="Cua"
                 onClick={() => openQueue(queue.id)}

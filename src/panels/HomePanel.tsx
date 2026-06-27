@@ -244,13 +244,6 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
                 />
                 <h3 className="panel-section__title">Queues</h3>
               </div>
-              <Select
-                className="panel-section__sort"
-                ariaLabel="Ordena les cues"
-                value={queueSort}
-                options={QUEUE_SORT_OPTIONS}
-                onChange={handleQueueSort}
-              />
             </header>
             <div className="panel-section__filters" role="group" aria-label="Filtra les cues">
               <Chip
@@ -274,6 +267,13 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
               >
                 Sense agents
               </Chip>
+              <Select
+                className="panel-section__sort"
+                ariaLabel="Ordena les cues"
+                value={queueSort}
+                options={QUEUE_SORT_OPTIONS}
+                onChange={handleQueueSort}
+              />
             </div>
             {topQueues.length > 0 ? (
               <div className="entity-list entity-list--grid" ref={attachQueueGrid}>
@@ -297,13 +297,6 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
                 />
                 <h3 className="panel-section__title">Agents</h3>
               </div>
-              <Select
-                className="panel-section__sort"
-                ariaLabel="Ordena els agents"
-                value={agentSort}
-                options={AGENT_SORT_OPTIONS}
-                onChange={handleAgentSort}
-              />
             </header>
             <div className="panel-section__filters" role="group" aria-label="Filtra els agents">
               {AGENT_FILTERS.map((filter) => (
@@ -317,6 +310,13 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
                   {filter === 'all' ? 'Tots' : presenceLabel(filter)}
                 </Chip>
               ))}
+              <Select
+                className="panel-section__sort"
+                ariaLabel="Ordena els agents"
+                value={agentSort}
+                options={AGENT_SORT_OPTIONS}
+                onChange={handleAgentSort}
+              />
             </div>
             {activeAgents.length > 0 ? (
               <div className="entity-list entity-list--grid" ref={attachAgentGrid}>

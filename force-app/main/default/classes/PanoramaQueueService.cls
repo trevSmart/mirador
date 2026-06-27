@@ -2,7 +2,6 @@ public with sharing class PanoramaQueueService {
     public class QueueDto {
         public String id;
         public String name;
-        public String color;
         public Integer backlog;
         public Integer longest;
         public Integer avg;
@@ -12,10 +11,6 @@ public with sharing class PanoramaQueueService {
     public class QueuesResponse {
         public List<QueueDto> queues;
     }
-
-    private static final List<String> PALETTE = new List<String>{
-        '#6A5BE8', '#E05641', '#15A06A', '#D9981F', '#A98AFF', '#3B82F6', '#EC4899'
-    };
 
     public static QueuesResponse getQueues() {
         PanoramaLoadContext ctx = PanoramaLoadContext.load();
@@ -42,20 +37,17 @@ public with sharing class PanoramaQueueService {
         Map<Id, BacklogStats> backlogByQueue = backlogByQueueFromContext(ctx, queueIds);
         Map<Id, Integer> onlineByQueue = onlineAgentsByQueueFromContext(ctx, queueIds);
 
-        Integer colorIdx = 0;
         for (Group g : groups) {
             BacklogStats stats = backlogByQueue.get(g.Id);
 
             QueueDto dto = new QueueDto();
             dto.id = g.Id;
             dto.name = g.Name;
-            dto.color = PALETTE[Math.mod(colorIdx, PALETTE.size())];
             dto.backlog = stats == null ? 0 : stats.count;
             dto.longest = stats == null ? 0 : stats.longestSec;
             dto.avg = stats == null ? 0 : stats.avgSec;
             dto.online = onlineByQueue.containsKey(g.Id) ? onlineByQueue.get(g.Id) : 0;
             queues.add(dto);
-            colorIdx++;
         }
 
         return queues;

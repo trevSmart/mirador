@@ -27,6 +27,7 @@ export function Select<T extends string | number>({
 }: SelectProps<T>) {
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
+  const [alignEnd, setAlignEnd] = useState(false)
 
   const rootRef = useRef<HTMLDivElement>(null)
   const dropRef = useRef<HTMLDivElement>(null)
@@ -36,8 +37,27 @@ export function Select<T extends string | number>({
   const selected = options.find((o) => o.value === value)
   const selectedIndex = options.findIndex((o) => o.value === value)
 
-  // Animate open/close with the shared helper.
+  // Animate open/close with the shared helper. On open, decide whether the
+  // panel must align to the right edge of the trigger because there isn't
+  // enough room to expand rightwards within the viewport.
   useEffect(() => {
+    if (open) {
+      const root = rootRef.current
+      const panel = dropRef.current
+      if (root && panel) {
+        const triggerLeft = root.getBoundingClientRect().left
+        // The panel is at least as wide as the trigger (min-width: 100%);
+        // measure its natural width while still hidden.
+        const panelWidth = Math.max(panel.scrollWidth, root.offsetWidth)
+        const margin = 8
+        const overflowsRight =
+          triggerLeft + panelWidth > window.innerWidth - margin
+        // Only flip if aligning to the right actually keeps it on-screen.
+        const fitsWhenAlignedEnd =
+          triggerLeft + root.offsetWidth - panelWidth >= margin
+        setAlignEnd(overflowsRight && fitsWhenAlignedEnd)
+      }
+    }
     closeTimeoutRef.current = syncDropdownPanel(dropRef.current, open, {
       closeTimeoutId: closeTimeoutRef.current,
     })
@@ -112,7 +132,7 @@ export function Select<T extends string | number>({
       <div
         ref={dropRef}
         id={listId}
-        className="ds-select__panel dropdown-panel"
+        className={`ds-select__panel dropdown-panel${alignEnd ? ' ds-select__panel--align-end' : ''}`}
         role="listbox"
         aria-label={ariaLabel}
         aria-activedescendant={open ? `${listId}-opt-${activeIndex}` : undefined}

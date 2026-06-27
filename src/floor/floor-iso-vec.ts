@@ -14,8 +14,8 @@ export type Point = [number, number]
 // Tile metrics that reproduce the official look at azimuth 45° / tilt 0.5.
 export const VEC_TW = 34
 export const VEC_TH = 17
-const VEC_THK = 6
-const VEC_WALL_H = 104
+const VEC_THK = 5
+const VEC_WALL_H = 120
 const VEC_DIV_H = 14
 export const VEC_SEAT_MIN_H = 4
 export const VEC_SEAT_MAX_H = 88
@@ -139,6 +139,45 @@ export function backRightOpeningEdge(x: number, y: number, b: IsoBasis): [Point,
 export function backLeftOpeningEdge(x: number, y: number, b: IsoBasis): [Point, Point, Point, Point] {
   const { top, left } = tileCorners(x, y, b)
   return [top, left, up(top, b.wallH), up(left, b.wallH)]
+}
+
+/** Footprint of light cast onto the floor by a window on a back wall.
+   The beam starts at the window's ground sill (a centred slice of the wall's
+   ground edge) and is projected across the floor along a shared sun direction
+   `(sx, sy)` (screen-space, in cell units) by `length` cells. A common sun
+   direction for every window makes all the beams parallel, like one light
+   source — far more convincing than each beam shooting straight off its wall.
+   Returns the quad [near0, near1, far1, far0] plus the near/far edge midpoints
+   so the caller can run a gradient that fades along the throw. */
+export function windowBeamQuad(
+  x: number,
+  y: number,
+  b: IsoBasis,
+  edge: 'N' | 'O',
+  sx: number,
+  sy: number,
+  length: number,
+  sill = 0.62,
+  spread = 0,
+): { points: string; near: [Point, Point]; far: [Point, Point] } {
+  const { top, right, left } = tileCorners(x, y, b)
+  const [e0, e1] = edge === 'N' ? [top, right] : [top, left]
+  // The window only spans the middle `sill` fraction of the wall, so inset the
+  // ground edge symmetrically to that width.
+  const pad = (1 - sill) / 2
+  const n0: Point = [e0[0] + (e1[0] - e0[0]) * pad, e0[1] + (e1[1] - e0[1]) * pad]
+  const n1: Point = [e0[0] + (e1[0] - e0[0]) * (1 - pad), e0[1] + (e1[1] - e0[1]) * (1 - pad)]
+  // Throw both ends along the shared sun vector (scaled to one cell ≈ |u|).
+  const tx = sx * b.ux + sy * b.vx
+  const ty = sx * b.uy + sy * b.vy
+  // Splay the far ends sideways (along the sill direction n0→n1) so the beam
+  // fans out as it travels — `spread` is the extra half-width gained at the
+  // throw's end, as a fraction of the sill width.
+  const wx = (n1[0] - n0[0]) * spread
+  const wy = (n1[1] - n0[1]) * spread
+  const far0: Point = [n0[0] + tx * length - wx, n0[1] + ty * length - wy]
+  const far1: Point = [n1[0] + tx * length + wx, n1[1] + ty * length + wy]
+  return { points: str(n0, n1, far1, far0), near: [n0, n1], far: [far0, far1] }
 }
 
 /** Interior divider wall on the shared edge toward the E or S neighbour. */

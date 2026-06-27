@@ -21,7 +21,7 @@ export function DetailTabIcon({ target }: { target: DetailTarget }) {
 
   if (target.kind === 'queue') {
     const queue = queues.find((entry) => entry.id === target.id)
-    return <SfIcon name="queue" sldsSize="x-small" bg={queue?.color} />
+    return <SfIcon name="queue" sldsSize="x-small" bg={queue ? colorFromString(queue.name) : undefined} />
   }
 
   if (target.kind === 'work') {

@@ -1,4 +1,5 @@
 import type { Agent, Queue } from '../api/types'
+import { colorFromString } from '../utils/color-from-string'
 
 export interface TowerSegment {
   queueId: string | null
@@ -17,13 +18,9 @@ function resolveQueueColor(
 ): string {
   if (queueId) {
     const byId = queuesById.get(queueId)
-    if (byId) return byId.color
+    if (byId) return colorFromString(byId.name)
   }
-  if (queueName) {
-    for (const queue of queuesById.values()) {
-      if (queue.name === queueName) return queue.color
-    }
-  }
+  if (queueName) return colorFromString(queueName)
   return FALLBACK_COLOR
 }
 

@@ -1,5 +1,6 @@
 import type { Agent, PresenceStatus } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
+import { colorFromString } from '../utils/color-from-string'
 import { agentInitials } from '../utils/format'
 import { useSalesforcePhoto } from '../hooks/useSalesforcePhoto'
 import { FadeValue } from './ds'
@@ -20,7 +21,11 @@ function AgentCardAvatar({ name, photo, color }: { name: string; photo: string |
       {photoSrc ? (
         <img className="agent-card__avatar agent-card__avatar--photo" src={photoSrc} alt="" aria-hidden="true" />
       ) : (
-        <span className="agent-card__avatar" aria-hidden="true">
+        <span
+          className="agent-card__avatar"
+          style={{ background: colorFromString(name) }}
+          aria-hidden="true"
+        >
           {agentInitials(name)}
         </span>
       )}
