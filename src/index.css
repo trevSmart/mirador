@@ -1637,7 +1637,7 @@ textarea,
   display: flex;
   align-items: flex-start;
   gap: var(--sp-5);
-  flex: 1 1 auto;
+  flex: 1 0 auto;
   min-width: 0;
 }
 
@@ -1707,9 +1707,10 @@ textarea,
 
 .insights-banner__pillars {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: var(--sp-3);
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   align-self: center;
 }
 
@@ -3207,34 +3208,22 @@ textarea,
   border: 1px solid var(--accent);
   border-radius: var(--r-pill);
   padding: 2px 7px;
-}
-
-.app-header__button--console {
-  font-family: var(--font-mono);
-  font-size: calc(10px + var(--mono-fs-nudge));
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  padding: 2px 8px;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--pa-line-2);
-  background: transparent;
-  color: var(--pa-faint);
   cursor: pointer;
   transition: background 0.12s, color 0.12s, border-color 0.12s;
 }
 
-.app-header__button--console:hover {
-  background: var(--pa-surface-2);
-  color: var(--pa-dim);
+.app-header__dev:hover {
+  background: var(--accent);
+  color: var(--pa-bg, #fff);
 }
 
-.app-header__button--console-active {
+.app-header__dev--active {
   border-color: var(--pa-ok);
   color: var(--pa-ok);
   background: var(--pa-ok-soft);
 }
 
-.app-header__button--console-active:hover {
+.app-header__dev--active:hover {
   background: var(--pa-ok-soft);
   color: var(--pa-ok);
 }
@@ -5358,14 +5347,40 @@ textarea,
   border: 1px solid rgba(255, 255, 255, .10);
   background: transparent;
   color: rgba(255, 255, 255, .62);
-  font: inherit;
+  /* Els controls (a diferència dels filtres de nivell) van amb la font normal
+     de la UI, no la monospace de la consola. */
+  font-family: var(--font-body);
   font-size: 10px;
   cursor: pointer;
   text-align: center;
 }
 
+/* Els botons d'icona centren un SVG de traç (Heroicons) que hereta currentColor. */
 .dev-console__action-btn--icon {
   width: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dev-console__action-btn--icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Botó amb icona + etiqueta (p. ex. Clear): amplada automàtica per encabir tots
+   dos, amb una mica de separació entre la icona i el text. */
+.dev-console__action-btn--text-icon {
+  width: auto;
+  padding: 1px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dev-console__action-btn--text-icon svg {
+  width: 13px;
+  height: 13px;
 }
 
 .dev-console__action-btn--on {
@@ -5384,9 +5399,37 @@ textarea,
   overflow-y: auto;
   overflow-x: hidden;
   padding: 4px 0;
+  /* Firefox: thumb prou contrastat i track lleugerament tintat perquè el canal
+     es distingeixi del fons fosc de la consola, en lloc de fondre-s'hi. */
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, .15) transparent;
+  scrollbar-color: rgba(255, 255, 255, .4) rgba(255, 255, 255, .06);
   scroll-behavior: smooth;
+}
+
+/* WebKit/Blink: scrollbar custom visible. El track marca el canal i el thumb
+   porta un border translúcid que el separa nítidament del fons. */
+.dev-console__body::-webkit-scrollbar {
+  width: 10px;
+}
+
+.dev-console__body::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, .06);
+  border-radius: 6px;
+}
+
+.dev-console__body::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, .4);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.dev-console__body::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, .6);
+}
+
+.dev-console__body::-webkit-scrollbar-thumb:active {
+  background-color: rgba(255, 255, 255, .75);
 }
 
 /* Amagat en minimitzar però sense desmuntar, perquè conservi el scroll. */
@@ -5476,10 +5519,60 @@ textarea,
 /* Message text */
 .dev-console__msg {
   flex: 1;
+  min-width: 0;
   white-space: pre-wrap;
   word-break: break-all;
   user-select: text;
   color: #c9c6d3;
+}
+
+/* Estat col·lapsat: retalla a una sola línia amb el·lipsi. `white-space: normal`
+   evita que un salt de línia primerenc (p. ex. stacks d'error) deixi la línia
+   buida; així la previsualització mostra el màxim de contingut en aquesta línia. */
+.dev-console__msg--collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+}
+
+/* Botó d'expandir/col·lapsar una entrada. Compacte i discret; s'alinea a dalt
+   perquè quan el missatge està expandit (multilínia) quedi a la primera línia. */
+.dev-console__expand {
+  flex-shrink: 0;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, .06);
+  color: rgba(255, 255, 255, .7);
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color .12s ease, color .12s ease, border-color .12s ease;
+}
+
+.dev-console__expand svg {
+  width: 12px;
+  height: 12px;
+  transition: transform .15s ease;
+}
+
+/* Expandit: gira la fletxa cap amunt per indicar que es pot col·lapsar. */
+.dev-console__expand--open svg {
+  transform: rotate(180deg);
+}
+
+.dev-console__expand:hover {
+  background: rgba(255, 255, 255, .14);
+  border-color: rgba(255, 255, 255, .28);
+  color: rgba(255, 255, 255, .95);
 }
 
 /* Tinta molt subtil del text segons el nivell: el color base es barreja amb el

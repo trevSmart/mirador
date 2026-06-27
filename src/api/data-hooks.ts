@@ -45,6 +45,11 @@ function useSnapshotConfig() {
     staleTime: 1_500,
     refetchInterval: prefs.autoRefresh ? prefs.refreshInterval * 1000 : false,
     refetchIntervalInBackground: true,
+    // Newly-mounted readers (e.g. opening the detail drawer) reuse the cache
+    // instead of triggering a snapshot refetch — freshness is the polling
+    // interval's job. The first load (no data) and the manual refresh
+    // (invalidateQueries) still fetch regardless.
+    refetchOnMount: false,
   } as const
 }
 

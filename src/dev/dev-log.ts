@@ -22,7 +22,7 @@ export interface LogEntry {
 type Subscriber = (event: LogEvent) => void
 type LogEvent = { type: 'entry'; entry: LogEntry } | { type: 'clear' }
 
-const MAX_ENTRIES = 500
+export const MAX_ENTRIES = 500
 const ALWAYS_CAPTURE: ReadonlySet<LogLevel> = new Set(['error'])
 
 let _seq = 0

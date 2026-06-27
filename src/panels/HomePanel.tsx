@@ -241,7 +241,6 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
                   className="panel-section__icon"
                   name="queue"
                   sldsSize="x-small"
-                  bg="var(--pa-ic-queue)"
                 />
                 <h3 className="panel-section__title">Queues</h3>
               </div>
@@ -295,7 +294,6 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
                   sprite="standard"
                   symbol="customers"
                   sldsSize="x-small"
-                  bg="var(--pa-ic-user)"
                 />
                 <h3 className="panel-section__title">Agents</h3>
               </div>

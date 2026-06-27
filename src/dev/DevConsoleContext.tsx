@@ -3,7 +3,7 @@
    and the hook lives in ./useDevConsole.ts. */
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { devLog, type LogEntry, type LogLevel } from './dev-log'
+import { devLog, MAX_ENTRIES, type LogEntry, type LogLevel } from './dev-log'
 import { DevConsoleContext, type DevConsoleContextValue } from './dev-console-context'
 import { useDeveloperMode } from '../hooks/useDeveloperMode'
 import { useRegisterModal } from '../modals/useRegisterModal'
@@ -108,7 +108,7 @@ export function DevConsoleProvider({ children }: { children: ReactNode }) {
       } else {
         setEntries((prev) => {
           const next = [...prev, event.entry]
-          return next.length > 500 ? next.slice(next.length - 500) : next
+          return next.length > MAX_ENTRIES ? next.slice(next.length - MAX_ENTRIES) : next
         })
       }
     })
