@@ -407,12 +407,14 @@ export function FloorView3D({ floor, agentsById, queuesById, showAvatars, animat
   // floor prop swaps to a different room, re-hydrate for that floor (render-time
   // reset, matching FloorPanel's prefs pattern).
   const [rotation, setRotation] = useState<RoomRotation>(() => loadRoomRotation(floor.id))
-  const [rotFloorId, setRotFloorId] = useState(floor.id)
   const dirtyRef = useRef(false)
-  if (rotFloorId !== floor.id) {
-    setRotFloorId(floor.id)
+  const rotFloorIdRef = useRef(floor.id)
+
+  useEffect(() => {
+    if (rotFloorIdRef.current === floor.id) return
+    rotFloorIdRef.current = floor.id
     setRotation(loadRoomRotation(floor.id))
-  }
+  }, [floor.id])
 
   // On (re)hydration for a floor, clear the dirty flag so the just-loaded value
   // is never written straight back. Declared BEFORE the persist effect so it
