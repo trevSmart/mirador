@@ -91,10 +91,11 @@ export function useDataStatus(): DataStatus {
     notifyOnChangeProps: ['isLoading', 'isFetching', 'error'],
   })
 
-  const refresh = useCallback(
-    () => queryClient.invalidateQueries({ queryKey: snapshotKey }),
-    [queryClient],
-  )
+  const refresh = useCallback(() => {
+    const state = queryClient.getQueryState(snapshotKey)
+    if (state?.fetchStatus === 'fetching') return Promise.resolve()
+    return queryClient.invalidateQueries({ queryKey: snapshotKey })
+  }, [queryClient])
 
   const error =
     query.error && query.data === undefined
