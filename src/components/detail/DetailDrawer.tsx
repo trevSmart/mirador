@@ -5,10 +5,11 @@ import { SfIcon } from '../ds'
 import { AgentDetail } from './AgentDetail'
 import { QueueDetail } from './QueueDetail'
 import { SkillDetail } from './SkillDetail'
+import { WorkItemDetail } from './WorkItemDetail'
 
 export function DetailDrawer() {
   const { detail, close, openAsTab } = useDetailDrawer()
-  const { agents, queues, skills } = useMiradorData()
+  const { agents, queues, skills, work } = useMiradorData()
 
   const open = detail !== null
   // Retain the last target while closing so content doesn't blank out mid-animation.
@@ -39,6 +40,9 @@ export function DetailDrawer() {
   } else if (shown?.kind === 'skill') {
     const skill = skills.find((s) => s.id === shown.id)
     if (skill) content = <SkillDetail skill={skill} />
+  } else if (shown?.kind === 'work') {
+    const item = work.find((w) => w.id === shown.id)
+    if (item) content = <WorkItemDetail item={item} />
   }
 
   return (

@@ -11,7 +11,7 @@ const BACKLOG_FULL = 20
 
 export function QueueDetail({ queue }: { queue: Queue }) {
   const { agents, work } = useMiradorData()
-  const { openAgent } = useDetailDrawer()
+  const { openAgent, openWork } = useDetailDrawer()
 
   const waiting = work.filter((item) => item.status === 'queued' && item.queueId === queue.id)
   const members = sortAgentsByPresence(agents.filter((agent) => agent.queueIds.includes(queue.id)))
@@ -63,6 +63,7 @@ export function QueueDetail({ queue }: { queue: Queue }) {
                       {channelLabel(item.channelKey)} · <FadeValue value={formatSeconds(item.ageSec)} />
                     </>
                   }
+                  onClick={() => openWork(item.id)}
                 />
               )
             })}

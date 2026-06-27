@@ -4,13 +4,14 @@ import { useMiradorData } from '../api/mirador-data-context'
 import { AgentDetail } from '../components/detail/AgentDetail'
 import { QueueDetail } from '../components/detail/QueueDetail'
 import { SkillDetail } from '../components/detail/SkillDetail'
+import { WorkItemDetail } from '../components/detail/WorkItemDetail'
 import type { DetailPanelParams } from '../detail/detail-panel'
 import { resolveDetailTitle } from '../detail/resolve-detail-meta'
 
 export function DetailPanel({ api, params }: IDockviewPanelProps<DetailPanelParams>) {
-  const { agents, queues, skills } = useMiradorData()
+  const { agents, queues, skills, work } = useMiradorData()
   const target = { kind: params.kind, id: params.id }
-  const title = resolveDetailTitle(target, { agents, queues, skills })
+  const title = resolveDetailTitle(target, { agents, queues, skills, work })
 
   useEffect(() => {
     if (api.title !== title) {
@@ -28,6 +29,9 @@ export function DetailPanel({ api, params }: IDockviewPanelProps<DetailPanelPara
   } else if (params.kind === 'skill') {
     const skill = skills.find((entry) => entry.id === params.id)
     if (skill) content = <SkillDetail skill={skill} />
+  } else if (params.kind === 'work') {
+    const item = work.find((entry) => entry.id === params.id)
+    if (item) content = <WorkItemDetail item={item} />
   }
 
   return (

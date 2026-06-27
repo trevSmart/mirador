@@ -23,7 +23,7 @@ import {
 
 export function DetailDrawerProvider({ children }: { children: ReactNode }) {
   const [detail, setDetail] = useState<DetailTarget | null>(null)
-  const { agents, queues, skills } = useMiradorData()
+  const { agents, queues, skills, work } = useMiradorData()
   const { getApi } = useDockviewHost()
 
   const open = useCallback((kind: DetailKind, id: string) => {
@@ -38,13 +38,13 @@ export function DetailDrawerProvider({ children }: { children: ReactNode }) {
       if (!api) {
         return
       }
-      const title = resolveDetailTitle(target, { agents, queues, skills })
+      const title = resolveDetailTitle(target, { agents, queues, skills, work })
       devLog.action('detail:open-as-tab', `${target.kind} · ${title}`)
       recordDetailOpen({ kind: target.kind, id: target.id, name: title })
       openDetailTab(api, target, title)
       setDetail(null)
     },
-    [agents, getApi, queues, skills],
+    [agents, getApi, queues, skills, work],
   )
 
   const value = useMemo<DetailDrawerContextValue>(
@@ -53,6 +53,7 @@ export function DetailDrawerProvider({ children }: { children: ReactNode }) {
       openAgent: (id) => open('agent', id),
       openQueue: (id) => open('queue', id),
       openSkill: (id) => open('skill', id),
+      openWork: (id) => open('work', id),
       openAsTab,
       close: () => setDetail(null),
     }),

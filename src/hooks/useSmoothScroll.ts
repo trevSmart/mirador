@@ -58,15 +58,29 @@ export function useSmoothScroll<T extends HTMLElement>() {
     })
     lenisByElement.set(element, lenis)
 
-    let rafId = requestAnimationFrame(function raf(time) {
+    let rafId = 0
+    const teardown = () => {
+      cancelAnimationFrame(rafId)
+      lenisByElement.delete(element)
+      lenis.destroy()
+      cleanup.current = null
+    }
+
+    // Mirador renders panels inside Dockview, which destroys panel DOM nodes
+    // directly rather than through React's reconciler. When that happens React
+    // never invokes this callback ref with `null`, so the cleanup below would
+    // never run and Lenis's raf loop would leak — several orphaned loops pegged
+    // the CPU at 100% on load. Guard the loop on `element.isConnected`: the
+    // moment the element leaves the document, the instance self-destructs.
+    rafId = requestAnimationFrame(function raf(time) {
+      if (!element.isConnected) {
+        teardown()
+        return
+      }
       lenis.raf(time)
       rafId = requestAnimationFrame(raf)
     })
 
-    cleanup.current = () => {
-      cancelAnimationFrame(rafId)
-      lenisByElement.delete(element)
-      lenis.destroy()
-    }
+    cleanup.current = teardown
   }, [])
 }
