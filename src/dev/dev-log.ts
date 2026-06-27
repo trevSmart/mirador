@@ -173,6 +173,7 @@ export const devLog = {
      truncated so large snapshots don't flood the console; the full object is
      always available via the React Query store. */
   query(status: string, key: string, payload?: unknown): void {
+    if (!_capturing) return
     const tail =
       payload !== undefined ? ` → ${truncate(safeText(payload))}` : ''
     push('query', `${status} ${key}${tail}`)
