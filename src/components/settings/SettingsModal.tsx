@@ -105,7 +105,7 @@ export function SettingsModal() {
   let body: ReactNode = null
   switch (activeSection) {
     case 'connexio':
-      body = <ConnexioSection draft={draft} patch={patch} />
+      body = <ConnexioSection />
       break
     case 'dades':
       body = <DadesSection draft={draft} patch={patch} />
