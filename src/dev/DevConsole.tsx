@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useDevConsole } from './useDevConsole'
 import { useDeveloperMode } from '../hooks/useDeveloperMode'
 import type { LogLevel } from './dev-log'
@@ -45,8 +45,13 @@ function useResizeDrag(onResize: (px: number) => void) {
    explícit perquè la transició CSS pugui animar. */
 const MINIMIZED_HEIGHT_PX = 110
 
-/** Nombre d'entrades recents mostrades a la previsualització minimitzada. */
+/** Nombre d'entrades recents VISIBLES a la previsualització minimitzada. */
 const MINIMIZED_PREVIEW_COUNT = 3
+
+/** Línies realment renderitzades: una més de les visibles. L'extra queda
+   retallada per `overflow:hidden` i és la que es veu sortir per dalt mentre el
+   bloc llisca amunt en arribar una entrada nova (efecte teletip). */
+const MINIMIZED_RENDER_COUNT = MINIMIZED_PREVIEW_COUNT + 1
 
 // ── Main component ───────────────────────────────────────────────────────────
 
@@ -81,6 +86,9 @@ export function DevConsole() {
      sense dependre'n: així, desbloquejar NO provoca un salt immediat al fons;
      el seguiment només es reprèn a la pròxima entrada nova. */
   const scrollLockedRef = useRef(scrollLocked)
+  // Patró "mirall en ref" recomanat per React per llegir el valor més recent
+  // des d'un efecte sense dependre'n. L'escriptura durant el render és segura ací.
+  // eslint-disable-next-line react-hooks/refs
   scrollLockedRef.current = scrollLocked
 
   /* Estàvem enganxats al fons abans de l'última actualització? Es mesura abans
@@ -89,13 +97,13 @@ export function DevConsole() {
 
   /* Auto-scroll al fons quan arriben entrades noves, mantenint el seguiment
      si NO està bloquejat o si l'usuari ja era al fons. El body es manté sempre
-     muntat (s'amaga via CSS en minimitzar), així que `scrollTop` mai es perd;
-     per això no cal desar/restaurar cap posició manualment.
+     muntat (s'amaga via CSS en minimitzar), així que `scrollTop` mai es perd.
 
-     Mentre està minimitzat el body té `display:none` i no té dimensions de
-     scroll fiables, així que l'auto-scroll es difereix fins que es restaura
-     (deps inclou `minimized`): en obrir-se, si toca, salta al fons actual. */
-  useEffect(() => {
+     Mentre està minimitzat el body té `display:none` i no és mesurable, per
+     això l'ajust es difereix. Però en RESTAURAR (minimized passa a false) cal
+     que el scroll ja estigui a baix sense flaix visible: useLayoutEffect corre
+     síncron abans del paint, així que el reposicionament és imperceptible. */
+  useLayoutEffect(() => {
     const el = bodyRef.current
     if (!visible || minimized || !el) return
     if (!scrollLockedRef.current || wasAtBottomRef.current) {
@@ -140,6 +148,36 @@ export function DevConsole() {
       return true
     })
   }, [entries, filters, search])
+
+  const previewSlice = minimized ? filtered.slice(-MINIMIZED_RENDER_COUNT) : []
+  const newestPreviewId = previewSlice.at(-1)?.id ?? null
+
+  /* Id de l'última entrada arribada mentre minimitzat. Serveix de `key` del
+     contenidor de la previsualització: en canviar, React remunta el bloc i el
+     `@keyframes` de desplaçament es reprodueix net (tot el bloc llisca amunt una
+     alçada de línia, efecte teletip). La detecció es fa a un `useLayoutEffect`
+     (no durant el render) perquè mutar un ref dins el render es comporta malament
+     amb el doble render de StrictMode: el segon passi veuria el ref ja
+     actualitzat i no detectaria mai l'entrada nova.
+
+     El ref NOMÉS s'actualitza mentre minimitzat: estant expandit no hi ha
+     previsualització, així que en restaurar conserva l'últim id vist i no es
+     dispara una animació espúria pel simple fet de minimitzar — només quan
+     arriba realment una entrada nova. Inicialitzat a `undefined` per distingir
+     el primer cop (que no anima) d'un canvi real d'id. */
+  const [enteringId, setEnteringId] = useState<string | null>(null)
+  const lastPreviewIdRef = useRef<string | null | undefined>(undefined)
+  useLayoutEffect(() => {
+    if (!minimized) return
+    if (
+      lastPreviewIdRef.current !== undefined &&
+      newestPreviewId !== null &&
+      newestPreviewId !== lastPreviewIdRef.current
+    ) {
+      setEnteringId(newestPreviewId)
+    }
+    lastPreviewIdRef.current = newestPreviewId
+  }, [minimized, newestPreviewId])
 
   const copyAll = useCallback(() => {
     const text = filtered
@@ -242,21 +280,33 @@ export function DevConsole() {
         )}
       </div>
 
-      {/* Minimized preview: últimes entrades */}
-      {minimized && filtered.length > 0 && (
-        <div className="dev-console__preview" aria-hidden="true">
-          {filtered.slice(-MINIMIZED_PREVIEW_COUNT).map((entry) => (
-            <div
-              key={entry.id}
-              className={`dev-console__line dev-console__line--${entry.level}`}
-            >
-              <span className="dev-console__ts">{formatTime(entry.ts)}</span>
-              <span className={`dev-console__badge dev-console__badge--${entry.level}`}>
-                {entry.level}
-              </span>
-              <span className="dev-console__msg">{entry.text}</span>
-            </div>
-          ))}
+      {/* Minimized preview: últimes entrades amb efecte teletip. El contenidor
+          extern retalla (overflow:hidden) i el `__preview-track` intern és qui
+          llisca: en arribar una entrada nova, `key={enteringId}` el remunta i el
+          `@keyframes` el desplaça des d'una alçada de línia amunt fins a la seva
+          posició, així tot el bloc es mou junt i la línia de dalt surt per la
+          vora. El modificador de direcció fixa des d'on entra la línia nova; avui
+          les més recents van a baix (llisca amunt). Quan l'ordenació sigui
+          configurable, només cal commutar aquest modificador. */}
+      {minimized && previewSlice.length > 0 && (
+        <div
+          className="dev-console__preview dev-console__preview--newest-bottom"
+          aria-hidden="true"
+        >
+          <div className="dev-console__preview-track" key={enteringId ?? 'init'}>
+            {previewSlice.map((entry) => (
+              <div
+                key={entry.id}
+                className={`dev-console__line dev-console__line--${entry.level}`}
+              >
+                <span className="dev-console__ts">{formatTime(entry.ts)}</span>
+                <span className={`dev-console__badge dev-console__badge--${entry.level}`}>
+                  {entry.level}
+                </span>
+                <span className="dev-console__msg">{entry.text}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

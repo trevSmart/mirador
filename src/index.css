@@ -216,6 +216,9 @@
   --dur-fast: .15s;
   --dur-base: .2s;
   --dur-slow: .32s;
+  --dur-drawer: .28s;
+  --dur-backdrop: .18s;
+  --dur-nav: .2s;
   --dur-value: .45s;
   --dur-bar: .6s;
 
@@ -3393,13 +3396,13 @@ textarea,
   backdrop-filter: var(--blur-scrim, blur(2px));
   opacity: 0;
   visibility: hidden;
-  transition: opacity var(--dur-base) var(--ease), visibility 0s linear var(--dur-base);
+  transition: opacity var(--dur-backdrop) var(--ease), visibility 0s linear var(--dur-backdrop);
 }
 
 .detail-backdrop.is-open {
   opacity: 1;
   visibility: visible;
-  transition: opacity var(--dur-base) var(--ease), visibility 0s linear 0s;
+  transition: opacity var(--dur-backdrop) var(--ease), visibility 0s linear 0s;
 }
 
 .detail-drawer {
@@ -3416,7 +3419,7 @@ textarea,
   border-left: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-drawer, -30px 0 60px rgba(27, 25, 36, 0.15));
   transform: translateX(100%);
-  transition: transform var(--dur-slow) var(--ease);
+  transition: transform var(--dur-drawer) var(--ease);
   pointer-events: none;
 }
 
@@ -3457,9 +3460,72 @@ textarea,
 }
 
 .detail-drawer__scroll {
+  position: relative;
   flex: 1 1 auto;
-  overflow: auto;
+  overflow-y: auto;
+  /* Clip the incoming content while it slides in from off-canvas (the nav
+     animation), so it appears to enter from outside the drawer edge. */
+  overflow-x: hidden;
   padding: var(--sp-8);
+}
+
+/* Cross-slide when navigating to a related record while the drawer is already
+   open (skipped on first open — the whole drawer slides in then).
+   Two layers overlap during the transition: the outgoing record stays put
+   underneath (--leaving) while the incoming record slides in over it from
+   off-canvas (--nav). The incoming layer has an opaque background so it fully
+   covers the old content as it arrives — the panel never shows an empty gap. */
+.detail-drawer__content--leaving {
+  position: absolute;
+  inset: 0;
+  padding: var(--sp-8);
+  overflow: hidden;
+  animation: dd-content-out var(--dur-nav) var(--ease) forwards;
+}
+
+@keyframes dd-content-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-12%);
+  }
+}
+
+.detail-drawer__content--nav {
+  position: relative;
+  z-index: 1;
+  min-height: 100%;
+  background: var(--surface-raised);
+  animation: dd-content-in var(--dur-nav) var(--ease);
+}
+
+@keyframes dd-content-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Collapse the slide to an instant swap, but keep a non-zero duration so the
+     animationend handler still fires and clears the outgoing layer. */
+  .detail-drawer__content--nav,
+  .detail-drawer__content--leaving {
+    animation-duration: 1ms;
+  }
+  @keyframes dd-content-in {
+    from {
+      transform: none;
+    }
+    to {
+      transform: none;
+    }
+  }
 }
 
 .dd-head {
@@ -5077,13 +5143,59 @@ textarea,
   flex-shrink: 0;
 }
 
-/* Minimized preview: bloc amb les últimes entrades sota el header */
+/* Minimized preview: finestra teletip amb les últimes entrades sota el header.
+   Alçada exacta de 3 línies; renderitzem 4 al track, així la 4a (la més antiga)
+   queda retallada per dalt i es veu sortir quan el bloc llisca amunt.
+   `--line-h` ha de coincidir amb l'alçada real de `.dev-console__line`
+   (font-size 12.5px · line-height 1.5 + padding vertical 3px·2 ≈ 24.75px). */
 .dev-console__preview {
+  --line-h: 24.75px;
   flex: 1;
   min-height: 0;
+  /* Finestra d'EXACTAMENT 3 línies: sense padding vertical perquè el clip caigui
+     just a la vora d'una línia i la 4a quedi del tot fora (cap franja a mitges). */
+  max-height: calc(var(--line-h) * 3);
   overflow: hidden;
-  padding: 4px 0;
+  /* Ancora el contingut a baix: l'excés (línia més antiga) sobreïx per dalt. */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0;
   opacity: .85;
+}
+
+/* El track és qui es mou. En remuntar-se (canvi de `key`) reprodueix el
+   keyframe: arrenca desplaçat `--enter-from` i llisca fins a 0, arrossegant
+   totes les línies juntes. La direcció ve del modificador del contenidor. */
+.dev-console__preview-track {
+  animation: dev-console-track-shift .18s ease-out;
+}
+
+/* `--enter-from`: desplaçament inicial del track. Amb les més recents a baix, el
+   track arrenca una alçada de línia AVALL (mostrant encara l'estat previ, sense
+   la nova) i puja fins a 0 → la nova entra per baix i tot el bloc sembla pujar.
+   Per l'ordenació inversa, el track arrenca amunt i baixa. */
+.dev-console__preview--newest-bottom {
+  --enter-from: var(--line-h);
+}
+
+.dev-console__preview--newest-top {
+  --enter-from: calc(var(--line-h) * -1);
+}
+
+@keyframes dev-console-track-shift {
+  from {
+    transform: translateY(var(--enter-from));
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dev-console__preview-track {
+    animation: none;
+  }
 }
 
 /* Toolbar */

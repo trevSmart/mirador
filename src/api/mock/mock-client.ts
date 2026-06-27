@@ -2,17 +2,11 @@ import { devLog } from '../../dev/dev-log'
 import type { MiradorClient } from '../mirador-client'
 import type {
   AgentScope,
-  AgentSkillsResponse,
   AgentsResponse,
-  QueuesResponse,
   RecordDetail,
   RecordDetailsRequest,
   RecordDetailsResponse,
-  SkillAgentsResponse,
-  SkillsResponse,
   SnapshotResponse,
-  UpdateSkillsResponse,
-  WorkResponse,
 } from '../types'
 import { MOCK_CAPABILITIES } from './capabilities'
 import { getAgentSkills } from './mock-seed'

@@ -24,6 +24,9 @@ export function AppHeader() {
   useEffect(() => {
     if (isRefreshing) {
       stopRequestedRef.current = false
+      // Sincronitza l'estat del gir amb el prop extern isRefreshing (cas legítim
+      // d'efecte: sincronitzar React amb un sistema extern, ací el context d'estat).
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSpinning(true)
     } else {
       // Refresh finished — let the current rotation complete before stopping.
