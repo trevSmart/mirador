@@ -115,7 +115,7 @@ export function FloorView({
         style={{
           ['--fv-grid-w' as string]: `${gridW * scale}px`,
           ['--fv-grid-h' as string]: `${gridH * scale}px`,
-        } as React.CSSProperties}
+        }}
       >
         <div
           className="fv-grid"
@@ -123,7 +123,7 @@ export function FloorView({
             width: gridW,
             height: gridH,
             ['--fv-fit-scale' as string]: scale,
-          } as React.CSSProperties}
+          }}
         >
         {rotated.cells.map(([c, r]) => {
           const seat = rotated.seatByKey.get(cellKey(c, r))

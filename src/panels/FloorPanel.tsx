@@ -203,7 +203,7 @@ export function FloorPanel() {
               <span className="fv-place-name">{activePlace.name}</span>
             )}
 
-            {!multiFloor ? <span className="fv-floor-name">{floors[0]!.name}</span> : null}
+            {!multiFloor ? <span className="fv-floor-name">{floors[0].name}</span> : null}
           </div>
 
           <div className="fv-controls">

@@ -28,7 +28,7 @@ export function useSourceClient<S extends SourceId>(
 
   switch (source) {
     case 'salesforce':
-      return miradorClient as SourceClientMap[S] | null
+      return miradorClient
     default:
       return null
   }
