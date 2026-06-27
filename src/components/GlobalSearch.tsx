@@ -13,6 +13,7 @@ import { devLog } from '../dev/dev-log'
 import type { Agent, PresenceStatus, Queue, Skill } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { colorFromString } from '../utils/color-from-string'
+import { resolveWorkItemIcon } from '../utils/salesforce-object-icon'
 import {
   getDetailRecents,
   setDetailRecentResolver,
@@ -24,10 +25,10 @@ import {
   type SearchItemRef,
   type SearchWorkHit,
 } from '../utils/global-search'
-import { presenceLabel } from '../utils/format'
+import { presenceLabel, agentInitials } from '../utils/format'
 import { syncDropdownPanel } from '../utils/sync-dropdown-panel'
-import { AgentAvatar } from './AgentRow'
-import { SfIcon } from './ds/SfIcon'
+import { useSalesforcePhoto } from '../hooks/useSalesforcePhoto'
+import { SfIconTile } from './ds/SfIconTile'
 
 const CONTENT_TRANSITION_MS = 220
 
@@ -53,6 +54,32 @@ interface SearchAgentItemProps {
   onSelect: () => void
 }
 
+function SearchAgentAvatar({ name, photo }: { name: string; photo: string | null }) {
+  const photoSrc = useSalesforcePhoto(photo)
+  const [photoFailed, setPhotoFailed] = useState(false)
+  const showPhoto = Boolean(photoSrc) && !photoFailed
+  const initials = agentInitials(name)
+  const bg = colorFromString(name)
+
+  return (
+    <div className={`si-av${showPhoto ? '' : ' av--initials'}`} style={{ background: bg }}>
+      {showPhoto ? (
+        <>
+          <span className="av-ini">{initials}</span>
+          <img
+            src={photoSrc!}
+            alt=""
+            loading="lazy"
+            onError={() => setPhotoFailed(true)}
+          />
+        </>
+      ) : (
+        <span>{initials}</span>
+      )}
+    </div>
+  )
+}
+
 function SearchAgentItem({ agent, active, onSelect }: SearchAgentItemProps) {
   const statusColor = PRESENCE_COLOR[agent.status]
   return (
@@ -63,9 +90,7 @@ function SearchAgentItem({ agent, active, onSelect }: SearchAgentItemProps) {
       aria-selected={active}
       onClick={onSelect}
     >
-      <span className="si-av">
-        <AgentAvatar name={agent.name} photo={agent.photo} />
-      </span>
+      <SearchAgentAvatar name={agent.name} photo={agent.photo} />
       <span className="si-main">
         <div className="si-title">{agent.name}</div>
         <div className="si-meta">{agent.role}</div>
@@ -84,7 +109,7 @@ function SearchAgentItem({ agent, active, onSelect }: SearchAgentItemProps) {
 }
 
 interface SearchQueueItemProps {
-  queue: Pick<Queue, 'id' | 'name' | 'backlog' | 'online'>
+  queue: Pick<Queue, 'id' | 'name' | 'color' | 'backlog' | 'online'>
   active: boolean
   onSelect: () => void
 }
@@ -98,7 +123,7 @@ function SearchQueueItem({ queue, active, onSelect }: SearchQueueItemProps) {
       aria-selected={active}
       onClick={onSelect}
     >
-      <SfIcon name="queue" size={30} bg={colorFromString(queue.name)} radius={8} />
+      <SfIconTile name="queue" size={30} bg={queue.color} />
       <span className="si-main">
         <div className="si-title">{queue.name}</div>
         <div className="si-meta">
@@ -125,7 +150,7 @@ function SearchSkillItem({ skill, active, onSelect }: SearchSkillItemProps) {
       aria-selected={active}
       onClick={onSelect}
     >
-      <SfIcon name="skill" size={30} radius={8} />
+      <SfIconTile name="skill" size={30} bg={colorFromString(skill.name)} />
       <span className="si-main">
         <div className="si-title">{skill.name}</div>
         <div className="si-meta">{skill.agents} qualified agents</div>
@@ -142,6 +167,8 @@ interface SearchWorkItemProps {
 }
 
 function SearchWorkItemRow({ work, active, onSelect }: SearchWorkItemProps) {
+  const icon = resolveWorkItemIcon({ channelKey: work.channelKey })
+
   return (
     <button
       type="button"
@@ -150,7 +177,12 @@ function SearchWorkItemRow({ work, active, onSelect }: SearchWorkItemProps) {
       aria-selected={active}
       onClick={onSelect}
     >
-      <SfIcon channel={work.channelKey} size={30} radius={8} />
+      <SfIconTile
+        sprite={icon.sprite}
+        symbol={icon.symbol}
+        size={30}
+        bg={icon.tint}
+      />
       <span className="si-main">
         <div className="si-title">{work.title}</div>
         <div className="si-meta">
@@ -483,6 +515,7 @@ export function GlobalSearch() {
                     queue={{
                       id: resolved.id,
                       name: resolved.title,
+                      color: queues.find((q) => q.id === resolved.id)?.color ?? 'var(--pa-ic-queue)',
                       backlog: resolved.backlog ?? 0,
                       online: resolved.online ?? 0,
                     }}

@@ -36,26 +36,14 @@ function refreshLabel(seconds: number): string {
   return `Cada ${seconds / 3600} h`
 }
 
-export function ConnexioSection({ draft, patch }: SectionProps) {
-  const { isMockMode, isServerMockMode, isSalesforceEnabled, session, userInfo } = useAuth()
+export function ConnexioSection() {
+  const { isMockMode, isSalesforceEnabled, session, userInfo } = useAuth()
   const instanceUrl = session?.instanceUrl ?? null
   const effectiveMock = isMockMode
 
   return (
     <>
       <SettingsGroup label="Font de dades">
-        <SettingsRow
-          title="Mode de simulació (mock)"
-          hint="Usa dades locals de demostració sense connexió a Salesforce"
-          control={
-            <ToggleField
-              label="Mode de simulació"
-              checked={draft.mockOverride}
-              onChange={(v) => patch({ mockOverride: v })}
-              disabled={isServerMockMode}
-            />
-          }
-        />
         <SettingsRow
           title="Font activa"
           hint="D'on s'obtenen les dades del centre"
@@ -117,8 +105,25 @@ export function ConnexioSection({ draft, patch }: SectionProps) {
 }
 
 export function DadesSection({ draft, patch }: SectionProps) {
+  const { isServerMockMode } = useAuth()
+
   return (
     <>
+      <SettingsGroup label="Font de dades">
+        <SettingsRow
+          title="Mode de simulació (mock)"
+          hint="Usa dades locals de demostració sense connexió a Salesforce"
+          control={
+            <ToggleField
+              label="Mode de simulació"
+              checked={draft.mockOverride}
+              onChange={(v) => patch({ mockOverride: v })}
+              disabled={isServerMockMode}
+            />
+          }
+        />
+      </SettingsGroup>
+
       <SettingsGroup label="Actualització">
         <SettingsRow
           title="Interval de refresc"

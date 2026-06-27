@@ -69,6 +69,7 @@ export function Ring({
         />
       </svg>
       <div
+        className="ring__face"
         style={{
           position: 'absolute',
           inset: 6,

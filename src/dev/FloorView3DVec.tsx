@@ -41,7 +41,7 @@ import {
 const GRID_MAX = 49
 
 const PEDESTAL_COLOR = 'var(--text-disabled)'
-const AVATAR_RING = 'var(--border-subtle)'
+const AVATAR_RING = 'var(--accent-30)'
 const FLOOR_FILL_A = '#F8F7F4'
 const FLOOR_FILL_B = '#F5F4F1'
 const WALL_FILL = 'rgb(247,246,243)'
@@ -189,7 +189,7 @@ function AvatarDisc({
           {agentInitials(agent.name)}
         </text>
       )}
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke={ring} strokeWidth={2.5} />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={ring} strokeWidth={1} />
     </g>
   )
 }

@@ -7,7 +7,7 @@ import { AgentAvatar } from './AgentRow'
 import { SfIcon } from './ds/SfIcon'
 
 export function UserMenu() {
-  const { userInfo, session, isMockMode, logout } = useAuth()
+  const { userInfo, session, logout } = useAuth()
   const dev = useDeveloperMode()
   const settings = useSettingsModal()
   const [open, setOpen] = useState(false)
@@ -16,8 +16,8 @@ export function UserMenu() {
   const dropRef = useRef<HTMLDivElement>(null)
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const name = userInfo?.name ?? (isMockMode ? 'Supervisor mock' : 'Usuari Salesforce')
-  const secondary = isMockMode ? 'Simulació (mock)' : userInfo?.email ?? 'Salesforce'
+  const name = userInfo?.name ?? 'Usuari Salesforce'
+  const secondary = userInfo?.email ?? 'Salesforce'
   const photo = userInfo?.picture ?? null
   const instanceUrl = session?.instanceUrl ?? null
 
@@ -64,7 +64,6 @@ export function UserMenu() {
 
       <div ref={dropRef} className="user-menu__dropdown dropdown-panel" role="menu" hidden>
         <div className="user-menu__header">
-          <AgentAvatar name={name} photo={photo} />
           <div className="user-menu__id">
             <span className="user-menu__name">{name}</span>
             <span className="user-menu__email">{secondary}</span>
@@ -85,7 +84,7 @@ export function UserMenu() {
           Configuració
         </button>
 
-        {!isMockMode && instanceUrl ? (
+        {instanceUrl ? (
           <>
             <div className="user-menu__sep" />
             <button
@@ -125,23 +124,19 @@ export function UserMenu() {
           />
         </button>
 
-        {!isMockMode ? (
-          <>
-            <div className="user-menu__sep" />
-            <button
-              type="button"
-              role="menuitem"
-              className="user-menu__item user-menu__item--danger"
-              onClick={() => {
-                setOpen(false)
-                logout()
-              }}
-            >
-              <SfIcon sprite="utility" symbol="logout" size={16} />
-              Logout
-            </button>
-          </>
-        ) : null}
+        <div className="user-menu__sep" />
+        <button
+          type="button"
+          role="menuitem"
+          className="user-menu__item user-menu__item--danger"
+          onClick={() => {
+            setOpen(false)
+            logout()
+          }}
+        >
+          <SfIcon sprite="utility" symbol="logout" size={16} />
+          Logout
+        </button>
       </div>
     </div>
   )

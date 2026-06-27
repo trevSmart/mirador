@@ -2,9 +2,8 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import type { IDockviewPanelProps } from 'dockview-react'
 import { useMiradorData } from '../api/mirador-data-context'
 import { useMiradorStatus } from '../api/mirador-status-context'
-import { useAuth } from '../auth/auth-context'
 import { AgentRow } from '../components/AgentRow'
-import { SfIcon, FadeValue, Chip } from '../components/ds'
+import { SfIcon, Chip } from '../components/ds'
 import { Select, type SelectOption } from '../components/ds/Select'
 import { presenceLabel } from '../utils/format'
 import type { PresenceStatus } from '../api/types'
@@ -39,8 +38,6 @@ import {
   countAgentsByStatus,
   sortAgents,
   sortQueues,
-  totalAgentWork,
-  totalQueueBacklog,
   type AgentSortKey,
   type QueueSortKey,
 } from '../utils/agent-stats'
@@ -89,8 +86,6 @@ function loadSort<T extends string>(storageKey: string, allowed: readonly T[], f
 export function HomePanel({ containerApi }: IDockviewPanelProps) {
   const { agents, queues } = useMiradorData()
   const { isLoading, error, refresh } = useMiradorStatus()
-  const { isMockMode } = useAuth()
-  const statusCounts = countAgentsByStatus(agents)
 
   const [queueSort, setQueueSort] = useState<QueueSortKey>(() =>
     loadSort(
@@ -145,13 +140,7 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
     return sortQueues(filtered, queueSort).slice(0, 5)
   }, [queues, queueFilter, queueSort])
 
-  const health = useMemo(
-    () =>
-      computeHealthInsights(agents, queues, {
-        includeExtendedMetrics: isMockMode,
-      }),
-    [agents, isMockMode, queues],
-  )
+  const health = useMemo(() => computeHealthInsights(agents, queues), [agents, queues])
 
   const handleOpenPanel = (panel: PanelType) => {
     addPanelByType(containerApi, panel)
@@ -228,70 +217,6 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
       shellClassName="panel-shell--home"
     >
       <InsightsBanner health={health} queueCount={queues.length} onOpenPanel={handleOpenPanel} />
-
-      <div className="summary-grid">
-        <section className="summary-card">
-          <div className="summary-card__body">
-            <div className="summary-card__lead">
-              <SfIcon
-                className="summary-card__icon"
-                sprite="standard"
-                symbol="customers"
-                sldsSize="small"
-                bg="var(--pa-ic-user)"
-              />
-              <div className="summary-card__text">
-                <p className="summary-card__label">Agents</p>
-                <p className="summary-card__detail">
-                  <FadeValue value={statusCounts.online} /> en línia ·{' '}
-                  <FadeValue value={statusCounts.busy} /> ocupats ·{' '}
-                  <FadeValue value={statusCounts.away} /> absents ·{' '}
-                  <FadeValue value={statusCounts.offline} /> desconnectats
-                </p>
-              </div>
-            </div>
-            <FadeValue as="p" className="summary-card__value" value={agents.length} />
-          </div>
-        </section>
-
-        <section className="summary-card">
-          <div className="summary-card__body">
-            <div className="summary-card__lead">
-              <SfIcon
-                className="summary-card__icon"
-                name="work"
-                sldsSize="small"
-                bg="var(--pa-ic-work)"
-              />
-              <div className="summary-card__text">
-                <p className="summary-card__label">Treball actiu</p>
-                <p className="summary-card__detail">Casos assignats als agents</p>
-              </div>
-            </div>
-            <FadeValue as="p" className="summary-card__value" value={totalAgentWork(agents)} />
-          </div>
-        </section>
-
-        <section className="summary-card">
-          <div className="summary-card__body">
-            <div className="summary-card__lead">
-              <SfIcon
-                className="summary-card__icon"
-                name="queue"
-                sldsSize="small"
-                bg="var(--pa-ic-queue)"
-              />
-              <div className="summary-card__text">
-                <p className="summary-card__label">Cues</p>
-                <p className="summary-card__detail">
-                  <FadeValue value={totalQueueBacklog(queues)} /> treballs en cua
-                </p>
-              </div>
-            </div>
-            <FadeValue as="p" className="summary-card__value" value={queues.length} />
-          </div>
-        </section>
-      </div>
 
       <div className="home-layout" ref={layoutRef} style={layoutStyle}>
         <section className="home-floor">
