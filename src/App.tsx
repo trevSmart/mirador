@@ -1,6 +1,7 @@
 import 'dockview-react/dist/styles/dockview.css'
 import { AuthProvider } from './auth/AuthProvider'
 import { MiradorApiProvider } from './api/MiradorApiProvider'
+import { DataServiceProvider } from './api/data-service'
 import { MiradorDataProvider } from './api/MiradorDataProvider'
 import { AppHeader } from './components/AppHeader'
 import { DetailDrawer } from './components/detail/DetailDrawer'
@@ -41,23 +42,25 @@ function App({ initialAuthError = null }: { initialAuthError?: string | null }) 
       <PreferencesProvider>
         <AuthProvider initialAuthError={initialAuthError}>
           <MiradorApiProvider>
-            <MiradorDataProvider>
-              <DockviewHostProvider>
-                <ModalRegistryProvider>
-                  <DetailDrawerProvider>
-                    <SettingsModalProvider>
-                      <DevConsoleProvider>
-                        <GlobalShortcutsProvider>
-                          <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} />}>
-                            <AppContent />
-                          </ErrorBoundary>
-                        </GlobalShortcutsProvider>
-                      </DevConsoleProvider>
-                    </SettingsModalProvider>
-                  </DetailDrawerProvider>
-                </ModalRegistryProvider>
-              </DockviewHostProvider>
-            </MiradorDataProvider>
+            <DataServiceProvider>
+              <MiradorDataProvider>
+                <DockviewHostProvider>
+                  <ModalRegistryProvider>
+                    <DetailDrawerProvider>
+                      <SettingsModalProvider>
+                        <DevConsoleProvider>
+                          <GlobalShortcutsProvider>
+                            <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} />}>
+                              <AppContent />
+                            </ErrorBoundary>
+                          </GlobalShortcutsProvider>
+                        </DevConsoleProvider>
+                      </SettingsModalProvider>
+                    </DetailDrawerProvider>
+                  </ModalRegistryProvider>
+                </DockviewHostProvider>
+              </MiradorDataProvider>
+            </DataServiceProvider>
           </MiradorApiProvider>
         </AuthProvider>
       </PreferencesProvider>
