@@ -210,13 +210,13 @@ function canonicalDivider(a: Cell, b: Cell): { c: number; r: number; edge: 'E' |
 const EDGE_ORDER: Edge[] = ['N', 'E', 'S', 'O']
 function rotateEdgeLocal(edge: Edge, dir: Dir): Edge {
   const i = EDGE_ORDER.indexOf(edge)
-  return i < 0 ? edge : EDGE_ORDER[(i + dir) % 4]!
+  return i < 0 ? edge : EDGE_ORDER[(i + dir) % 4]
 }
 
 /** Rebuild every floor element in dir-0 space for `makeBasis`-driven rendering. */
 export function normalizeFloor(floor: Floor): NormalizedFloor {
   const dir = floor.dir
-  const rc = (c: number, r: number): Cell => rotateCell(c, r, dir, GRID_N) as Cell
+  const rc = (c: number, r: number): Cell => rotateCell(c, r, dir, GRID_N)
 
   const cells = floor.cells.map(([c, r]) => rc(c, r))
   const seats = floor.seats.map((s) => {

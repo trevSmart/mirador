@@ -23,8 +23,8 @@ function remainDeltas(oldCoords: Coords, newCoords: Coords) {
 
 function homeGridReorderPlugin(el: Element, action: 'add' | 'remove' | 'remain', a?: Coords, b?: Coords) {
   if (action === 'remain' && a && b) {
-    const oldCoords = a as Coords
-    const newCoords = b as Coords
+    const oldCoords = a
+    const newCoords = b
     const { deltaLeft, deltaTop } = remainDeltas(oldCoords, newCoords)
     const [widthFrom, widthTo, heightFrom, heightTo] = getTransitionSizes(el, oldCoords, newCoords)
 

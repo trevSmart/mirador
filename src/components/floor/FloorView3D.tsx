@@ -276,7 +276,7 @@ function segmentedTowerFaces(x: number, y: number, b: IsoBasis, h: number, segme
   let cursor = base
   const parts: ReactNode[] = []
   for (let i = 0; i < segments.length; i++) {
-    const seg = segments[i]!
+    const seg = segments[i]
     const top = cursor + shaftH * seg.fraction
     parts.push(<g key={`${seg.queueId ?? 'unknown'}-${i}`}>{shaftSegmentFaces(x, y, b, cursor, top, h, seg.color, `${idBase}-sg${i}`)}</g>)
     cursor = top
