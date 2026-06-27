@@ -992,7 +992,7 @@ textarea,
      since the pill stretches to (strip height − vertical margins), those 8px are
      the external gap above/below the pill. Halve them; --h-tabbar drops in step so
      the pill keeps its height (internal padding unchanged). */
-  --dv-tab-margin: 4px 0.25rem;
+  --dv-tab-margin: 3px 0.25rem;
 }
 
 /* Match every dockview surface to the header (--surface-raised). The

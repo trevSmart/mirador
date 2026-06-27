@@ -13,7 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "stop": "node scripts/stop-server.js",
-    "knip": "knip",
+    "knip": "knip --strict",
     "precommit": "npm run lint"
   },
   "dependencies": {

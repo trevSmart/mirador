@@ -13,7 +13,8 @@ module.exports = defineConfig([
         'coverage/**',
         'node_modules/**',
         '.sfdx/**',
-        'public/**'
+        'public/**',
+        'docs/**'
     ]),
 
     // App source: React + TypeScript + Vite
@@ -21,7 +22,7 @@ module.exports = defineConfig([
         files: ['src/**/*.{ts,tsx}'],
         extends: [
             eslintJs.configs.recommended,
-            ...tseslint.configs.recommended
+            ...tseslint.configs.recommendedTypeChecked
         ],
         plugins: {
             'react-hooks': reactHooks,
@@ -30,6 +31,10 @@ module.exports = defineConfig([
         languageOptions: {
             ecmaVersion: 'latest',
             sourceType: 'module',
+            parserOptions: {
+                projectService: true,
+                tsconfigRootDir: __dirname
+            },
             globals: {
                 ...globals.browser
             }
@@ -39,7 +44,8 @@ module.exports = defineConfig([
             'react-refresh/only-export-components': [
                 'warn',
                 { allowConstantExport: true }
-            ]
+            ],
+            'no-console': ['warn', { allow: ['warn', 'error'] }]
         }
     },
 
