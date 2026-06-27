@@ -10,10 +10,14 @@ import {
   type SettingsModalContextValue,
   type SettingsSectionId,
 } from './settings-modal-context'
+import { useRegisterModal } from '../modals/useRegisterModal'
 
 export function SettingsModalProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
   const [initialSection, setInitialSection] = useState<SettingsSectionId>('aparenca')
+
+  // Registra l'estat obert al registre de modals
+  useRegisterModal('settings', isOpen)
 
   const open = useCallback((section: SettingsSectionId = 'aparenca') => {
     devLog.action('settings:open', section)

@@ -20,9 +20,13 @@ import {
   type DetailKind,
   type DetailTarget,
 } from './detail-drawer-context'
+import { useRegisterModal } from '../modals/useRegisterModal'
 
 export function DetailDrawerProvider({ children }: { children: ReactNode }) {
   const [detail, setDetail] = useState<DetailTarget | null>(null)
+
+  // Registra l'estat obert al registre de modals (obert quan detail !== null)
+  useRegisterModal('detail-drawer', detail !== null)
   const { agents, queues, skills, work } = useMiradorData()
   const { getApi } = useDockviewHost()
 

@@ -15,6 +15,8 @@ import { PreferencesProvider } from './settings/PreferencesProvider'
 import { SettingsModalProvider } from './settings/SettingsModalProvider'
 import { DevConsoleProvider } from './dev/DevConsoleContext'
 import { DevConsole } from './dev/DevConsole'
+import { ModalRegistryProvider } from './modals/ModalRegistryProvider'
+import { GlobalShortcutsProvider } from './shortcuts/GlobalShortcutsProvider'
 
 function AppContent() {
   return (
@@ -44,9 +46,13 @@ function App({ initialAuthError = null }: { initialAuthError?: string | null }) 
                 <DetailDrawerProvider>
                   <SettingsModalProvider>
                     <DevConsoleProvider>
-                      <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} />}>
-                        <AppContent />
-                      </ErrorBoundary>
+                      <ModalRegistryProvider>
+                        <GlobalShortcutsProvider>
+                          <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} />}>
+                            <AppContent />
+                          </ErrorBoundary>
+                        </GlobalShortcutsProvider>
+                      </ModalRegistryProvider>
                     </DevConsoleProvider>
                   </SettingsModalProvider>
                 </DetailDrawerProvider>
