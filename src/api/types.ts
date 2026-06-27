@@ -142,3 +142,20 @@ export interface SnapshotResponse {
   skills: Skill[]
   work: WorkItem[]
 }
+
+export interface RecordDetail {
+  id: string
+  objectApiName: string | null
+  createdDate: string | null
+  lastModifiedDate: string | null
+  caseNumber?: string | null
+  subject?: string | null
+}
+
+export interface RecordDetailsRequest {
+  ids: string[]
+}
+
+export interface RecordDetailsResponse {
+  records: RecordDetail[]
+}

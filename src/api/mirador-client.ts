@@ -8,6 +8,8 @@ import type {
   ApiErrorBody,
   Capabilities,
   QueuesResponse,
+  RecordDetailsRequest,
+  RecordDetailsResponse,
   SkillAgentsResponse,
   SkillsResponse,
   SnapshotResponse,
@@ -43,6 +45,7 @@ export interface MiradorClient {
   getSkills: () => Promise<SkillsResponse>
   getWork: () => Promise<WorkResponse>
   getSnapshot: (scope?: AgentScope) => Promise<SnapshotResponse>
+  getRecordDetails: (body: RecordDetailsRequest) => Promise<RecordDetailsResponse>
 }
 
 type SessionGetter = () => OAuthSession | null | Promise<OAuthSession | null>
@@ -150,5 +153,10 @@ export function createMiradorClient(getSession: SessionGetter): MiradorClient {
     getWork: () => request<WorkResponse>('/work'),
     getSnapshot: (scope = 'all') =>
       request<SnapshotResponse>(`/snapshot?scope=${encodeURIComponent(scope)}`),
+    getRecordDetails: (body) =>
+      request<RecordDetailsResponse>('/records/details', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
   }
 }

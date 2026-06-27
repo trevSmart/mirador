@@ -117,6 +117,21 @@ export function formatMinutes(minutes: number): string {
   return remainder > 0 ? `${hours}h ${remainder}m` : `${hours}h`
 }
 
+/** ISO 8601 (from Apex) → localized date+time. Returns '—' for null/invalid. */
+export function formatDateTime(iso: string | null | undefined): string {
+  if (!iso) {
+    return '—'
+  }
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) {
+    return '—'
+  }
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date)
+}
+
 export function agentInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
   if (parts.length === 0) {

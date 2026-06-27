@@ -396,6 +396,16 @@ body,
 #root {
   margin: 0;
   height: 100%;
+  /* Mirador is a fixed-viewport dashboard: every panel scrolls internally, so the
+     document root must never scroll. Without this, at fractional device-pixel
+     ratios (browser zoom ≠ 100%) sub-pixel rounding can leave total content ~1px
+     taller than the viewport, flickering the window scrollbar on and off. Each
+     toggle steals/returns the scrollbar's width, which cascades down through
+     Dockview's layout; Dockview's ResizeObserver reacts to the size change and
+     recomputes every frame, sustaining an infinite reflow loop that repaints the
+     scrollbars forever and pegs the CPU. Pinning the root to overflow:hidden
+     removes the window scrollbar entirely so the loop can't start. */
+  overflow: hidden;
 }
 
 body {

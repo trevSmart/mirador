@@ -77,6 +77,41 @@ public with sharing class PanoramaRestHandler {
         }
     }
 
+    public static void handlePost(String apiPrefix) {
+        RestRequest req = RestContext.request;
+        RestResponse res = RestContext.response;
+        String path = normalizePath(req.requestURI, apiPrefix);
+        try {
+            if (path == '/records/details') {
+                if (req.requestBody == null || String.isBlank(req.requestBody.toString())) {
+                    writeJson(res, 400, new Map<String, Object>{ 'error' => 'Empty request body' });
+                    return;
+                }
+                Map<String, Object> body = (Map<String, Object>) JSON.deserializeUntyped(req.requestBody.toString());
+                List<Object> raw = (List<Object>) body.get('ids');
+                List<Id> recordIds = new List<Id>();
+                if (raw != null) {
+                    for (Object o : raw) {
+                        if (o == null) {
+                            continue;
+                        }
+                        try {
+                            recordIds.add((Id) String.valueOf(o));
+                        } catch (System.StringException ex) {
+                            writeJson(res, 400, new Map<String, Object>{ 'error' => 'Invalid id: ' + o });
+                            return;
+                        }
+                    }
+                }
+                writeJson(res, 200, PanoramaRecordDetailsService.getRecordDetails(recordIds));
+            } else {
+                writeJson(res, 404, new Map<String, Object>{ 'error' => 'Not found', 'path' => path });
+            }
+        } catch (Exception ex) {
+            writeJson(res, 500, new Map<String, Object>{ 'error' => ex.getMessage() });
+        }
+    }
+
     private static String normalizePath(String requestUri, String apiPrefix) {
         if (String.isBlank(requestUri)) {
             return '/';
