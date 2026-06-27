@@ -19,7 +19,7 @@ const STORAGE = {
 
 const DEFAULT_HEIGHT = 240
 const DEFAULT_FILTERS: ReadonlySet<LogLevel> = new Set([
-  'log', 'info', 'warn', 'error', 'action', 'api',
+  'log', 'info', 'warn', 'error', 'action', 'api', 'query',
 ])
 
 function readBool(key: string, fallback: boolean): boolean {

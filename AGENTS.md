@@ -29,7 +29,10 @@ The repository is a **dual project**:
 - Vite 8 dev server on **port 3000**, with a custom middleware (`src/server/`)
   serving `/api/*` endpoints.
 - `dockview-react` for the draggable/dockable multi-panel workspace.
-- TypeScript ~6.0, ESLint 10 (flat config), Prettier, Knip for dead-code checks.
+- **TanStack Query v5** as the data/cache layer (caching, request dedup, and
+  polling for all server state) — see "Data Service layer" below.
+- TypeScript ~6.0, ESLint 10 (flat config), Prettier, Knip for dead-code checks,
+  Vitest for unit tests.
 - Salesforce Apex (`sourceApiVersion` 66.0) for the backend.
 
 ## Commands
@@ -41,17 +44,22 @@ npm run build        # tsc -b && vite build
 npm run preview      # serve the production build on :3000
 npm run lint         # eslint .
 npm run lint:fix     # eslint . --fix
+npm run test         # Vitest unit tests (run once)
+npm run test:watch   # Vitest in watch mode
 npm run knip         # report unused files/exports/deps
 npm run stop         # kill the dev server (scripts/stop-server.js)
 ```
 
-There is currently **no frontend test runner script**. `jest.config.js` is the
-Salesforce LWC Jest config and is not wired to the SPA. Apex has its own tests
-(`*Test.cls`) run via `sf apex run test`. Husky `pre-commit` runs
-`npm run precommit`, which currently just runs `npm run lint`.
+Frontend unit tests run on **Vitest** (`npm run test`); test files sit next to the
+code as `*.test.ts(x)` (jsdom env; config in the `test` block of `vite.config.ts`
+plus `vitest.setup.ts`). `jest.config.js` is the Salesforce LWC Jest config and is
+**not** wired to the SPA. Apex has its own tests (`*Test.cls`) run via
+`sf apex run test`. Husky `pre-commit` runs `npm run precommit`, which currently
+just runs `npm run lint`.
 
-Verify changes with `npm run lint` and `npm run build` (the type-check happens in
-`tsc -b`).
+Verify changes with `npm run lint`, `npm run test`, and `npm run build` (the
+type-check happens in `tsc -b`). Note: `tsc -b` excludes `*.test.ts(x)`, so test
+files are type-checked only by the editor / Vitest, not the build.
 
 ## Data sources: mock vs. Salesforce
 
@@ -77,7 +85,7 @@ The app is composed of nested context providers, outermost first:
 PreferencesProvider          # user settings, persisted to localStorage
   AuthProvider               # OAuth session + isMockMode
     MiradorApiProvider       # builds the API client (real or mock)
-      MiradorDataProvider    # fetches snapshot, polling, refresh coalescing
+      DataServiceProvider    # TanStack Query client: cache, dedup, polling
         DockviewHostProvider # the panel workspace host
           DetailDrawerProvider
             SettingsModalProvider
@@ -100,11 +108,35 @@ run before React mounts; a splash screen is dismissed afterward
   responses; keep them in sync with `force-app` and `docs/mirador-REST-API.md`.
 - `mock/` — a self-contained fake backend (`mock-client.ts`, `mock-seed.ts`,
   `mock-state.ts`, avatars) implementing the same `MiradorClient` interface.
-- `MiradorDataProvider.tsx` — owns app data state (agents/queues/skills/work),
-  loads via `getSnapshot('all')`, supports silent background polling
-  (`prefs.autoRefresh` / `prefs.refreshInterval`), and **coalesces + rate-limits**
-  refreshes (`MIN_REFRESH_GAP_MS = 1500`). Data and status are split into two
-  contexts so data updates don't re-render status-only consumers.
+
+#### Data Service layer (`src/api/data-service/`, `src/api/data-hooks.ts`)
+
+The **single seam** between the integration layer (the client) and the UI, built
+on **TanStack Query** — it provides caching and request deduplication so the same
+data is never fetched twice unnecessarily. There is no bespoke data provider or
+compatibility shim; the UI reads server state exclusively through these hooks.
+
+Organized along three axes — **source** (external app) → **entity** (type) →
+**params** (id/filter) — so it scales to new screens, entity types and even new
+external apps:
+
+- `query-client.ts` / `DataServiceProvider.tsx` — the global `QueryClient`.
+- `sources.ts` — source registry (`SourceClientMap` + `useSourceClient`). A new
+  external app = extend the map and add a `case` here.
+- `resource.ts` + `resources/` — per-entity descriptors via `defineResource`:
+  `recordDetailResource` (the work-item backing record) and the snapshot-backed
+  `agent/queue/skill/workItem` resources. `batch-loader.ts` coalesces concurrent
+  id loads into a single request (e.g. one `POST /records/details` for N ids).
+- `use-entity.ts` — `useEntity` / `useEntities` for per-id reads.
+- `data-hooks.ts` — the UI's data entry point: `useAgents` / `useQueues` /
+  `useSkills` / `useWork` (typed selectors over **one shared snapshot query**,
+  polling via TanStack `refetchInterval` from `prefs.autoRefresh` /
+  `prefs.refreshInterval`) and `useDataStatus` (`{ isLoading, isRefreshing, error,
+  refresh }`). `fetchSnapshot` fetches the snapshot **and** primes the per-entity
+  cache, so per-id `useEntity` reads resolve from cache.
+
+Mutations should `invalidateQueries({ queryKey: snapshotKey })` on success to
+resync the cache (no active write features yet).
 
 ### Auth (`src/auth/`)
 
@@ -186,11 +218,13 @@ Common Salesforce CLI commands: `sf project deploy start`,
 - **Imports:** ESM only (`"type": "module"`). Use the existing relative-import
   style; there are no path aliases.
 - **Styling:** plain CSS (`src/index.css`) + SLDS. No CSS-in-JS framework.
-- **State:** React context per concern, split for render isolation (see the
-  data/status split in `MiradorDataProvider`). No Redux/Zustand.
+- **State:** server/remote data lives in TanStack Query (the Data Service layer);
+  read it through `data-hooks.ts` (`useAgents`, `useDataStatus`, …) or `useEntity`,
+  never via a bespoke provider. UI/app state uses React context per concern. No
+  Redux/Zustand.
 - **Lazy loading:** panels are code-split; keep heavy panels lazy.
 - **Errors:** wrap risky UI in the shared `ErrorBoundary`; surface API failures
-  through `MiradorStatusContext.error`.
+  through `useDataStatus().error`.
 - **Lint/format:** run `npm run lint` and respect Prettier (`.prettierrc`).
   `dist/`, `tmp/`, `public/`, `.sfdx/` are lint-ignored.
 

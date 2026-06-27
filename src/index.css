@@ -5304,6 +5304,12 @@ textarea,
   color: #c9a0ff;
 }
 
+.dev-console__filter--query.dev-console__filter--active {
+  border-color: rgba(77, 208, 225, .45);
+  background: rgba(77, 208, 225, .1);
+  color: #4dd0e1;
+}
+
 .dev-console__filter:hover {
   background: rgba(255, 255, 255, .06);
 }
@@ -5332,6 +5338,10 @@ textarea,
 
 .dev-console__filter--api.dev-console__filter--active:hover {
   background: rgba(201, 160, 255, .16);
+}
+
+.dev-console__filter--query.dev-console__filter--active:hover {
+  background: rgba(77, 208, 225, .16);
 }
 
 /* Action buttons */
@@ -5457,6 +5467,10 @@ textarea,
 
 .dev-console__badge--api {
   color: #c9a0ff;
+}
+
+.dev-console__badge--query {
+  color: #4dd0e1;
 }
 
 /* Message text */
