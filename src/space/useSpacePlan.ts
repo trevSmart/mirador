@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../auth/auth-context'
+import { useMiradorApi } from '../api/mirador-api-context'
 import {
   loadSpacePlan,
   saveSpacePlan,
@@ -51,6 +52,7 @@ function placeIndex(d: SpacePlanData, placeId: string): number {
 
 export function useSpacePlan() {
   const { isMockMode } = useAuth()
+  const client = useMiradorApi()
   const [data, setData] = useState<SpacePlanData>(() => defaultSpacePlan())
   const [tool, setToolState] = useState<SpaceTool>('cell')
   const [activeSpaceIndex, setActiveSpaceIndex] = useState(0)
@@ -87,7 +89,7 @@ export function useSpacePlan() {
   /* ── Load on mount / when data source changes ───────────────────────── */
   useEffect(() => {
     let cancelled = false
-    void loadSpacePlan(isMockMode).then((stored) => {
+    void loadSpacePlan(client, isMockMode).then((stored) => {
       if (cancelled) return
       const next = stored ?? defaultSpacePlan()
       undoStack.current = []
@@ -103,7 +105,7 @@ export function useSpacePlan() {
     return () => {
       cancelled = true
     }
-  }, [isMockMode, syncHistoryFlags])
+  }, [client, isMockMode, syncHistoryFlags])
 
   /* ── Core mutation plumbing ─────────────────────────────────────────── */
   const apply = useCallback((transform: (d: SpacePlanData) => SpacePlanData, recordHistory = true) => {
@@ -370,13 +372,13 @@ export function useSpacePlan() {
   /* ── Save / reset ───────────────────────────────────────────────────── */
   const save = useCallback(() => {
     const current = dataRef.current
-    void saveSpacePlan(current, isMockMode).then(() => {
+    void saveSpacePlan(client, current, isMockMode).then(() => {
       setSavedSignature(spacePlanSignature(current))
     })
-  }, [isMockMode])
+  }, [client, isMockMode])
 
   const reset = useCallback(() => {
-    void loadSpacePlan(isMockMode).then((stored) => {
+    void loadSpacePlan(client, isMockMode).then((stored) => {
       const next = stored ?? defaultSpacePlan()
       undoStack.current = []
       redoStack.current = []
@@ -387,7 +389,7 @@ export function useSpacePlan() {
       setSelectedSeat(null)
       syncHistoryFlags()
     })
-  }, [isMockMode, syncHistoryFlags])
+  }, [client, isMockMode, syncHistoryFlags])
 
   // Keep the live active space reachable from callbacks that read it (seatAt).
   useEffect(() => {

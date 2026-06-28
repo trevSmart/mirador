@@ -1,6 +1,7 @@
 import type { Connect } from 'vite'
 import { getPublicConfig, loadServerEnv } from './load-env'
 import { handleOAuthTokenProxy } from './oauth-token-proxy'
+import { handleOAuthUserinfoProxy } from './oauth-userinfo-proxy'
 import { handleSalesforcePhotoProxy } from './salesforce-photo-proxy'
 
 export function createApiMiddleware(): Connect.NextHandleFunction {
@@ -18,6 +19,11 @@ export function createApiMiddleware(): Connect.NextHandleFunction {
 
     if (url === '/api/oauth/token') {
       void handleOAuthTokenProxy(req, res, env)
+      return
+    }
+
+    if (url.startsWith('/api/oauth/userinfo')) {
+      void handleOAuthUserinfoProxy(req, res)
       return
     }
 

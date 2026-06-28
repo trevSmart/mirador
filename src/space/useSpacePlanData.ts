@@ -1,14 +1,12 @@
 /* Read-only space plan loader for the live supervision view.
    Loads the persisted plan and refreshes it whenever the editor saves (same-tab
-   pub/sub) or another tab writes the store (the window `storage` event). */
+   pub/sub). The plan lives in the org now, so cross-tab refresh rides on the same
+   pub/sub after a save rather than the window `storage` event. */
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '../auth/auth-context'
-import {
-  SPACE_PLAN_STORAGE_KEY,
-  loadSpacePlan,
-  subscribeSpacePlan,
-} from './space-plan-repository'
+import { useMiradorApi } from '../api/mirador-api-context'
+import { loadSpacePlan, subscribeSpacePlan } from './space-plan-repository'
 import type { SpacePlanData } from './types'
 
 export interface SpacePlanDataState {
@@ -18,6 +16,7 @@ export interface SpacePlanDataState {
 
 export function useSpacePlanData(): SpacePlanDataState {
   const { isMockMode } = useAuth()
+  const client = useMiradorApi()
   const [data, setData] = useState<SpacePlanData | null>(null)
   const [loaded, setLoaded] = useState(false)
 
@@ -25,7 +24,7 @@ export function useSpacePlanData(): SpacePlanDataState {
     let cancelled = false
 
     const reload = () => {
-      void loadSpacePlan(isMockMode).then((next) => {
+      void loadSpacePlan(client, isMockMode).then((next) => {
         if (cancelled) return
         setData(next)
         setLoaded(true)
@@ -34,17 +33,12 @@ export function useSpacePlanData(): SpacePlanDataState {
 
     reload()
     const unsubscribe = subscribeSpacePlan(reload)
-    const onStorage = (event: StorageEvent) => {
-      if (!isMockMode && event.key === SPACE_PLAN_STORAGE_KEY) reload()
-    }
-    window.addEventListener('storage', onStorage)
 
     return () => {
       cancelled = true
       unsubscribe()
-      window.removeEventListener('storage', onStorage)
     }
-  }, [isMockMode])
+  }, [client, isMockMode])
 
   return { data, loaded }
 }

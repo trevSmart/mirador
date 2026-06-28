@@ -1,26 +1,24 @@
 /* Space editor — persistence abstraction.
-   Today the plan lives in localStorage. The SpacePlanRepository interface is the
-   single seam the rest of the app talks to, so migrating to a Salesforce-backed
-   store later means writing one new class and swapping the exported instance —
-   no consumer changes. The async API is in place from day one for that reason.
+   Two backends sit behind one seam so consumers never branch on data source:
 
-   Mock mode uses an in-memory store seeded from `createMockSpacePlan()` so demo
-   spaces stay separate from a supervisor's real localStorage plan. */
+   - Mock mode: an in-memory store seeded from `createMockSpacePlan()`, so demo
+     spaces stay separate from a supervisor's real data.
+   - Real mode: a Salesforce-backed store. The plan round-trips through the
+     MiradorClient (`/space-plan` GET/PUT), which maps to the Place__c / Space__c
+     custom objects server-side. The async API was in place from day one for this.
 
+   The previous localStorage backend is gone for real mode: the plan now lives in
+   the org so it follows the user across browsers and devices. (Local-first caching
+   could be layered on top later without touching consumers.) */
+
+import type { MiradorClient } from '../api/mirador-client'
 import { createMockSpacePlan } from '../api/mock/mock-space-plan'
+import { devLog } from '../dev/dev-log'
 import { sanitizeSpacePlan } from './space-plan-model'
 import type { SpacePlanData } from './types'
 
-interface SpacePlanRepository {
-  load(): Promise<SpacePlanData | null>
-  save(data: SpacePlanData): Promise<void>
-}
-
-export const STORAGE_KEY = 'mirador.spacePlan.v1'
-
 /* Lightweight pub/sub so the live supervision view reloads the moment the editor
-   saves, within the same app instance. Cross-tab updates are handled separately
-   by listening to the window `storage` event (see useSpacePlanData). */
+   saves, within the same app instance. */
 type Listener = () => void
 const listeners = new Set<Listener>()
 
@@ -33,32 +31,9 @@ function notify(): void {
   for (const listener of listeners) listener()
 }
 
-export { STORAGE_KEY as SPACE_PLAN_STORAGE_KEY }
+/* ---------------------------------------------------------------- mock ---- */
 
-class LocalStorageSpacePlanRepository implements SpacePlanRepository {
-  load(): Promise<SpacePlanData | null> {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (!raw) return Promise.resolve(null)
-      return Promise.resolve(sanitizeSpacePlan(JSON.parse(raw)))
-    } catch {
-      return Promise.resolve(null)
-    }
-  }
-
-  save(data: SpacePlanData): Promise<void> {
-    try {
-      const clean = sanitizeSpacePlan(data) ?? data
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(clean))
-      notify()
-    } catch {
-      /* ignore quota / private-mode storage errors */
-    }
-    return Promise.resolve()
-  }
-}
-
-class MockSpacePlanRepository implements SpacePlanRepository {
+class MockSpacePlanRepository {
   private cache: SpacePlanData = createMockSpacePlan()
 
   load(): Promise<SpacePlanData | null> {
@@ -77,13 +52,56 @@ class MockSpacePlanRepository implements SpacePlanRepository {
   }
 }
 
-const localStorageRepository = new LocalStorageSpacePlanRepository()
 const mockRepository = new MockSpacePlanRepository()
 
-export function loadSpacePlan(isMockMode: boolean): Promise<SpacePlanData | null> {
-  return isMockMode ? mockRepository.load() : localStorageRepository.load()
+/** Exposed for the mock MiradorClient so demo mode shares one in-memory plan. */
+export function loadMockSpacePlan(): Promise<SpacePlanData | null> {
+  return mockRepository.load()
 }
 
-export function saveSpacePlan(data: SpacePlanData, isMockMode: boolean): Promise<void> {
-  return isMockMode ? mockRepository.save(data) : localStorageRepository.save(data)
+export function saveMockSpacePlan(data: SpacePlanData): Promise<void> {
+  return mockRepository.save(data)
+}
+
+export function resetMockSpacePlan(): void {
+  mockRepository.reset()
+}
+
+/* ---------------------------------------------------------- salesforce ---- */
+
+async function loadFromOrg(client: MiradorClient): Promise<SpacePlanData | null> {
+  try {
+    const stored = await client.getSpacePlan()
+    return stored ? sanitizeSpacePlan(stored) : null
+  } catch (error) {
+    devLog.api('GET', '/space-plan', `failed: ${String(error)}`)
+    return null
+  }
+}
+
+async function saveToOrg(client: MiradorClient, data: SpacePlanData): Promise<void> {
+  const clean = sanitizeSpacePlan(data) ?? data
+  await client.saveSpacePlan(clean)
+  notify()
+}
+
+/* ------------------------------------------------------------- public ----- */
+
+export function loadSpacePlan(
+  client: MiradorClient | null,
+  isMockMode: boolean,
+): Promise<SpacePlanData | null> {
+  if (isMockMode) return mockRepository.load()
+  if (!client) return Promise.resolve(null)
+  return loadFromOrg(client)
+}
+
+export function saveSpacePlan(
+  client: MiradorClient | null,
+  data: SpacePlanData,
+  isMockMode: boolean,
+): Promise<void> {
+  if (isMockMode) return mockRepository.save(data)
+  if (!client) return Promise.resolve()
+  return saveToOrg(client, data)
 }
