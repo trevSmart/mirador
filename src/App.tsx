@@ -8,7 +8,8 @@ import { SettingsModal } from './components/settings/SettingsModal'
 import { DockviewShell } from './components/DockviewShell'
 import { DevErrorOverlay } from './components/error/DevErrorOverlay'
 import { ErrorBoundary } from './components/error/ErrorBoundary'
-import { ErrorFallback } from './components/error/ErrorFallback'
+import { StatusScreen } from './components/status/StatusScreen'
+import { AppGate } from './components/status/AppGate'
 import { DetailDrawerProvider } from './detail/DetailDrawerContext'
 import { DockviewHostProvider } from './dockview/DockviewHostProvider'
 import { PreferencesProvider } from './settings/PreferencesProvider'
@@ -48,8 +49,24 @@ function App({ initialAuthError = null }: { initialAuthError?: string | null }) 
                     <SettingsModalProvider>
                       <DevConsoleProvider>
                         <GlobalShortcutsProvider>
-                          <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} />}>
-                            <AppContent />
+                          <ErrorBoundary
+                            fallback={(error, reset) => (
+                              <StatusScreen
+                                tone="error"
+                                title="Alguna cosa ha fallat"
+                                message="S'ha produït un error inesperat i no s'ha pogut mostrar aquesta vista."
+                                detail={error.message}
+                                detailLabel="Detalls de l'error"
+                                actions={[
+                                  { label: 'Torna-ho a provar', onClick: reset, variant: 'primary' },
+                                  { label: 'Recarrega la pàgina', onClick: () => window.location.reload() },
+                                ]}
+                              />
+                            )}
+                          >
+                            <AppGate>
+                              <AppContent />
+                            </AppGate>
                           </ErrorBoundary>
                         </GlobalShortcutsProvider>
                       </DevConsoleProvider>
