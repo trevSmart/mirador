@@ -6,7 +6,7 @@
     <referenceTo>Place__c</referenceTo>
     <relationshipLabel>Spaces</relationshipLabel>
     <relationshipName>Spaces</relationshipName>
-    <required>true</required>
+    <required>false</required>
     <relationshipOrder>0</relationshipOrder>
     <reparentableMasterDetail>false</reparentableMasterDetail>
     <trackTrending>false</trackTrending>
