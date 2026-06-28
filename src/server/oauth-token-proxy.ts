@@ -67,7 +67,7 @@ export async function handleOAuthTokenProxy(
       return
     }
 
-    const tokenUrl = `${env.sfLoginUrl.replace(/\/$/, '')}/services/oauth2/token`
+    const tokenUrl = `${env.sfTokenUrl.replace(/\/$/, '')}/services/oauth2/token`
     const sfResponse = await fetch(tokenUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
