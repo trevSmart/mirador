@@ -513,8 +513,7 @@ textarea,
   color: var(--text-body);
 }
 
-.app-header__warning,
-.app-header__error {
+.app-header__warning {
   font-size: var(--fs-xs);
   color: var(--text-muted);
 }
@@ -530,10 +529,6 @@ textarea,
   border: 1px solid color-mix(in srgb, var(--status-watch) 70%, transparent);
   border-radius: var(--r-pill);
   padding: 2px 7px;
-}
-
-.app-header__error {
-  color: var(--status-alert);
 }
 
 .app-header__warning {
