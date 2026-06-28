@@ -4516,15 +4516,6 @@ textarea,
   color: var(--text-strong);
 }
 
-.error-fallback--global {
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  width: 100%;
-  padding: var(--sp-10);
-  background: var(--surface-canvas);
-}
-
 .error-fallback--panel {
   align-items: center;
   justify-content: center;
@@ -4802,11 +4793,6 @@ textarea,
   display: flex;
   gap: var(--sp-3);
   flex-wrap: wrap;
-}
-
-.error-fallback--global .error-fallback__actions {
-  width: 100%;
-  padding-top: var(--sp-2);
 }
 
 .error-fallback__btn {
