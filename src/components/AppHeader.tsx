@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useDataStatus } from '../api/data-hooks'
+import { formatRelativeTime } from '../utils/relative-time'
 import { useAuth } from '../auth/auth-context'
 import miradorLogo from '../assets/mirador/logo/mirador-logo.png'
 import { useDevConsole } from '../dev/useDevConsole'
@@ -11,7 +12,7 @@ import { UserMenu } from './UserMenu'
 
 export function AppHeader() {
   const { authError, isAuthenticated, isLoading, isMockMode, isSalesforceEnabled } = useAuth()
-  const { isRefreshing, refresh } = useDataStatus()
+  const { isRefreshing, refresh, dataUpdatedAt } = useDataStatus()
   const { enabled: devMode } = useDeveloperMode()
   const { visible: consoleVisible, toggle: toggleConsole } = useDevConsole()
 
@@ -40,6 +41,22 @@ export function AppHeader() {
       setSpinning(false)
     }
   }
+
+  // Re-render every 20 s so the relative "fa X" label stays current without
+  // re-fetching data. `now` is read at render time below.
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNow(Date.now())
+    const id = setInterval(() => setNow(Date.now()), 20_000)
+    return () => clearInterval(id)
+  }, [dataUpdatedAt])
+
+  const lastRefreshLabel =
+    dataUpdatedAt > 0 ? `Actualitzat ${formatRelativeTime(dataUpdatedAt, now)}` : null
+  const refreshTitle = lastRefreshLabel
+    ? `Actualitza les dades d'Omni — ${lastRefreshLabel.toLowerCase()}`
+    : "Actualitza les dades d'Omni"
 
   return (
     <header className="app-header">
@@ -82,14 +99,16 @@ export function AppHeader() {
 
         <button
           type="button"
-          className={`app-header__button app-header__button--icon${spinning ? ' app-header__button--spinning' : ''}`}
+          className={`app-header__button app-header__button--icon${lastRefreshLabel ? ' app-header__button--with-label' : ''}${spinning ? ' app-header__button--spinning' : ''}`}
           onClick={() => void refresh()}
           onAnimationIteration={handleSpinIteration}
           disabled={!isAuthenticated || isRefreshing}
-          title="Actualitza les dades d'Omni"
-          aria-label="Actualitza les dades d'Omni"
+          aria-label={refreshTitle}
         >
           <SfIcon sprite="utility" symbol="refresh" size={12} />
+          {lastRefreshLabel ? (
+            <span className="app-header__button-label">{lastRefreshLabel}</span>
+          ) : null}
         </button>
 
         <GlobalSearch />

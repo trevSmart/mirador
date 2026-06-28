@@ -9,18 +9,39 @@ import Lenis from 'lenis'
 const lenisByElement = new WeakMap<HTMLElement, Lenis>()
 
 /**
- * Smoothly scrolls a registered scroll container back to the top. Falls back to
- * a native scroll when the element has no Lenis instance (e.g. reduced motion).
+ * Live set of every element that currently has a Lenis instance. A WeakMap
+ * isn't enumerable, so this lets `scrollPanelToTop` discover the real scroll
+ * containers *inside* a shell — needed for layouts like Home, whose shell is
+ * `overflow:hidden` and whose scrollable content lives in nested columns.
  */
-export function scrollPanelToTop(element: HTMLElement | null): void {
-  if (!element) {
-    return
-  }
+const registeredScrollers = new Set<HTMLElement>()
+
+/** Scrolls a single element to the top, via its Lenis instance if registered. */
+function scrollElementToTop(element: HTMLElement): void {
   const lenis = lenisByElement.get(element)
   if (lenis) {
     lenis.scrollTo(0)
   } else {
     element.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+/**
+ * Smoothly scrolls a panel back to the top. The shell itself may be the scroll
+ * container (most panels) or may delegate scrolling to nested columns (Home is
+ * `overflow:hidden` with two scrollable columns), so we scroll the shell *and*
+ * every registered Lenis scroller living inside it. Falls back to a native
+ * scroll when an element has no Lenis instance (e.g. reduced motion).
+ */
+export function scrollPanelToTop(element: HTMLElement | null): void {
+  if (!element) {
+    return
+  }
+  scrollElementToTop(element)
+  for (const scroller of registeredScrollers) {
+    if (scroller !== element && element.contains(scroller)) {
+      scrollElementToTop(scroller)
+    }
   }
 }
 
@@ -57,6 +78,7 @@ export function useSmoothScroll<T extends HTMLElement>() {
       virtualScroll: (data) => !data.event.ctrlKey && !data.event.metaKey,
     })
     lenisByElement.set(element, lenis)
+    registeredScrollers.add(element)
 
     let rafId = 0
     const runRaf = () => {
@@ -93,6 +115,7 @@ export function useSmoothScroll<T extends HTMLElement>() {
       observer.disconnect()
       cancelAnimationFrame(rafId)
       lenisByElement.delete(element)
+      registeredScrollers.delete(element)
       lenis.destroy()
       cleanup.current = null
     }

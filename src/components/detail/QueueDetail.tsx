@@ -5,10 +5,8 @@ import { sortAgentsByPresence } from '../../utils/agent-stats'
 import { colorFromString } from '../../utils/color-from-string'
 import { channelLabel, formatSeconds } from '../../utils/format'
 import { resolveWorkItemIcon } from '../../utils/salesforce-object-icon'
-import { Badge, FadeValue, PressureBar, SfIcon } from '../ds'
+import { Badge, FadeValue, SfIcon } from '../ds'
 import { DetailRow, DrawerSection, EmptyHint, MiniAgentRow, Stat, StatGrid } from './parts'
-
-const BACKLOG_FULL = 20
 
 export function QueueDetail({ queue }: { queue: Queue }) {
   const agents = useAgents()
@@ -17,7 +15,6 @@ export function QueueDetail({ queue }: { queue: Queue }) {
 
   const waiting = work.filter((item) => item.status === 'queued' && item.queueId === queue.id)
   const members = sortAgentsByPresence(agents.filter((agent) => agent.queueIds.includes(queue.id)))
-  const pressure = Math.min(1, queue.backlog / BACKLOG_FULL)
 
   return (
     <>
@@ -33,7 +30,6 @@ export function QueueDetail({ queue }: { queue: Queue }) {
       </header>
 
       <DrawerSection title="Salut de la cua">
-        <PressureBar value={pressure} />
         <StatGrid>
           <Stat label="Backlog" value={queue.backlog} tone={queue.backlog > 8 ? 'alert' : undefined} />
           <Stat label="Espera màxima" value={formatSeconds(queue.longest)} tone={queue.longest > 150 ? 'alert' : undefined} />

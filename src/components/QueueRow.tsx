@@ -2,17 +2,13 @@ import type { Queue } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { colorFromString } from '../utils/color-from-string'
 import { formatSeconds } from '../utils/format'
-import { FadeValue, MetricPill, PressureBar, SfIcon } from './ds'
-
-/** Backlog count that reads as "full" pressure on the bar. */
-const BACKLOG_FULL = 20
+import { FadeValue, MetricPill, SfIcon } from './ds'
 
 interface QueueRowProps {
   queue: Queue
 }
 
 export function QueueRow({ queue }: QueueRowProps) {
-  const pressure = Math.min(1, queue.backlog / BACKLOG_FULL)
   const { openQueue } = useDetailDrawer()
 
   return (
@@ -37,8 +33,6 @@ export function QueueRow({ queue }: QueueRowProps) {
           </p>
         </div>
       </div>
-
-      <PressureBar value={pressure} />
 
       <div className="queue-row__metrics">
         <MetricPill label="Backlog" value={queue.backlog} />

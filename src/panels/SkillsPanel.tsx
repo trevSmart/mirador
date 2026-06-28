@@ -1,13 +1,14 @@
 import { useDataStatus, useSkills } from '../api/data-hooks'
-import { FadeValue } from '../components/ds'
+import { FadeValue, SfIcon } from '../components/ds'
 import { PanelState } from '../components/PanelState'
 import { SkillRow } from '../components/SkillRow'
-import { sortSkillsByBacklog, totalSkillBacklog } from '../utils/agent-stats'
+import { groupSkillsByType, totalSkillBacklog } from '../utils/agent-stats'
+import { colorFromString } from '../utils/color-from-string'
 
 export function SkillsPanel() {
   const skills = useSkills()
   const { isLoading, error, refresh } = useDataStatus()
-  const sortedSkills = sortSkillsByBacklog(skills)
+  const groups = groupSkillsByType(skills)
 
   return (
     <PanelState
@@ -21,11 +22,31 @@ export function SkillsPanel() {
         <FadeValue value={skills.length} /> skills · <FadeValue value={totalSkillBacklog(skills)} /> treballs en cua
       </p>
 
-      <div className="entity-list entity-list--grid">
-        {sortedSkills.map((skill) => (
-          <SkillRow key={skill.id} skill={skill} />
-        ))}
-      </div>
+      {groups.map((group) => (
+        <section key={group.type} className="panel-section skill-group">
+          <header className="panel-section__header">
+            <div className="panel-section__heading">
+              <SfIcon
+                className="panel-section__icon"
+                sprite="standard"
+                symbol="skill_entity"
+                sldsSize="x-small"
+                bg={colorFromString(group.type)}
+              />
+              <h3 className="panel-section__title">{group.type}</h3>
+            </div>
+            <span className="skill-group__count">
+              <FadeValue value={group.skills.length} /> skills · <FadeValue value={group.backlog} /> en cua
+            </span>
+          </header>
+
+          <div className="entity-list entity-list--grid">
+            {group.skills.map((skill) => (
+              <SkillRow key={skill.id} skill={skill} />
+            ))}
+          </div>
+        </section>
+      ))}
     </PanelState>
   )
 }

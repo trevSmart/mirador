@@ -117,6 +117,8 @@ export interface DataStatus {
   /** Any fetch in flight (initial or background poll/refresh). */
   isRefreshing: boolean
   error: string | null
+  /** Epoch ms of the last successful fetch; 0 before the first one. */
+  dataUpdatedAt: number
   /** Forces an immediate background refetch of the snapshot. */
   refresh: () => Promise<void>
 }
@@ -131,7 +133,7 @@ export function useDataStatus(): DataStatus {
   const queryClient = useQueryClient()
   const query = useQuery({
     ...config,
-    notifyOnChangeProps: ['isLoading', 'isFetching', 'error'],
+    notifyOnChangeProps: ['isLoading', 'isFetching', 'error', 'dataUpdatedAt'],
   })
 
   const queryKey = config.queryKey
@@ -153,6 +155,7 @@ export function useDataStatus(): DataStatus {
     isLoading: query.isLoading,
     isRefreshing: query.isFetching,
     error,
+    dataUpdatedAt: query.dataUpdatedAt,
     refresh,
   }
 }
