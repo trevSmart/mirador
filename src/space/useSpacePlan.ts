@@ -1,4 +1,4 @@
-/* Floor editor — React state hook.
+/* Space editor — React state hook.
    Owns the working plan, the selected tool/seat, undo/redo history and the
    dirty/save lifecycle. Keeps a ref mirror of the data so action callbacks never
    read stale state, and delegates every mutation to the pure model functions. */
@@ -6,25 +6,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../auth/auth-context'
 import {
-  loadFloorPlan,
-  saveFloorPlan,
-} from './floor-plan-repository'
+  loadSpacePlan,
+  saveSpacePlan,
+} from './space-plan-repository'
 import {
   UNDO_LIMIT,
   addCellRect,
   assignAgentToSeat,
-  cloneFloor,
-  defaultFloorPlan,
+  cloneSpace,
+  defaultSpacePlan,
   eraseCell,
   eraseEdge,
-  floorPlanSignature,
+  spacePlanSignature,
   makeId,
-  seedFloor,
+  seedSpace,
   toggleDivider,
   toggleOpening,
   toggleSeat,
-} from './floor-plan-model'
-import type { Cell, Dir, Edge, Floor, FloorPlanData, FloorTool, Place } from './types'
+} from './space-plan-model'
+import type { Cell, Dir, Edge, Space, SpacePlanData, SpaceTool, Place } from './types'
 
 export interface SeatRef {
   c: number
@@ -44,16 +44,16 @@ function uniqueName(base: string, existing: string[]): string {
   return `${base} ${n}`
 }
 
-function placeIndex(d: FloorPlanData, placeId: string): number {
+function placeIndex(d: SpacePlanData, placeId: string): number {
   const pi = d.places.findIndex((p) => p.id === placeId)
   return pi >= 0 ? pi : Math.max(0, d.places.findIndex((p) => p.id === d.activePlaceId))
 }
 
-export function useFloorPlan() {
+export function useSpacePlan() {
   const { isMockMode } = useAuth()
-  const [data, setData] = useState<FloorPlanData>(() => defaultFloorPlan())
-  const [tool, setToolState] = useState<FloorTool>('cell')
-  const [activeFloorIndex, setActiveFloorIndex] = useState(0)
+  const [data, setData] = useState<SpacePlanData>(() => defaultSpacePlan())
+  const [tool, setToolState] = useState<SpaceTool>('cell')
+  const [activeSpaceIndex, setActiveSpaceIndex] = useState(0)
   const [selectedSeat, setSelectedSeat] = useState<SeatRef | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [savedSignature, setSavedSignature] = useState('')
@@ -62,10 +62,10 @@ export function useFloorPlan() {
 
   const dataRef = useRef(data)
   const toolRef = useRef(tool)
-  const floorIndexRef = useRef(activeFloorIndex)
-  const activeFloorRef = useRef<Floor | null>(null)
-  const undoStack = useRef<FloorPlanData[]>([])
-  const redoStack = useRef<FloorPlanData[]>([])
+  const spaceIndexRef = useRef(activeSpaceIndex)
+  const activeSpaceRef = useRef<Space | null>(null)
+  const undoStack = useRef<SpacePlanData[]>([])
+  const redoStack = useRef<SpacePlanData[]>([])
 
   // Mirror render state into refs so action callbacks read fresh values without
   // accessing refs during render (which the react-hooks rules disallow).
@@ -76,8 +76,8 @@ export function useFloorPlan() {
     toolRef.current = tool
   }, [tool])
   useEffect(() => {
-    floorIndexRef.current = activeFloorIndex
-  }, [activeFloorIndex])
+    spaceIndexRef.current = activeSpaceIndex
+  }, [activeSpaceIndex])
 
   const syncHistoryFlags = useCallback(() => {
     setCanUndo(undoStack.current.length > 0)
@@ -87,15 +87,15 @@ export function useFloorPlan() {
   /* ── Load on mount / when data source changes ───────────────────────── */
   useEffect(() => {
     let cancelled = false
-    void loadFloorPlan(isMockMode).then((stored) => {
+    void loadSpacePlan(isMockMode).then((stored) => {
       if (cancelled) return
-      const next = stored ?? defaultFloorPlan()
+      const next = stored ?? defaultSpacePlan()
       undoStack.current = []
       redoStack.current = []
       dataRef.current = next
       setData(next)
-      setSavedSignature(floorPlanSignature(next))
-      setActiveFloorIndex(0)
+      setSavedSignature(spacePlanSignature(next))
+      setActiveSpaceIndex(0)
       setSelectedSeat(null)
       syncHistoryFlags()
       setLoaded(true)
@@ -106,7 +106,7 @@ export function useFloorPlan() {
   }, [isMockMode, syncHistoryFlags])
 
   /* ── Core mutation plumbing ─────────────────────────────────────────── */
-  const apply = useCallback((transform: (d: FloorPlanData) => FloorPlanData, recordHistory = true) => {
+  const apply = useCallback((transform: (d: SpacePlanData) => SpacePlanData, recordHistory = true) => {
     const prev = dataRef.current
     const next = transform(prev)
     if (next === prev) return
@@ -119,19 +119,19 @@ export function useFloorPlan() {
     setData(next)
   }, [syncHistoryFlags])
 
-  const updateActiveFloor = useCallback(
-    (fn: (floor: Floor) => Floor, recordHistory = true) => {
+  const updateActiveSpace = useCallback(
+    (fn: (space: Space) => Space, recordHistory = true) => {
       apply((d) => {
         const pi = Math.max(0, d.places.findIndex((p) => p.id === d.activePlaceId))
         const place = d.places[pi]
         if (!place) return d
-        const fi = clampIndex(floorIndexRef.current, place.floors.length)
-        const floor = place.floors[fi]
-        if (!floor) return d
-        const nextFloor = fn(floor)
-        if (nextFloor === floor) return d
-        const floors = place.floors.map((f, i) => (i === fi ? nextFloor : f))
-        const places = d.places.map((p, i) => (i === pi ? { ...p, floors } : p))
+        const fi = clampIndex(spaceIndexRef.current, place.spaces.length)
+        const space = place.spaces[fi]
+        if (!space) return d
+        const nextSpace = fn(space)
+        if (nextSpace === space) return d
+        const spaces = place.spaces.map((f, i) => (i === fi ? nextSpace : f))
+        const places = d.places.map((p, i) => (i === pi ? { ...p, spaces } : p))
         return { ...d, places }
       }, recordHistory)
     },
@@ -141,47 +141,47 @@ export function useFloorPlan() {
   /* ── Derived selectors ──────────────────────────────────────────────── */
   const activePlaceIndex = Math.max(0, data.places.findIndex((p) => p.id === data.activePlaceId))
   const activePlace = data.places[activePlaceIndex] ?? data.places[0]
-  const safeFloorIndex = clampIndex(activeFloorIndex, activePlace?.floors.length ?? 0)
-  const activeFloor = activePlace?.floors[safeFloorIndex] ?? null
+  const safeSpaceIndex = clampIndex(activeSpaceIndex, activePlace?.spaces.length ?? 0)
+  const activeSpace = activePlace?.spaces[safeSpaceIndex] ?? null
 
-  const dirty = useMemo(() => floorPlanSignature(data) !== savedSignature, [data, savedSignature])
+  const dirty = useMemo(() => spacePlanSignature(data) !== savedSignature, [data, savedSignature])
 
   /* ── Tool actions (called by the grid) ──────────────────────────────── */
-  const setTool = useCallback((next: FloorTool) => {
+  const setTool = useCallback((next: SpaceTool) => {
     setToolState(next)
     if (next !== 'seat') setSelectedSeat(null)
   }, [])
 
   const paintCellRect = useCallback(
-    (start: Cell, end: Cell) => updateActiveFloor((f) => addCellRect(f, start, end)),
-    [updateActiveFloor],
+    (start: Cell, end: Cell) => updateActiveSpace((f) => addCellRect(f, start, end)),
+    [updateActiveSpace],
   )
 
   const eraseCellAt = useCallback(
     (c: number, r: number) => {
-      updateActiveFloor((f) => eraseCell(f, c, r))
+      updateActiveSpace((f) => eraseCell(f, c, r))
       setSelectedSeat((cur) => (cur && cur.c === c && cur.r === r ? null : cur))
     },
-    [updateActiveFloor],
+    [updateActiveSpace],
   )
 
   /** Seat tool tap: create an empty seat if absent, and select the seat. */
   const seatAt = useCallback(
     (c: number, r: number) => {
-      const floor = activeFloorRef.current
-      if (!floor) return
-      const hasSeat = floor.seats.some((s) => s.c === c && s.r === r)
-      if (!hasSeat) updateActiveFloor((f) => toggleSeat(f, c, r))
+      const space = activeSpaceRef.current
+      if (!space) return
+      const hasSeat = space.seats.some((s) => s.c === c && s.r === r)
+      if (!hasSeat) updateActiveSpace((f) => toggleSeat(f, c, r))
       setSelectedSeat({ c, r })
     },
-    [updateActiveFloor],
+    [updateActiveSpace],
   )
 
   /** Edge tap dispatched by the current tool (door/window/divider/erase). */
   const applyEdge = useCallback(
     (c: number, r: number, edge: Edge) => {
       const t = toolRef.current
-      updateActiveFloor((f) => {
+      updateActiveSpace((f) => {
         switch (t) {
           case 'door':
             return toggleOpening(f, c, r, edge, 'door')
@@ -196,40 +196,40 @@ export function useFloorPlan() {
         }
       })
     },
-    [updateActiveFloor],
+    [updateActiveSpace],
   )
 
-  const rotateFloor = useCallback(
+  const rotateSpace = useCallback(
     (delta: 1 | -1) =>
-      updateActiveFloor((f) => ({ ...f, dir: (((f.dir + delta) % 4) + 4) % 4 as Dir })),
-    [updateActiveFloor],
+      updateActiveSpace((f) => ({ ...f, dir: (((f.dir + delta) % 4) + 4) % 4 as Dir })),
+    [updateActiveSpace],
   )
 
   /* ── Seat / agent actions (palette) ─────────────────────────────────── */
   const assignAgent = useCallback(
     (c: number, r: number, agentId: string | null) =>
-      updateActiveFloor((f) => assignAgentToSeat(f, c, r, agentId)),
-    [updateActiveFloor],
+      updateActiveSpace((f) => assignAgentToSeat(f, c, r, agentId)),
+    [updateActiveSpace],
   )
 
   const removeSeat = useCallback(
     (c: number, r: number) => {
-      updateActiveFloor((f) => toggleSeat(f, c, r))
+      updateActiveSpace((f) => toggleSeat(f, c, r))
       setSelectedSeat(null)
     },
-    [updateActiveFloor],
+    [updateActiveSpace],
   )
 
-  /* ── Place / floor management ───────────────────────────────────────── */
+  /* ── Place / space management ───────────────────────────────────────── */
   const selectPlace = useCallback((placeId: string) => {
     apply((d) => (d.activePlaceId === placeId ? d : { ...d, activePlaceId: placeId }), false)
-    setActiveFloorIndex(0)
+    setActiveSpaceIndex(0)
     setSelectedSeat(null)
   }, [apply])
 
-  const selectFloor = useCallback((placeId: string, index: number) => {
+  const selectSpace = useCallback((placeId: string, index: number) => {
     apply((d) => (d.activePlaceId === placeId ? d : { ...d, activePlaceId: placeId }), false)
-    setActiveFloorIndex(index)
+    setActiveSpaceIndex(index)
     setSelectedSeat(null)
   }, [apply])
 
@@ -239,11 +239,11 @@ export function useFloorPlan() {
       const place: Place = {
         id: makeId('place'),
         name: uniqueName(`Lloc ${d.places.length + 1}`, names),
-        floors: [seedFloor('Planta 1')],
+        spaces: [seedSpace('Planta 1')],
       }
       return { ...d, places: [...d.places, place], activePlaceId: place.id }
     })
-    setActiveFloorIndex(0)
+    setActiveSpaceIndex(0)
     setSelectedSeat(null)
   }, [apply])
 
@@ -254,7 +254,7 @@ export function useFloorPlan() {
       const activePlaceId = d.activePlaceId === placeId ? places[0].id : d.activePlaceId
       return { ...d, places, activePlaceId }
     })
-    setActiveFloorIndex(0)
+    setActiveSpaceIndex(0)
     setSelectedSeat(null)
   }, [apply])
 
@@ -267,81 +267,81 @@ export function useFloorPlan() {
     }))
   }, [apply])
 
-  const addFloor = useCallback((placeId: string) => {
+  const addSpace = useCallback((placeId: string) => {
     let newIndex = 0
     apply((d) => {
       const pi = placeIndex(d, placeId)
       const place = d.places[pi]
       if (!place) return d
-      const names = place.floors.map((f) => f.name)
-      const floor = seedFloor(uniqueName(`Planta ${place.floors.length + 1}`, names))
-      const floors = [...place.floors, floor]
-      newIndex = floors.length - 1
-      const places = d.places.map((p, i) => (i === pi ? { ...p, floors } : p))
+      const names = place.spaces.map((f) => f.name)
+      const space = seedSpace(uniqueName(`Planta ${place.spaces.length + 1}`, names))
+      const spaces = [...place.spaces, space]
+      newIndex = spaces.length - 1
+      const places = d.places.map((p, i) => (i === pi ? { ...p, spaces } : p))
       return { ...d, places, activePlaceId: place.id }
     })
-    setActiveFloorIndex(newIndex)
+    setActiveSpaceIndex(newIndex)
     setSelectedSeat(null)
   }, [apply])
 
-  const removeFloor = useCallback((placeId: string, index: number) => {
+  const removeSpace = useCallback((placeId: string, index: number) => {
     apply((d) => {
       const pi = placeIndex(d, placeId)
       const place = d.places[pi]
-      if (!place || place.floors.length <= 1) return d
-      const floors = place.floors.filter((_, i) => i !== index)
-      const places = d.places.map((p, i) => (i === pi ? { ...p, floors } : p))
+      if (!place || place.spaces.length <= 1) return d
+      const spaces = place.spaces.filter((_, i) => i !== index)
+      const places = d.places.map((p, i) => (i === pi ? { ...p, spaces } : p))
       return { ...d, places, activePlaceId: place.id }
     })
-    setActiveFloorIndex((cur) => Math.max(0, cur > index ? cur - 1 : cur === index ? cur - 1 : cur))
+    setActiveSpaceIndex((cur) => Math.max(0, cur > index ? cur - 1 : cur === index ? cur - 1 : cur))
     setSelectedSeat(null)
   }, [apply])
 
-  const duplicateFloor = useCallback((placeId: string, index: number) => {
+  const duplicateSpace = useCallback((placeId: string, index: number) => {
     let newIndex = index
     apply((d) => {
       const pi = placeIndex(d, placeId)
       const place = d.places[pi]
-      const source = place?.floors[index]
+      const source = place?.spaces[index]
       if (!place || !source) return d
-      const names = place.floors.map((f) => f.name)
-      const copy = cloneFloor(source, uniqueName(`${source.name} (còpia)`, names))
-      const floors = [...place.floors.slice(0, index + 1), copy, ...place.floors.slice(index + 1)]
+      const names = place.spaces.map((f) => f.name)
+      const copy = cloneSpace(source, uniqueName(`${source.name} (còpia)`, names))
+      const spaces = [...place.spaces.slice(0, index + 1), copy, ...place.spaces.slice(index + 1)]
       newIndex = index + 1
-      const places = d.places.map((p, i) => (i === pi ? { ...p, floors } : p))
+      const places = d.places.map((p, i) => (i === pi ? { ...p, spaces } : p))
       return { ...d, places, activePlaceId: place.id }
     })
-    setActiveFloorIndex(newIndex)
+    setActiveSpaceIndex(newIndex)
     setSelectedSeat(null)
   }, [apply])
 
-  const renameFloor = useCallback((placeId: string, index: number, name: string) => {
+  const renameSpace = useCallback((placeId: string, index: number, name: string) => {
     const trimmed = name.trim().slice(0, 40)
     if (!trimmed) return
     apply((d) => {
       const pi = placeIndex(d, placeId)
       const place = d.places[pi]
-      if (!place || !place.floors[index]) return d
-      const floors = place.floors.map((f, i) => (i === index ? { ...f, name: trimmed } : f))
-      const places = d.places.map((p, i) => (i === pi ? { ...p, floors } : p))
+      if (!place || !place.spaces[index]) return d
+      const spaces = place.spaces.map((f, i) => (i === index ? { ...f, name: trimmed } : f))
+      const places = d.places.map((p, i) => (i === pi ? { ...p, spaces } : p))
       return { ...d, places }
     })
   }, [apply])
 
-  const reorderFloor = useCallback((placeId: string, from: number, to: number) => {
+  const reorderSpace = useCallback((placeId: string, from: number, to: number) => {
     if (from === to) return
     apply((d) => {
       const pi = placeIndex(d, placeId)
       const place = d.places[pi]
       if (!place) return d
-      const floors = [...place.floors]
-      if (from < 0 || from >= floors.length || to < 0 || to >= floors.length) return d
-      const [moved] = floors.splice(from, 1)
-      floors.splice(to, 0, moved)
-      const places = d.places.map((p, i) => (i === pi ? { ...p, floors } : p))
+      const spaces = [...place.spaces]
+      if (from < 0 || from >= spaces.length || to < 0 || to >= spaces.length) return d
+      const [moved] = spaces.splice(from, 1)
+      spaces.splice(to, 0, moved)
+      const places = d.places.map((p, i) => (i === pi ? { ...p, spaces } : p))
       return { ...d, places, activePlaceId: place.id }
     })
-    setActiveFloorIndex(to)
+    setActiveSpaceIndex(to)
   }, [apply])
 
   /* ── History ────────────────────────────────────────────────────────── */
@@ -370,37 +370,37 @@ export function useFloorPlan() {
   /* ── Save / reset ───────────────────────────────────────────────────── */
   const save = useCallback(() => {
     const current = dataRef.current
-    void saveFloorPlan(current, isMockMode).then(() => {
-      setSavedSignature(floorPlanSignature(current))
+    void saveSpacePlan(current, isMockMode).then(() => {
+      setSavedSignature(spacePlanSignature(current))
     })
   }, [isMockMode])
 
   const reset = useCallback(() => {
-    void loadFloorPlan(isMockMode).then((stored) => {
-      const next = stored ?? defaultFloorPlan()
+    void loadSpacePlan(isMockMode).then((stored) => {
+      const next = stored ?? defaultSpacePlan()
       undoStack.current = []
       redoStack.current = []
       dataRef.current = next
       setData(next)
-      setSavedSignature(floorPlanSignature(next))
-      setActiveFloorIndex(0)
+      setSavedSignature(spacePlanSignature(next))
+      setActiveSpaceIndex(0)
       setSelectedSeat(null)
       syncHistoryFlags()
     })
   }, [isMockMode, syncHistoryFlags])
 
-  // Keep the live active floor reachable from callbacks that read it (seatAt).
+  // Keep the live active space reachable from callbacks that read it (seatAt).
   useEffect(() => {
-    activeFloorRef.current = activeFloor
-  }, [activeFloor])
+    activeSpaceRef.current = activeSpace
+  }, [activeSpace])
 
   return {
     loaded,
     data,
     places: data.places,
     activePlace,
-    activeFloor,
-    activeFloorIndex: safeFloorIndex,
+    activeSpace,
+    activeSpaceIndex: safeSpaceIndex,
     tool,
     setTool,
     selectedSeat,
@@ -413,21 +413,21 @@ export function useFloorPlan() {
     eraseCellAt,
     seatAt,
     applyEdge,
-    rotateFloor,
+    rotateSpace,
     // agents
     assignAgent,
     removeSeat,
     // structure
     selectPlace,
-    selectFloor,
+    selectSpace,
     addPlace,
     removePlace,
     renamePlace,
-    addFloor,
-    removeFloor,
-    duplicateFloor,
-    renameFloor,
-    reorderFloor,
+    addSpace,
+    removeSpace,
+    duplicateSpace,
+    renameSpace,
+    reorderSpace,
     // history + persistence
     undo,
     redo,

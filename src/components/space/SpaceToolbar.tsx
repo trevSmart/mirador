@@ -1,10 +1,10 @@
-import type { Floor, FloorTool } from '../../floor/types'
+import type { Space, SpaceTool } from '../../space/types'
 import { Button } from '../ds'
 import { ButtonIcon } from '../ds/ButtonIcon'
 import { ROTATE_ICON_PATH } from './rotate-icon-path'
 
 interface ToolDef {
-  tool: FloorTool
+  tool: SpaceTool
   label: string
   glyph: string
   hint: string
@@ -19,13 +19,13 @@ const TOOLS: ToolDef[] = [
   { tool: 'erase', label: 'Esborra', glyph: '⌫', hint: 'Treu cel·les, seients o obertures' },
 ]
 
-interface FloorToolbarProps {
-  tool: FloorTool
-  floor: Floor | null
+interface SpaceToolbarProps {
+  tool: SpaceTool
+  space: Space | null
   dirty: boolean
   canUndo: boolean
   canRedo: boolean
-  onSelectTool: (tool: FloorTool) => void
+  onSelectTool: (tool: SpaceTool) => void
   onRotate: (delta: 1 | -1) => void
   onUndo: () => void
   onRedo: () => void
@@ -33,9 +33,9 @@ interface FloorToolbarProps {
   onReset: () => void
 }
 
-export function FloorToolbar({
+export function SpaceToolbar({
   tool,
-  floor,
+  space,
   dirty,
   canUndo,
   canRedo,
@@ -45,7 +45,7 @@ export function FloorToolbar({
   onRedo,
   onSave,
   onReset,
-}: FloorToolbarProps) {
+}: SpaceToolbarProps) {
   return (
     <div className="fe-toolbar">
       <div className="fe-toolbar__tools" role="toolbar" aria-label="Eines">
@@ -68,11 +68,11 @@ export function FloorToolbar({
 
       <div className="fe-toolbar__spacer" />
 
-      {floor ? (
+      {space ? (
         <span className="fe-toolbar__meta" aria-label="Recompte d'elements">
           <span>
-            {floor.seats.filter((seat) => seat.agentId).length} agents en{' '}
-            {floor.seats.length} seients
+            {space.seats.filter((seat) => seat.agentId).length} agents en{' '}
+            {space.seats.length} seients
           </span>
         </span>
       ) : null}
@@ -83,7 +83,7 @@ export function FloorToolbar({
           title="Gira a l'esquerra"
           aria-label="Gira a l'esquerra"
           onClick={() => onRotate(-1)}
-          disabled={!floor}
+          disabled={!space}
         >
           <svg width={18} height={18} viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
             <path d={ROTATE_ICON_PATH} />
@@ -94,7 +94,7 @@ export function FloorToolbar({
           title="Gira a la dreta"
           aria-label="Gira a la dreta"
           onClick={() => onRotate(1)}
-          disabled={!floor}
+          disabled={!space}
         >
           <svg width={18} height={18} viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
             <g transform="translate(24 0) scale(-1 1)">

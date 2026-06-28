@@ -67,8 +67,8 @@ preferences → auth → API client → data → dockview host → drawers/modal
   `/api/oauth/token` (token proxy), and `/api/salesforce/photo` (photo proxy).
 - **`src/panels/` + `src/dockview/`** — the dockable workspace. `registry.ts` is the
   single source of truth for panels (home, wallboard, agents, queues, skills, work,
-  floor, floor editor, and an experimental dev panel).
-- **`src/floor/` + `src/components/floor/`** — 2D/3D isometric floor plan.
+  space, space editor, and an experimental dev panel).
+- **`src/space/` + `src/components/space/`** — 2D/3D isometric space plan.
 - **`src/components/ds/`** — in-house design-system primitives (SLDS-based).
 - **`src/settings/`** — user preferences (persisted to localStorage) and the
   settings modal.

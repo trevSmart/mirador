@@ -8,7 +8,7 @@ import { clearLocalData } from '../../utils/clear-local-data'
 import { Button } from '../ds/Button'
 import {
   REFRESH_OPTIONS,
-  type FloorViewMode,
+  type SpaceViewMode,
   type Lang,
   type Preferences,
   type TimeFormat,
@@ -236,19 +236,19 @@ export function AparencaSection({ draft, patch }: SectionProps) {
           hint="To del gradient darrere els renders de planta"
           control={
             <TintSwatchField
-              value={draft.floorCanvasTint}
-              onChange={(v) => patch({ floorCanvasTint: v })}
+              value={draft.spaceCanvasTint}
+              onChange={(v) => patch({ spaceCanvasTint: v })}
             />
           }
         />
         <SettingsRow
           title="Vista de planta per defecte"
-          hint="Mode amb què s'obre el panell Floor"
+          hint="Mode amb què s'obre el panell Space"
           control={
-            <SelectField<FloorViewMode>
+            <SelectField<SpaceViewMode>
               label="Vista de planta per defecte"
-              value={draft.defaultFloorView}
-              onChange={(v) => patch({ defaultFloorView: v })}
+              value={draft.defaultSpaceView}
+              onChange={(v) => patch({ defaultSpaceView: v })}
               options={[
                 { value: '2d', label: '2D (planta)' },
                 { value: '3d', label: '3D (isomètric)' },

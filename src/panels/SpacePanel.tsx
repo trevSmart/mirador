@@ -1,22 +1,22 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAgents, useQueues } from '../api/data-hooks'
 import type { Agent, PresenceStatus } from '../api/types'
-import { FloorView } from '../components/floor/FloorView'
-import { FloorZoomControl } from '../components/floor/FloorZoomControl'
-import { FLOOR_ZOOM_KEY, adjustFloorZoomFromWheel, loadFloorZoom } from '../components/floor/floor-zoom'
+import { SpaceView } from '../components/space/SpaceView'
+import { SpaceZoomControl } from '../components/space/SpaceZoomControl'
+import { SPACE_ZOOM_KEY, adjustSpaceZoomFromWheel, loadSpaceZoom } from '../components/space/space-zoom'
 import { PanelSuspenseFallback } from '../components/PanelSuspenseFallback'
 import { PanelShell } from '../components/PanelState'
 import { Select } from '../components/ds/Select'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
-import { useFloorPlanData } from '../floor/useFloorPlanData'
-import { setFloorSeatedAgentIds } from '../floor/floor-seated-agents'
+import { useSpacePlanData } from '../space/useSpacePlanData'
+import { setSpaceSeatedAgentIds } from '../space/space-seated-agents'
 import { useSmoothScroll } from '../hooks/useSmoothScroll'
 import { usePreferences } from '../settings/preferences-context'
 import { presenceLabel } from '../utils/format'
-import type { Floor } from '../floor/types'
+import type { Space } from '../space/types'
 
-const FloorView3D = lazy(() =>
-  import('../components/floor/FloorView3D').then(m => ({ default: m.FloorView3D }))
+const SpaceView3D = lazy(() =>
+  import('../components/space/SpaceView3D').then(m => ({ default: m.SpaceView3D }))
 )
 
 const STATUS_ORDER: PresenceStatus[] = ['online', 'busy', 'away', 'offline']
@@ -29,8 +29,8 @@ const STATUS_DOT: Record<PresenceStatus, string> = {
 
 type ViewMode = '2d' | '3d'
 
-export function FloorPanel() {
-  const { data, loaded } = useFloorPlanData()
+export function SpacePanel() {
+  const { data, loaded } = useSpacePlanData()
   const agents = useAgents()
   const queues = useQueues()
   const { openAgent } = useDetailDrawer()
@@ -38,7 +38,7 @@ export function FloorPanel() {
   const canvasScrollRef = useSmoothScroll<HTMLDivElement>()
   const wheelCleanupRef = useRef<(() => void) | null>(null)
   const [placeId, setPlaceId] = useState<string | null>(null)
-  const [zoom, setZoom] = useState<number>(loadFloorZoom)
+  const [zoom, setZoom] = useState<number>(loadSpaceZoom)
 
   const setCanvasRef = useCallback(
     (element: HTMLDivElement | null) => {
@@ -53,7 +53,7 @@ export function FloorPanel() {
         if (!event.ctrlKey && !event.metaKey) return
         event.preventDefault()
         event.stopImmediatePropagation()
-        setZoom((current) => adjustFloorZoomFromWheel(current, event.deltaY))
+        setZoom((current) => adjustSpaceZoomFromWheel(current, event.deltaY))
       }
 
       // Removal must repeat the capture flag, otherwise it's a no-op and the
@@ -69,17 +69,17 @@ export function FloorPanel() {
   // preference re-syncs the live view, even though Dockview keeps this panel
   // mounted — handled by adjusting state during render when the default changes.
   // A manual toggle here still wins until the default preference changes again.
-  const [view, setView] = useState<ViewMode>(prefs.defaultFloorView)
-  const [prevDefault, setPrevDefault] = useState<ViewMode>(prefs.defaultFloorView)
-  if (prevDefault !== prefs.defaultFloorView) {
-    setPrevDefault(prefs.defaultFloorView)
-    setView(prefs.defaultFloorView)
+  const [view, setView] = useState<ViewMode>(prefs.defaultSpaceView)
+  const [prevDefault, setPrevDefault] = useState<ViewMode>(prefs.defaultSpaceView)
+  if (prevDefault !== prefs.defaultSpaceView) {
+    setPrevDefault(prefs.defaultSpaceView)
+    setView(prefs.defaultSpaceView)
   }
 
   useEffect(() => {
     const id = window.setTimeout(() => {
       try {
-        localStorage.setItem(FLOOR_ZOOM_KEY, String(zoom))
+        localStorage.setItem(SPACE_ZOOM_KEY, String(zoom))
       } catch {
         /* ignore */
       }
@@ -95,8 +95,8 @@ export function FloorPanel() {
     return data.places.find((p) => p.id === placeId) ?? data.places[0]
   }, [data, placeId])
 
-  const floors = useMemo(() => activePlace?.floors ?? [], [activePlace])
-  const multiFloor = floors.length > 1
+  const spaces = useMemo(() => activePlace?.spaces ?? [], [activePlace])
+  const multiSpace = spaces.length > 1
 
   const stackStyle = {
     '--fv-zoom': zoom,
@@ -105,20 +105,20 @@ export function FloorPanel() {
 
   useEffect(() => {
     const ids = new Set<string>()
-    for (const floor of floors) {
-      for (const seat of floor.seats) {
+    for (const space of spaces) {
+      for (const seat of space.seats) {
         if (seat.agentId) ids.add(seat.agentId)
       }
     }
-    setFloorSeatedAgentIds(ids)
-  }, [floors])
+    setSpaceSeatedAgentIds(ids)
+  }, [spaces])
 
   const summary = useMemo(() => {
     const counts: Record<PresenceStatus, number> = { online: 0, busy: 0, away: 0, offline: 0 }
     let vacant = 0
     let total = 0
-    for (const floor of floors) {
-      for (const seat of floor.seats) {
+    for (const space of spaces) {
+      for (const seat of space.seats) {
         total += 1
         const agent = seat.agentId ? agentsById.get(seat.agentId) : null
         if (agent) counts[agent.status] += 1
@@ -126,19 +126,19 @@ export function FloorPanel() {
       }
     }
     return { counts, vacant, total }
-  }, [floors, agentsById])
+  }, [spaces, agentsById])
 
   const handleSelectAgent = (agent: Agent) => {
     openAgent(agent.id)
   }
 
-  const renderFloorTile = (floor: Floor) => (
-    <section key={floor.id} className="fv-stack__item">
-      {multiFloor ? <h4 className="fv-stack__label">{floor.name}</h4> : null}
+  const renderSpaceTile = (space: Space) => (
+    <section key={space.id} className="fv-stack__item">
+      {multiSpace ? <h4 className="fv-stack__label">{space.name}</h4> : null}
       <div className="fv-stack__render">
         {view === '3d' ? (
-          <FloorView3D
-            floor={floor}
+          <SpaceView3D
+            space={space}
             agentsById={agentsById}
             queuesById={queuesById}
             showAvatars={prefs.showAvatars}
@@ -146,9 +146,9 @@ export function FloorPanel() {
             onSelectAgent={handleSelectAgent}
           />
         ) : (
-          <FloorView
-            floor={floor}
-            dir={floor.dir}
+          <SpaceView
+            space={space}
+            dir={space.dir}
             agentsById={agentsById}
             showAvatars={prefs.showAvatars}
             animations={prefs.animations}
@@ -159,36 +159,36 @@ export function FloorPanel() {
     </section>
   )
 
-  const floorStack = (
+  const spaceStack = (
     <div
-      className={`fv-stack${multiFloor ? ' fv-stack--multi' : ' fv-stack--single'}`}
+      className={`fv-stack${multiSpace ? ' fv-stack--multi' : ' fv-stack--single'}`}
       style={stackStyle}
     >
-      {floors.map(renderFloorTile)}
+      {spaces.map(renderSpaceTile)}
     </div>
   )
 
   if (!loaded) {
     return (
-      <PanelShell hideHeader smoothScroll={false} className="panel-shell--floor">
+      <PanelShell hideHeader smoothScroll={false} className="panel-shell--space">
         <p className="panel-state panel-state--muted">Carregant plànol…</p>
       </PanelShell>
     )
   }
 
-  if (!data || !activePlace || floors.length === 0) {
+  if (!data || !activePlace || spaces.length === 0) {
     return (
-      <PanelShell hideHeader smoothScroll={false} className="panel-shell--floor">
+      <PanelShell hideHeader smoothScroll={false} className="panel-shell--space">
         <p className="panel-state panel-state--muted">
-          Encara no hi ha cap plànol desat. Crea'l des del panell <strong>Floor editor</strong>.
+          Encara no hi ha cap plànol desat. Crea'l des del panell <strong>Space editor</strong>.
         </p>
       </PanelShell>
     )
   }
 
   return (
-    <PanelShell hideHeader smoothScroll={false} className="panel-shell--floor">
-      <div className="floor-view">
+    <PanelShell hideHeader smoothScroll={false} className="panel-shell--space">
+      <div className="space-view">
         <header className="fv-bar">
           <div className="fv-selectors">
             {data.places.length > 1 ? (
@@ -203,7 +203,7 @@ export function FloorPanel() {
               <span className="fv-place-name">{activePlace.name}</span>
             )}
 
-            {!multiFloor ? <span className="fv-floor-name">{floors[0].name}</span> : null}
+            {!multiSpace ? <span className="fv-space-name">{spaces[0].name}</span> : null}
           </div>
 
           <div className="fv-controls">
@@ -219,7 +219,7 @@ export function FloorPanel() {
               </span>
             </div>
 
-            <FloorZoomControl zoom={zoom} onChange={setZoom} />
+            <SpaceZoomControl zoom={zoom} onChange={setZoom} />
 
             <div className="fv-toggle" role="group" aria-label="Avatars">
               <button
@@ -254,9 +254,9 @@ export function FloorPanel() {
 
         <div className="fv-canvas" ref={setCanvasRef}>
           {view === '3d' ? (
-            <Suspense fallback={<PanelSuspenseFallback />}>{floorStack}</Suspense>
+            <Suspense fallback={<PanelSuspenseFallback />}>{spaceStack}</Suspense>
           ) : (
-            floorStack
+            spaceStack
           )}
         </div>
       </div>

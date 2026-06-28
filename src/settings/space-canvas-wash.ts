@@ -1,12 +1,12 @@
-/* Floor canvas background wash — subtle dual-tone gradient behind room renders.
-   Each preset pairs two hues (e.g. green → lilac); buildFloorCanvasWash() layers
+/* Space canvas background wash — subtle dual-tone gradient behind room renders.
+   Each preset pairs two hues (e.g. green → lilac); buildSpaceCanvasWash() layers
    corner radials plus a linear blend so the shift reads without overpowering. */
 
-export type FloorCanvasTint = 'none' | 'blue' | 'teal' | 'neutral' | 'warm' | 'violet'
+export type SpaceCanvasTint = 'none' | 'blue' | 'teal' | 'neutral' | 'warm' | 'violet'
 
-export const FLOOR_CANVAS_TINTS: FloorCanvasTint[] = ['none', 'blue', 'teal', 'neutral', 'warm', 'violet']
+export const SPACE_CANVAS_TINTS: SpaceCanvasTint[] = ['none', 'blue', 'teal', 'neutral', 'warm', 'violet']
 
-export const FLOOR_CANVAS_TINT_LABELS: Record<FloorCanvasTint, string> = {
+export const SPACE_CANVAS_TINT_LABELS: Record<SpaceCanvasTint, string> = {
   none: 'Sense gradient',
   blue: 'Blau · cel',
   teal: 'Verd · aigua',
@@ -19,7 +19,7 @@ export const FLOOR_CANVAS_TINT_LABELS: Record<FloorCanvasTint, string> = {
 const NO_CANVAS_FILL = 'transparent'
 
 /** primary → top-right corner; secondary → bottom-left corner */
-const TINT_PAIRS: Record<Exclude<FloorCanvasTint, 'none'>, { primary: string; secondary: string }> = {
+const TINT_PAIRS: Record<Exclude<SpaceCanvasTint, 'none'>, { primary: string; secondary: string }> = {
   blue: { primary: '#0060a0', secondary: '#3dd4f0' },
   teal: { primary: '#1a7a5c', secondary: '#5ee0d0' },
   neutral: { primary: '#6b7d94', secondary: '#d4b896' },
@@ -75,7 +75,7 @@ function blendTint(a: string, b: string, blendT: number, whiteRatio: number): st
 }
 
 /** Build the full --fv-canvas-wash value for a given dual-tone preset. */
-export function buildFloorCanvasWash(tint: FloorCanvasTint): string {
+export function buildSpaceCanvasWash(tint: SpaceCanvasTint): string {
   if (tint === 'none') return NO_CANVAS_FILL
   const { primary, secondary } = TINT_PAIRS[tint]
   const [r1, g1, b1] = parseHex(primary)!

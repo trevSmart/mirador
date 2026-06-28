@@ -1,10 +1,10 @@
-import { FLOOR_SCHEMA_VERSION } from '../../floor/floor-plan-model'
-import type { Cell, Edge, Floor, FloorPlanData, Opening, OpeningKind, Place, Seat } from '../../floor/types'
+import { SPACE_SCHEMA_VERSION } from '../../space/space-plan-model'
+import type { Cell, Edge, Space, SpacePlanData, Opening, OpeningKind, Place, Seat } from '../../space/types'
 
 const MOCK_PLACE_ID = 'mock-place-cc'
-const MOCK_FLOOR_VENDES = 'mock-floor-vendes'
-const MOCK_FLOOR_ATENCIO = 'mock-floor-atencio'
-const MOCK_FLOOR_SUPORT = 'mock-floor-suport'
+const MOCK_SPACE_VENDES = 'mock-space-vendes'
+const MOCK_SPACE_ATENCIO = 'mock-space-atencio'
+const MOCK_SPACE_SUPORT = 'mock-space-suport'
 
 type SeatDef = { c: number; r: number; agentId: string | null }
 type OpeningDef = { lc: number; lr: number; edge: Edge; kind: OpeningKind }
@@ -41,7 +41,7 @@ function roomOpenings(
   }))
 }
 
-function buildFloor(
+function buildSpace(
   id: string,
   name: string,
   originC: number,
@@ -50,7 +50,7 @@ function buildFloor(
   height: number,
   seatDefs: SeatDef[],
   openingDefs: OpeningDef[],
-): Floor {
+): Space {
   return {
     id,
     name,
@@ -62,10 +62,10 @@ function buildFloor(
   }
 }
 
-/** Predefined contact-center floors for mock mode, with seats bound to mock agent ids. */
-export function createMockFloorPlan(): FloorPlanData {
-  const vendes = buildFloor(
-    MOCK_FLOOR_VENDES,
+/** Predefined contact-center spaces for mock mode, with seats bound to mock agent ids. */
+export function createMockSpacePlan(): SpacePlanData {
+  const vendes = buildSpace(
+    MOCK_SPACE_VENDES,
     'Planta Vendes',
     2,
     2,
@@ -97,8 +97,8 @@ export function createMockFloorPlan(): FloorPlanData {
     ],
   )
 
-  const atencio = buildFloor(
-    MOCK_FLOOR_ATENCIO,
+  const atencio = buildSpace(
+    MOCK_SPACE_ATENCIO,
     'Planta Atenció',
     2,
     9,
@@ -124,8 +124,8 @@ export function createMockFloorPlan(): FloorPlanData {
     ],
   )
 
-  const suport = buildFloor(
-    MOCK_FLOOR_SUPORT,
+  const suport = buildSpace(
+    MOCK_SPACE_SUPORT,
     'Planta Suport',
     2,
     16,
@@ -160,11 +160,11 @@ export function createMockFloorPlan(): FloorPlanData {
   const place: Place = {
     id: MOCK_PLACE_ID,
     name: 'Contact Center Barcelona',
-    floors: [vendes, atencio, suport],
+    spaces: [vendes, atencio, suport],
   }
 
   return {
-    v: FLOOR_SCHEMA_VERSION,
+    v: SPACE_SCHEMA_VERSION,
     activePlaceId: place.id,
     places: [place],
   }

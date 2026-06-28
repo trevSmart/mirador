@@ -2,20 +2,20 @@ import { type KeyboardEvent, useEffect, useRef, useState } from 'react'
 import { ButtonIcon } from '../ds/ButtonIcon'
 import { syncDropdownPanel } from '../../utils/sync-dropdown-panel'
 import {
-  FLOOR_ZOOM_DEFAULT,
-  FLOOR_ZOOM_MAX,
-  FLOOR_ZOOM_MIN,
-  FLOOR_ZOOM_STEP,
-} from './floor-zoom'
+  SPACE_ZOOM_DEFAULT,
+  SPACE_ZOOM_MAX,
+  SPACE_ZOOM_MIN,
+  SPACE_ZOOM_STEP,
+} from './space-zoom'
 
-interface FloorZoomSliderProps {
+interface SpaceZoomSliderProps {
   zoom: number
   onChange: (zoom: number) => void
   minZoom: number
   maxZoom: number
 }
 
-function FloorZoomSlider({ zoom, onChange, minZoom, maxZoom }: FloorZoomSliderProps) {
+function SpaceZoomSlider({ zoom, onChange, minZoom, maxZoom }: SpaceZoomSliderProps) {
   const pct = Math.round(zoom * 100)
   const clamp = (value: number) => Math.min(maxZoom, Math.max(minZoom, value))
 
@@ -27,7 +27,7 @@ function FloorZoomSlider({ zoom, onChange, minZoom, maxZoom }: FloorZoomSliderPr
         icon="utility:dash"
         size={14}
         disabled={zoom <= minZoom}
-        onClick={() => onChange(clamp(Number((zoom - FLOOR_ZOOM_STEP).toFixed(3))))}
+        onClick={() => onChange(clamp(Number((zoom - SPACE_ZOOM_STEP).toFixed(3))))}
       />
       <label className="fv-zoom__slider">
         <input
@@ -49,7 +49,7 @@ function FloorZoomSlider({ zoom, onChange, minZoom, maxZoom }: FloorZoomSliderPr
         icon="utility:add"
         size={14}
         disabled={zoom >= maxZoom}
-        onClick={() => onChange(clamp(Number((zoom + FLOOR_ZOOM_STEP).toFixed(3))))}
+        onClick={() => onChange(clamp(Number((zoom + SPACE_ZOOM_STEP).toFixed(3))))}
       />
       <span className="fv-zoom__value" aria-hidden="true">
         {pct}%
@@ -61,21 +61,21 @@ function FloorZoomSlider({ zoom, onChange, minZoom, maxZoom }: FloorZoomSliderPr
         icon="utility:refresh"
         size={14}
         disabled={pct === 100}
-        onClick={() => onChange(FLOOR_ZOOM_DEFAULT)}
+        onClick={() => onChange(SPACE_ZOOM_DEFAULT)}
       />
     </div>
   )
 }
 
-interface FloorZoomControlProps {
+interface SpaceZoomControlProps {
   zoom: number
   onChange: (zoom: number) => void
-  /** Overridable zoom bounds (default to the shared floor-zoom constants). */
+  /** Overridable zoom bounds (default to the shared space-zoom constants). */
   minZoom?: number
   maxZoom?: number
 }
 
-export function FloorZoomControl({ zoom, onChange, minZoom = FLOOR_ZOOM_MIN, maxZoom = FLOOR_ZOOM_MAX }: FloorZoomControlProps) {
+export function SpaceZoomControl({ zoom, onChange, minZoom = SPACE_ZOOM_MIN, maxZoom = SPACE_ZOOM_MAX }: SpaceZoomControlProps) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const dropRef = useRef<HTMLDivElement>(null)
@@ -118,7 +118,7 @@ export function FloorZoomControl({ zoom, onChange, minZoom = FLOOR_ZOOM_MIN, max
         </span>
       </button>
       <div ref={dropRef} className="fv-zoom-drop__panel dropdown-panel" role="dialog" hidden>
-        <FloorZoomSlider zoom={zoom} onChange={onChange} minZoom={minZoom} maxZoom={maxZoom} />
+        <SpaceZoomSlider zoom={zoom} onChange={onChange} minZoom={minZoom} maxZoom={maxZoom} />
       </div>
     </div>
   )

@@ -1139,8 +1139,8 @@ textarea,
 .panel-shell,
 .home-side,
 .qsearch-drop-body,
-.floor-editor__canvas,
-.floor-editor__aside-scroll,
+.space-editor__canvas,
+.space-editor__aside-scroll,
 .fe-palette__list,
 .fv-canvas,
 .detail-drawer__scroll,
@@ -1285,7 +1285,7 @@ textarea,
   flex: none;
 }
 
-/* Home: floor render on the left, queues + agents stacked on the right, with
+/* Home: space render on the left, queues + agents stacked on the right, with
    a draggable resizer in between that drives the left column via --home-split. */
 .home-layout {
   display: grid;
@@ -1296,7 +1296,7 @@ textarea,
   min-height: 0;
 }
 
-.home-floor {
+.home-space {
   min-height: 0;
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-md);
@@ -1356,7 +1356,7 @@ textarea,
     display: none;
   }
 
-  .home-floor {
+  .home-space {
     height: 420px;
   }
 
@@ -1962,22 +1962,22 @@ textarea,
   }
 }
 
-/* ── Floor editor ──────────────────────────────────────────────────────── */
-.panel-shell--floor {
+/* ── Space editor ──────────────────────────────────────────────────────── */
+.panel-shell--space {
   padding: 0;
   overflow: hidden;
 }
 
 /* The aside lives on the left, the canvas on the right, with a draggable
    resizer in between that drives the left column via --fe-split. */
-.floor-editor {
+.space-editor {
   display: grid;
   grid-template-columns: minmax(0, var(--fe-split, 0.43fr)) auto minmax(0, 1fr);
   height: 100%;
   min-height: 0;
 }
 
-.floor-editor__main {
+.space-editor__main {
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -1986,7 +1986,7 @@ textarea,
   min-height: 0;
 }
 
-.floor-editor__resizer {
+.space-editor__resizer {
   align-self: stretch;
   display: flex;
   align-items: center;
@@ -1998,7 +1998,7 @@ textarea,
   border-right: 1px solid var(--border-subtle);
 }
 
-.floor-editor__resizer-grip {
+.space-editor__resizer-grip {
   width: 3px;
   height: 48px;
   border-radius: var(--r-pill);
@@ -2006,19 +2006,19 @@ textarea,
   transition: background var(--dur-base) var(--ease);
 }
 
-.floor-editor__resizer:hover .floor-editor__resizer-grip,
-.floor-editor__resizer:active .floor-editor__resizer-grip {
+.space-editor__resizer:hover .space-editor__resizer-grip,
+.space-editor__resizer:active .space-editor__resizer-grip {
   background: var(--text-muted);
 }
 
-.floor-editor__canvas {
+.space-editor__canvas {
   flex: 1 1 auto;
   overflow: auto;
   padding: var(--sp-6);
   background: var(--surface-canvas);
 }
 
-.floor-editor__aside {
+.space-editor__aside {
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -2026,7 +2026,7 @@ textarea,
   background: var(--surface-raised);
 }
 
-.floor-editor__aside-scroll {
+.space-editor__aside-scroll {
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
@@ -2036,7 +2036,7 @@ textarea,
   padding: var(--sp-5);
 }
 
-.floor-editor__preview {
+.space-editor__preview {
   flex: 0 0 200px;
   height: 200px;
   padding: var(--sp-4);
@@ -2047,11 +2047,11 @@ textarea,
 }
 
 @media (max-width: 900px) {
-  .floor-editor {
+  .space-editor {
     grid-template-columns: 1fr;
   }
 
-  .floor-editor__resizer {
+  .space-editor__resizer {
     display: none;
   }
 }
@@ -2391,7 +2391,7 @@ textarea,
   padding: 0 var(--sp-1) var(--sp-2) var(--sp-4);
 }
 
-.fe-tree .fe-floor {
+.fe-tree .fe-space {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
@@ -2403,20 +2403,20 @@ textarea,
   transition: background var(--dur-fast) var(--ease);
 }
 
-.fe-tree .fe-floor:hover {
+.fe-tree .fe-space:hover {
   background: var(--surface-well);
 }
 
-.fe-tree .fe-floor--on {
+.fe-tree .fe-space--on {
   background: var(--accent-tint);
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 
-.fe-tree .fe-floor--drop {
+.fe-tree .fe-space--drop {
   box-shadow: inset 0 2px 0 var(--accent);
 }
 
-.fe-floor {
+.fe-space {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
@@ -2428,16 +2428,16 @@ textarea,
   transition: border-color var(--dur-fast) var(--ease);
 }
 
-.fe-floor:hover {
+.fe-space:hover {
   border-color: var(--border-strong);
 }
 
-.fe-floor--on {
+.fe-space--on {
   border-color: var(--accent);
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 
-.fe-floor--drop {
+.fe-space--drop {
   border-top: 2px solid var(--accent);
 }
 
@@ -2457,20 +2457,20 @@ textarea,
   color: var(--text-muted);
 }
 
-.fe-floor__grip {
+.fe-space__grip {
   color: var(--text-disabled);
   cursor: grab;
   font-size: 13px;
 }
 
-.fe-floor__body {
+.fe-space__body {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
 
-.fe-floor__name {
+.fe-space__name {
   font-size: var(--fs-sm);
   font-weight: 500;
   color: var(--text-strong);
@@ -2479,7 +2479,7 @@ textarea,
   text-overflow: ellipsis;
 }
 
-.fe-floor__meta {
+.fe-space__meta {
   font-family: var(--font-mono);
   font-size: calc(10px + var(--mono-fs-nudge));
   color: var(--text-muted);
@@ -2618,7 +2618,7 @@ textarea,
   margin: var(--sp-2) 0;
 }
 
-/* ── Floor supervision view (live) ─────────────────────────────────────── */
+/* ── Space supervision view (live) ─────────────────────────────────────── */
 @property --fv-zoom {
   syntax: '<number>';
   inherits: true;
@@ -2631,7 +2631,7 @@ textarea,
   initial-value: 1;
 }
 
-.floor-view {
+.space-view {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -2658,19 +2658,19 @@ textarea,
 }
 
 .fv-select {
-  /* Sizing tweaks layered on .ds-select__trigger for the floor bar. */
+  /* Sizing tweaks layered on .ds-select__trigger for the space bar. */
   font-size: var(--fs-sm);
 }
 
 .fv-place-name,
-.fv-floor-name {
+.fv-space-name {
   font-family: var(--font-display);
   font-size: var(--fs-title);
   font-weight: var(--fw-semibold);
   color: var(--text-strong);
 }
 
-.fv-floor-name {
+.fv-space-name {
   font-size: var(--fs-body);
   color: var(--text-body);
 }
@@ -2870,8 +2870,8 @@ textarea,
 .fv-stack__item {
   display: flex;
   flex-direction: column;
-  /* No gap between a floor's title and its render — they read as one unit.
-     Separation between different floors comes from `.fv-stack`'s own gap. */
+  /* No gap between a space's title and its render — they read as one unit.
+     Separation between different spaces comes from `.fv-stack`'s own gap. */
   gap: 0;
   min-height: 0;
   transition:
@@ -2974,7 +2974,7 @@ textarea,
   cursor: default;
 }
 
-/* ── Floor view controls (2D/3D toggle, rotation, seat style) ───────────── */
+/* ── Space view controls (2D/3D toggle, rotation, seat style) ───────────── */
 .fv-controls {
   display: flex;
   align-items: center;
@@ -3077,7 +3077,7 @@ textarea,
   padding: 9px 12px;
   font-size: 12px;
   color: var(--text-primary);
-  /* Glass treatment ported verbatim from the panorama floor tooltip. */
+  /* Glass treatment ported verbatim from the panorama space tooltip. */
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(12px) saturate(1.15);
@@ -3179,9 +3179,9 @@ textarea,
 }
 
 .fv3d-svg {
-  /* In multi-floor mode the tile (.fv-stack__item) already scales by the zoom,
+  /* In multi-space mode the tile (.fv-stack__item) already scales by the zoom,
      so the SVG just fills it. Re-applying the zoom here would size the SVG to
-     280·z² inside a 280·z wide, overflow:hidden wrap, clipping the floor. */
+     280·z² inside a 280·z wide, overflow:hidden wrap, clipping the space. */
   width: 100%;
   height: auto;
   max-width: none;
@@ -3189,8 +3189,8 @@ textarea,
   transition: width 0.35s var(--ease);
 }
 
-/* Single-floor mode: the tile fills the canvas at a fixed size, so the SVG
-   itself carries the zoom and the canvas scrolls to reveal the larger floor. */
+/* Single-space mode: the tile fills the canvas at a fixed size, so the SVG
+   itself carries the zoom and the canvas scrolls to reveal the larger space. */
 .fv-stack--single .fv3d-svg {
   width: calc(100% * var(--fv-render-zoom, 1));
 }

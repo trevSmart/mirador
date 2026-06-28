@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
-import type { Place } from '../../floor/types'
+import type { Place } from '../../space/types'
 import { ButtonIcon } from '../ds/ButtonIcon'
 
 // Font Awesome "clone" (regular), viewBox 0 0 640 640.
@@ -63,37 +63,37 @@ function EditableLabel({ value, className, onCommit }: EditableLabelProps) {
   )
 }
 
-interface FloorSidebarProps {
+interface SpaceSidebarProps {
   places: Place[]
   activePlace: Place | null
-  activeFloorIndex: number
+  activeSpaceIndex: number
   onSelectPlace: (id: string) => void
   onAddPlace: () => void
   onRemovePlace: (id: string) => void
   onRenamePlace: (id: string, name: string) => void
-  onSelectFloor: (placeId: string, index: number) => void
-  onAddFloor: (placeId: string) => void
-  onRemoveFloor: (placeId: string, index: number) => void
-  onDuplicateFloor: (placeId: string, index: number) => void
-  onRenameFloor: (placeId: string, index: number, name: string) => void
-  onReorderFloor: (placeId: string, from: number, to: number) => void
+  onSelectSpace: (placeId: string, index: number) => void
+  onAddSpace: (placeId: string) => void
+  onRemoveSpace: (placeId: string, index: number) => void
+  onDuplicateSpace: (placeId: string, index: number) => void
+  onRenameSpace: (placeId: string, index: number, name: string) => void
+  onReorderSpace: (placeId: string, from: number, to: number) => void
 }
 
-export function FloorSidebar({
+export function SpaceSidebar({
   places,
   activePlace,
-  activeFloorIndex,
+  activeSpaceIndex,
   onSelectPlace,
   onAddPlace,
   onRemovePlace,
   onRenamePlace,
-  onSelectFloor,
-  onAddFloor,
-  onRemoveFloor,
-  onDuplicateFloor,
-  onRenameFloor,
-  onReorderFloor,
-}: FloorSidebarProps) {
+  onSelectSpace,
+  onAddSpace,
+  onRemoveSpace,
+  onDuplicateSpace,
+  onRenameSpace,
+  onReorderSpace,
+}: SpaceSidebarProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => {
     const initial = new Set<string>()
     if (activePlace?.id) initial.add(activePlace.id)
@@ -182,7 +182,7 @@ export function FloorSidebar({
                     value={place.name}
                     onCommit={(name) => onRenamePlace(place.id, name)}
                   />
-                  <span className="fe-place__count">{place.floors.length}</span>
+                  <span className="fe-place__count">{place.spaces.length}</span>
                   <button
                     type="button"
                     className="fe-add-btn fe-add-btn--inline"
@@ -190,7 +190,7 @@ export function FloorSidebar({
                     onClick={(e) => {
                       e.stopPropagation()
                       expandPlace(place.id)
-                      onAddFloor(place.id)
+                      onAddSpace(place.id)
                     }}
                   >
                     + Planta
@@ -213,8 +213,8 @@ export function FloorSidebar({
 
                 {isExpanded ? (
                   <div className="fe-tree__children" role="group">
-                    {place.floors.map((floor, index) => {
-                      const isActiveFloor = isActivePlace && index === activeFloorIndex
+                    {place.spaces.map((space, index) => {
+                      const isActiveSpace = isActivePlace && index === activeSpaceIndex
                       const isDropTarget =
                         dropState?.placeId === place.id &&
                         dropState.index === index &&
@@ -222,14 +222,14 @@ export function FloorSidebar({
 
                       return (
                         <div
-                          key={floor.id}
+                          key={space.id}
                           role="treeitem"
                           aria-level={2}
-                          aria-selected={isActiveFloor}
+                          aria-selected={isActiveSpace}
                           className={[
-                            'fe-floor',
-                            isActiveFloor ? 'fe-floor--on' : '',
-                            isDropTarget ? 'fe-floor--drop' : '',
+                            'fe-space',
+                            isActiveSpace ? 'fe-space--on' : '',
+                            isDropTarget ? 'fe-space--drop' : '',
                           ]
                             .filter(Boolean)
                             .join(' ')}
@@ -246,7 +246,7 @@ export function FloorSidebar({
                               dragState?.placeId === place.id &&
                               dragState.index !== index
                             ) {
-                              onReorderFloor(place.id, dragState.index, index)
+                              onReorderSpace(place.id, dragState.index, index)
                             }
                             setDragState(null)
                             setDropState(null)
@@ -255,20 +255,20 @@ export function FloorSidebar({
                             setDragState(null)
                             setDropState(null)
                           }}
-                          onClick={() => onSelectFloor(place.id, index)}
+                          onClick={() => onSelectSpace(place.id, index)}
                         >
-                          <span className="fe-floor__grip" aria-hidden="true">
+                          <span className="fe-space__grip" aria-hidden="true">
                             ⠿
                           </span>
-                          <div className="fe-floor__body">
+                          <div className="fe-space__body">
                             <EditableLabel
-                              className="fe-floor__name"
-                              value={floor.name}
-                              onCommit={(name) => onRenameFloor(place.id, index, name)}
+                              className="fe-space__name"
+                              value={space.name}
+                              onCommit={(name) => onRenameSpace(place.id, index, name)}
                             />
-                            <span className="fe-floor__meta">
-                              {floor.seats.length} llocs de treball ·{' '}
-                              {floor.seats.filter((s) => s.agentId).length} agents
+                            <span className="fe-space__meta">
+                              {space.seats.length} llocs de treball ·{' '}
+                              {space.seats.filter((s) => s.agentId).length} agents
                             </span>
                           </div>
                           <ButtonIcon
@@ -278,7 +278,7 @@ export function FloorSidebar({
                             size={14}
                             onClick={(e) => {
                               e.stopPropagation()
-                              onDuplicateFloor(place.id, index)
+                              onDuplicateSpace(place.id, index)
                             }}
                           >
                             <svg width={14} height={14} viewBox="0 0 640 640" aria-hidden="true" fill="currentColor">
@@ -289,11 +289,11 @@ export function FloorSidebar({
                             type="button"
                             className="fe-mini-btn"
                             title="Elimina la planta"
-                            disabled={place.floors.length <= 1}
+                            disabled={place.spaces.length <= 1}
                             onClick={(e) => {
                               e.stopPropagation()
-                              if (window.confirm(`Vols eliminar la planta "${floor.name}"?`)) {
-                                onRemoveFloor(place.id, index)
+                              if (window.confirm(`Vols eliminar la planta "${space.name}"?`)) {
+                                onRemoveSpace(place.id, index)
                               }
                             }}
                           >

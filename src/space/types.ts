@@ -1,9 +1,9 @@
-/* Floor editor — data model.
+/* Space editor — data model.
    Stored in a fully serializable shape (plain arrays/objects, no Set/Map) so it
    can be persisted as-is and, later, round-tripped through a Salesforce-backed
    repository without conversion. */
 
-export type FloorTool = 'cell' | 'seat' | 'door' | 'window' | 'divider' | 'erase'
+export type SpaceTool = 'cell' | 'seat' | 'door' | 'window' | 'divider' | 'erase'
 
 /** Cell edge. O = Oest (west). */
 export type Edge = 'N' | 'S' | 'E' | 'O'
@@ -38,24 +38,24 @@ export interface Divider {
   edge: 'E' | 'S'
 }
 
-export interface Floor {
+export interface Space {
   id: string
   name: string
   cells: Cell[]
   seats: Seat[]
   openings: Opening[]
   dividers: Divider[]
-  /** Saved camera rotation for this floor (0..3, 90° steps). */
+  /** Saved camera rotation for this space (0..3, 90° steps). */
   dir: Dir
 }
 
 export interface Place {
   id: string
   name: string
-  floors: Floor[]
+  spaces: Space[]
 }
 
-export interface FloorPlanData {
+export interface SpacePlanData {
   /** Schema version, for forward-compatible migrations. */
   v: number
   activePlaceId: string | null

@@ -4,13 +4,13 @@
    que els eliminem de localStorage i sessionStorage sense tocar res que pugui
    pertànyer a altres orígens. El plànol de planta es preserva expressament. */
 
-import { STORAGE_KEY as FLOOR_PLAN_KEY } from '../floor/floor-plan-repository'
+import { STORAGE_KEY as SPACE_PLAN_KEY } from '../space/space-plan-repository'
 
 const APP_PREFIX = 'mirador'
 
 /* Claus que es mantenen tot i tenir el prefix de l'app: el plànol de planta no
    s'esborra en reiniciar les dades locals. */
-const PRESERVED_KEYS = new Set<string>([FLOOR_PLAN_KEY])
+const PRESERVED_KEYS = new Set<string>([SPACE_PLAN_KEY])
 
 function clearStore(store: Storage): void {
   const keys: string[] = []

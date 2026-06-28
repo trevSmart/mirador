@@ -1,11 +1,11 @@
-/* Floor viewer — isometric (2.5D) grid helpers. Pure geometry, no React/DOM.
+/* Space viewer — isometric (2.5D) grid helpers. Pure geometry, no React/DOM.
 
-   Since the 3D render moved to the basis-vector projection in `floor-iso-vec.ts`,
+   Since the 3D render moved to the basis-vector projection in `space-iso-vec.ts`,
    this module now only keeps:
-   - the 2D grid rotation helpers used by `FloorView` (`rotateCell`, `rotateEdge`,
+   - the 2D grid rotation helpers used by `SpaceView` (`rotateCell`, `rotateEdge`,
      `roomBounds2D`);
    - the camera-direction-aware back-wall topology (`backLeftTrue` / `backRightTrue`)
-     and the opening quad (`openingQuad`), which `floor-iso-vec` reuses at dir 0. */
+     and the opening quad (`openingQuad`), which `space-iso-vec` reuses at dir 0. */
 
 import type { Cell, Edge, Dir } from './types'
 export type { Dir }
@@ -75,8 +75,8 @@ function backLeftVisible(has: Has, dir: Dir): Has {
    1. Silhouette: scanning outward from the edge along the direction it faces,
       no room cell re-appears. If it does, the empty neighbour is an interior
       gap (a courtyard or hole), not the exterior backdrop — even when a wall
-      there would hide nothing (it can be short enough to clear the far floor).
-   2. No occlusion: the wall's projected quad covers no farther floor tile. This
+      there would hide nothing (it can be short enough to clear the far space).
+   2. No occlusion: the wall's projected quad covers no farther space tile. This
       catches staircase offsets where a near wing's tall wall would paint over a
       farther wing that sits beside it (not directly behind it in the grid).
 
@@ -164,7 +164,7 @@ function backWallTrue(
     if (!base(c, r)) return false
     // (1) Must sit on the room's exterior silhouette in its facing direction.
     if (!onBackSilhouette(has, c, r, fdc, fdr, maxC, maxR)) return false
-    // (2) Must not occlude a farther floor tile.
+    // (2) Must not occlude a farther space tile.
     const [x, y] = projectCell(c, r, dir, maxC, maxR)
     const wall = wallPts(x, y)
     for (const cell of cells) {
@@ -179,7 +179,7 @@ function backWallTrue(
 }
 
 /** Paints only true back walls: rejects edges that face an interior void
-    (silhouette) or whose wall would hide farther floor. */
+    (silhouette) or whose wall would hide farther space. */
 export function backRightTrue(has: Has, cells: Cell[], dir: Dir, maxC: number, maxR: number): Has {
   return backWallTrue(backRightVisible(has, dir), backRightFacing(dir), backRightWallPts, has, cells, dir, maxC, maxR)
 }

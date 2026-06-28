@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Agent, PresenceStatus } from '../../api/types'
-import { edgeStyle } from '../../floor/floor-geometry'
-import { cellKey, GRID_C } from '../../floor/floor-plan-model'
-import { rotateCell, rotateEdge, roomBounds2D } from '../../floor/floor-iso'
-import type { Dir, Floor } from '../../floor/types'
+import { edgeStyle } from '../../space/space-geometry'
+import { cellKey, GRID_C } from '../../space/space-plan-model'
+import { rotateCell, rotateEdge, roomBounds2D } from '../../space/space-iso'
+import type { Dir, Space } from '../../space/types'
 import { useSalesforcePhoto } from '../../hooks/useSalesforcePhoto'
 import { colorFromString } from '../../utils/color-from-string'
 import { agentInitials, presenceLabel } from '../../utils/format'
@@ -19,14 +19,14 @@ const STATUS_COLOR: Record<PresenceStatus, string> = {
   offline: 'var(--text-disabled)',
 }
 
-interface FloorSeatProps {
+interface SpaceSeatProps {
   agent: Agent
   onSelect: (agent: Agent) => void
   showAvatars: boolean
   animations: boolean
 }
 
-function FloorSeat({ agent, onSelect, showAvatars, animations }: FloorSeatProps) {
+function SpaceSeat({ agent, onSelect, showAvatars, animations }: SpaceSeatProps) {
   const photo = useSalesforcePhoto(agent.photo)
   return (
     <button
@@ -49,8 +49,8 @@ function FloorSeat({ agent, onSelect, showAvatars, animations }: FloorSeatProps)
   )
 }
 
-interface FloorViewProps {
-  floor: Floor
+interface SpaceViewProps {
+  space: Space
   dir: Dir
   agentsById: Map<string, Agent>
   onSelectAgent: (agent: Agent) => void
@@ -58,34 +58,34 @@ interface FloorViewProps {
   animations: boolean
 }
 
-export function FloorView({
-  floor,
+export function SpaceView({
+  space,
   dir,
   agentsById,
   onSelectAgent,
   showAvatars,
   animations,
-}: FloorViewProps) {
+}: SpaceViewProps) {
   // Rotate every element into the camera frame, then crop to the rotated room.
   const rotated = useMemo(() => {
-    const cells = floor.cells.map(([c, r]) => rotateCell(c, r, dir, GRID_C))
-    const seatByKey = new Map<string, Floor['seats'][number]>()
-    for (const seat of floor.seats) {
+    const cells = space.cells.map(([c, r]) => rotateCell(c, r, dir, GRID_C))
+    const seatByKey = new Map<string, Space['seats'][number]>()
+    for (const seat of space.seats) {
       const [rc, rr] = rotateCell(seat.c, seat.r, dir, GRID_C)
       seatByKey.set(cellKey(rc, rr), { ...seat, c: rc, r: rr })
     }
-    const dividers = floor.dividers.map((d) => {
+    const dividers = space.dividers.map((d) => {
       const [rc, rr] = rotateCell(d.c, d.r, dir, GRID_C)
       return { ...d, c: rc, r: rr, edge: rotateEdge(d.edge, dir) }
     })
-    const openings = floor.openings.map((o) => {
+    const openings = space.openings.map((o) => {
       const [rc, rr] = rotateCell(o.c, o.r, dir, GRID_C)
       return { ...o, c: rc, r: rr, edge: rotateEdge(o.edge, dir) }
     })
     return { cells, seatByKey, dividers, openings }
-  }, [floor, dir])
+  }, [space, dir])
 
-  const bounds = useMemo(() => roomBounds2D(floor.cells, dir, GRID_C), [floor.cells, dir])
+  const bounds = useMemo(() => roomBounds2D(space.cells, dir, GRID_C), [space.cells, dir])
   const { minC, minR, cols, rows } = bounds
 
   const containerRef = useRef<HTMLDivElement>(null)
@@ -143,7 +143,7 @@ export function FloorView({
             >
               {seat ? (
                 agent ? (
-                  <FloorSeat
+                  <SpaceSeat
                     agent={agent}
                     onSelect={onSelectAgent}
                     showAvatars={showAvatars}

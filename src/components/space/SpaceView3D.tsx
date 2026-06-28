@@ -8,14 +8,14 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 import { createPortal } from 'react-dom'
-import { FloorSeatTooltip } from './FloorSeatTooltip'
+import { SpaceSeatTooltip } from './SpaceSeatTooltip'
 import { useTowerHeightScale } from '../../hooks/useTowerHeightScale'
 import { useSalesforcePhoto } from '../../hooks/useSalesforcePhoto'
 import { colorFromString } from '../../utils/color-from-string'
 import { agentInitials } from '../../utils/format'
-import { agentTowerSegments, towerSegmentLabel, type TowerSegment } from '../../floor/agent-tower-segments'
+import { agentTowerSegments, towerSegmentLabel, type TowerSegment } from '../../space/agent-tower-segments'
 import type { Agent, Queue } from '../../api/types'
-import type { Floor } from '../../floor/types'
+import type { Space } from '../../space/types'
 import {
   type IsoBasis,
   type Point,
@@ -34,7 +34,7 @@ import {
   diamondPointsVec,
   dividerFaceVec,
   makeBasis,
-  normalizeFloor,
+  normalizeSpace,
   openingQuad,
   projectCellVec,
   slabLeftFaceVec,
@@ -42,7 +42,7 @@ import {
   towerLeftFace,
   towerRightFace,
   windowBeamQuad,
-} from '../../floor/floor-iso-vec'
+} from '../../space/space-iso-vec'
 import {
   type RoomRotation,
   ROOM_AZ_MAX,
@@ -51,14 +51,14 @@ import {
   ROOM_TILT_MIN,
   loadRoomRotation,
   saveRoomRotation,
-} from '../../floor/floor-rotation-store'
+} from '../../space/space-rotation-store'
 
 const GRID_MAX = 49
 
 const PEDESTAL_COLOR = '#E2DFDA'
 const AVATAR_RING = 'var(--accent-30)'
-const FLOOR_FILL_A = '#FDFCFB'
-const FLOOR_FILL_B = '#FBFAF8'
+const SPACE_FILL_A = '#FDFCFB'
+const SPACE_FILL_B = '#FBFAF8'
 const WALL_FILL = 'rgb(252,251,249)'
 
 // Shared sun direction for every window's light shaft, expressed in cell units
@@ -68,7 +68,7 @@ const SUN_X = 0.55
 const SUN_Y = 1.45
 const SUN_LENGTH = 2.6
 // Extra half-width the beam gains by the end of its throw (× the sill width),
-// so the light fans out as it crosses the floor.
+// so the light fans out as it crosses the space.
 const SUN_SPREAD = 1.2
 
 // Base and cap are solid, outlined slabs with real thickness — they frame the
@@ -82,7 +82,7 @@ const FACE_OPACITY_TOP = 0.22
 // Lit (right) vs. shaded (left) faces keep a faint dark wash for iso depth.
 const SHADE_LEFT = 'rgba(12,10,22,0.12)'
 const SHADE_RIGHT = 'rgba(12,10,22,0.04)'
-// The agent pedestal is a pale, near-floor-coloured slab, so the tower's dark
+// The agent pedestal is a pale, near-space-coloured slab, so the tower's dark
 // side-shading would read as a heavy grey block. Use much softer washes for it.
 const PEDESTAL_SHADE_LEFT = 'rgba(12,10,22,0.05)'
 const PEDESTAL_SHADE_RIGHT = 'rgba(12,10,22,0.015)'
@@ -152,10 +152,10 @@ function WindowGlass({ id, quad }: { id: string; quad: OpeningQuad }) {
   )
 }
 
-/** Cool-white pool of daylight cast on the floor by a window. A near-white wash
+/** Cool-white pool of daylight cast on the space by a window. A near-white wash
    that subtly tints the tiles from the wall outward and dissolves into the room
    — kept very faint so it reads as a soft glow, not a painted tile. Drawn
-   over the floor tiles but under the furniture/seats. */
+   over the space tiles but under the furniture/seats. */
 function WindowSunbeam({ id, points, near, far, blurId }: { id: string; points: string; near: [Point, Point]; far: [Point, Point]; blurId: string }) {
   const gradId = `${id}-beam`
   const nx = (near[0][0] + near[1][0]) / 2
@@ -176,10 +176,10 @@ function WindowSunbeam({ id, points, near, far, blurId }: { id: string; points: 
   )
 }
 
-/** The faint volume of light hanging in the air between a window and its floor
+/** The faint volume of light hanging in the air between a window and its space
    pool — a translucent shaft so the daylight reads as entering, not just lying
    on the ground. `top` are the window-sill corners (up on the wall), `bottom`
-   the far edge of the floor pool; the gradient is brightest at the window. */
+   the far edge of the space pool; the gradient is brightest at the window. */
 function WindowAirShaft({ id, top, bottom, blurId }: { id: string; top: [Point, Point]; bottom: [Point, Point]; blurId: string }) {
   const gradId = `${id}-air`
   const tx = (top[0][0] + top[1][0]) / 2
@@ -452,8 +452,8 @@ function SaturationBeacon({ x, avatarCy, animations }: { x: number; avatarCy: nu
   )
 }
 
-interface FloorView3DProps {
-  floor: Floor
+interface SpaceView3DProps {
+  space: Space
   agentsById: Map<string, Agent>
   queuesById: Map<string, Queue>
   showAvatars: boolean
@@ -461,7 +461,7 @@ interface FloorView3DProps {
   onSelectAgent: (agent: Agent) => void
 }
 
-export function FloorView3D({ floor, agentsById, queuesById, showAvatars, animations, onSelectAgent }: FloorView3DProps) {
+export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animations, onSelectAgent }: SpaceView3DProps) {
   const [tooltip, setTooltip] = useState<{ agent: Agent; x: number; y: number } | null>(null)
   const [tooltipOpen, setTooltipOpen] = useState(false)
   // Which seat is hovered, so its avatar can be lifted above every other one
@@ -469,32 +469,32 @@ export function FloorView3D({ floor, agentsById, queuesById, showAvatars, animat
   const [hoveredId, setHoveredId] = useState<string | null>(null)
 
   // Per-room camera rotation, hydrated from + persisted to localStorage. When the
-  // floor prop swaps to a different room, re-hydrate for that floor (render-time
-  // reset, matching FloorPanel's prefs pattern).
-  const [rotation, setRotation] = useState<RoomRotation>(() => loadRoomRotation(floor.id))
+  // space prop swaps to a different room, re-hydrate for that space (render-time
+  // reset, matching SpacePanel's prefs pattern).
+  const [rotation, setRotation] = useState<RoomRotation>(() => loadRoomRotation(space.id))
   const dirtyRef = useRef(false)
-  const rotFloorIdRef = useRef(floor.id)
+  const rotSpaceIdRef = useRef(space.id)
 
   useEffect(() => {
-    if (rotFloorIdRef.current === floor.id) return
-    rotFloorIdRef.current = floor.id
-    setRotation(loadRoomRotation(floor.id))
-  }, [floor.id])
+    if (rotSpaceIdRef.current === space.id) return
+    rotSpaceIdRef.current = space.id
+    setRotation(loadRoomRotation(space.id))
+  }, [space.id])
 
-  // On (re)hydration for a floor, clear the dirty flag so the just-loaded value
+  // On (re)hydration for a space, clear the dirty flag so the just-loaded value
   // is never written straight back. Declared BEFORE the persist effect so it
-  // wins the same commit when the floor id changes.
+  // wins the same commit when the space id changes.
   useEffect(() => {
     dirtyRef.current = false
-  }, [floor.id])
+  }, [space.id])
 
   // Persist only after the user actually orbits, so merely viewing a room never
   // writes a default entry for it.
   useEffect(() => {
     if (!dirtyRef.current) return
-    const id = window.setTimeout(() => saveRoomRotation(floor.id, rotation), 250)
+    const id = window.setTimeout(() => saveRoomRotation(space.id, rotation), 250)
     return () => window.clearTimeout(id)
-  }, [floor.id, rotation])
+  }, [space.id, rotation])
 
   const basis = useMemo(() => makeBasis(rotation.az, rotation.tilt), [rotation.az, rotation.tilt])
 
@@ -558,7 +558,7 @@ export function FloorView3D({ floor, agentsById, queuesById, showAvatars, animat
   }, [])
   const handleTooltipExited = useCallback(() => setTooltip(null), [])
 
-  const plan = useMemo(() => normalizeFloor(floor), [floor])
+  const plan = useMemo(() => normalizeSpace(space), [space])
 
   const cellSet = useMemo(() => new Set(plan.cells.map(([c, r]) => `${c},${r}`)), [plan])
   const has = useMemo(() => (c: number, r: number) => cellSet.has(`${c},${r}`), [cellSet])
@@ -587,9 +587,9 @@ export function FloorView3D({ floor, agentsById, queuesById, showAvatars, animat
   }, [plan])
 
   const ordered = useMemo(() => [...plan.cells].sort(depthCompareVec(basis)), [plan, basis])
-  const svgIdPrefix = `fv3d-${floor.id}`
-  const floorGrainId = `${svgIdPrefix}-floor-grain`
-  const floorSheenId = `${svgIdPrefix}-floor-sheen`
+  const svgIdPrefix = `fv3d-${space.id}`
+  const spaceGrainId = `${svgIdPrefix}-space-grain`
+  const spaceSheenId = `${svgIdPrefix}-space-sheen`
   const wallSheenRightId = `${svgIdPrefix}-wall-sheen-r`
   const wallSheenLeftId = `${svgIdPrefix}-wall-sheen-l`
   const beamBlurId = `${svgIdPrefix}-beam-blur`
@@ -641,7 +641,7 @@ export function FloorView3D({ floor, agentsById, queuesById, showAvatars, animat
     }
 
     // Slab-thickness side faces are tinted to match the back wall they run
-    // parallel to, then darkened by a constant delta so the floor edge always
+    // parallel to, then darkened by a constant delta so the space edge always
     // reads as an arris (a shade below its wall), not the same plane.
     // slabRight ‖ back-LEFT wall (vector v); slabLeft ‖ back-RIGHT wall (vector u).
     if (!has(c + 1, r)) {
@@ -654,13 +654,13 @@ export function FloorView3D({ floor, agentsById, queuesById, showAvatars, animat
     }
 
     const tilePoints = diamondPointsVec(x, y, basis, 0)
-    body.push(<polygon key={`t-${key}`} points={tilePoints} fill={(c + r) % 2 === 0 ? FLOOR_FILL_A : FLOOR_FILL_B} />)
-    body.push(<polygon key={`tg-${key}`} points={tilePoints} fill={`url(#${floorGrainId})`} opacity={0.5} />)
-    body.push(<polygon key={`ts-${key}`} points={tilePoints} fill={`url(#${floorSheenId})`} />)
+    body.push(<polygon key={`t-${key}`} points={tilePoints} fill={(c + r) % 2 === 0 ? SPACE_FILL_A : SPACE_FILL_B} />)
+    body.push(<polygon key={`tg-${key}`} points={tilePoints} fill={`url(#${spaceGrainId})`} opacity={0.5} />)
+    body.push(<polygon key={`ts-${key}`} points={tilePoints} fill={`url(#${spaceSheenId})`} />)
     body.push(<polygon key={`t2-${key}`} points={tilePoints} fill="none" stroke="rgba(27,25,36,.065)" />)
 
     // Daylight beams are collected separately and drawn as one layer over the
-    // whole floor (below seats), so a beam can stretch across several tiles
+    // whole space (below seats), so a beam can stretch across several tiles
     // without later-painted neighbour tiles clipping it.
     for (const edge of ['N', 'O'] as const) {
       const visible = edge === 'N' ? brVis(c, r) : blVis(c, r)
@@ -668,7 +668,7 @@ export function FloorView3D({ floor, agentsById, queuesById, showAvatars, animat
       const beam = windowBeamQuad(x, y, basis, edge, SUN_X, SUN_Y, SUN_LENGTH, 0.62, SUN_SPREAD)
       sunbeams.push(<WindowSunbeam key={`beam-${key}-${edge}`} id={`${svgIdPrefix}-beam-${c}-${r}-${edge}`} blurId={beamBlurId} {...beam} />)
       // Faint volumetric shaft "in the air": from the window opening on the wall
-      // down to the floor pool's far edge.
+      // down to the space pool's far edge.
       const [g0, g1, t0, t1] = edge === 'N' ? backRightOpeningEdge(x, y, basis) : backLeftOpeningEdge(x, y, basis)
       const oq = openingQuad(g0, g1, t0, t1, 'window')
       airbeams.push(
@@ -727,19 +727,19 @@ export function FloorView3D({ floor, agentsById, queuesById, showAvatars, animat
             <filter id={beamBlurId} x="-25%" y="-25%" width="150%" height="150%">
               <feGaussianBlur stdDeviation="3.5" />
             </filter>
-            <pattern id={floorGrainId} width="10" height="10" patternUnits="userSpaceOnUse">
+            <pattern id={spaceGrainId} width="10" height="10" patternUnits="userSpaceOnUse">
               <rect width="10" height="10" fill="transparent" />
               <circle cx="2.5" cy="2.5" r="0.35" fill="rgba(27,25,36,0.02)" />
               <circle cx="7.5" cy="7.5" r="0.3" fill="rgba(27,25,36,0.016)" />
             </pattern>
-            <linearGradient id={floorSheenId} gradientUnits="objectBoundingBox" x1="0.5" y1="0" x2="0.5" y2="1">
+            <linearGradient id={spaceSheenId} gradientUnits="objectBoundingBox" x1="0.5" y1="0" x2="0.5" y2="1">
               <stop offset="0%" stopColor="rgba(255,255,255,0.07)" />
               <stop offset="100%" stopColor="rgba(27,25,36,0.03)" />
             </linearGradient>
             {/* Vertical light wash for the back walls: brighter near the top
-               (catches the overhead light) fading to a soft shade at the floor.
+               (catches the overhead light) fading to a soft shade at the space.
                The right-facing wall reads a touch lighter than the left, matching
-               the floor's SHADE_LEFT/RIGHT balance so the two planes separate. */}
+               the space's SHADE_LEFT/RIGHT balance so the two planes separate. */}
             <linearGradient id={wallSheenRightId} gradientUnits="objectBoundingBox" x1="0.5" y1="0" x2="0.5" y2="1">
               <stop offset="0%" stopColor="rgba(255,255,255,0.05)" />
               <stop offset="55%" stopColor="rgba(255,255,255,0)" />
@@ -766,7 +766,7 @@ export function FloorView3D({ floor, agentsById, queuesById, showAvatars, animat
       </div>
       {tooltip
         ? createPortal(
-            <FloorSeatTooltip agent={tooltip.agent} queuesById={queuesById} x={tooltip.x} y={tooltip.y} open={tooltipOpen} onExited={handleTooltipExited} />,
+            <SpaceSeatTooltip agent={tooltip.agent} queuesById={queuesById} x={tooltip.x} y={tooltip.y} open={tooltipOpen} onExited={handleTooltipExited} />,
             document.body,
           )
         : null}

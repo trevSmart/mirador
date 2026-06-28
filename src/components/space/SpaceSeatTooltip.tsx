@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { Agent, PresenceStatus, Queue } from '../../api/types'
-import { agentTowerSegments, towerSegmentLabel } from '../../floor/agent-tower-segments'
+import { agentTowerSegments, towerSegmentLabel } from '../../space/agent-tower-segments'
 import { presenceLabel } from '../../utils/format'
 import { DROPDOWN_TRANSITION_MS, syncDropdownPanel } from '../../utils/sync-dropdown-panel'
 import { AgentAvatar } from '../AgentRow'
@@ -24,7 +24,7 @@ function detailLine(agent: Agent): string {
   return `${agent.used}/${agent.max} · ${load}% · ${team}`
 }
 
-interface FloorSeatTooltipProps {
+interface SpaceSeatTooltipProps {
   agent: Agent
   queuesById: Map<string, Queue>
   x: number
@@ -33,7 +33,7 @@ interface FloorSeatTooltipProps {
   onExited?: () => void
 }
 
-export function FloorSeatTooltip({ agent, queuesById, x, y, open, onExited }: FloorSeatTooltipProps) {
+export function SpaceSeatTooltip({ agent, queuesById, x, y, open, onExited }: SpaceSeatTooltipProps) {
   const ref = useRef<HTMLDivElement>(null)
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const queueSegments = agentTowerSegments(agent, queuesById)

@@ -4,9 +4,9 @@
    value can never break a consumer. The <SettingsModal> edits a draft copy and
    calls savePreferences(); usePreferences exposes the live value to the app. */
 
-import { FLOOR_CANVAS_TINTS, type FloorCanvasTint } from './floor-canvas-wash'
+import { SPACE_CANVAS_TINTS, type SpaceCanvasTint } from './space-canvas-wash'
 
-export type FloorViewMode = '2d' | '3d'
+export type SpaceViewMode = '2d' | '3d'
 export type Lang = 'ca' | 'es' | 'en'
 export type TimeFormat = '24h' | '12h'
 
@@ -24,14 +24,14 @@ export interface Preferences {
   /** Share of agents in alert needed to raise a global warning (0–100). */
   alertPct: number
 
-  /** Floor panel view to open with. */
-  defaultFloorView: FloorViewMode
-  /** Show agent avatars on the floor. */
+  /** Space panel view to open with. */
+  defaultSpaceView: SpaceViewMode
+  /** Show agent avatars on the space. */
   showAvatars: boolean
-  /** Animate towers / beacons in the 3D floor view. */
+  /** Animate towers / beacons in the 3D space view. */
   animations: boolean
-  /** Background wash tint behind floor room renders. */
-  floorCanvasTint: FloorCanvasTint
+  /** Background wash tint behind space room renders. */
+  spaceCanvasTint: SpaceCanvasTint
   lang: Lang
   timeFormat: TimeFormat
 
@@ -53,10 +53,10 @@ export const PREFERENCES_DEFAULTS: Preferences = {
   slaTarget: 80,
   alertPct: 30,
 
-  defaultFloorView: '3d',
+  defaultSpaceView: '3d',
   showAvatars: true,
   animations: true,
-  floorCanvasTint: 'none',
+  spaceCanvasTint: 'none',
   lang: 'ca',
   timeFormat: '24h',
 
@@ -99,10 +99,10 @@ function sanitizePreferences(raw: Partial<Preferences> | null | undefined): Pref
     slaTarget: clampInt(p.slaTarget, d.slaTarget, 50, 100),
     alertPct: clampInt(p.alertPct, d.alertPct, 5, 100),
 
-    defaultFloorView: oneOf(p.defaultFloorView, ['2d', '3d'], d.defaultFloorView),
+    defaultSpaceView: oneOf(p.defaultSpaceView, ['2d', '3d'], d.defaultSpaceView),
     showAvatars: asBool(p.showAvatars, d.showAvatars),
     animations: asBool(p.animations, d.animations),
-    floorCanvasTint: oneOf(p.floorCanvasTint, FLOOR_CANVAS_TINTS, d.floorCanvasTint),
+    spaceCanvasTint: oneOf(p.spaceCanvasTint, SPACE_CANVAS_TINTS, d.spaceCanvasTint),
     lang: oneOf(p.lang, ['ca', 'es', 'en'], d.lang),
     timeFormat: oneOf(p.timeFormat, ['24h', '12h'], d.timeFormat),
 

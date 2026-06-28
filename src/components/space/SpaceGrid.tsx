@@ -1,9 +1,9 @@
 import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import type { Agent, PresenceStatus } from '../../api/types'
-import { CELL_SIZE, edgeStyle } from '../../floor/floor-geometry'
-import { GRID_C, GRID_R, cellKey } from '../../floor/floor-plan-model'
-import type { Cell, Edge, Floor, FloorTool } from '../../floor/types'
-import type { SeatRef } from '../../floor/useFloorPlan'
+import { CELL_SIZE, edgeStyle } from '../../space/space-geometry'
+import { GRID_C, GRID_R, cellKey } from '../../space/space-plan-model'
+import type { Cell, Edge, Space, SpaceTool } from '../../space/types'
+import type { SeatRef } from '../../space/useSpacePlan'
 import { colorFromString } from '../../utils/color-from-string'
 import { AgentAvatar } from '../AgentRow'
 
@@ -17,11 +17,11 @@ const STATUS_COLOR: Record<PresenceStatus, string> = {
   offline: 'var(--text-disabled)',
 }
 
-const EDGE_TOOLS: ReadonlySet<FloorTool> = new Set<FloorTool>(['door', 'window', 'divider'])
+const EDGE_TOOLS: ReadonlySet<SpaceTool> = new Set<SpaceTool>(['door', 'window', 'divider'])
 
-interface FloorGridProps {
-  floor: Floor
-  tool: FloorTool
+interface SpaceGridProps {
+  space: Space
+  tool: SpaceTool
   selectedSeat: SeatRef | null
   agentsById: Map<string, Agent>
   onPaintCells: (start: Cell, end: Cell) => void
@@ -87,8 +87,8 @@ function SeatMarker({ agent, selected }: SeatMarkerProps) {
   )
 }
 
-export function FloorGrid({
-  floor,
+export function SpaceGrid({
+  space,
   tool,
   selectedSeat,
   agentsById,
@@ -96,7 +96,7 @@ export function FloorGrid({
   onEraseCell,
   onSeatTap,
   onEdgeTap,
-}: FloorGridProps) {
+}: SpaceGridProps) {
   const ref = useRef<HTMLDivElement>(null)
   const session = useRef<Session>(null)
   const [preview, setPreview] = useState<{ start: Cell; end: Cell } | null>(null)
@@ -105,10 +105,10 @@ export function FloorGrid({
   const height = GRID_R * CELL_SIZE
 
   const seatByKey = useMemo(() => {
-    const map = new Map<string, Floor['seats'][number]>()
-    for (const seat of floor.seats) map.set(cellKey(seat.c, seat.r), seat)
+    const map = new Map<string, Space['seats'][number]>()
+    for (const seat of space.seats) map.set(cellKey(seat.c, seat.r), seat)
     return map
-  }, [floor.seats])
+  }, [space.seats])
 
   function pointerCell(event: ReactPointerEvent<HTMLDivElement>): PointerCell {
     const rect = ref.current?.getBoundingClientRect()
@@ -205,7 +205,7 @@ export function FloorGrid({
       onPointerUp={endSession}
       onPointerCancel={endSession}
     >
-      {floor.cells.map(([c, r]) => {
+      {space.cells.map(([c, r]) => {
         const seat = seatByKey.get(cellKey(c, r))
         const agent = seat?.agentId ? agentsById.get(seat.agentId) ?? null : null
         const isSelected = !!selectedSeat && selectedSeat.c === c && selectedSeat.r === r
@@ -220,7 +220,7 @@ export function FloorGrid({
         )
       })}
 
-      {floor.dividers.map((d) => (
+      {space.dividers.map((d) => (
         <div
           key={`div-${d.c}-${d.r}-${d.edge}`}
           className="fe-edge fe-edge--divider"
@@ -228,7 +228,7 @@ export function FloorGrid({
         />
       ))}
 
-      {floor.openings.map((o) => (
+      {space.openings.map((o) => (
         <div
           key={`op-${o.c}-${o.r}-${o.edge}`}
           className={`fe-edge fe-edge--${o.kind}`}

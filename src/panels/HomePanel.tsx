@@ -9,8 +9,8 @@ import type { PresenceStatus } from '../api/types'
 import { InsightsBanner } from '../components/InsightsBanner'
 import { PanelState } from '../components/PanelState'
 import { QueueRow } from '../components/QueueRow'
-import { FloorPanel } from './FloorPanel'
-import { useFloorSeatedAgentIds } from '../floor/floor-seated-agents'
+import { SpacePanel } from './SpacePanel'
+import { useSpaceSeatedAgentIds } from '../space/space-seated-agents'
 import { addPanelByType } from './panel-actions'
 import type { PanelType } from './registry'
 import { computeHealthInsights } from '../utils/health-insights'
@@ -149,7 +149,7 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
 
   const layoutRef = useRef<HTMLDivElement>(null)
   const [split, setSplit] = useState<number>(loadSplit)
-  const seatedAgentIds = useFloorSeatedAgentIds()
+  const seatedAgentIds = useSpaceSeatedAgentIds()
   const attachQueueGrid = useGridAutoAnimate<HTMLDivElement>()
   const attachAgentGrid = useGridAutoAnimate<HTMLDivElement>()
   // The right column is the only scroll container on Home (the shell is
@@ -224,8 +224,8 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
       <InsightsBanner health={health} queueCount={queues.length} onOpenPanel={handleOpenPanel} />
 
       <div className="home-layout" ref={layoutRef} style={layoutStyle}>
-        <section className="home-floor">
-          <FloorPanel />
+        <section className="home-space">
+          <SpacePanel />
         </section>
 
         <div
