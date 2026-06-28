@@ -6,6 +6,7 @@ import {
   SPACE_ZOOM_MAX,
   SPACE_ZOOM_MIN,
   SPACE_ZOOM_STEP,
+  formatSpaceZoom,
 } from './space-zoom'
 
 interface SpaceZoomSliderProps {
@@ -17,6 +18,7 @@ interface SpaceZoomSliderProps {
 
 function SpaceZoomSlider({ zoom, onChange, minZoom, maxZoom }: SpaceZoomSliderProps) {
   const pct = Math.round(zoom * 100)
+  const label = formatSpaceZoom(zoom)
   const clamp = (value: number) => Math.min(maxZoom, Math.max(minZoom, value))
 
   return (
@@ -52,12 +54,12 @@ function SpaceZoomSlider({ zoom, onChange, minZoom, maxZoom }: SpaceZoomSliderPr
         onClick={() => onChange(clamp(Number((zoom + SPACE_ZOOM_STEP).toFixed(3))))}
       />
       <span className="fv-zoom__value" aria-hidden="true">
-        {pct}%
+        {label}
       </span>
       <ButtonIcon
         className="fv-icon-btn"
-        aria-label="Restableix el zoom al 100%"
-        title="100%"
+        aria-label="Restableix el zoom a 1x"
+        title="1x"
         icon="utility:refresh"
         size={14}
         disabled={pct === 100}
@@ -80,7 +82,7 @@ export function SpaceZoomControl({ zoom, onChange, minZoom = SPACE_ZOOM_MIN, max
   const rootRef = useRef<HTMLDivElement>(null)
   const dropRef = useRef<HTMLDivElement>(null)
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const pct = Math.round(zoom * 100)
+  const label = formatSpaceZoom(zoom)
 
   useEffect(() => {
     closeTimeoutRef.current = syncDropdownPanel(dropRef.current, open, {
@@ -107,12 +109,12 @@ export function SpaceZoomControl({ zoom, onChange, minZoom = SPACE_ZOOM_MIN, max
         className="fv-zoom-drop__trigger fv-select"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={`Zoom del plànol (${pct}%)`}
+        aria-label={`Zoom del plànol (${label})`}
         onClick={() => setOpen((value) => !value)}
         onKeyDown={onKeyDown}
       >
         <span className="fv-zoom-drop__label">Zoom</span>
-        <span className="fv-zoom-drop__value">{pct}%</span>
+        <span className="fv-zoom-drop__value">{label}</span>
         <span className="fv-zoom-drop__caret" aria-hidden="true">
           ▾
         </span>

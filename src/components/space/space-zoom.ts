@@ -5,6 +5,12 @@ export const SPACE_ZOOM_DEFAULT = 1
 export const SPACE_ZOOM_STEP = 0.05
 export const SPACE_ZOOM_KEY = 'mirador.space.zoom'
 
+/** Human-readable zoom factor, e.g. 2.7 → "2,7x", 1 → "1x". */
+export function formatSpaceZoom(zoom: number): string {
+  const rounded = Math.round(zoom * 10) / 10
+  return `${rounded.toLocaleString('ca-ES', { maximumFractionDigits: 1 })}x`
+}
+
 export function loadSpaceZoom(): number {
   try {
     const raw = localStorage.getItem(SPACE_ZOOM_KEY)

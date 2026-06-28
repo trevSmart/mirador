@@ -15,6 +15,7 @@ export type Point = [number, number]
 export const VEC_TW = 34
 export const VEC_TH = 17
 const VEC_THK = 5
+const VEC_WALL_THK = 2 // wall coping band width — deliberately well below the slab's THK
 const VEC_WALL_H = 120
 const VEC_DIV_H = 14
 export const VEC_SEAT_MIN_H = 4
@@ -31,6 +32,8 @@ export interface IsoBasis {
   vy: number
   wallH: number
   thk: number
+  /** Wall coping band width, as a fraction of one cell (interior offset). */
+  wallThk: number
 }
 
 /**
@@ -51,6 +54,7 @@ export function makeBasis(azimuthDeg: number, tilt = 0.5): IsoBasis {
     vy: S * tilt * Math.cos(a),
     wallH: VEC_WALL_H,
     thk: VEC_THK,
+    wallThk: VEC_WALL_THK / VEC_TW,
   }
 }
 
@@ -129,6 +133,33 @@ export function backRightWallVec(x: number, y: number, b: IsoBasis): string {
 export function backLeftWallVec(x: number, y: number, b: IsoBasis): string {
   const { top, left } = tileCorners(x, y, b)
   return faceQuad(top, left, 0, b.wallH)
+}
+
+/** Shift a point toward the room interior along basis vector `u`/`v` by `f` cells. */
+function shift([px, py]: Point, dx: number, dy: number, f: number): Point {
+  return [px + dx * f, py + dy * f]
+}
+
+// Wall coping: the thin top band that reveals the wall's thickness, seen from
+// above at full wall height. The outer edge is the wall's top edge; the inner
+// edge is the same edge nudged into the room by `wallThk` cells. The back-right
+// wall runs along +u, so its interior lies toward +v; the back-left wall runs
+// along +v, so its interior lies toward +u.
+export function backRightWallTopVec(x: number, y: number, b: IsoBasis): string {
+  const { top, right } = tileCorners(x, y, b)
+  const o0 = up(top, b.wallH)
+  const o1 = up(right, b.wallH)
+  const i1 = shift(o1, b.vx, b.vy, b.wallThk)
+  const i0 = shift(o0, b.vx, b.vy, b.wallThk)
+  return str(o0, o1, i1, i0)
+}
+export function backLeftWallTopVec(x: number, y: number, b: IsoBasis): string {
+  const { top, left } = tileCorners(x, y, b)
+  const o0 = up(top, b.wallH)
+  const o1 = up(left, b.wallH)
+  const i1 = shift(o1, b.ux, b.uy, b.wallThk)
+  const i0 = shift(o0, b.ux, b.uy, b.wallThk)
+  return str(o0, o1, i1, i0)
 }
 
 /** Ground + top corner pair for an opening on a back wall edge, for `openingQuad`. */

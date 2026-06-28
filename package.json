@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "stop": "node scripts/stop-server.js",
+    "slds:sprites": "node scripts/build-slds-sprites.mjs --from slds-source/icons.txt",
     "knip": "knip --strict",
     "precommit": "npm run lint"
   },
