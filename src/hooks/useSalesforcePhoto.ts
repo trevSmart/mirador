@@ -16,7 +16,7 @@ function isDirectPhotoUrl(url: string): boolean {
 
 /**
  * Module-level cache of fetched photo blobs, shared across every
- * `useSalesforcePhoto` consumer. Keyed by `${accessToken}|${photoUrl}` so the
+ * `useSalesforcePhoto` consumer. Keyed by `${instanceUrl}|${photoUrl}` so the
  * same agent rendered in several places (e.g. a seat and its hover overlay)
  * reuses one object URL instead of each instance re-fetching from scratch —
  * which is what caused the avatar to flicker back to initials on hover.
@@ -62,7 +62,7 @@ function acquirePhoto(key: string, photoUrl: string, accessToken: string): Photo
       .catch(() => null)
       .finally(() => {
         const current = photoCache.get(key)
-        if (current === entry) {
+        if (current && current === entry) {
           current.promise = null
         }
       })
@@ -88,30 +88,42 @@ function releasePhoto(key: string): void {
 export function useSalesforcePhoto(photoUrl: string | null): string | null {
   const { session, isMockMode } = useAuth()
   const accessToken = session?.accessToken ?? null
+  const instanceUrl = session?.instanceUrl?.replace(/\/$/, '') ?? null
   const isDirect =
     photoUrl !== null && (isMockMode || isDirectPhotoUrl(photoUrl))
 
   const cacheKey =
-    !isDirect && photoUrl && accessToken ? `${accessToken}|${photoUrl}` : null
+    !isDirect && photoUrl && accessToken && instanceUrl
+      ? `${instanceUrl}|${photoUrl}`
+      : null
+
+  const cachedSrc = cacheKey ? (photoCache.get(cacheKey)?.objectUrl ?? null) : null
 
   // Seed synchronously from the cache so an already-loaded photo shows on the
   // very first render — no flash of initials when a second consumer mounts.
-  const [src, setSrc] = useState<string | null>(() =>
-    cacheKey ? (photoCache.get(cacheKey)?.objectUrl ?? null) : null,
-  )
-
-  const [loadedKey, setLoadedKey] = useState<string | null>(cacheKey)
-  if (loadedKey !== cacheKey) {
-    setLoadedKey(cacheKey)
-    setSrc(cacheKey ? (photoCache.get(cacheKey)?.objectUrl ?? null) : null)
-  }
+  const [{ key: loadedKey, src }, setLoadedPhoto] = useState(() => ({
+    key: cacheKey,
+    src: cachedSrc,
+  }))
 
   useEffect(() => {
+    let cancelled = false
+    queueMicrotask(() => {
+      if (!cancelled) {
+        setLoadedPhoto((current) =>
+          current.key === cacheKey && current.src === cachedSrc
+            ? current
+            : { key: cacheKey, src: cachedSrc },
+        )
+      }
+    })
+
     if (!cacheKey || isDirect || !photoUrl || !accessToken) {
-      return
+      return () => {
+        cancelled = true
+      }
     }
 
-    let cancelled = false
     const entry = acquirePhoto(cacheKey, photoUrl, accessToken)
 
     // Resolve asynchronously in every case (even when the blob is already
@@ -119,7 +131,9 @@ export function useSalesforcePhoto(photoUrl: string | null): string | null {
     // synchronous useState seed already covers the already-loaded path.
     void Promise.resolve(entry.objectUrl ?? entry.promise).then((url) => {
       if (!cancelled && url) {
-        setSrc(url)
+        setLoadedPhoto((current) =>
+          current.key === cacheKey ? { key: cacheKey, src: url } : current,
+        )
       }
     })
 
@@ -127,11 +141,11 @@ export function useSalesforcePhoto(photoUrl: string | null): string | null {
       cancelled = true
       releasePhoto(cacheKey)
     }
-  }, [cacheKey, isDirect, photoUrl, accessToken])
+  }, [cacheKey, cachedSrc, isDirect, photoUrl, accessToken])
 
   if (isDirect) {
     return photoUrl
   }
 
-  return src
+  return loadedKey === cacheKey ? src : cachedSrc
 }
