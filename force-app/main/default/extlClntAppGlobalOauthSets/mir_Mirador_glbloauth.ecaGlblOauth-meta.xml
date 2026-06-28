@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ExtlClntAppGlobalOauthSettings xmlns="http://soap.sforce.com/2006/04/metadata">
     <callbackUrl>http://localhost:3000/oauth/callback</callbackUrl>
-    <consumerKey>3MVG9HtWXcDGV.nG0NvALN.rnxp6oaNUeX4ofOq4qDMfsATmP4Kf9b9XMKZqAkM5QO_ERdSuaXYp0QWc01tLF</consumerKey>
+    <consumerKey>3MVG94DAZekw5HcskkbKVP0c_Sm0kZzJHTMumH.aES9xGJJe_XiaP1nYBPkdFsHYC6GblgJ47rtlehj947c9C</consumerKey>
     <externalClientApplication>mir_Mirador</externalClientApplication>
     <isClientCredentialsFlowEnabled>false</isClientCredentialsFlowEnabled>
     <isCodeCredFlowEnabled>true</isCodeCredFlowEnabled>

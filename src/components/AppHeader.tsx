@@ -11,7 +11,7 @@ import { HeaderClock } from './HeaderClock'
 import { UserMenu } from './UserMenu'
 
 export function AppHeader() {
-  const { authError, isAuthenticated, isLoading, isMockMode, isSalesforceEnabled } = useAuth()
+  const { authError, isAuthenticated, isLoading, isMockMode, isSalesforceEnabled, login } = useAuth()
   const { isRefreshing, refresh, dataUpdatedAt } = useDataStatus()
   const { enabled: devMode } = useDeveloperMode()
   const { visible: consoleVisible, toggle: toggleConsole } = useDevConsole()
@@ -92,9 +92,18 @@ export function AppHeader() {
         ) : null}
 
         {authError ? (
-          <span className="app-header__error" title={authError}>
-            {authError}
-          </span>
+          <>
+            <span className="app-header__error" title={authError}>
+              {authError}
+            </span>
+            <button
+              type="button"
+              className="app-header__button"
+              onClick={() => void login()}
+            >
+              Torna a intentar
+            </button>
+          </>
         ) : null}
 
         <button
