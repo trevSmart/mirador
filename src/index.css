@@ -570,11 +570,47 @@ textarea,
   width: 32px;
   height: 32px;
   padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.app-header__button--icon:hover {
+  /* Header background is near-white, so a translucent dark overlay reads as a
+     highlight where --surface-raised would be invisible. */
+  background: rgba(27, 25, 36, 0.06);
+  color: var(--text-strong);
+}
+
+/* The label is a <span> inside .app-header, so the generic
+   `.app-header span:not(...)` rule (specificity 0,3,1) wins over a plain
+   `.app-header__button-label`. Out-specify it (0,3,1 here too, declared later)
+   so the label tracks the button's color in both rest and hover. */
+.app-header .app-header__button span.app-header__button-label {
+  color: var(--text-muted);
+}
+
+.app-header .app-header__button--icon:hover span.app-header__button-label {
+  color: var(--text-strong);
 }
 
 .app-header__button--icon:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+.app-header__button--with-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: auto;
+  padding: 0 var(--sp-3);
+}
+
+.app-header__button-label {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .app-header__button--spinning svg {
@@ -1037,6 +1073,7 @@ textarea,
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  font-size: calc(var(--fs-sm) + 0.3px);
 }
 
 .mirador-tab__icon {
@@ -1047,8 +1084,8 @@ textarea,
 
 /* Bump the panel (SLDS) tab icons over the x-small default (1rem = 16px). */
 .mirador-tab__icon .slds-icon {
-  width: 18px;
-  height: 18px;
+  width: 19px;
+  height: 19px;
 }
 
 .mirador-tab__icon--detail .agent-avatar,
@@ -1267,6 +1304,7 @@ textarea,
     opacity: 0;
     transform: translateY(6px);
   }
+
   to {
     opacity: 1;
     transform: none;
@@ -1422,6 +1460,7 @@ textarea,
 }
 
 @media (max-width: 900px) {
+
   /* Stacked single column: restore the shell's global scroll so the whole
      page flows naturally instead of trapping each column. */
   .panel-shell--home {
@@ -1503,6 +1542,21 @@ textarea,
 }
 
 /* ── Entity rows ── */
+.skill-group + .skill-group {
+  margin-top: var(--sp-10);
+}
+
+.skill-group__count {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Indent the grid so each group's skills sit beneath, and to the right of, its title. */
+.skill-group > .entity-list {
+  padding-left: var(--sp-6);
+}
+
 .entity-list {
   display: flex;
   flex-direction: column;
@@ -5740,4 +5794,220 @@ textarea,
 
 .dev-console__line--query .dev-console__msg {
   color: color-mix(in oklab, #c9c6d3 78%, #4dd0e1);
+}
+
+/* ── Color Playground (dev) ──────────────────────────────────────────────── */
+
+.color-playground {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  padding: var(--sp-6);
+  overflow: auto;
+  height: 100%;
+}
+
+.color-playground__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding: var(--sp-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--surface-card);
+  box-shadow: var(--shadow);
+}
+
+.color-playground__skill-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.color-playground__skill-group-title {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--mi-dim);
+  margin: 0;
+}
+
+.color-playground__empty {
+  font-size: var(--fs-sm);
+  color: var(--mi-dim);
+  margin: 0;
+}
+
+.color-playground__toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+}
+
+.color-playground__title h2 {
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-semibold);
+  color: var(--mi-ink);
+  margin: 0;
+}
+
+.color-playground__title p {
+  font-size: var(--fs-sm);
+  color: var(--mi-dim);
+  margin: var(--sp-1) 0 0;
+}
+
+.color-playground__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+}
+
+.color-playground__controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--mi-dim);
+}
+
+.color-playground__controls input[type='range'] {
+  accent-color: var(--mi-accent);
+}
+
+.color-playground__controls > button {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--mi-surface);
+  background: var(--mi-accent);
+  border: none;
+  border-radius: var(--r-sm);
+  padding: var(--sp-2) var(--sp-4);
+  cursor: pointer;
+  transition: filter var(--dur-base) var(--ease);
+}
+
+.color-playground__controls > button:hover {
+  filter: brightness(1.08);
+}
+
+/* Toggle segmentat de tipus de noms */
+.color-playground__modes {
+  display: inline-flex;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+}
+
+.color-playground__modes button {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--mi-dim);
+  background: var(--surface-card);
+  border: none;
+  padding: var(--sp-2) var(--sp-4);
+  cursor: pointer;
+  transition: background var(--dur-base) var(--ease), color var(--dur-base) var(--ease);
+}
+
+.color-playground__modes button.is-active {
+  background: var(--mi-accent);
+  color: var(--mi-surface);
+}
+
+/* Histograma del cercle cromàtic */
+.color-playground__wheel {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 140px;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  background: var(--mi-bg);
+}
+
+.color-playground__bar {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Zona on creix la barra; el tick de l'eix queda a sota, fora del track. */
+.color-playground__bar-track {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  min-height: 0;
+}
+
+.color-playground__bar-fill {
+  width: 100%;
+  min-height: 2px;
+  border-radius: 3px 3px 0 0;
+  transition: height var(--dur-base) var(--ease);
+}
+
+/* Bins de la franja de hue exclosa: ratllat tènue, no és un buit de cobertura. */
+.color-playground__bar--excluded .color-playground__bar-fill {
+  background: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--mi-dim) 12%, transparent),
+    color-mix(in srgb, var(--mi-dim) 12%, transparent) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+  border-radius: var(--r-sm);
+}
+
+.color-playground__bar-tick {
+  margin-top: var(--sp-1);
+  font-size: var(--fs-2xs);
+  color: var(--mi-dim);
+  text-align: center;
+  white-space: nowrap;
+  /* L'etiqueta es desborda més enllà de l'ample del bin (només 1/36) sense
+     empènyer els veïns ni partir-se. */
+  overflow: visible;
+}
+
+/* Graella de swatches */
+.color-playground__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--sp-3);
+}
+
+.color-playground__swatch {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  background: var(--surface-card);
+  min-width: 0;
+}
+
+.color-playground__chip {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px rgba(27, 25, 36, .06);
+}
+
+.color-playground__label {
+  font-size: var(--fs-sm);
+  color: var(--mi-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

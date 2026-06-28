@@ -14,6 +14,7 @@ export type PanelType =
   | 'work'
   | 'space'
   | 'spaceEditor'
+  | 'colorPlayground'
 
 type PanelIcon =
   | { name: SfIconName }
@@ -35,6 +36,7 @@ export const PANEL_DEFINITIONS: PanelDefinition[] = [
   { type: 'work',       title: 'Work',         icon: { name: 'work' },                                    component: lazy(() => import('./WorkPanel').then(m => ({ default: m.WorkPanel }))) },
   { type: 'space',      title: 'Space',        icon: { sprite: 'standard', symbol: 'business_unit' },      component: lazy(() => import('./SpacePanel').then(m => ({ default: m.SpacePanel }))) },
   { type: 'spaceEditor', title: 'Space editor', icon: { sprite: 'custom', symbol: 'custom83' },              component: lazy(() => import('./SpaceEditorPanel').then(m => ({ default: m.SpaceEditorPanel }))) },
+  { type: 'colorPlayground', title: 'Color playground', icon: { sprite: 'utility', symbol: 'color_swatch' }, component: lazy(() => import('./ColorPlaygroundPanel').then(m => ({ default: m.ColorPlaygroundPanel }))) },
 ]
 
 function withPanelErrorBoundary(

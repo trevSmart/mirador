@@ -116,4 +116,28 @@ describe('useDataStatus', () => {
 
     await waitFor(() => expect(getSnapshot).toHaveBeenCalledTimes(2))
   })
+
+  it('exposes dataUpdatedAt: 0 before the first successful fetch, then a timestamp', async () => {
+    const { client } = makeClient(snapshot())
+    const { Wrapper } = makeWrapper(client, { isAuthenticated: false })
+
+    const { result, rerender } = renderHook(() => useDataStatus(), {
+      wrapper: Wrapper,
+    })
+
+    // Unauthenticated → query disabled, no successful fetch yet.
+    expect(result.current.dataUpdatedAt).toBe(0)
+
+    void rerender
+  })
+
+  it('reports a non-zero dataUpdatedAt after a successful fetch', async () => {
+    const { client } = makeClient(snapshot())
+    const { Wrapper } = makeWrapper(client)
+
+    const { result } = renderHook(() => useDataStatus(), { wrapper: Wrapper })
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(result.current.dataUpdatedAt).toBeGreaterThan(0)
+  })
 })

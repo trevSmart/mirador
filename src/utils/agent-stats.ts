@@ -104,6 +104,52 @@ export function sortSkillsByBacklog(skills: Skill[]): Skill[] {
   })
 }
 
+/** Label used for skills without a SkillType. */
+export const SKILL_TYPE_FALLBACK = 'Sense tipus'
+
+export interface SkillTypeGroup {
+  type: string
+  skills: Skill[]
+  backlog: number
+}
+
+/**
+ * Group skills by their Salesforce SkillType. Skills within each group keep the
+ * backlog-first ordering; groups themselves are ordered by total backlog, with the
+ * untyped group always last.
+ */
+export function groupSkillsByType(skills: Skill[]): SkillTypeGroup[] {
+  const byType = new Map<string, Skill[]>()
+  for (const skill of skills) {
+    const type = skill.type ?? SKILL_TYPE_FALLBACK
+    const bucket = byType.get(type)
+    if (bucket) {
+      bucket.push(skill)
+    } else {
+      byType.set(type, [skill])
+    }
+  }
+
+  const groups: SkillTypeGroup[] = [...byType.entries()].map(([type, groupSkills]) => ({
+    type,
+    skills: sortSkillsByBacklog(groupSkills),
+    backlog: totalSkillBacklog(groupSkills),
+  }))
+
+  return groups.sort((left, right) => {
+    const leftFallback = left.type === SKILL_TYPE_FALLBACK
+    const rightFallback = right.type === SKILL_TYPE_FALLBACK
+    if (leftFallback !== rightFallback) {
+      return leftFallback ? 1 : -1
+    }
+    const backlogDiff = right.backlog - left.backlog
+    if (backlogDiff !== 0) {
+      return backlogDiff
+    }
+    return left.type.localeCompare(right.type, 'ca')
+  })
+}
+
 export interface WorkStatusCounts {
   assigned: number
   queued: number
