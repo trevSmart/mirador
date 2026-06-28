@@ -95,9 +95,11 @@ export function SpaceView({
   const gridW = cols * VIEW_CELL
   const gridH = rows * VIEW_CELL
 
-  // The .fv-fit box fills the tile width and derives its height from the
-  // intrinsic aspect-ratio (set via --fv-aspect below), exactly like .fv3d-svg.
-  // We only need the rendered width to scale the raw-pixel .fv-grid down to fit.
+  // The .fv-fit box targets the shared render height and derives its width from
+  // the room's aspect-ratio (--fv-aspect-n is that ratio as a number, used by the
+  // CSS width calc; --fv-aspect is the same ratio as a CSS aspect-ratio string).
+  // We still need the rendered width to scale the raw-pixel .fv-grid down to fit.
+  const aspectN = (cols > 0 ? cols : 1) / (rows > 0 ? rows : 1)
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
@@ -118,7 +120,10 @@ export function SpaceView({
     <div
       className="fv-fit"
       ref={containerRef}
-      style={{ ['--fv-aspect' as string]: roomAspect(cols, rows) }}
+      style={{
+        ['--fv-aspect' as string]: roomAspect(cols, rows),
+        ['--fv-aspect-n' as string]: aspectN,
+      }}
     >
       <div
         className="fv-grid"
