@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../auth/auth-context'
 import { buildPhotoProxyUrlFromAbsoluteUrl } from '../auth/salesforce-oauth'
 
@@ -88,6 +88,7 @@ function releasePhoto(key: string): void {
 export function useSalesforcePhoto(photoUrl: string | null): string | null {
   const { session, isMockMode } = useAuth()
   const accessToken = session?.accessToken ?? null
+  const accessTokenRef = useRef(accessToken)
   const instanceUrl = session?.instanceUrl?.replace(/\/$/, '') ?? null
   const isDirect =
     photoUrl !== null && (isMockMode || isDirectPhotoUrl(photoUrl))
@@ -107,6 +108,10 @@ export function useSalesforcePhoto(photoUrl: string | null): string | null {
   }))
 
   useEffect(() => {
+    accessTokenRef.current = accessToken
+  }, [accessToken])
+
+  useEffect(() => {
     let cancelled = false
     if (loadedKey !== cacheKey || src !== cachedSrc) {
       queueMicrotask(() => {
@@ -120,13 +125,14 @@ export function useSalesforcePhoto(photoUrl: string | null): string | null {
       })
     }
 
-    if (!cacheKey || isDirect || !photoUrl || !accessToken) {
+    const currentAccessToken = accessTokenRef.current
+    if (!cacheKey || isDirect || !photoUrl || !currentAccessToken) {
       return () => {
         cancelled = true
       }
     }
 
-    const entry = acquirePhoto(cacheKey, photoUrl, accessToken)
+    const entry = acquirePhoto(cacheKey, photoUrl, currentAccessToken)
 
     // Resolve asynchronously in every case (even when the blob is already
     // cached) so we never call setState synchronously inside the effect; the
@@ -143,7 +149,7 @@ export function useSalesforcePhoto(photoUrl: string | null): string | null {
       cancelled = true
       releasePhoto(cacheKey)
     }
-  }, [cacheKey, cachedSrc, isDirect, loadedKey, photoUrl, src, accessToken])
+  }, [cacheKey, cachedSrc, isDirect, loadedKey, photoUrl, src])
 
   if (isDirect) {
     return photoUrl
