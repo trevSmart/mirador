@@ -11,6 +11,13 @@ single-page app (`src/`) backed by a Salesforce org. The frontend reads a
 domain-oriented JSON API (agents, queues, skills, work items) served by Apex REST
 in the org; it never talks to raw Salesforce objects.
 
+**Functional baseline:** Mirador must do everything Salesforce's standard
+supervisor experience does — the product formerly known as **Omni Supervisor**,
+renamed **Command Center for Service** in recent releases. Treat feature parity
+with Command Center for Service as the floor, not the ceiling: any capability the
+standard supervisor offers (real-time agent/queue monitoring, work assignment
+oversight, skills, etc.) should have an equivalent here.
+
 The repository is a **dual project**:
 
 - **`src/`** — the SPA (TypeScript, React 19, Vite 8). This is where most work happens.

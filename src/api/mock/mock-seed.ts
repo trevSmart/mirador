@@ -3,6 +3,7 @@ import type {
   AgentSkill,
   AgentWorkItem,
   ChannelKey,
+  PresenceStatusOption,
   Queue,
   Skill,
   WorkItem,
@@ -37,6 +38,37 @@ const SKILL_DEFS: Skill[] = [
   { id: 'acc', name: 'Accessibilitat', type: 'Certification', agents: 7, backlog: 1 },
   { id: 'gdpr', name: 'Compliment GDPR', type: 'Certification', agents: 11, backlog: 0 },
 ]
+
+/* The org's full presence-status catalog (as Setup → Presence Statuses would
+   define it), independent of which agents currently hold them. The Home builds
+   one filter chip per entry here. Just id + label — Salesforce doesn't expose a
+   busy/available flag, so the catalog carries no category. */
+const MOCK_PRESENCE_CATALOG: PresenceStatusOption[] = [
+  { id: '0N5mock0000Avail', label: 'Disponible' },
+  { id: '0N5mock000AvailV', label: 'Disponible per a veu' },
+  { id: '0N5mock00000Busy', label: 'En trucada' },
+  { id: '0N5mock00000Away', label: 'En pausa' },
+  { id: '0N5mock0000Lunch', label: 'Dinar' },
+  { id: '0N5mock00Meeting', label: 'Reunió' },
+  { id: '0N5mock00Offline', label: 'Desconnectat' },
+]
+
+/* Which catalog status each seeded agent gets, keyed by the agent's own
+   normalized category (Agent.status still drives badge colors). Lets mock agents
+   carry a realistic presenceStatusId/Label. Offline agents have no presence. */
+const MOCK_PRESENCE_BY_CATEGORY: Record<
+  'online' | 'busy' | 'away' | 'offline',
+  PresenceStatusOption | null
+> = {
+  online: MOCK_PRESENCE_CATALOG[0],
+  busy: MOCK_PRESENCE_CATALOG[2],
+  away: MOCK_PRESENCE_CATALOG[3],
+  offline: null,
+}
+
+export function getMockPresenceStatuses(): PresenceStatusOption[] {
+  return MOCK_PRESENCE_CATALOG.map((s) => ({ ...s }))
+}
 
 type AgentSpec = {
   id: string
@@ -80,8 +112,13 @@ const AGENT_PHOTOS: Record<string, string> = {
   a31: 'w31', a32: 'm32', a33: 'w33',
 }
 
-// Agents intentionally without a photo (mirrors production gaps).
-const NO_PHOTO_AGENTS = new Set(['a9', 'a17', 'a24', 'a27', 'a32'])
+// Agents intentionally without a photo (mirrors production gaps). The a34–a41
+// offline service reps have none either — derived from Service Resource, they
+// often lack an Omni profile photo — exercising the no-photo fallback.
+const NO_PHOTO_AGENTS = new Set([
+  'a9', 'a17', 'a24', 'a27', 'a32',
+  'a34', 'a35', 'a36', 'a37', 'a38', 'a39', 'a40', 'a41',
+])
 
 function agentPhoto(agentId: string): string | null {
   if (NO_PHOTO_AGENTS.has(agentId)) return null
@@ -435,6 +472,66 @@ const AGENT_SPECS: AgentSpec[] = [
     ],
     skillIds: ['ca', 'es', 'en', 'ret', 'gdpr'],
   },
+  // --- OFFLINE service reps (visible only with scope=all / "show offline
+  // agents"). These mirror Command Center for Service's offline service reps:
+  // active Service Resources with no current Omni presence. Disabling the
+  // "Mostra els agents desconnectats" setting (scope=connected) hides them. --
+  {
+    id: 'a34', name: 'Guillem Roca', role: 'Agent · Atenció', status: 'offline',
+    max: 5, used: 0, queueIds: ['ac', 'in'], loginMin: 0,
+    chans: { veu: 0, chat: 0, email: 0, wa: 0, cas: 0 },
+    work: [],
+    skillIds: ['ca', 'es', 'acc'],
+  },
+  {
+    id: 'a35', name: 'Laia Serra', role: 'Sènior · Suport', status: 'offline',
+    max: 6, used: 0, queueIds: ['st', 'in'], loginMin: 0,
+    chans: { veu: 0, chat: 0, email: 0, wa: 0, cas: 0 },
+    work: [],
+    skillIds: ['ca', 'tec', 'tec3'],
+  },
+  {
+    id: 'a36', name: 'Omar Haddad', role: 'Agent · Vendes', status: 'offline',
+    max: 4, used: 0, queueIds: ['ve', 're'], loginMin: 0,
+    chans: { veu: 0, chat: 0, email: 0, wa: 0, cas: 0 },
+    work: [],
+    skillIds: ['es', 'en', 'ven'],
+  },
+  {
+    id: 'a37', name: 'Júlia Camós', role: 'Agent · Incidències', status: 'offline',
+    max: 5, used: 0, queueIds: ['in', 'st'], loginMin: 0,
+    chans: { veu: 0, chat: 0, email: 0, wa: 0, cas: 0 },
+    work: [],
+    skillIds: ['ca', 'es', 'tec'],
+  },
+  {
+    id: 'a38', name: 'Pere Munné', role: 'Agent · Retenció', status: 'offline',
+    max: 4, used: 0, queueIds: ['re', 'ac'], loginMin: 0,
+    chans: { veu: 0, chat: 0, email: 0, wa: 0, cas: 0 },
+    work: [],
+    skillIds: ['es', 'ret', 'med'],
+  },
+  {
+    id: 'a39', name: 'Yuki Tanaka', role: 'Agent · Suport', status: 'offline',
+    max: 5, used: 0, queueIds: ['st', 've'], loginMin: 0,
+    chans: { veu: 0, chat: 0, email: 0, wa: 0, cas: 0 },
+    work: [],
+    skillIds: ['en', 'tec', 'tec3'],
+  },
+  {
+    id: 'a40', name: 'Carme Bo', role: 'Sènior · Atenció', status: 'offline',
+    max: 6, used: 0, queueIds: ['ac', 'in'], loginMin: 0,
+    chans: { veu: 0, chat: 0, email: 0, wa: 0, cas: 0 },
+    work: [],
+    skillIds: ['ca', 'es', 'gdpr', 'acc'],
+  },
+  {
+    id: 'a41', name: 'Ivan Petrov', role: 'Agent · Vendes', status: 'offline',
+    max: 5, used: 0, queueIds: ['ve', 'st'], loginMin: 0,
+    chans: { veu: 0, chat: 0, email: 0, wa: 0, cas: 0 },
+    work: [],
+    skillIds: ['en', 'ven', 'gdpr'],
+  },
 ]
 
 const MOCK_SKILL_EPOCH = Date.UTC(2025, 0, 1)
@@ -473,12 +570,16 @@ function buildAgent(spec: AgentSpec): Agent {
     ageMin: Math.max(1, Math.floor(w.ageSec / 60)),
   }))
 
+  const presence = MOCK_PRESENCE_BY_CATEGORY[spec.status]
+
   return {
     id: spec.id,
     name: spec.name,
     role: spec.role,
     recordUrl: null,
     status: spec.status,
+    presenceStatusId: presence?.id ?? null,
+    presenceStatusLabel: presence?.label ?? null,
     max: spec.max,
     used: spec.used,
     queueIds: spec.queueIds,

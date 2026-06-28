@@ -56,7 +56,8 @@ public with sharing class PanoramaLoadContext {
     private static Map<Id, UserServicePresence> loadPresence() {
         Map<Id, UserServicePresence> presenceByUser = new Map<Id, UserServicePresence>();
         for (UserServicePresence usp : [
-            SELECT UserId, ServicePresenceStatus.MasterLabel,
+            SELECT UserId, ServicePresenceStatusId,
+                   ServicePresenceStatus.MasterLabel,
                    ServicePresenceStatus.DeveloperName,
                    StatusStartDate, ConfiguredCapacity
             FROM UserServicePresence

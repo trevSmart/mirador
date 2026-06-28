@@ -9,7 +9,6 @@ import { PanelShell } from '../components/PanelState'
 import { Select } from '../components/ds/Select'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { useSpacePlanData } from '../space/useSpacePlanData'
-import { setSpaceSeatedAgentIds } from '../space/space-seated-agents'
 import { useSmoothScroll } from '../hooks/useSmoothScroll'
 import { usePreferences } from '../settings/preferences-context'
 import { presenceLabel } from '../utils/format'
@@ -102,16 +101,6 @@ export function SpacePanel() {
     '--fv-zoom': zoom,
     '--fv-render-zoom': zoom,
   } as React.CSSProperties
-
-  useEffect(() => {
-    const ids = new Set<string>()
-    for (const space of spaces) {
-      for (const seat of space.seats) {
-        if (seat.agentId) ids.add(seat.agentId)
-      }
-    }
-    setSpaceSeatedAgentIds(ids)
-  }, [spaces])
 
   const summary = useMemo(() => {
     const counts: Record<PresenceStatus, number> = { online: 0, busy: 0, away: 0, offline: 0 }

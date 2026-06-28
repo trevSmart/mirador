@@ -85,29 +85,91 @@ export function PanelState({
       hideHeader={hideHeader}
     >
       {!isMockMode && !isSalesforceEnabled ? (
-        <p className="panel-state panel-state--muted">
+        <PanelStatus icon={<StatusGlyph kind="config" />}>
           Configura SF_CLIENT_ID per connectar a Salesforce.
-        </p>
+        </PanelStatus>
       ) : !isMockMode && !isAuthenticated ? (
-        <p className="panel-state panel-state--muted">Redirigint a Salesforce…</p>
+        <PanelStatus icon={<Spinner />}>Redirigint a Salesforce…</PanelStatus>
       ) : isLoading ? (
-        <p className="panel-state panel-state--muted">
+        <PanelStatus icon={<Spinner />}>
           {isMockMode ? 'Carregant dades simulades…' : 'Carregant dades de Salesforce…'}
-        </p>
+        </PanelStatus>
       ) : error ? (
-        <div className="panel-state">
-          <p className="panel-state--error">{error}</p>
+        <PanelStatus tone="error" icon={<StatusGlyph kind="error" />}>
+          {error}
           {onRetry ? (
-            <button type="button" className="panel-state__button" onClick={() => void onRetry()}>
+            <button
+              type="button"
+              className="panel-status__button"
+              onClick={() => void onRetry()}
+            >
               Torna a intentar
             </button>
           ) : null}
-        </div>
+        </PanelStatus>
       ) : isEmpty ? (
-        <p className="panel-state panel-state--muted">{emptyMessage}</p>
+        <PanelStatus icon={<StatusGlyph kind="empty" />}>{emptyMessage}</PanelStatus>
       ) : (
         children
       )}
     </PanelShell>
+  )
+}
+
+interface PanelStatusProps {
+  icon: ReactNode
+  tone?: 'muted' | 'error'
+  children: ReactNode
+}
+
+/** Centred, friendly placeholder for loading / error / empty / config states. */
+function PanelStatus({ icon, tone = 'muted', children }: PanelStatusProps) {
+  return (
+    <div className={`panel-status panel-status--${tone}`} role="status">
+      <span className="panel-status__icon" aria-hidden>
+        {icon}
+      </span>
+      <div className="panel-status__body">{children}</div>
+    </div>
+  )
+}
+
+function Spinner() {
+  return <span className="panel-status__spinner" />
+}
+
+function StatusGlyph({ kind }: { kind: 'error' | 'empty' | 'config' }) {
+  const paths: Record<typeof kind, ReactNode> = {
+    error: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <line x1="12" y1="8" x2="12" y2="13" />
+        <line x1="12" y1="16" x2="12" y2="16" />
+      </>
+    ),
+    empty: (
+      <>
+        <rect x="4" y="5" width="16" height="14" rx="2" />
+        <line x1="4" y1="10" x2="20" y2="10" />
+      </>
+    ),
+    config: (
+      <>
+        <circle cx="12" cy="12" r="3" />
+        <path d="M12 3v3M12 18v3M4.2 7l2.6 1.5M17.2 15.5l2.6 1.5M4.2 17l2.6-1.5M17.2 8.5l2.6-1.5" />
+      </>
+    ),
+  }
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {paths[kind]}
+    </svg>
   )
 }

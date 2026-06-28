@@ -23,6 +23,13 @@ export interface Preferences {
   slaTarget: number
   /** Share of agents in alert needed to raise a global warning (0–100). */
   alertPct: number
+  /**
+   * Include offline service reps in the agent roster (snapshot `scope=all`).
+   * When off, only agents currently connected to Omni-Channel are shown
+   * (`scope=connected`). Mirrors Command Center for Service's configurable
+   * "show all offline service reps" behavior.
+   */
+  showOfflineAgents: boolean
 
   /** Space panel view to open with. */
   defaultSpaceView: SpaceViewMode
@@ -52,6 +59,7 @@ export const PREFERENCES_DEFAULTS: Preferences = {
   maxWaitSeconds: 180,
   slaTarget: 80,
   alertPct: 30,
+  showOfflineAgents: true,
 
   defaultSpaceView: '3d',
   showAvatars: true,
@@ -98,6 +106,7 @@ function sanitizePreferences(raw: Partial<Preferences> | null | undefined): Pref
     maxWaitSeconds: clampInt(p.maxWaitSeconds, d.maxWaitSeconds, 30, 3600),
     slaTarget: clampInt(p.slaTarget, d.slaTarget, 50, 100),
     alertPct: clampInt(p.alertPct, d.alertPct, 5, 100),
+    showOfflineAgents: asBool(p.showOfflineAgents, d.showOfflineAgents),
 
     defaultSpaceView: oneOf(p.defaultSpaceView, ['2d', '3d'], d.defaultSpaceView),
     showAvatars: asBool(p.showAvatars, d.showAvatars),

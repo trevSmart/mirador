@@ -9,7 +9,7 @@ import type {
   SnapshotResponse,
 } from '../types'
 import { MOCK_CAPABILITIES } from './capabilities'
-import { getAgentSkills } from './mock-seed'
+import { getAgentSkills, getMockPresenceStatuses } from './mock-seed'
 import {
   getMockAgents,
   getMockQueues,
@@ -95,6 +95,7 @@ export function createMockMiradorClient(): MiradorClient {
           queues: getMockQueues(),
           skills: getMockSkills(),
           work: getMockWork(),
+          presenceStatuses: getMockPresenceStatuses(),
         } satisfies SnapshotResponse
       }),
     getRecordDetails: (body: RecordDetailsRequest) =>

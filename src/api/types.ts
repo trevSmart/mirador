@@ -40,7 +40,16 @@ export interface Agent {
   name: string
   role: string
   recordUrl: string | null
+  /** Normalized presence category, used for colors/sorting. */
   status: PresenceStatus
+  /**
+   * The org's real Omni-Channel presence status id, or null when the agent has
+   * no active presence (offline). Distinct from `status`, which is our coarse
+   * normalization — this is the configured status the agent actually selected.
+   */
+  presenceStatusId: string | null
+  /** The real presence status display label (e.g. "Disponible per a veu"). */
+  presenceStatusLabel: string | null
   max: number
   used: number
   queueIds: string[]
@@ -135,11 +144,19 @@ export interface UpdateSkillsResponse {
   ok: boolean
 }
 
+/** A presence status configured in the org (Setup → Presence Statuses). */
+export interface PresenceStatusOption {
+  id: string
+  label: string
+}
+
 export interface SnapshotResponse {
   agents: Agent[]
   queues: Queue[]
   skills: Skill[]
   work: WorkItem[]
+  /** Full catalog of org presence statuses; drives Home's per-status filters. */
+  presenceStatuses: PresenceStatusOption[]
 }
 
 export interface RecordDetail {

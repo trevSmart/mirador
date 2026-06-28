@@ -19,6 +19,7 @@ function snapshot(): SnapshotResponse {
     queues: [{ id: 'q1' } as unknown as SnapshotResponse['queues'][number]],
     skills: [],
     work: [],
+    presenceStatuses: [],
   }
 }
 
