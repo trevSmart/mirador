@@ -1,16 +1,13 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { IDockviewPanelProps } from 'dockview-react'
-import { useAgents, useDataStatus, useQueues } from '../api/data-hooks'
+import { useAgents, useDataStatus, usePresenceStatuses, useQueues } from '../api/data-hooks'
 import { AgentRow } from '../components/AgentRow'
 import { SfIcon, Chip } from '../components/ds'
 import { Select, type SelectOption } from '../components/ds/Select'
-import { presenceLabel } from '../utils/format'
-import type { PresenceStatus } from '../api/types'
 import { InsightsBanner } from '../components/InsightsBanner'
 import { PanelState } from '../components/PanelState'
 import { QueueRow } from '../components/QueueRow'
 import { SpacePanel } from './SpacePanel'
-import { useSpaceSeatedAgentIds } from '../space/space-seated-agents'
 import { addPanelByType } from './panel-actions'
 import type { PanelType } from './registry'
 import { computeHealthInsights } from '../utils/health-insights'
@@ -35,7 +32,6 @@ function loadSplit(): number {
   return 0.62
 }
 import {
-  countAgentsByStatus,
   sortAgents,
   sortQueues,
   type AgentSortKey,
@@ -61,16 +57,14 @@ const AGENT_SORT_OPTIONS: SelectOption<AgentSortKey>[] = [
 ]
 
 type QueueFilter = 'all' | 'backlog' | 'idle'
-type AgentFilter = 'all' | PresenceStatus
+/**
+ * Agent filter on Home: the CONNECTED_FILTER sentinel (everyone with an active
+ * Omni-Channel presence) or a specific real presence status id. Offline agents
+ * are never shown on Home — use the Agents panel for the full roster.
+ */
+type AgentFilter = string
 
-const PRESENCE_DOT: Record<PresenceStatus, string> = {
-  online: 'var(--status-ok)',
-  busy: 'var(--status-alert)',
-  away: 'var(--status-watch)',
-  offline: 'var(--text-disabled)',
-}
-
-const AGENT_FILTERS: AgentFilter[] = ['all', 'online', 'busy', 'away', 'offline']
+const CONNECTED_FILTER = 'connected'
 
 /** Read a persisted sort key, falling back when missing or unknown. */
 function loadSort<T extends string>(storageKey: string, allowed: readonly T[], fallback: T): T {
@@ -86,6 +80,7 @@ function loadSort<T extends string>(storageKey: string, allowed: readonly T[], f
 export function HomePanel({ containerApi }: IDockviewPanelProps) {
   const agents = useAgents()
   const queues = useQueues()
+  const presenceStatuses = usePresenceStatuses()
   const { isLoading, error, refresh } = useDataStatus()
 
   const [queueSort, setQueueSort] = useState<QueueSortKey>(() =>
@@ -121,7 +116,7 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
   }
 
   const [queueFilter, setQueueFilter] = useState<QueueFilter>('all')
-  const [agentFilter, setAgentFilter] = useState<AgentFilter>('all')
+  const [agentFilter, setAgentFilter] = useState<AgentFilter>(CONNECTED_FILTER)
 
   const queueFilterCounts = useMemo(
     () => ({
@@ -149,7 +144,6 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
 
   const layoutRef = useRef<HTMLDivElement>(null)
   const [split, setSplit] = useState<number>(loadSplit)
-  const seatedAgentIds = useSpaceSeatedAgentIds()
   const attachQueueGrid = useGridAutoAnimate<HTMLDivElement>()
   const attachAgentGrid = useGridAutoAnimate<HTMLDivElement>()
   // The right column is the only scroll container on Home (the shell is
@@ -157,23 +151,42 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
   // the app gets via PanelShell.
   const attachSideScroll = useSmoothScroll<HTMLDivElement>()
 
-  const seatedAgents = useMemo(
-    () =>
-      seatedAgentIds.size > 0
-        ? agents.filter((agent) => seatedAgentIds.has(agent.id))
-        : agents,
-    [agents, seatedAgentIds],
+  // Home shows only agents connected to Omni-Channel — i.e. those with an active
+  // presence (a presence status id), no matter what that status is named. Agents
+  // with no presence at all live in the Agents panel. We deliberately do NOT
+  // judge connection by the status name/category (no keyword heuristics).
+  const connectedAgents = useMemo(
+    () => agents.filter((agent) => agent.presenceStatusId !== null),
+    [agents],
   )
 
-  const agentFilterCounts = useMemo(() => countAgentsByStatus(seatedAgents), [seatedAgents])
+  // One filter chip per presence status configured in the org (the full
+  // catalog, every status, unfiltered), with a live count computed over the
+  // connected agents. Chips stay visible even at count 0.
+  const presenceFilters = useMemo(() => {
+    const countById = new Map<string, number>()
+    for (const agent of connectedAgents) {
+      const id = agent.presenceStatusId
+      if (id) countById.set(id, (countById.get(id) ?? 0) + 1)
+    }
+    return presenceStatuses.map((status) => ({
+      id: status.id,
+      label: status.label,
+      count: countById.get(status.id) ?? 0,
+    }))
+  }, [presenceStatuses, connectedAgents])
+
+  // "connected" always exists; a selected status id is always a real chip from
+  // the catalog, so no fallback is needed here.
+  const effectiveFilter = agentFilter
 
   const activeAgents = useMemo(() => {
     const filtered =
-      agentFilter === 'all'
-        ? seatedAgents
-        : seatedAgents.filter((agent) => agent.status === agentFilter)
+      effectiveFilter === CONNECTED_FILTER
+        ? connectedAgents
+        : connectedAgents.filter((agent) => agent.presenceStatusId === effectiveFilter)
     return sortAgents(filtered, agentSort).slice(0, 5)
-  }, [seatedAgents, agentFilter, agentSort])
+  }, [connectedAgents, effectiveFilter, agentSort])
 
   const startResize = useCallback((event: React.PointerEvent) => {
     event.preventDefault()
@@ -304,15 +317,24 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
               </div>
             </header>
             <div className="panel-section__filters" role="group" aria-label="Filtra els agents">
-              {AGENT_FILTERS.map((filter) => (
+              <Chip
+                active={effectiveFilter === CONNECTED_FILTER}
+                count={connectedAgents.length}
+                onClick={() => setAgentFilter(CONNECTED_FILTER)}
+              >
+                Connectats
+              </Chip>
+              {presenceFilters.map((filter) => (
+                // No status dot: Salesforce doesn't expose whether a presence
+                // status is "busy" via any API, so we don't imply a meaning we
+                // can't back up.
                 <Chip
-                  key={filter}
-                  active={agentFilter === filter}
-                  dotColor={filter === 'all' ? undefined : PRESENCE_DOT[filter]}
-                  count={filter === 'all' ? seatedAgents.length : agentFilterCounts[filter]}
-                  onClick={() => setAgentFilter(filter)}
+                  key={filter.id}
+                  active={effectiveFilter === filter.id}
+                  count={filter.count}
+                  onClick={() => setAgentFilter(filter.id)}
                 >
-                  {filter === 'all' ? 'Tots' : presenceLabel(filter)}
+                  {filter.label}
                 </Chip>
               ))}
               <Select

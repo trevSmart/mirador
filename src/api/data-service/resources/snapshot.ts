@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query'
 import type { MiradorClient } from '../../mirador-client'
 import type {
   Agent,
+  AgentScope,
   Queue,
   Skill,
   SnapshotResponse,
@@ -84,8 +85,13 @@ export const workItemResource = defineResource<
   },
 })
 
-/** Query key for the bulk snapshot (the live agents/queues/skills/work feed). */
-export const snapshotKey = ['salesforce', 'snapshot'] as const
+/**
+ * Query key for the bulk snapshot (the live agents/queues/skills/work feed).
+ * Scoped so toggling the agent scope (e.g. show/hide offline reps) is a distinct
+ * cached query rather than overwriting the other scope's data.
+ */
+export const snapshotKey = (scope: AgentScope = 'all') =>
+  ['salesforce', 'snapshot', scope] as const
 
 /**
  * Fetches the snapshot and hydrates the per-entity cache in one go. Used as the
@@ -95,8 +101,9 @@ export const snapshotKey = ['salesforce', 'snapshot'] as const
 export async function fetchSnapshot(
   client: MiradorClient,
   queryClient: QueryClient,
+  scope: AgentScope = 'all',
 ): Promise<SnapshotResponse> {
-  const snapshot = await client.getSnapshot('all')
+  const snapshot = await client.getSnapshot(scope)
   primeSnapshot(queryClient, snapshot)
   return snapshot
 }

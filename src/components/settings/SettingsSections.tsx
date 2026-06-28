@@ -4,6 +4,7 @@
    The Connexió and Sobre sections are read-only info pulled from auth state. */
 
 import { useAuth } from '../../auth/auth-context'
+import { useDataStatus } from '../../api/data-hooks'
 import { clearLocalData } from '../../utils/clear-local-data'
 import { Button } from '../ds/Button'
 import {
@@ -37,7 +38,11 @@ function refreshLabel(seconds: number): string {
 }
 
 export function ConnexioSection() {
-  const { isMockMode, isSalesforceEnabled, session, userInfo } = useAuth()
+  const { isMockMode, isSalesforceEnabled, session, userInfo, logout } = useAuth()
+  // Real reachability, not just "is there a token": a saved OAuth session can
+  // coexist with a failing data fetch (expired/revoked token, org down, API
+  // error). The data feed is the source of truth for "are we actually connected".
+  const { isLoading: isProbing, error: dataError } = useDataStatus()
   const instanceUrl = session?.instanceUrl ?? null
   const effectiveMock = isMockMode
 
@@ -45,26 +50,36 @@ export function ConnexioSection() {
     <>
       <SettingsGroup label="Font de dades">
         <SettingsRow
-          title="Font activa"
+          title="Origen de dades actual"
           hint="D'on s'obtenen les dades del centre"
           control={
             effectiveMock ? (
               <SettingsBadge tone="watch">Simulació (mock)</SettingsBadge>
             ) : (
-              <SettingsBadge tone="ok">Salesforce</SettingsBadge>
+              <SettingsBadge tone="off">Salesforce</SettingsBadge>
             )
           }
         />
         <SettingsRow
           title="Estat de la connexió"
-          hint="Comprovació en iniciar sessió"
+          hint={
+            !effectiveMock && dataError ? (
+              <span className="settings-error-text">{dataError}</span>
+            ) : (
+              'Comprovació en iniciar sessió'
+            )
+          }
           control={
             effectiveMock ? (
               <SettingsBadge tone="watch">Simulada</SettingsBadge>
-            ) : session ? (
-              <SettingsBadge tone="ok">Connectat</SettingsBadge>
-            ) : (
+            ) : !session ? (
               <SettingsBadge tone="off">Sense sessió</SettingsBadge>
+            ) : isProbing ? (
+              <SettingsBadge tone="watch">Comprovant…</SettingsBadge>
+            ) : dataError ? (
+              <SettingsBadge tone="off">Error de connexió</SettingsBadge>
+            ) : (
+              <SettingsBadge tone="ok">Connectat</SettingsBadge>
             )
           }
         />
@@ -84,13 +99,25 @@ export function ConnexioSection() {
           <SettingsRow
             title="Instància"
             hint="URL de l'org connectada"
-            control={<SettingsBadge tone={instanceUrl ? 'ok' : 'off'}>{instanceUrl ?? '—'}</SettingsBadge>}
+            control={
+              instanceUrl ? (
+                <span className="settings-text">{instanceUrl}</span>
+              ) : (
+                <SettingsBadge tone="off">—</SettingsBadge>
+              )
+            }
           />
           <SettingsRow
             title="Sessió activa"
             hint="Token d'accés OAuth"
             control={
-              <SettingsBadge tone={session ? 'ok' : 'off'}>{session ? 'Activa' : 'No autenticat'}</SettingsBadge>
+              !session ? (
+                <SettingsBadge tone="off">No autenticat</SettingsBadge>
+              ) : dataError ? (
+                <SettingsBadge tone="watch">Pot haver caducat</SettingsBadge>
+              ) : (
+                <SettingsBadge tone="ok">Activa</SettingsBadge>
+              )
             }
           />
           <SettingsRow
@@ -100,8 +127,33 @@ export function ConnexioSection() {
           />
         </SettingsGroup>
       ) : null}
+
+      {!effectiveMock ? (
+        <SettingsGroup label="Zona perillosa">
+          <SettingsRow
+            title="Esborra el token d'autenticació"
+            hint="Elimina el token OAuth desat en aquest navegador i tanca la sessió. Hauràs de tornar a autenticar-te a Salesforce."
+            control={
+              <Button variant="danger" onClick={handleClearAuthToken(logout)} disabled={!session}>
+                Esborra el token
+              </Button>
+            }
+          />
+        </SettingsGroup>
+      ) : null}
     </>
   )
+}
+
+function handleClearAuthToken(logout: () => void) {
+  return () => {
+    const confirmed = window.confirm(
+      "Això esborrarà el token d'autenticació desat i tancarà la sessió. " +
+        "Hauràs de tornar a autenticar-te a Salesforce.\n\nVols continuar?",
+    )
+    if (!confirmed) return
+    logout()
+  }
 }
 
 export function DadesSection({ draft, patch }: SectionProps) {
@@ -145,6 +197,20 @@ export function DadesSection({ draft, patch }: SectionProps) {
               label="Refresc automàtic"
               checked={draft.autoRefresh}
               onChange={(v) => patch({ autoRefresh: v })}
+            />
+          }
+        />
+      </SettingsGroup>
+
+      <SettingsGroup label="Agents">
+        <SettingsRow
+          title="Mostra els agents desconnectats"
+          hint="Inclou els agents sense connexió a Omni-Channel (Service Resources actius). Si es desactiva, només es mostren els agents connectats."
+          control={
+            <ToggleField
+              label="Mostra els agents desconnectats"
+              checked={draft.showOfflineAgents}
+              onChange={(v) => patch({ showOfflineAgents: v })}
             />
           }
         />

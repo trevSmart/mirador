@@ -3,10 +3,16 @@ import { QueryClient } from '@tanstack/react-query'
 import type { MiradorClient } from '../../mirador-client'
 import type { SnapshotResponse } from '../../types'
 import { entityKey } from '../query-keys'
-import { agentResource, primeSnapshot, queueResource } from './snapshot'
+import {
+  agentResource,
+  fetchSnapshot,
+  primeSnapshot,
+  queueResource,
+  snapshotKey,
+} from './snapshot'
 
 function emptySnapshot(): SnapshotResponse {
-  return { agents: [], queues: [], skills: [], work: [] }
+  return { agents: [], queues: [], skills: [], work: [], presenceStatuses: [] }
 }
 
 function makeClient(snapshot: SnapshotResponse) {
@@ -42,6 +48,34 @@ describe('snapshot resources', () => {
   })
 })
 
+describe('snapshotKey', () => {
+  it('defaults to the all scope', () => {
+    expect(snapshotKey()).toEqual(['salesforce', 'snapshot', 'all'])
+  })
+
+  it('keys each scope distinctly so toggling does not clash', () => {
+    expect(snapshotKey('connected')).toEqual([
+      'salesforce',
+      'snapshot',
+      'connected',
+    ])
+    expect(snapshotKey('connected')).not.toEqual(snapshotKey('all'))
+  })
+})
+
+describe('fetchSnapshot', () => {
+  it('requests the given scope and defaults to all', async () => {
+    const { client, getSnapshot } = makeClient(emptySnapshot())
+    const queryClient = new QueryClient()
+
+    await fetchSnapshot(client, queryClient, 'connected')
+    expect(getSnapshot).toHaveBeenLastCalledWith('connected')
+
+    await fetchSnapshot(client, queryClient)
+    expect(getSnapshot).toHaveBeenLastCalledWith('all')
+  })
+})
+
 describe('primeSnapshot', () => {
   it('seeds every entity list into the cache under its resource key', () => {
     const queryClient = new QueryClient()
@@ -50,6 +84,7 @@ describe('primeSnapshot', () => {
       queues: [{ id: 'q1' } as SnapshotResponse['queues'][number]],
       skills: [{ id: 's1' } as SnapshotResponse['skills'][number]],
       work: [{ id: 'w1' } as SnapshotResponse['work'][number]],
+      presenceStatuses: [],
     }
 
     primeSnapshot(queryClient, snapshot)

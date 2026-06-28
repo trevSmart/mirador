@@ -10,18 +10,29 @@ import { usePreferences } from '../settings/preferences-context'
 import { useSourceClient } from './data-service'
 import { fetchSnapshot, snapshotKey } from './data-service'
 import { MiradorApiError } from './mirador-client'
-import type { Agent, Queue, Skill, SnapshotResponse, WorkItem } from './types'
+import type {
+  Agent,
+  AgentScope,
+  PresenceStatusOption,
+  Queue,
+  Skill,
+  SnapshotResponse,
+  WorkItem,
+} from './types'
 
 // Stable empty arrays so consumers' memo deps don't churn while data loads.
 const EMPTY_AGENTS: Agent[] = []
 const EMPTY_QUEUES: Queue[] = []
 const EMPTY_SKILLS: Skill[] = []
 const EMPTY_WORK: WorkItem[] = []
+const EMPTY_PRESENCE_STATUSES: PresenceStatusOption[] = []
 
 const selectAgents = (snapshot: SnapshotResponse) => snapshot.agents
 const selectQueues = (snapshot: SnapshotResponse) => snapshot.queues
 const selectSkills = (snapshot: SnapshotResponse) => snapshot.skills
 const selectWork = (snapshot: SnapshotResponse) => snapshot.work
+const selectPresenceStatuses = (snapshot: SnapshotResponse) =>
+  snapshot.presenceStatuses
 
 /**
  * Canonical options for the shared snapshot query. Every hook below spreads
@@ -35,11 +46,16 @@ function useSnapshotConfig() {
   const queryClient = useQueryClient()
   const { prefs } = usePreferences()
   const enabled = isAuthenticated && client !== null
+  // Show offline reps → request the full roster; otherwise only connected
+  // agents. The scope is part of the query key so the two are cached apart.
+  const scope: AgentScope = prefs.showOfflineAgents ? 'all' : 'connected'
 
   return {
-    queryKey: snapshotKey,
+    queryKey: snapshotKey(scope),
     queryFn:
-      enabled && client ? () => fetchSnapshot(client, queryClient) : skipToken,
+      enabled && client
+        ? () => fetchSnapshot(client, queryClient, scope)
+        : skipToken,
     // Short window so panels mounting together coalesce into one fetch, while
     // refetchInterval drives liveness.
     staleTime: 1_500,
@@ -73,6 +89,28 @@ export function useWork(): WorkItem[] {
   return useQuery({ ...config, select: selectWork }).data ?? EMPTY_WORK
 }
 
+export function usePresenceStatuses(): PresenceStatusOption[] {
+  const config = useSnapshotConfig()
+  return (
+    useQuery({ ...config, select: selectPresenceStatuses }).data ??
+    EMPTY_PRESENCE_STATUSES
+  )
+}
+
+const GENERIC_ERROR = 'No s\'han pogut carregar les dades de Salesforce'
+
+/** Best-effort human-readable message for a snapshot fetch failure. */
+function errorMessage(err: unknown): string {
+  if (err instanceof MiradorApiError) {
+    return err.status
+      ? `${err.message} (HTTP ${err.status})`
+      : err.message || GENERIC_ERROR
+  }
+  if (err instanceof Error && err.message) return err.message
+  if (typeof err === 'string' && err) return err
+  return GENERIC_ERROR
+}
+
 export interface DataStatus {
   /** First load with no data yet. */
   isLoading: boolean
@@ -96,17 +134,19 @@ export function useDataStatus(): DataStatus {
     notifyOnChangeProps: ['isLoading', 'isFetching', 'error'],
   })
 
+  const queryKey = config.queryKey
   const refresh = useCallback(() => {
-    const state = queryClient.getQueryState(snapshotKey)
+    const state = queryClient.getQueryState(queryKey)
     if (state?.fetchStatus === 'fetching') return Promise.resolve()
-    return queryClient.invalidateQueries({ queryKey: snapshotKey })
-  }, [queryClient])
+    return queryClient.invalidateQueries({ queryKey })
+  }, [queryClient, queryKey])
 
+  // Surface the real failure reason: MiradorApiError carries the server message,
+  // and plain Errors (network, CORS, expired token, etc.) carry theirs. Only
+  // fall back to the generic string when there's genuinely no message to show.
   const error =
     query.error && query.data === undefined
-      ? query.error instanceof MiradorApiError
-        ? query.error.message
-        : 'No s\'han pogut carregar les dades de Salesforce'
+      ? errorMessage(query.error)
       : null
 
   return {

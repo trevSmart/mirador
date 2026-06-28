@@ -172,7 +172,7 @@ Returns Omni-Channel agents with presence, capacity, active work, queue membersh
 
 | Name | Default | Values | Description |
 |------|---------|--------|-------------|
-| `scope` | `connected` | `connected`, `all` | `connected` — users with a current `UserServicePresence`. `all` — every Omni-enabled user (via `PresenceUserConfigUser` / `PresenceUserConfigProfile`); users without presence are reported as `offline`. |
+| `scope` | `connected` | `connected`, `all` | `connected` — users with a current `UserServicePresence`. `all` — every Omni-enabled user (via `PresenceUserConfigUser` / `PresenceUserConfigProfile`) **plus** every active `ServiceResource` of type Agent (`ResourceType='A'`, gated on read access to `ServiceResource`); users without presence are reported as `offline`. The Service-Resource branch mirrors Command Center for Service's offline service reps. |
 
 **Response `200`**
 
@@ -516,7 +516,7 @@ v1 does not expose cursor or offset pagination. Internal query limits (approxima
 | Resource | Limit |
 |----------|-------|
 | Connected presences | 500 users |
-| Agents (`scope=all`) | 5 000 Omni-enabled users |
+| Agents (`scope=all`) | 5 000 Omni-enabled users + 5 000 active agent Service Resources |
 | Active agent work | 2 000 `AgentWork` rows |
 | Queued work | 2 000 `PendingServiceRouting` rows |
 | Queues | 200 |

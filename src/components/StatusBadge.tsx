@@ -4,9 +4,18 @@ import { StatusPill } from './ds'
 
 interface StatusBadgeProps {
   status: PresenceStatus
+  /** Override the displayed text — e.g. the org's real presence status label.
+   *  Falls back to the normalized category label when omitted. */
+  label?: string | null
   compact?: boolean
 }
 
-export function StatusBadge({ status, compact = false }: StatusBadgeProps) {
-  return <StatusPill status={status} label={presenceLabel(status)} compact={compact} />
+export function StatusBadge({ status, label, compact = false }: StatusBadgeProps) {
+  return (
+    <StatusPill
+      status={status}
+      label={label ?? presenceLabel(status)}
+      compact={compact}
+    />
+  )
 }

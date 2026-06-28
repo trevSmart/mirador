@@ -18,6 +18,8 @@ public with sharing class PanoramaAgentService {
         public String role;
         public String recordUrl;
         public String status;
+        public String presenceStatusId;
+        public String presenceStatusLabel;
         public Integer max;
         public Integer used;
         public List<String> queueIds;
@@ -30,6 +32,12 @@ public with sharing class PanoramaAgentService {
 
     public class AgentsResponse {
         public List<AgentDto> agents;
+    }
+
+    /** A presence status configured in the org (Setup → Presence Statuses). */
+    public class PresenceStatusDto {
+        public String id;
+        public String label;
     }
 
     public class AgentSkillDto {
@@ -56,8 +64,10 @@ public with sharing class PanoramaAgentService {
 
     /**
      * @param scope 'connected' (default) returns agents with a current Omni-Channel
-     *        presence. 'all' returns every Omni-enabled agent (connected or not);
-     *        agents without a current presence are reported as offline.
+     *        presence. 'all' returns every Omni-enabled agent plus every active
+     *        Service Resource of type Agent (connected or not); agents without a
+     *        current presence are reported as offline. This mirrors Command Center
+     *        for Service, which derives offline service reps from Service Resource.
      */
     public static AgentsResponse getAgents(String scope) {
         PanoramaLoadContext ctx = PanoramaLoadContext.load();
@@ -172,6 +182,7 @@ public with sharing class PanoramaAgentService {
         Set<Id> userIds = new Set<Id>(ctx.presenceByUser.keySet());
         if (includeAll) {
             userIds.addAll(loadOmniEnabledUserIds());
+            userIds.addAll(loadServiceResourceUserIds());
         }
         return buildAgentDtos(userIds, ctx.presenceByUser, ctx);
     }
@@ -216,6 +227,12 @@ public with sharing class PanoramaAgentService {
                     usp.ServicePresenceStatus?.DeveloperName,
                     usp.ServicePresenceStatus?.MasterLabel
                 );
+            dto.presenceStatusId = usp?.ServicePresenceStatusId == null
+                ? null
+                : String.valueOf(usp.ServicePresenceStatusId);
+            dto.presenceStatusLabel = usp == null
+                ? null
+                : usp.ServicePresenceStatus?.MasterLabel;
             dto.max = usp != null && usp.ConfiguredCapacity != null && usp.ConfiguredCapacity > 0
                 ? Integer.valueOf(usp.ConfiguredCapacity)
                 : 5;
@@ -278,6 +295,66 @@ public with sharing class PanoramaAgentService {
         }
 
         return userIds;
+    }
+
+    /**
+     * User ids derived from active Service Resources of type Agent — the offline
+     * service reps Command Center for Service surfaces in its Agents tab. A user
+     * with an Active Service Resource whose Resource Type is Agent shows up here
+     * even if they never connected to Omni-Channel; buildAgentDtos reports them as
+     * offline when they have no current presence.
+     *
+     * Gated on read access to ServiceResource, matching the standard product: a
+     * supervisor without that permission gets no Service-Resource-derived reps.
+     *
+     * Note: Command Center for Service caps this at 1,000 records (and can show
+     * inconsistent offline counts above that). We do not impose that 1,000 cap; a
+     * 5,000 safety LIMIT (as in loadOmniEnabledUserIds) bounds the query instead.
+     */
+    @TestVisible
+    private static Set<Id> loadServiceResourceUserIds() {
+        Set<Id> userIds = new Set<Id>();
+        if (!Schema.sObjectType.ServiceResource.isAccessible()) {
+            return userIds;
+        }
+
+        for (ServiceResource sr : [
+            SELECT RelatedRecordId
+            FROM ServiceResource
+            WHERE IsActive = true
+              AND ResourceType = 'A'
+              AND RelatedRecordId != null
+            LIMIT 5000
+        ]) {
+            Id userId = sr.RelatedRecordId;
+            if (userId != null && String.valueOf(userId).startsWith('005')) {
+                userIds.add(userId);
+            }
+        }
+
+        return userIds;
+    }
+
+    /**
+     * The full catalog of presence statuses configured in the org, regardless of
+     * whether any agent currently holds them. Drives the Home's per-status filter
+     * chips (one chip per configured status). Only id + label: Salesforce does not
+     * expose whether a status is "busy", so we don't classify them.
+     */
+    public static List<PresenceStatusDto> getPresenceStatuses() {
+        List<PresenceStatusDto> result = new List<PresenceStatusDto>();
+        for (ServicePresenceStatus sps : [
+            SELECT Id, MasterLabel
+            FROM ServicePresenceStatus
+            ORDER BY MasterLabel
+            LIMIT 1000
+        ]) {
+            PresenceStatusDto dto = new PresenceStatusDto();
+            dto.id = String.valueOf(sps.Id);
+            dto.label = sps.MasterLabel;
+            result.add(dto);
+        }
+        return result;
     }
 
     @TestVisible

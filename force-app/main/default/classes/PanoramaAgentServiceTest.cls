@@ -210,6 +210,125 @@ private class PanoramaAgentServiceTest {
     }
 
     @IsTest
+    static void getPresenceStatusesReturnsCatalog() {
+        Test.startTest();
+        List<PanoramaAgentService.PresenceStatusDto> statuses =
+            PanoramaAgentService.getPresenceStatuses();
+        Test.stopTest();
+        System.assertNotEquals(null, statuses);
+        // Every entry must carry an id, a label and a normalized category.
+        for (PanoramaAgentService.PresenceStatusDto s : statuses) {
+            System.assertNotEquals(null, s.id, 'status needs an id');
+            System.assertNotEquals(null, s.status, 'status needs a normalized category');
+        }
+    }
+
+    @IsTest
+    static void snapshotIncludesPresenceStatusCatalog() {
+        Test.startTest();
+        PanoramaSnapshotService.SnapshotResponse response =
+            PanoramaSnapshotService.getSnapshot('all');
+        Test.stopTest();
+        System.assertNotEquals(null, response.presenceStatuses,
+            'snapshot must carry the presence status catalog');
+    }
+
+    @IsTest
+    static void loadServiceResourceUserIdsReturnsSet() {
+        Test.startTest();
+        Set<Id> userIds = PanoramaAgentService.loadServiceResourceUserIds();
+        Test.stopTest();
+        System.assertNotEquals(null, userIds);
+    }
+
+    /**
+     * An active Service Resource of type Agent (Command Center for Service's
+     * "offline service rep") must be surfaced by loadServiceResourceUserIds, even
+     * when the user has no Omni-Channel presence. The running user has Customize
+     * Application in tests, so read access on ServiceResource is satisfied.
+     */
+    @IsTest
+    static void loadServiceResourceUserIdsIncludesActiveAgentResource() {
+        User u = insertIsolatedUser();
+        ServiceResource sr = new ServiceResource(
+            Name = 'Panorama Offline Rep',
+            RelatedRecordId = u.Id,
+            ResourceType = 'A',
+            IsActive = true
+        );
+        insert sr;
+
+        Test.startTest();
+        Set<Id> userIds = PanoramaAgentService.loadServiceResourceUserIds();
+        Test.stopTest();
+
+        System.assert(
+            userIds.contains(u.Id),
+            'Active agent Service Resource should contribute its user'
+        );
+    }
+
+    /**
+     * With scope='all', a user backed only by an active agent Service Resource
+     * (no Omni presence) is reported as an offline agent — the parity feature with
+     * Command Center for Service's offline service reps.
+     */
+    @IsTest
+    static void getAgentsAllScopeIncludesOfflineServiceResourceRep() {
+        User u = insertIsolatedUser();
+        insert new ServiceResource(
+            Name = 'Panorama Offline Rep All',
+            RelatedRecordId = u.Id,
+            ResourceType = 'A',
+            IsActive = true
+        );
+
+        Test.startTest();
+        PanoramaAgentService.AgentsResponse response = PanoramaAgentService.getAgents('all');
+        Test.stopTest();
+
+        PanoramaAgentService.AgentDto target = null;
+        for (PanoramaAgentService.AgentDto a : response.agents) {
+            if (a.id == String.valueOf(u.Id)) {
+                target = a;
+            }
+        }
+        System.assertNotEquals(null, target, 'Offline Service Resource rep should appear in scope=all');
+        System.assertEquals('offline', target.status, 'A rep with no presence is offline');
+        System.assertEquals(null, target.presenceStatusId, 'Offline rep has no real presence status id');
+        System.assertEquals(null, target.presenceStatusLabel, 'Offline rep has no real presence status label');
+    }
+
+    /**
+     * An inactive agent Service Resource (or one of a non-agent type) must not be
+     * surfaced — only Active + ResourceType='A' qualify.
+     */
+    @IsTest
+    static void loadServiceResourceUserIdsExcludesInactiveAndNonAgent() {
+        User inactive = insertIsolatedUser();
+        insert new ServiceResource(
+            Name = 'Panorama Inactive Rep',
+            RelatedRecordId = inactive.Id,
+            ResourceType = 'A',
+            IsActive = false
+        );
+        User technician = insertIsolatedUser();
+        insert new ServiceResource(
+            Name = 'Panorama Technician Rep',
+            RelatedRecordId = technician.Id,
+            ResourceType = 'T',
+            IsActive = true
+        );
+
+        Test.startTest();
+        Set<Id> userIds = PanoramaAgentService.loadServiceResourceUserIds();
+        Test.stopTest();
+
+        System.assert(!userIds.contains(inactive.Id), 'Inactive resource must be excluded');
+        System.assert(!userIds.contains(technician.Id), 'Non-agent resource type must be excluded');
+    }
+
+    @IsTest
     static void getQueuesReturnsList() {
         Test.startTest();
         PanoramaQueueService.QueuesResponse response = PanoramaQueueService.getQueues();
