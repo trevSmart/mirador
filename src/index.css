@@ -3068,24 +3068,19 @@ textarea,
   .fv-stack,
   .fv-stack__item,
   .fv-stack__render,
-  .fv-grid-zoom,
   .fv3d-svg {
     transition: none !important;
   }
 }
 
+/* 2D sizing contract — mirrors .fv3d-svg: fill the tile width, derive height
+   from the room's intrinsic aspect-ratio. The user zoom is already expressed
+   once as the tile width (flex-basis in multi-space, width*zoom in single),
+   so it must NOT be re-applied here. */
 .fv-fit {
   width: 100%;
+  aspect-ratio: var(--fv-aspect, 1 / 1);
   overflow: hidden;
-}
-
-.fv-grid-zoom {
-  width: calc(var(--fv-grid-w, 100%) * var(--fv-render-zoom, 1));
-  height: calc(var(--fv-grid-h, auto) * var(--fv-render-zoom, 1));
-  overflow: hidden;
-  transition:
-    width 0.35s var(--ease),
-    height 0.35s var(--ease);
 }
 
 .fv-grid {
