@@ -181,6 +181,11 @@ export function SpaceEditorPanel() {
             onSave={fp.save}
             onReset={fp.reset}
           />
+          {fp.saveError ? (
+            <div className="space-editor__save-error" role="alert">
+              No s'ha pogut desar: {fp.saveError}
+            </div>
+          ) : null}
           <div className="space-editor__canvas" ref={canvasScrollRef}>
             {fp.activeSpace ? (
               <SpaceGrid

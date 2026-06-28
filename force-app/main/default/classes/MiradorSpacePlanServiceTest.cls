@@ -240,6 +240,23 @@ private class MiradorSpacePlanServiceTest {
     }
 
     @IsTest
+    static void restPutRejectsNullPlan() {
+        RestRequest req = new RestRequest();
+        req.requestURI = '/services/apexrest/mirador/v1/space-plan';
+        req.httpMethod = 'PUT';
+        // Valid JSON, but the literal null deserializes to a null PlanDto.
+        req.requestBody = Blob.valueOf('null');
+        RestContext.request = req;
+        RestContext.response = new RestResponse();
+
+        Test.startTest();
+        MiradorRestHandler.handlePut('/mirador/v1');
+        Test.stopTest();
+
+        System.assertEquals(400, RestContext.response.statusCode, 'null plan → 400, not 500');
+    }
+
+    @IsTest
     static void restPutRejectsInvalidJson() {
         RestRequest req = new RestRequest();
         req.requestURI = '/services/apexrest/mirador/v1/space-plan';

@@ -1,5 +1,6 @@
 /**
- * Reads and writes the Mirador space plan (Places + Spaces) for the running user.
+ * Reads and writes the org-wide Mirador space plan (Places + Spaces). Shared:
+ * every user sees and edits the same plan.
  *
  * Wire shape mirrors the front-end SpacePlanData model 1:1 so the TS repository
  * round-trips it without conversion:
@@ -7,15 +8,14 @@
  * where each Space is { id, name, dir, cells, seats, openings, dividers }.
  *
  * Storage:
- *   - Place__c   : one row per place. Name, ActiveSpaceId__c, SchemaVersion__c.
- *   - Space__c   : one row per space (master-detail to Place__c). Name, Direction__c,
- *                  SortOrder__c, and Geometry__c (JSON: cells/seats/openings/dividers).
+ *   - Place__c   : one row per place. Name, AppId__c, ActivePlaceId__c, SchemaVersion__c.
+ *   - Space__c   : one row per space (master-detail to Place__c). Name, AppId__c,
+ *                  Direction__c, SortOrder__c, and Geometry__c (JSON:
+ *                  cells/seats/openings/dividers).
  *
- * The app's own string ids (place_..., space_...) are persisted as data, not as
- * Salesforce record ids: Place__c stores its app id in Name-adjacent fields via the
- * plan payload, and Space__c carries it back in Geometry-independent fields. To keep
- * a stable mapping we store the app id of a place on the place row and the app id of
- * a space inside its row, so a load reproduces the exact same ids the editor wrote.
+ * The app's own string ids (place_..., space_...) are persisted in the AppId__c
+ * fields, not as Salesforce record ids, so a load reproduces the exact same ids the
+ * editor wrote. activePlaceId is a Place id (validated against places[].id client-side).
  */
 public with sharing class MiradorSpacePlanService {
 
@@ -80,7 +80,7 @@ public with sharing class MiradorSpacePlanService {
      */
     public static PlanDto getPlan() {
         List<Place__c> places = [
-            SELECT Id, Name, AppId__c, ActiveSpaceId__c, SchemaVersion__c,
+            SELECT Id, Name, AppId__c, ActivePlaceId__c, SchemaVersion__c,
                 (
                     SELECT Id, Name, AppId__c, Direction__c, SortOrder__c, Geometry__c
                     FROM Spaces__r
@@ -102,8 +102,8 @@ public with sharing class MiradorSpacePlanService {
             if (p.SchemaVersion__c != null) {
                 plan.v = (Integer) p.SchemaVersion__c;
             }
-            if (String.isNotBlank(p.ActiveSpaceId__c)) {
-                plan.activePlaceId = p.ActiveSpaceId__c;
+            if (String.isNotBlank(p.ActivePlaceId__c)) {
+                plan.activePlaceId = p.ActivePlaceId__c;
             }
 
             PlaceDto pd = new PlaceDto();
@@ -164,7 +164,7 @@ public with sharing class MiradorSpacePlanService {
             Place__c p = new Place__c();
             p.Name = clip(pd.name, 80);
             p.AppId__c = pd.id;
-            p.ActiveSpaceId__c = plan.activePlaceId;
+            p.ActivePlaceId__c = plan.activePlaceId;
             p.SchemaVersion__c = version;
             placeRows.add(p);
         }

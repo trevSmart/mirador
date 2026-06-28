@@ -106,9 +106,6 @@ export function createMockMiradorClient(): MiradorClient {
     getSpacePlan: () =>
       withApiLog('GET', '/space-plan', () => loadMockSpacePlan()),
     saveSpacePlan: (plan) =>
-      withApiLog('PUT', '/space-plan', async () => {
-        await saveMockSpacePlan(plan)
-        return { ok: true }
-      }),
+      withApiLog('PUT', '/space-plan', () => saveMockSpacePlan(plan)),
   }
 }
