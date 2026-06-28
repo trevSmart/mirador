@@ -1,17 +1,14 @@
 /**
- * Deterministic HSL color from a string (same string → same hue). Saturation
- * and lightness sit in a soft pastel band — gentle backgrounds that read well
- * behind dark text/initials.
+ * Color HSL determinístic derivat d'un string. Mateix string → mateix color.
+ * Només varia el to (hue); saturació i lluminositat són fixes dins la gamma de
+ * la paleta SF, així tots els colors tenen el mateix pes visual i contrast amb
+ * el blanc. (Alineat amb l'algoritme del projecte panorama.)
  */
 export function colorFromString(str: string): string {
   let h = 0
   const s = String(str ?? '')
   for (let i = 0; i < s.length; i++) {
-    h = (h * 31 + s.charCodeAt(i)) >>> 0
+    h = (h * 31 + s.charCodeAt(i)) >>> 0 // hash enter no negatiu
   }
-  // Vary saturation/lightness slightly per-hue so adjacent colors stay distinct
-  // while keeping the whole range in a soft (but not washed-out) pastel band.
-  const sat = 58 + ((h >>> 8) % 14) // 58–71%
-  const light = 62 + ((h >>> 16) % 8) // 62–69%
-  return `hsl(${h % 360} ${sat}% ${light}%)`
+  return `hsl(${h % 360} 62% 58%)`
 }

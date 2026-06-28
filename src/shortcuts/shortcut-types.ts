@@ -1,9 +1,13 @@
 /* Tipus del sistema de dreceres de teclat globals. */
 
+import type { PanelType } from '../panels/registry'
+
 /** Accions que el provider injecta a cada drecera quan s'executa.
     Afegeix-hi camps a mesura que noves dreceres necessitin noves accions. */
 export interface ShortcutContext {
   openSettings: () => void
+  /** Obre (o revela si ja existeix) un panel pel seu tipus. */
+  openPanel: (type: PanelType) => void
 }
 
 export interface Shortcut {

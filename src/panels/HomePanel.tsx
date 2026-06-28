@@ -15,6 +15,7 @@ import { addPanelByType } from './panel-actions'
 import type { PanelType } from './registry'
 import { computeHealthInsights } from '../utils/health-insights'
 import { useGridAutoAnimate } from '../utils/home-grid-reorder'
+import { useSmoothScroll } from '../hooks/useSmoothScroll'
 
 const SPLIT_KEY = 'mirador.home.split'
 const MIN_SPLIT = 0.25
@@ -151,6 +152,10 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
   const seatedAgentIds = useFloorSeatedAgentIds()
   const attachQueueGrid = useGridAutoAnimate<HTMLDivElement>()
   const attachAgentGrid = useGridAutoAnimate<HTMLDivElement>()
+  // The right column is the only scroll container on Home (the shell is
+  // overflow:hidden), so it needs Lenis to match the smooth scroll the rest of
+  // the app gets via PanelShell.
+  const attachSideScroll = useSmoothScroll<HTMLDivElement>()
 
   const seatedAgents = useMemo(
     () =>
@@ -233,7 +238,7 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
           <span className="home-resizer__grip" aria-hidden="true" />
         </div>
 
-        <div className="home-side">
+        <div className="home-side" ref={attachSideScroll}>
           <section className="panel-section">
             <header className="panel-section__header">
               <div className="panel-section__heading">

@@ -7,7 +7,9 @@
 
 import { useEffect, useMemo, type ReactNode } from 'react'
 import { devLog } from '../dev/dev-log'
+import { useDockviewHost } from '../dockview/dockview-host-context'
 import { useModalRegistry } from '../modals/modal-registry-context'
+import { addPanelByType } from '../panels/panel-actions'
 import { useSettingsModal } from '../settings/settings-modal-context'
 import { SHORTCUTS } from './shortcuts'
 import type { ShortcutContext } from './shortcut-types'
@@ -24,10 +26,17 @@ function isEditingTextField(): boolean {
 export function GlobalShortcutsProvider({ children }: { children: ReactNode }) {
   const { isAnyModalOpen } = useModalRegistry()
   const { open: openSettings } = useSettingsModal()
+  const { getApi } = useDockviewHost()
 
   const shortcutCtx = useMemo<ShortcutContext>(
-    () => ({ openSettings: () => openSettings() }),
-    [openSettings],
+    () => ({
+      openSettings: () => openSettings(),
+      openPanel: (type) => {
+        const api = getApi()
+        if (api) addPanelByType(api, type)
+      },
+    }),
+    [openSettings, getApi],
   )
 
   useEffect(() => {

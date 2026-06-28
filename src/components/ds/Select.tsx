@@ -3,6 +3,29 @@ import { syncDropdownPanel } from '../../utils/sync-dropdown-panel'
 
 export type SelectOption<T extends string | number> = { value: T; label: string }
 
+/**
+ * Find the bounding rect of the nearest ancestor that clips its overflow
+ * (overflow other than `visible` on any axis). That edge — not the window's —
+ * is the real boundary the dropdown must stay within, since a select can live
+ * inside a scrolling column with content (a sidebar) to its right. Returns the
+ * viewport-relative rect, or null if nothing clips before <body>.
+ */
+function findClipBounds(el: HTMLElement): DOMRect | null {
+  let node: HTMLElement | null = el.parentElement
+  while (node && node !== document.body) {
+    const { overflow, overflowX, overflowY } = getComputedStyle(node)
+    if (
+      [overflow, overflowX, overflowY].some(
+        (v) => v === 'auto' || v === 'scroll' || v === 'hidden' || v === 'clip',
+      )
+    ) {
+      return node.getBoundingClientRect()
+    }
+    node = node.parentElement
+  }
+  return null
+}
+
 export interface SelectProps<T extends string | number> {
   value: T
   options: SelectOption<T>[]
@@ -27,7 +50,6 @@ export function Select<T extends string | number>({
 }: SelectProps<T>) {
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
-  const [alignEnd, setAlignEnd] = useState(false)
 
   const rootRef = useRef<HTMLDivElement>(null)
   const dropRef = useRef<HTMLDivElement>(null)
@@ -40,27 +62,50 @@ export function Select<T extends string | number>({
   // Animate open/close with the shared helper. On open, decide whether the
   // panel must align to the right edge of the trigger because there isn't
   // enough room to expand rightwards within the viewport.
+  //
+  // The align decision is applied IMPERATIVELY (classList) rather than via
+  // setState on purpose: the panel's `hidden` attribute is hardcoded in the
+  // JSX and only cleared imperatively by syncDropdownPanel. Any setState here
+  // would trigger a re-render in which React re-reconciles that JSX and puts
+  // `hidden` back, re-hiding the panel right after it opened — the bug that
+  // made the dropdown need multiple clicks to appear.
   useEffect(() => {
+    // Reveal the panel first: while it carries the `hidden` attribute it is
+    // `display: none`, so `scrollWidth` reads 0 and the overflow check below
+    // can never measure the real panel width. syncDropdownPanel clears
+    // `hidden` synchronously on open, so the panel is laid out by the time we
+    // measure it on the next lines.
+    closeTimeoutRef.current = syncDropdownPanel(dropRef.current, open, {
+      closeTimeoutId: closeTimeoutRef.current,
+    })
     if (open) {
       const root = rootRef.current
       const panel = dropRef.current
       if (root && panel) {
-        const triggerLeft = root.getBoundingClientRect().left
-        // The panel is at least as wide as the trigger (min-width: 100%);
-        // measure its natural width while still hidden.
+        const rootRect = root.getBoundingClientRect()
+        const triggerLeft = rootRect.left
+        // Options are `white-space: nowrap`, so scrollWidth is the panel's
+        // natural single-line width. Clamp to the trigger (min-width: 100%).
         const panelWidth = Math.max(panel.scrollWidth, root.offsetWidth)
         const margin = 8
-        const overflowsRight =
-          triggerLeft + panelWidth > window.innerWidth - margin
-        // Only flip if aligning to the right actually keeps it on-screen.
+        // The right boundary is the clipping container's edge, not the
+        // window's. The select often sits inside a column with a sidebar to
+        // its right, so a narrow panel can fit within the window yet still
+        // overflow its visible container. Walk up to the nearest scroll/clip
+        // ancestor and use its right edge; fall back to the viewport.
+        const clip = findClipBounds(root)
+        const rightBound = clip ? clip.right : window.innerWidth
+        const leftBound = clip ? clip.left : 0
+        const overflowsRight = triggerLeft + panelWidth > rightBound - margin
+        // Only flip if aligning to the right actually keeps it in-bounds.
         const fitsWhenAlignedEnd =
-          triggerLeft + root.offsetWidth - panelWidth >= margin
-        setAlignEnd(overflowsRight && fitsWhenAlignedEnd)
+          rootRect.right - panelWidth >= leftBound + margin
+        panel.classList.toggle(
+          'ds-select__panel--align-end',
+          overflowsRight && fitsWhenAlignedEnd,
+        )
       }
     }
-    closeTimeoutRef.current = syncDropdownPanel(dropRef.current, open, {
-      closeTimeoutId: closeTimeoutRef.current,
-    })
   }, [open])
 
   // Helper: set highlight to current value then open.
@@ -132,7 +177,7 @@ export function Select<T extends string | number>({
       <div
         ref={dropRef}
         id={listId}
-        className={`ds-select__panel dropdown-panel${alignEnd ? ' ds-select__panel--align-end' : ''}`}
+        className="ds-select__panel dropdown-panel"
         role="listbox"
         aria-label={ariaLabel}
         aria-activedescendant={open ? `${listId}-opt-${activeIndex}` : undefined}
