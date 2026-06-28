@@ -49,3 +49,7 @@ $RECYCLE.BIN/
 
 # Superpowers scratch (brainstorm mockups, sdd ledgers)
 .superpowers/
+
+# Salesforce scan/retrieve temp dirs
+.sf-scan/
+.sf-x/

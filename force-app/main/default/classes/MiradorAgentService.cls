@@ -349,6 +349,7 @@ public with sharing class MiradorAgentService {
         for (ServicePresenceStatus sps : [
             SELECT Id, MasterLabel
             FROM ServicePresenceStatus
+            WHERE Id IN (SELECT ServicePresenceStatusId FROM ServiceChannelStatus)
             ORDER BY MasterLabel
             LIMIT 1000
         ]) {
