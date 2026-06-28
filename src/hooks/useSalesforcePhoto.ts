@@ -108,15 +108,17 @@ export function useSalesforcePhoto(photoUrl: string | null): string | null {
 
   useEffect(() => {
     let cancelled = false
-    queueMicrotask(() => {
-      if (!cancelled) {
-        setLoadedPhoto((current) =>
-          current.key === cacheKey && current.src === cachedSrc
-            ? current
-            : { key: cacheKey, src: cachedSrc },
-        )
-      }
-    })
+    if (loadedKey !== cacheKey || src !== cachedSrc) {
+      queueMicrotask(() => {
+        if (!cancelled) {
+          setLoadedPhoto((current) =>
+            current.key === cacheKey && current.src === cachedSrc
+              ? current
+              : { key: cacheKey, src: cachedSrc },
+          )
+        }
+      })
+    }
 
     if (!cacheKey || isDirect || !photoUrl || !accessToken) {
       return () => {
@@ -141,7 +143,7 @@ export function useSalesforcePhoto(photoUrl: string | null): string | null {
       cancelled = true
       releasePhoto(cacheKey)
     }
-  }, [cacheKey, cachedSrc, isDirect, photoUrl, accessToken])
+  }, [cacheKey, cachedSrc, isDirect, loadedKey, photoUrl, src, accessToken])
 
   if (isDirect) {
     return photoUrl
