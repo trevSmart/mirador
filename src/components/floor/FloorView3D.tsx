@@ -153,8 +153,8 @@ function WindowGlass({ id, quad }: { id: string; quad: OpeningQuad }) {
 }
 
 /** Cool-white pool of daylight cast on the floor by a window. A near-white wash
-   that lightens (screen) the tiles from the wall outward and dissolves into the
-   room — kept very faint so it reads as a soft glow, not a painted tile. Drawn
+   that subtly tints the tiles from the wall outward and dissolves into the room
+   — kept very faint so it reads as a soft glow, not a painted tile. Drawn
    over the floor tiles but under the furniture/seats. */
 function WindowSunbeam({ id, points, near, far, blurId }: { id: string; points: string; near: [Point, Point]; far: [Point, Point]; blurId: string }) {
   const gradId = `${id}-beam`
