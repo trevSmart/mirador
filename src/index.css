@@ -3339,6 +3339,12 @@ textarea,
   width: calc(100% * var(--fv-render-zoom, 1));
 }
 
+/* Same contract for 2D: in single-space the .fv-fit box carries the zoom so
+   the canvas scrolls. Height still follows --fv-aspect, so it never squashes. */
+.fv-stack--single .fv-fit {
+  width: calc(100% * var(--fv-render-zoom, 1));
+}
+
 .fv3d-seat {
   cursor: pointer;
   transition: filter 0.16s var(--ease);
