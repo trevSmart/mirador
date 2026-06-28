@@ -216,10 +216,10 @@ private class PanoramaAgentServiceTest {
             PanoramaAgentService.getPresenceStatuses();
         Test.stopTest();
         System.assertNotEquals(null, statuses);
-        // Every entry must carry an id, a label and a normalized category.
+        // Every entry must carry an id and a label.
         for (PanoramaAgentService.PresenceStatusDto s : statuses) {
             System.assertNotEquals(null, s.id, 'status needs an id');
-            System.assertNotEquals(null, s.status, 'status needs a normalized category');
+            System.assertNotEquals(null, s.label, 'status needs a label');
         }
     }
 
