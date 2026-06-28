@@ -2992,6 +2992,12 @@ textarea,
 }
 
 .fv-stack {
+  /* Base render height shared by both renderers. Height drives the sizing
+     contract: each render fills this height and derives its width from the
+     room's aspect-ratio (capped by the tile's max-width). Scaled by the user
+     zoom. Keeping it on .fv-stack means 2D and 3D read the same value, so the
+     render height never jumps when toggling views. */
+  --fv-render-h: calc(220px * var(--fv-render-zoom, 1));
   width: 100%;
   flex: 0 0 auto;
   min-height: 0;
@@ -3036,9 +3042,12 @@ textarea,
 }
 
 .fv-stack--multi .fv-stack__item {
-  flex: 0 1 calc(280px * var(--fv-render-zoom, 1));
-  min-width: min(100%, calc(280px * var(--fv-render-zoom, 1)));
-  max-width: min(100%, calc(280px * var(--fv-render-zoom, 1)));
+  /* Height-driven: the render sets its own width from --fv-render-h and its
+     aspect-ratio, so the tile hugs that width rather than imposing one. The
+     render's own max-width:100% keeps a wide (flat) room from overflowing. */
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .fv-stack__label {
@@ -3073,12 +3082,18 @@ textarea,
   }
 }
 
-/* 2D sizing contract — mirrors .fv3d-svg: fill the tile width, derive height
-   from the room's intrinsic aspect-ratio. The user zoom is already expressed
-   once as the tile width (flex-basis in multi-space, width*zoom in single),
-   so it must NOT be re-applied here. */
+/* Sizing contract — shared with .fv3d-svg. Height is the constant axis: the
+   render targets --fv-render-h, so its width is render-h × aspect (--fv-aspect-n
+   is the numeric ratio). We express that as an explicit `width` with
+   `max-width:100%`, then let `aspect-ratio` derive the *height* from the actual
+   (post-cap) width. That ordering is the whole trick: when a wide/flat room hits
+   the tile's max-width, the width shrinks and the height follows it down — so the
+   room scales to fit instead of leaving empty space below. A compact room never
+   hits the cap and keeps the full --fv-render-h, identical to 3D, so toggling
+   2D/3D never makes the height jump. */
 .fv-fit {
-  width: 100%;
+  width: calc(var(--fv-render-h) * var(--fv-aspect-n, 1));
+  max-width: 100%;
   aspect-ratio: var(--fv-aspect, 1 / 1);
   overflow: hidden;
 }
@@ -3323,26 +3338,29 @@ textarea,
 }
 
 .fv3d-svg {
-  /* In multi-space mode the tile (.fv-stack__item) already scales by the zoom,
-     so the SVG just fills it. Re-applying the zoom here would size the SVG to
-     280·z² inside a 280·z wide, overflow:hidden wrap, clipping the space. */
-  width: 100%;
-  height: auto;
-  max-width: none;
+  /* Height-driven contract (shared with .fv-fit): target --fv-render-h, so the
+     width is render-h × aspect. Expressed as an explicit width + max-width:100%
+     so a wide room shrinks its height to fit; the SVG's own aspect-ratio (set
+     inline from the viewBox) derives the height from the post-cap width. The
+     constant height keeps the render from jumping when toggling 2D/3D. */
+  width: calc(var(--fv-render-h) * var(--fv-aspect-n, 1));
+  max-width: 100%;
   display: block;
   transition: width 0.35s var(--ease);
 }
 
-/* Single-space mode: the tile fills the canvas at a fixed size, so the SVG
-   itself carries the zoom and the canvas scrolls to reveal the larger space. */
+/* Single-space mode: the render still fills the shared --fv-render-h (which
+   already carries the zoom), so width follows the aspect-ratio. Lifting the
+   max-width cap lets a wide room grow past the canvas and scroll instead of
+   shrinking — the single-space tile is meant to be panned at high zoom. */
 .fv-stack--single .fv3d-svg {
-  width: calc(100% * var(--fv-render-zoom, 1));
+  max-width: none;
 }
 
-/* Same contract for 2D: in single-space the .fv-fit box carries the zoom so
-   the canvas scrolls. Height still follows --fv-aspect, so it never squashes. */
+/* Same for 2D single-space: drop the max-width cap so the room scrolls
+   horizontally at high zoom rather than shrinking its height. */
 .fv-stack--single .fv-fit {
-  width: calc(100% * var(--fv-render-zoom, 1));
+  max-width: none;
 }
 
 .fv3d-seat {

@@ -59,8 +59,10 @@ describe('SpaceView sizing contract', () => {
     )
     const fit = container.querySelector('.fv-fit') as HTMLElement
     expect(fit).not.toBeNull()
-    // 3 cols × 2 rows → "3 / 2"
+    // 3 cols × 2 rows → "3 / 2" (CSS aspect-ratio string) and 1.5 (numeric ratio
+    // the height-driven width calc multiplies --fv-render-h by).
     expect(fit.style.getPropertyValue('--fv-aspect')).toBe('3 / 2')
+    expect(fit.style.getPropertyValue('--fv-aspect-n')).toBe('1.5')
     // The old double-zoom wrapper is gone.
     expect(container.querySelector('.fv-grid-zoom')).toBeNull()
     // The grid still carries its raw intrinsic pixel size.

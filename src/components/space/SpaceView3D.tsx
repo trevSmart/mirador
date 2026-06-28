@@ -715,7 +715,7 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
         onPointerCancel={onUp}
         style={{ cursor: dragging ? 'grabbing' : 'grab', touchAction: 'none' }}
       >
-        <svg className="fv3d-svg" viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`} preserveAspectRatio="xMidYMid meet" style={{ aspectRatio: `${bounds.width} / ${bounds.height}` }} xmlns="http://www.w3.org/2000/svg">
+        <svg className="fv3d-svg" viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`} preserveAspectRatio="xMidYMid meet" style={{ aspectRatio: `${bounds.width} / ${bounds.height}`, ['--fv-aspect-n' as string]: bounds.width / bounds.height }} xmlns="http://www.w3.org/2000/svg">
           <defs>
             <filter id={`${svgIdPrefix}-shadow`} x="-60%" y="-60%" width="220%" height="220%">
               <feGaussianBlur stdDeviation="24" />
