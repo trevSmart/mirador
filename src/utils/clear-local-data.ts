@@ -2,21 +2,16 @@
    obertura. Tots els valors persistits per Mirador (preferències, sessió OAuth,
    layout, recents, mode desenvolupador…) comparteixen el prefix "mirador", així
    que els eliminem de localStorage i sessionStorage sense tocar res que pugui
-   pertànyer a altres orígens. El plànol de planta es preserva expressament. */
-
-import { STORAGE_KEY as SPACE_PLAN_KEY } from '../space/space-plan-repository'
+   pertànyer a altres orígens. El plànol viu ara a l'org (Place__c/Space__c), no
+   a localStorage, per la qual cosa no cal preservar-lo aquí. */
 
 const APP_PREFIX = 'mirador'
-
-/* Claus que es mantenen tot i tenir el prefix de l'app: el plànol de planta no
-   s'esborra en reiniciar les dades locals. */
-const PRESERVED_KEYS = new Set<string>([SPACE_PLAN_KEY])
 
 function clearStore(store: Storage): void {
   const keys: string[] = []
   for (let i = 0; i < store.length; i++) {
     const key = store.key(i)
-    if (key && key.toLowerCase().startsWith(APP_PREFIX) && !PRESERVED_KEYS.has(key)) keys.push(key)
+    if (key && key.toLowerCase().startsWith(APP_PREFIX)) keys.push(key)
   }
   keys.forEach((key) => store.removeItem(key))
 }

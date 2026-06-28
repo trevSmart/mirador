@@ -75,8 +75,8 @@ public with sharing class MiradorSpacePlanService {
     // ---------------------------------------------------------------- read ----
 
     /**
-     * Returns the running user's space plan, or null when nothing has been saved.
-     * Places are owned by the user (OwnerId); Spaces follow their parent.
+     * Returns the org-wide space plan, or null when nothing has been saved.
+     * Places and Spaces are shared: every user sees and edits the same plan.
      */
     public static PlanDto getPlan() {
         List<Place__c> places = [
@@ -87,7 +87,6 @@ public with sharing class MiradorSpacePlanService {
                     ORDER BY SortOrder__c ASC NULLS LAST, Name ASC
                 )
             FROM Place__c
-            WHERE OwnerId = :UserInfo.getUserId()
             ORDER BY CreatedDate ASC
         ];
 
@@ -140,18 +139,16 @@ public with sharing class MiradorSpacePlanService {
     // --------------------------------------------------------------- write ----
 
     /**
-     * Full replace of the running user's plan. Deletes the user's existing places
-     * (cascading their spaces) and re-inserts from the payload, so the org always
-     * reflects exactly what the editor saved. Runs in one transaction.
+     * Full replace of the org-wide plan. Deletes all existing places (cascading
+     * their spaces) and re-inserts from the payload, so the org always reflects
+     * exactly what the editor saved. Shared across all users. One transaction.
      */
     public static void savePlan(PlanDto plan) {
         if (plan == null) {
             throw new SpacePlanException('Missing plan');
         }
 
-        List<Place__c> existing = [
-            SELECT Id FROM Place__c WHERE OwnerId = :UserInfo.getUserId()
-        ];
+        List<Place__c> existing = [SELECT Id FROM Place__c];
         if (!existing.isEmpty()) {
             delete existing;
         }

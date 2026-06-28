@@ -50,7 +50,7 @@ export interface MiradorClient {
   /** Loads the running user's saved space plan, or null when none exists. */
   getSpacePlan: () => Promise<SpacePlanData | null>
   /** Full-replace save of the running user's space plan. */
-  saveSpacePlan: (plan: SpacePlanData) => Promise<void>
+  saveSpacePlan: (plan: SpacePlanData) => Promise<{ ok: boolean }>
 }
 
 type SessionGetter = () => OAuthSession | null | Promise<OAuthSession | null>
