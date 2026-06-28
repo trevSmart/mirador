@@ -1,6 +1,7 @@
 import { recoverAccessSession } from '../auth/salesforce-oauth'
 import { devLog } from '../dev/dev-log'
 import type { OAuthSession } from '../auth/types'
+import type { SpacePlanData } from '../space/types'
 import type {
   AgentScope,
   AgentSkillsResponse,
@@ -46,6 +47,10 @@ export interface MiradorClient {
   getWork: () => Promise<WorkResponse>
   getSnapshot: (scope?: AgentScope) => Promise<SnapshotResponse>
   getRecordDetails: (body: RecordDetailsRequest) => Promise<RecordDetailsResponse>
+  /** Loads the running user's saved space plan, or null when none exists. */
+  getSpacePlan: () => Promise<SpacePlanData | null>
+  /** Full-replace save of the running user's space plan. */
+  saveSpacePlan: (plan: SpacePlanData) => Promise<void>
 }
 
 type SessionGetter = () => OAuthSession | null | Promise<OAuthSession | null>
@@ -160,5 +165,11 @@ export function createMiradorClient(getSession: SessionGetter): MiradorClient {
         method: 'POST',
         body: JSON.stringify(body),
       }),
+    getSpacePlan: () => request<SpacePlanData | null>('/space-plan'),
+    saveSpacePlan: (plan) =>
+      request<{ ok: boolean }>('/space-plan', {
+        method: 'PUT',
+        body: JSON.stringify(plan),
+      }).then(() => undefined),
   }
 }
