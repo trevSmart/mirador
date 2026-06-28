@@ -63,6 +63,11 @@ public with sharing class MiradorRestHandler {
                     writeJson(res, 400, new Map<String, Object>{ 'error' => 'Invalid JSON body' });
                     return;
                 }
+                if (plan == null) {
+                    // Valid JSON but not a plan (e.g. the literal `null`).
+                    writeJson(res, 400, new Map<String, Object>{ 'error' => 'Missing plan' });
+                    return;
+                }
                 MiradorSpacePlanService.savePlan(plan);
                 writeJson(res, 200, new Map<String, Object>{ 'ok' => true });
             } else if (path.startsWith('/agents/') && path.endsWith('/skills')) {

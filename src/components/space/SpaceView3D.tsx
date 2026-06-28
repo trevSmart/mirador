@@ -41,7 +41,7 @@ import {
   slabRightFaceVec,
   towerLeftFace,
   towerRightFace,
-  windowBeamQuad,
+  windowBeamVolume,
 } from '../../space/space-iso-vec'
 import {
   type RoomRotation,
@@ -66,10 +66,14 @@ const WALL_FILL = 'rgb(252,251,249)'
 // reading as one off-screen light source rather than per-wall spotlights.
 const SUN_X = 0.55
 const SUN_Y = 1.45
-const SUN_LENGTH = 2.6
+const SUN_LENGTH = 1.1
 // Extra half-width the beam gains by the end of its throw (× the sill width),
 // so the light fans out as it crosses the space.
 const SUN_SPREAD = 1.2
+// How much farther the window's TOP edge throws than its bottom edge. >1 opens
+// the shaft's angle so the far edge reaches deeper into the room while the near
+// edge stays pinned at the sill — daylight spilling in, not aimed at the floor.
+const SUN_TOP_REACH = 2.0
 
 // Base and cap are solid, outlined slabs with real thickness — they frame the
 // translucent shaft between them (the mirador capsule look).
@@ -152,51 +156,68 @@ function WindowGlass({ id, quad }: { id: string; quad: OpeningQuad }) {
   )
 }
 
-/** Cool-white pool of daylight cast on the space by a window. A near-white wash
-   that subtly tints the tiles from the wall outward and dissolves into the room
-   — kept very faint so it reads as a soft glow, not a painted tile. Drawn
-   over the space tiles but under the furniture/seats. */
-function WindowSunbeam({ id, points, near, far, blurId }: { id: string; points: string; near: [Point, Point]; far: [Point, Point]; blurId: string }) {
-  const gradId = `${id}-beam`
+/** Volumetric shaft of daylight: the whole window pane projected across the room
+   as a 3D parallelepiped that widens toward the floor. Three faces are drawn —
+   the floor pool, the two angled side walls of the shaft, and a translucent cap
+   — each with a gradient that fades from the window (bright) into the room. The
+   side faces carry slightly different opacities (lit vs. shaded) so the volume
+   reads as a solid wedge of light, not a flat smear. Drawn over the tiles but
+   under the furniture/seats. */
+function WindowLightVolume({
+  id,
+  floor,
+  sideL,
+  sideR,
+  cap,
+  near,
+  far,
+  blurId,
+}: {
+  id: string
+  floor: string
+  sideL: string
+  sideR: string
+  cap: string
+  near: [Point, Point]
+  far: [Point, Point]
+  blurId: string
+}) {
   const nx = (near[0][0] + near[1][0]) / 2
   const ny = (near[0][1] + near[1][1]) / 2
   const fx = (far[0][0] + far[1][0]) / 2
   const fy = (far[0][1] + far[1][1]) / 2
+  const floorGrad = `${id}-floor`
+  const capGrad = `${id}-cap`
+  const sideGrad = `${id}-side`
   return (
     <g style={{ mixBlendMode: 'multiply' }} filter={`url(#${blurId})`}>
       <defs>
-        <linearGradient id={gradId} x1={nx} y1={ny} x2={fx} y2={fy} gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="rgba(214,226,240,0.055)" />
-          <stop offset="55%" stopColor="rgba(228,236,246,0.024)" />
-          <stop offset="100%" stopColor="rgba(240,245,250,0)" />
+        {/* Pool on the floor: brightest where the light lands near the wall, then
+           falls off fast so the beam dies close to the window rather than washing
+           across the whole room. The stops are bunched toward the start (mid at
+           28%, fully clear by 62%) to compress the fade into the near zone. */}
+        <linearGradient id={floorGrad} x1={nx} y1={ny} x2={fx} y2={fy} gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="rgba(150,178,214,0.07)" />
+          <stop offset="16%" stopColor="rgba(178,200,228,0.022)" />
+          <stop offset="38%" stopColor="rgba(220,232,245,0)" />
+        </linearGradient>
+        {/* Translucent ceiling of the shaft, fading on the same fast curve. */}
+        <linearGradient id={capGrad} x1={nx} y1={ny} x2={fx} y2={fy} gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="rgba(160,186,220,0.095)" />
+          <stop offset="18%" stopColor="rgba(196,214,234,0.03)" />
+          <stop offset="40%" stopColor="rgba(232,240,248,0)" />
+        </linearGradient>
+        {/* Side walls: a touch denser so the wedge edges read as volume. */}
+        <linearGradient id={sideGrad} x1={nx} y1={ny} x2={fx} y2={fy} gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="rgba(154,182,218,0.08)" />
+          <stop offset="18%" stopColor="rgba(188,208,232,0.028)" />
+          <stop offset="40%" stopColor="rgba(226,236,246,0)" />
         </linearGradient>
       </defs>
-      <polygon points={points} fill={`url(#${gradId})`} />
-    </g>
-  )
-}
-
-/** The faint volume of light hanging in the air between a window and its space
-   pool — a translucent shaft so the daylight reads as entering, not just lying
-   on the ground. `top` are the window-sill corners (up on the wall), `bottom`
-   the far edge of the space pool; the gradient is brightest at the window. */
-function WindowAirShaft({ id, top, bottom, blurId }: { id: string; top: [Point, Point]; bottom: [Point, Point]; blurId: string }) {
-  const gradId = `${id}-air`
-  const tx = (top[0][0] + top[1][0]) / 2
-  const ty = (top[0][1] + top[1][1]) / 2
-  const bx = (bottom[0][0] + bottom[1][0]) / 2
-  const by = (bottom[0][1] + bottom[1][1]) / 2
-  const points = `${top[0][0]},${top[0][1]} ${top[1][0]},${top[1][1]} ${bottom[1][0]},${bottom[1][1]} ${bottom[0][0]},${bottom[0][1]}`
-  return (
-    <g style={{ mixBlendMode: 'multiply' }} filter={`url(#${blurId})`}>
-      <defs>
-        <linearGradient id={gradId} x1={tx} y1={ty} x2={bx} y2={by} gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="rgba(222,232,244,0.12)" />
-          <stop offset="70%" stopColor="rgba(234,240,248,0.05)" />
-          <stop offset="100%" stopColor="rgba(244,248,252,0)" />
-        </linearGradient>
-      </defs>
-      <polygon points={points} fill={`url(#${gradId})`} />
+      <polygon points={cap} fill={`url(#${capGrad})`} />
+      <polygon points={sideL} fill={`url(#${sideGrad})`} />
+      <polygon points={sideR} fill={`url(#${sideGrad})`} opacity={0.7} />
+      <polygon points={floor} fill={`url(#${floorGrad})`} />
     </g>
   )
 }
@@ -595,6 +616,21 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
   const beamBlurId = `${svgIdPrefix}-beam-blur`
   const bounds = useMemo(() => computeBoundsVec(plan.cells, basis, VEC_TH * 2), [plan, basis])
 
+  // The render's *outer* size is height-driven: width = --fv-render-h × aspect.
+  // While orbiting, `bounds` changes every frame (the room's silhouette shifts
+  // with the camera), which would resize the outer box each frame and make the
+  // room appear to slide/jump — especially once max-width caps the width and the
+  // height carries the change. So the outer aspect-ratio is held in state and
+  // only re-synced to `bounds` when NOT dragging: during a drag it stays frozen
+  // (the SVG viewBox still rotates inside the fixed-size box), and it snaps to
+  // the final shape once the drag settles.
+  const [outerAspectN, setOuterAspectN] = useState(() => bounds.width / bounds.height)
+  useEffect(() => {
+    if (dragging) return
+    const next = bounds.width / bounds.height
+    setOuterAspectN((prev) => (prev === next ? prev : next))
+  }, [dragging, bounds.width, bounds.height])
+
   const brVis = useMemo(() => backRightTrue(has, plan.cells, 0, GRID_MAX, GRID_MAX), [has, plan])
   const blVis = useMemo(() => backLeftTrue(has, plan.cells, 0, GRID_MAX, GRID_MAX), [has, plan])
 
@@ -620,7 +656,6 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
 
   const body: ReactNode[] = []
   const sunbeams: ReactNode[] = []
-  const airbeams: ReactNode[] = []
   for (const [c, r] of ordered) {
     const [x, y] = pos(c, r)
     const key = `${c},${r}`
@@ -665,21 +700,13 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
     for (const edge of ['N', 'O'] as const) {
       const visible = edge === 'N' ? brVis(c, r) : blVis(c, r)
       if (!visible || openingByKey.get(`${c},${r},${edge}`) !== 'window') continue
-      const beam = windowBeamQuad(x, y, basis, edge, SUN_X, SUN_Y, SUN_LENGTH, 0.62, SUN_SPREAD)
-      sunbeams.push(<WindowSunbeam key={`beam-${key}-${edge}`} id={`${svgIdPrefix}-beam-${c}-${r}-${edge}`} blurId={beamBlurId} {...beam} />)
-      // Faint volumetric shaft "in the air": from the window opening on the wall
-      // down to the space pool's far edge.
+      // The actual window pane on the wall (4 lifted corners). Projecting the
+      // whole pane — not just its ground edge — along the sun vector gives the
+      // beam real volume: a 3D wedge that widens as it crosses the floor.
       const [g0, g1, t0, t1] = edge === 'N' ? backRightOpeningEdge(x, y, basis) : backLeftOpeningEdge(x, y, basis)
-      const oq = openingQuad(g0, g1, t0, t1, 'window')
-      airbeams.push(
-        <WindowAirShaft
-          key={`air-${key}-${edge}`}
-          id={`${svgIdPrefix}-air-${c}-${r}-${edge}`}
-          top={[oq.bl, oq.br]}
-          bottom={beam.far}
-          blurId={beamBlurId}
-        />,
-      )
+      const pane = openingQuad(g0, g1, t0, t1, 'window')
+      const vol = windowBeamVolume(pane, basis, SUN_X, SUN_Y, SUN_LENGTH, SUN_SPREAD, SUN_TOP_REACH)
+      sunbeams.push(<WindowLightVolume key={`beam-${key}-${edge}`} id={`${svgIdPrefix}-beam-${c}-${r}-${edge}`} blurId={beamBlurId} {...vol} />)
     }
 
     for (const d of dividersByKey.get(key) ?? []) {
@@ -715,7 +742,7 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
         onPointerCancel={onUp}
         style={{ cursor: dragging ? 'grabbing' : 'grab', touchAction: 'none' }}
       >
-        <svg className="fv3d-svg" viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`} preserveAspectRatio="xMidYMid meet" style={{ aspectRatio: `${bounds.width} / ${bounds.height}`, ['--fv-aspect-n' as string]: bounds.width / bounds.height }} xmlns="http://www.w3.org/2000/svg">
+        <svg className="fv3d-svg" viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`} preserveAspectRatio="xMidYMid meet" style={{ aspectRatio: outerAspectN, ['--fv-aspect-n' as string]: outerAspectN }} xmlns="http://www.w3.org/2000/svg">
           <defs>
             <filter id={`${svgIdPrefix}-shadow`} x="-60%" y="-60%" width="220%" height="220%">
               <feGaussianBlur stdDeviation="24" />
@@ -756,7 +783,6 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
           </g>
           {body}
           {sunbeams}
-          {airbeams}
           {showAvatars && hoveredAgent && hoverPos ? (
             // key per agent → fresh mount when moving avatar→avatar, so the height
             // hook starts at the final height instead of sliding from the previous.

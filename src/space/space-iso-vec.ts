@@ -180,6 +180,67 @@ export function windowBeamQuad(
   return { points: str(n0, n1, far1, far0), near: [n0, n1], far: [far0, far1] }
 }
 
+/** A volumetric shaft of daylight: the whole window pane projected across the
+    room along the sun vector, forming a 3D parallelepiped that widens as it
+    travels. The window's four pane corners (on the wall) are each thrown along
+    the sun direction onto the floor, so the entry face is the pane, the exit
+    face is the floor footprint, and the connecting faces give it real volume.
+
+    `pane` are the four wall-space pane corners {bl,br,tr,tl} (already lifted up
+    the wall). `length` is the throw in cells, `spread` the extra half-width the
+    footprint gains as it lands. Returns the polygons of the three visible faces
+    plus the entry/exit centres so the caller can run a fading gradient. */
+export function windowBeamVolume(
+  pane: { bl: Point; br: Point; tr: Point; tl: Point },
+  b: IsoBasis,
+  sx: number,
+  sy: number,
+  length: number,
+  spread = 0,
+  topReach = 1,
+): {
+  floor: string
+  sideL: string
+  sideR: string
+  cap: string
+  near: [Point, Point]
+  far: [Point, Point]
+} {
+  const { bl, br, tr, tl } = pane
+  // Sun throw vector in screen space (one cell ≈ |u|), same as windowBeamQuad.
+  const tx = sx * b.ux + sy * b.vx
+  const ty = sx * b.uy + sy * b.vy
+  // Splay the landing edge sideways along the sill direction (bl→br) so the
+  // pool fans out wider than the pane as the light spreads across the floor.
+  const wx = (br[0] - bl[0]) * spread
+  const wy = (br[1] - bl[1]) * spread
+  // Project a wall point onto the floor along the sun vector. `reach` lets the
+  // top pane corners throw farther than the bottom ones (`topReach` > 1), which
+  // opens up the shaft's angle: the floor pool keeps its near edge fixed at the
+  // sill while the far edge (cast by the window's top) stretches deeper into the
+  // room — daylight fanning out, not a flat ramp aimed straight down.
+  const land = (p: Point, side: -1 | 1, reach: number): Point => [
+    p[0] + tx * length * reach + side * wx,
+    p[1] + ty * length * reach + side * wy,
+  ]
+  // Bottom corners keep the base throw; top corners reach farther.
+  const fbl = land(bl, -1, 1)
+  const fbr = land(br, 1, 1)
+  const ftr = land(tr, 1, topReach)
+  const ftl = land(tl, -1, topReach)
+  return {
+    // Exit pool on the floor (entry-bottom edge → far landing edge).
+    floor: str(bl, br, fbr, fbl),
+    // Left/right side faces of the shaft connect pane edges to the floor edges.
+    sideL: str(tl, bl, fbl, ftl),
+    sideR: str(tr, br, fbr, ftr),
+    // The translucent "ceiling" of the shaft: top pane edge → far landing edge.
+    cap: str(tl, tr, ftr, ftl),
+    near: [bl, br],
+    far: [fbl, fbr],
+  }
+}
+
 /** Interior divider wall on the shared edge toward the E or S neighbour. */
 export function dividerFaceVec(x: number, y: number, b: IsoBasis, edge: 'E' | 'S'): string {
   const { right, bottom, left } = tileCorners(x, y, b)

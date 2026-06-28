@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../auth/auth-context'
 import { useMiradorApi } from '../api/mirador-api-context'
+import { devLog } from '../dev/dev-log'
 import {
   loadSpacePlan,
   saveSpacePlan,
@@ -59,6 +60,7 @@ export function useSpacePlan() {
   const [selectedSeat, setSelectedSeat] = useState<SeatRef | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [savedSignature, setSavedSignature] = useState('')
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
 
@@ -372,9 +374,16 @@ export function useSpacePlan() {
   /* ── Save / reset ───────────────────────────────────────────────────── */
   const save = useCallback(() => {
     const current = dataRef.current
-    void saveSpacePlan(client, current, isMockMode).then(() => {
-      setSavedSignature(spacePlanSignature(current))
-    })
+    setSaveError(null)
+    void saveSpacePlan(client, current, isMockMode)
+      .then(() => {
+        setSavedSignature(spacePlanSignature(current))
+      })
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error)
+        devLog.api('PUT', '/space-plan', `desat fallit: ${message}`)
+        setSaveError(message)
+      })
   }, [client, isMockMode])
 
   const reset = useCallback(() => {
@@ -434,6 +443,7 @@ export function useSpacePlan() {
     undo,
     redo,
     save,
+    saveError,
     reset,
   }
 }
