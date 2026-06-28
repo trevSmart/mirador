@@ -4,16 +4,16 @@ global with sharing class MiradorApi {
 
     @HttpGet
     global static void handleGet() {
-        PanoramaRestHandler.handleGet(API_PREFIX);
+        MiradorRestHandler.handleGet(API_PREFIX);
     }
 
     @HttpPut
     global static void handlePut() {
-        PanoramaRestHandler.handlePut(API_PREFIX);
+        MiradorRestHandler.handlePut(API_PREFIX);
     }
 
     @HttpPost
     global static void handlePost() {
-        PanoramaRestHandler.handlePost(API_PREFIX);
+        MiradorRestHandler.handlePost(API_PREFIX);
     }
 }

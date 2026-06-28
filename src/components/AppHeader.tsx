@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useDataStatus } from '../api/data-hooks'
 import { useAuth } from '../auth/auth-context'
-import panoramaLogo from '../assets/panorama/logo/panorama-logo.png'
+import miradorLogo from '../assets/mirador/logo/mirador-logo.png'
 import { useDevConsole } from '../dev/useDevConsole'
 import { useDeveloperMode } from '../hooks/useDeveloperMode'
 import { SfIcon } from './ds/SfIcon'
@@ -44,7 +44,7 @@ export function AppHeader() {
   return (
     <header className="app-header">
       <div className="app-header__left">
-        <img className="app-header__logo" src={panoramaLogo} alt="Panorama" />
+        <img className="app-header__logo" src={miradorLogo} alt="Mirador" />
         {isMockMode ? (
           <span className="app-header__status" title="Dades simulades (mock)">
             Simulació

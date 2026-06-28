@@ -72,7 +72,7 @@ const SUN_LENGTH = 2.6
 const SUN_SPREAD = 1.2
 
 // Base and cap are solid, outlined slabs with real thickness — they frame the
-// translucent shaft between them (the panorama capsule look).
+// translucent shaft between them (the mirador capsule look).
 const BAND_H = 4.5
 const BAND_OPACITY = 0.68
 // Glassy tower face: the colour stays the queue hue but fades to translucent
@@ -277,7 +277,7 @@ function AvatarDisc({
           dominantBaseline="central"
           fontSize={r * 0.8}
           fontWeight={600}
-          fill="var(--pa-av-fg, #514E5C)"
+          fill="var(--mi-av-fg, #514E5C)"
           style={{ fontFamily: 'var(--font-display)' }}
         >
           {agentInitials(agent.name)}

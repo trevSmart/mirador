@@ -9,35 +9,35 @@ export interface ResolvedObjectIcon {
 }
 
 const OBJECT_TINTS: Record<string, string> = {
-  case: 'var(--pa-ic-case)',
-  call: 'var(--pa-ic-voice)',
-  messaging: 'var(--pa-ic-whatsapp)',
-  live_chat: 'var(--pa-ic-chat)',
-  messaging_session: 'var(--pa-ic-whatsapp)',
-  voice_call: 'var(--pa-ic-voice)',
-  email: 'var(--pa-ic-email)',
-  lead: 'var(--pa-ic-work)',
-  social: 'var(--pa-ic-chat)',
-  task: 'var(--pa-ic-work)',
-  orders: 'var(--pa-ic-work)',
+  case: 'var(--mi-ic-case)',
+  call: 'var(--mi-ic-voice)',
+  messaging: 'var(--mi-ic-whatsapp)',
+  live_chat: 'var(--mi-ic-chat)',
+  messaging_session: 'var(--mi-ic-whatsapp)',
+  voice_call: 'var(--mi-ic-voice)',
+  email: 'var(--mi-ic-email)',
+  lead: 'var(--mi-ic-work)',
+  social: 'var(--mi-ic-chat)',
+  task: 'var(--mi-ic-work)',
+  orders: 'var(--mi-ic-work)',
 }
 
 const CHANNEL_ICON: Record<ChannelKey, ResolvedObjectIcon> = {
-  veu: { sprite: 'standard', symbol: 'call', tint: 'var(--pa-ic-voice)' },
-  chat: { sprite: 'standard', symbol: 'messaging_session', tint: 'var(--pa-ic-chat)' },
-  email: { sprite: 'standard', symbol: 'email', tint: 'var(--pa-ic-email)' },
-  wa: { sprite: 'standard', symbol: 'messaging_session', tint: 'var(--pa-ic-whatsapp)' },
-  cas: { sprite: 'standard', symbol: 'case', tint: 'var(--pa-ic-case)' },
+  veu: { sprite: 'standard', symbol: 'call', tint: 'var(--mi-ic-voice)' },
+  chat: { sprite: 'standard', symbol: 'messaging_session', tint: 'var(--mi-ic-chat)' },
+  email: { sprite: 'standard', symbol: 'email', tint: 'var(--mi-ic-email)' },
+  wa: { sprite: 'standard', symbol: 'messaging_session', tint: 'var(--mi-ic-whatsapp)' },
+  cas: { sprite: 'standard', symbol: 'case', tint: 'var(--mi-ic-case)' },
 }
 
 const DEFAULT_ICON: ResolvedObjectIcon = {
   sprite: 'standard',
   symbol: 'case',
-  tint: 'var(--pa-ic-case)',
+  tint: 'var(--mi-ic-case)',
 }
 
 function tintForSymbol(symbol: string): string {
-  return OBJECT_TINTS[symbol] ?? 'var(--pa-ic-work)'
+  return OBJECT_TINTS[symbol] ?? 'var(--mi-ic-work)'
 }
 
 function isSfSprite(value: string | null | undefined): value is SfSprite {

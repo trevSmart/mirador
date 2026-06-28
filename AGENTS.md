@@ -191,7 +191,7 @@ Geometry/projection helpers in `src/space/`; UI in `src/components/space/`.
 - `src/components/ds/` — the in-house design-system primitives (Button, Badge,
   Ring, icons via SLDS sprites in `SfIcon.tsx`, etc.). Prefer these over ad-hoc
   markup.
-- `src/components/error/` — error boundaries, the Panorama-styled dev error
+- `src/components/error/` — error boundaries, the Mirador-styled dev error
   overlay (replaces Vite's default HMR overlay, which is disabled in
   `vite.config.ts`), and Vite error formatting.
 - `src/settings/` — `Preferences` model (flat object in localStorage, sanitized on
@@ -202,13 +202,13 @@ Geometry/projection helpers in `src/space/`; UI in `src/components/space/`.
 
 ## Salesforce backend (`force-app/main/default/`)
 
-- `classes/PanoramaRestHandler.cls` / `MiradorApi.cls` — the `@RestResource`
+- `classes/MiradorRestHandler.cls` / `MiradorApi.cls` — the `@RestResource`
   entry point at `/mirador/v1/*`.
-- `classes/Panorama*Service.cls` — domain services (agent, queue, skill, work,
+- `classes/Mirador*Service.cls` — domain services (agent, queue, skill, work,
   snapshot, capability) producing the response shapes in `src/api/types.ts`.
 - `externalClientApps/` + `extlClntApp*OauthSets/` — ECA OAuth config for the SPA
   login flow.
-- `skilltypes/` — `PanoramaLanguage`, `PanoramaExpertise` skill types.
+- `skilltypes/` — `MiradorLanguage`, `MiradorExpertise` skill types.
 - `*Test.cls` — Apex unit tests.
 
 The HTTP contract is documented in [`docs/mirador-REST-API.md`](docs/mirador-REST-API.md);

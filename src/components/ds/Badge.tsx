@@ -10,8 +10,8 @@ interface ToneDef {
 const TONES: Record<BadgeTone, ToneDef> = {
   neutral: { bg: 'var(--surface-well)', fg: 'var(--text-body)' },
   accent: { bg: 'var(--accent-tint)', fg: 'var(--accent)' },
-  ok: { bg: 'var(--pa-ok-soft)', fg: 'var(--status-ok)' },
-  watch: { bg: 'var(--pa-watch-soft)', fg: 'var(--status-watch)' },
+  ok: { bg: 'var(--mi-ok-soft)', fg: 'var(--status-ok)' },
+  watch: { bg: 'var(--mi-watch-soft)', fg: 'var(--status-watch)' },
   alert: { bg: 'var(--status-alert)', fg: '#fff' },
 }
 

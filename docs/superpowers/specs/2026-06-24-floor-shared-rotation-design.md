@@ -96,7 +96,7 @@ contenidor: el comportament natural de mirar la sala des d'un altre costat.
 - `FloorPanel.tsx`: treure els dos `<ButtonIcon>` de rotació, el `.fv-rotate` i el `dir`
   local. Llegir `activeFloor.dir` i passar-lo a les vistes.
 - `FloorToolbar.tsx`: afegir dos `<ButtonIcon>` "Gira a l'esquerra"/"Gira a la dreta"
-  (SVG Panorama `ROTATE_ICON_PATH`, ja existent) que criden `rotateFloor(-1)` /
+  (SVG Mirador `ROTATE_ICON_PATH`, ja existent) que criden `rotateFloor(-1)` /
   `rotateFloor(+1)`. `ButtonIcon` es reutilitza. `ROTATE_ICON_PATH` es mou a un lloc
   compartit del floor.
 

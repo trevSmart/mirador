@@ -25,7 +25,7 @@ export function Chip({ children, active = false, dotColor, count, style = {}, ..
     cursor: 'pointer',
     transition: 'all var(--dur-fast) var(--ease)',
     background: active ? 'var(--accent-tint)' : 'var(--surface-card)',
-    border: `1px solid ${active ? 'var(--pa-accent-line)' : 'var(--border-subtle)'}`,
+    border: `1px solid ${active ? 'var(--mi-accent-line)' : 'var(--border-subtle)'}`,
     color: active ? 'var(--accent)' : 'var(--text-body)',
     ...style,
   }

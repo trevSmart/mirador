@@ -2,7 +2,7 @@
  * Color HSL determinístic derivat d'un string. Mateix string → mateix color.
  * Només varia el to (hue); saturació i lluminositat són fixes dins la gamma de
  * la paleta SF, així tots els colors tenen el mateix pes visual i contrast amb
- * el blanc. (Alineat amb l'algoritme del projecte panorama.)
+ * el blanc. (Alineat amb l'algoritme del projecte mirador.)
  */
 export function colorFromString(str: string): string {
   let h = 0
