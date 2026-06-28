@@ -8,6 +8,7 @@ import { useSalesforcePhoto } from '../../hooks/useSalesforcePhoto'
 import { colorFromString } from '../../utils/color-from-string'
 import { agentInitials, presenceLabel } from '../../utils/format'
 import { Ring } from '../ds'
+import { roomAspect } from './space-view-aspect'
 
 /** Larger cells than the editor: supervisors read avatars and rings at a glance. */
 const VIEW_CELL = 46
@@ -94,6 +95,9 @@ export function SpaceView({
   const gridW = cols * VIEW_CELL
   const gridH = rows * VIEW_CELL
 
+  // The .fv-fit box fills the tile width and derives its height from the
+  // intrinsic aspect-ratio (set via --fv-aspect below), exactly like .fv3d-svg.
+  // We only need the rendered width to scale the raw-pixel .fv-grid down to fit.
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
@@ -101,9 +105,9 @@ export function SpaceView({
       const entry = entries[0]
       if (!entry) return
       const cw = entry.contentRect.width
-      if (!gridW) return
+      if (!gridW || !isFinite(cw) || cw === 0) return
       const next = cw / gridW
-      if (!isFinite(next) || isNaN(next) || next === 0) return
+      if (!isFinite(next) || next === 0) return
       setScale((prev) => (prev === next ? prev : next))
     })
     observer.observe(el)
@@ -111,22 +115,19 @@ export function SpaceView({
   }, [gridW])
 
   return (
-    <div className="fv-fit" ref={containerRef}>
+    <div
+      className="fv-fit"
+      ref={containerRef}
+      style={{ ['--fv-aspect' as string]: roomAspect(cols, rows) }}
+    >
       <div
-        className="fv-grid-zoom"
+        className="fv-grid"
         style={{
-          ['--fv-grid-w' as string]: `${gridW * scale}px`,
-          ['--fv-grid-h' as string]: `${gridH * scale}px`,
+          width: gridW,
+          height: gridH,
+          ['--fv-fit-scale' as string]: scale,
         }}
       >
-        <div
-          className="fv-grid"
-          style={{
-            width: gridW,
-            height: gridH,
-            ['--fv-fit-scale' as string]: scale,
-          }}
-        >
         {rotated.cells.map(([c, r]) => {
           const seat = rotated.seatByKey.get(cellKey(c, r))
           const agent = seat?.agentId ? agentsById.get(seat.agentId) ?? null : null
@@ -172,7 +173,6 @@ export function SpaceView({
             style={edgeStyle(o.c - minC, o.r - minR, o.edge, VIEW_CELL)}
           />
         ))}
-        </div>
       </div>
     </div>
   )
