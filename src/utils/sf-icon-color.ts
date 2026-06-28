@@ -1,6 +1,6 @@
 import type { SfIconName } from '../components/ds/SfIcon'
 
-/** Salesforce Lightning object icon backgrounds (aligned with Panorama). */
+/** Salesforce Lightning object icon backgrounds (aligned with Mirador). */
 const SF_ICON_COLORS: Partial<Record<SfIconName, string>> = {
   queue: '#5867E8',
   skill: '#F88962',

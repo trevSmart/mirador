@@ -25,8 +25,8 @@ export function Ring({
   size = 48,
   photo,
   initials = '',
-  faceBg = 'var(--pa-av-bg)',
-  faceFg = 'var(--pa-av-fg)',
+  faceBg = 'var(--mi-av-bg)',
+  faceFg = 'var(--mi-av-fg)',
   breathe = false,
   style = {},
 }: RingProps) {

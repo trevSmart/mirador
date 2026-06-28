@@ -39,7 +39,7 @@ interface SfIconTileProps {
   style?: CSSProperties
 }
 
-/** Colored SLDS tile — same markup as Panorama `sf-icon-tile`. */
+/** Colored SLDS tile — same markup as Mirador `sf-icon-tile`. */
 export function SfIconTile({
   name,
   channel,

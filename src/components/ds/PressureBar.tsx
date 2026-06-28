@@ -10,7 +10,7 @@ interface PressureBarProps {
 function pressureColor(p: number): string {
   if (p <= 0.5) {
     const t = p / 0.5
-    return `color-mix(in srgb, var(--pa-accent-2) ${(1 - t) * 100}%, var(--status-watch))`
+    return `color-mix(in srgb, var(--mi-accent-2) ${(1 - t) * 100}%, var(--status-watch))`
   }
   const t = (p - 0.5) / 0.5
   return `color-mix(in srgb, var(--status-watch) ${(1 - t) * 100}%, var(--status-alert))`

@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════════════════
-   Panorama webfonts
+   Mirador webfonts
      · Space Grotesk — display / headings / brand
      · Inter         — UI body text
      · JetBrains Mono — numerals, timers, metrics
@@ -23,80 +23,80 @@
 }
 
 /* ════════════════════════════════════════════════════════════
-   PANORAMA · COLOR TOKENS
+   MIRADOR · COLOR TOKENS
    A calm, paper-warm operations canvas. The app accent is
    Salesforce blue over a four-step semantic ramp (ok → watch →
    alert). Each team keeps its own hue.
    ════════════════════════════════════════════════════════════ */
 :root {
   /* ── Base palette ───────────────────────────────────── */
-  --pa-bg: rgba(251, 250, 248, 0.8);
+  --mi-bg: rgba(251, 250, 248, 0.8);
   /* app canvas — warm paper */
-  --pa-bg-tint: #FBFAF8;
+  --mi-bg-tint: #FBFAF8;
   /* lifted canvas / drawer / sticky bars */
-  --pa-surface: #FFFFFF;
+  --mi-surface: #FFFFFF;
   /* cards, inputs, raised surfaces */
-  --pa-surface-2: #F2F1ED;
+  --mi-surface-2: #F2F1ED;
   /* inset wells, tracks, muted fills */
 
   /* ── Ink ramp (text) ────────────────────────────────── */
-  --pa-ink: #1B1924;
+  --mi-ink: #1B1924;
   /* primary text, headlines */
-  --pa-dim: #65616F;
+  --mi-dim: #65616F;
   /* secondary text, labels */
-  --pa-faint: #9C98A6;
+  --mi-faint: #9C98A6;
   /* tertiary text, captions, placeholders */
-  --pa-off: #B7B3C0;
+  --mi-off: #B7B3C0;
   /* disabled / offline */
 
   /* ── Hairlines ──────────────────────────────────────── */
-  --pa-line: rgba(27, 25, 36, .09);
+  --mi-line: rgba(27, 25, 36, .09);
   /* default border */
-  --pa-line-2: rgba(27, 25, 36, .16);
+  --mi-line-2: rgba(27, 25, 36, .16);
   /* hover / stronger border */
 
   /* ── Accent (Salesforce blue) ───────────────────────── */
-  --pa-accent: #0080BE;
+  --mi-accent: #0080BE;
   /* links, active nav, primary */
-  --pa-accent-2: #34BECD;
+  --mi-accent-2: #34BECD;
   /* secondary cyan */
-  --pa-accent-soft: rgba(0, 128, 190, .10);
+  --mi-accent-soft: rgba(0, 128, 190, .10);
   /* tint fill */
-  --pa-accent-line: rgba(0, 128, 190, .30);
+  --mi-accent-line: rgba(0, 128, 190, .30);
   /* tint border / focus halo */
 
   /* ── Semantic status ────────────────────────────────── */
-  --pa-ok: #15A06A;
-  --pa-ok-soft: rgba(21, 160, 106, .10);
-  --pa-watch: #D9981F;
-  --pa-watch-soft: rgba(217, 152, 31, .12);
-  --pa-alert: #E05641;
-  --pa-alert-soft: rgba(224, 86, 65, .10);
+  --mi-ok: #15A06A;
+  --mi-ok-soft: rgba(21, 160, 106, .10);
+  --mi-watch: #D9981F;
+  --mi-watch-soft: rgba(217, 152, 31, .12);
+  --mi-alert: #E05641;
+  --mi-alert-soft: rgba(224, 86, 65, .10);
 
   /* ── Team / queue hues ──────────────────────────────── */
-  --pa-team-atencio: #6A5BE8;
-  --pa-team-vendes: #15A06A;
-  --pa-team-suport: #D9981F;
-  --pa-team-incidencies: #E05641;
-  --pa-team-retencio: #A98AFF;
+  --mi-team-atencio: #6A5BE8;
+  --mi-team-vendes: #15A06A;
+  --mi-team-suport: #D9981F;
+  --mi-team-incidencies: #E05641;
+  --mi-team-retencio: #A98AFF;
 
   /* ── Avatar fallback (neutral, not tinted) ──────────── */
-  --pa-av-bg: var(--pa-surface-2);
-  --pa-av-fg: var(--pa-dim);
+  --mi-av-bg: var(--mi-surface-2);
+  --mi-av-fg: var(--mi-dim);
 
   /* ── SLDS object icon tints ─────────────────────────── */
-  --pa-ic-queue: #5867E8;
-  --pa-ic-skill: #F88962;
-  --pa-ic-user: #34BECD;
-  --pa-ic-case: #FF538A;
-  --pa-ic-voice: #9050E9;
-  --pa-ic-chat: #FF538A;
-  --pa-ic-email: #95AEC5;
-  --pa-ic-whatsapp: #1FA076;
-  --pa-ic-work: #6CA1E9;
+  --mi-ic-queue: #5867E8;
+  --mi-ic-skill: #F88962;
+  --mi-ic-user: #34BECD;
+  --mi-ic-case: #FF538A;
+  --mi-ic-voice: #9050E9;
+  --mi-ic-chat: #FF538A;
+  --mi-ic-email: #95AEC5;
+  --mi-ic-whatsapp: #1FA076;
+  --mi-ic-work: #6CA1E9;
 
   /* ── Canvas wash — fixed radial behind the app ──────── */
-  --pa-wash: radial-gradient(1100px 600px at 75% -15%, rgba(0, 128, 190, .05), transparent 60%);
+  --mi-wash: radial-gradient(1100px 600px at 75% -15%, rgba(0, 128, 190, .05), transparent 60%);
   --fv-canvas-wash:
     radial-gradient(ellipse 120% 95% at 50% -8%, rgba(255, 255, 255, 0.12) 0%, transparent 58%),
     radial-gradient(ellipse 90% 80% at 12% 92%, rgba(61, 212, 240, 0.1) 0%, transparent 56%),
@@ -106,19 +106,19 @@
   /* ════════════════════════════════════════════════════
      SEMANTIC ALIASES — prefer these in components
      ════════════════════════════════════════════════════ */
-  --surface-canvas: var(--pa-bg);
-  --surface-raised: var(--pa-bg-tint);
-  --surface-card: var(--pa-surface);
+  --surface-canvas: var(--mi-bg);
+  --surface-raised: var(--mi-bg-tint);
+  --surface-card: var(--mi-surface);
   --surface-well: #F7F6F3;
 
-  --text-strong: var(--pa-ink);
-  --text-body: var(--pa-dim);
+  --text-strong: var(--mi-ink);
+  --text-body: var(--mi-dim);
   --text-mid: color-mix(in srgb, var(--text-body) 25%, var(--text-strong));
-  --text-muted: var(--pa-faint);
-  --text-disabled: var(--pa-off);
+  --text-muted: var(--mi-faint);
+  --text-disabled: var(--mi-off);
 
-  --border-subtle: var(--pa-line);
-  --border-strong: var(--pa-line-2);
+  --border-subtle: var(--mi-line);
+  --border-strong: var(--mi-line-2);
 
   /* Scrollbar thumb. Uses a solid-ish color (not the 9%-opacity border tokens)
      so it reads identically whether painted on the panel shell or on macOS's
@@ -129,16 +129,16 @@
   --accent: #0080BE;
   --accent-soft: rgba(0, 128, 190, .10);
   --accent-fg: #FFFFFF;
-  --accent-tint: var(--pa-accent-soft);
-  --accent-line: var(--pa-accent-line);
-  --accent-30: var(--pa-accent-line);
+  --accent-tint: var(--mi-accent-soft);
+  --accent-line: var(--mi-accent-line);
+  --accent-30: var(--mi-accent-line);
 
-  --status-ok: var(--pa-ok);
-  --status-watch: var(--pa-watch);
-  --status-alert: var(--pa-alert);
+  --status-ok: var(--mi-ok);
+  --status-watch: var(--mi-watch);
+  --status-alert: var(--mi-alert);
 
   /* ════════════════════════════════════════════════════
-     PANORAMA · TYPOGRAPHY TOKENS
+     MIRADOR · TYPOGRAPHY TOKENS
      ════════════════════════════════════════════════════ */
   --font-display: 'Space Grotesk', system-ui, sans-serif;
   --font-body: 'Inter', system-ui, sans-serif;
@@ -173,7 +173,7 @@
   --ls-caps: 0.05em;
 
   /* ════════════════════════════════════════════════════
-     PANORAMA · SPACING, RADIUS & SIZING (4px base grid)
+     MIRADOR · SPACING, RADIUS & SIZING (4px base grid)
      ════════════════════════════════════════════════════ */
   --sp-1: 4px;
   --sp-2: 7px;
@@ -204,14 +204,14 @@
   --h-tabbar: 34px;
 
   /* ════════════════════════════════════════════════════
-     PANORAMA · EFFECTS — shadow, motion, blur
+     MIRADOR · EFFECTS — shadow, motion, blur
      ════════════════════════════════════════════════════ */
   --shadow: 0 1px 2px rgba(27, 25, 36, .04), 0 4px 16px rgba(27, 25, 36, .05);
   --shadow-hover: 0 0 6px rgba(27, 25, 36, .065), 0 0 19px rgba(27, 25, 36, .075);
   --shadow-lift: 0 8px 30px rgba(27, 25, 36, .10);
   --shadow-drawer: -30px 0 60px rgba(27, 25, 36, .15);
   --shadow-tip: 0 10px 28px rgba(0, 0, 0, .28);
-  --ring-focus: 0 0 0 3px var(--pa-accent-soft);
+  --ring-focus: 0 0 0 3px var(--mi-accent-soft);
 
   --ease: cubic-bezier(.22, .61, .36, 1);
   --dur-fast: .15s;
@@ -276,11 +276,11 @@
 
   0%,
   100% {
-    box-shadow: 0 0 0 0 var(--st, var(--pa-alert));
+    box-shadow: 0 0 0 0 var(--st, var(--mi-alert));
   }
 
   50% {
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--st, var(--pa-alert)) 22%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--st, var(--mi-alert)) 22%, transparent);
   }
 }
 
@@ -305,7 +305,7 @@
   align-items: center;
   justify-content: center;
   background: var(--surface-canvas);
-  background-image: var(--pa-wash);
+  background-image: var(--mi-wash);
   opacity: 1;
   visibility: visible;
   transition:
@@ -418,7 +418,7 @@ body {
   font-size: var(--fs-body);
   line-height: var(--lh-normal);
   -webkit-font-smoothing: antialiased;
-  background-image: var(--pa-wash);
+  background-image: var(--mi-wash);
   background-attachment: fixed;
   /* Keep the default arrow cursor everywhere, even over selectable text. */
   cursor: default;
@@ -930,7 +930,7 @@ textarea,
   --dv-tabs-and-actions-container-background-color: var(--surface-raised);
   --dv-group-view-background-color: var(--surface-raised);
   /* Selected (visible-panel) tab: a soft pale-blue wash instead of the full
-     --pa-accent, so it reads far less intense. The fill is too light for white
+     --mi-accent, so it reads far less intense. The fill is too light for white
      text, so the selected tab uses dark text (--text-strong) like the others
      and is distinguished by its blue tint alone. */
   --dv-selected-tab-bg: rgba(0, 128, 190, 0.1);
@@ -1087,7 +1087,7 @@ textarea,
 }
 
 .dockview-container .dv-tab .dv-default-tab .dv-default-tab-action:hover {
-  background-color: var(--pa-alert-soft);
+  background-color: var(--mi-alert-soft);
   color: var(--status-alert);
 }
 
@@ -1617,8 +1617,8 @@ textarea,
   height: 36px;
   border-radius: var(--r-full);
   border: 1px solid var(--accent-30);
-  background: var(--pa-av-bg);
-  color: var(--pa-av-fg);
+  background: var(--mi-av-bg);
+  color: var(--mi-av-fg);
   font-family: var(--font-display);
   font-size: var(--fs-xs);
   font-weight: var(--fw-semibold);
@@ -1627,7 +1627,7 @@ textarea,
 
 .agent-avatar--photo {
   object-fit: cover;
-  background: var(--pa-av-bg);
+  background: var(--mi-av-bg);
 }
 
 .ring__face {
@@ -1716,7 +1716,7 @@ textarea,
 }
 
 .work-row__status--queued {
-  background: var(--pa-watch-soft);
+  background: var(--mi-watch-soft);
   color: var(--status-watch);
 }
 
@@ -1783,7 +1783,7 @@ textarea,
   color: var(--text-strong);
 }
 
-/* ── Insights banner (Panorama ops-summary) ── */
+/* ── Insights banner (Mirador ops-summary) ── */
 .panel-shell--home {
   padding: 0;
 }
@@ -1964,13 +1964,13 @@ textarea,
 }
 
 .insights-pillar--watch {
-  background: var(--pa-watch-soft);
+  background: var(--mi-watch-soft);
   color: var(--status-watch);
   box-shadow: inset 0 0 0 1px currentColor;
 }
 
 .insights-pillar--alert {
-  background: var(--pa-alert-soft);
+  background: var(--mi-alert-soft);
   color: var(--status-alert);
   box-shadow: inset 0 0 0 1px currentColor;
 }
@@ -2331,7 +2331,7 @@ textarea,
 }
 
 .fe-edge--divider {
-  background: var(--pa-team-vendes);
+  background: var(--mi-team-vendes);
 }
 
 .fe-rect-preview {
@@ -3158,7 +3158,7 @@ textarea,
   padding: 9px 12px;
   font-size: 12px;
   color: var(--text-primary);
-  /* Glass treatment ported verbatim from the panorama space tooltip. */
+  /* Glass treatment ported verbatim from the mirador space tooltip. */
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(12px) saturate(1.15);
@@ -3332,18 +3332,18 @@ textarea,
 
 .app-header__dev:hover {
   background: var(--dev-accent);
-  color: var(--pa-bg, #fff);
+  color: var(--mi-bg, #fff);
 }
 
 .app-header__dev--active {
-  border-color: var(--pa-ok);
-  color: var(--pa-ok);
-  background: var(--pa-ok-soft);
+  border-color: var(--mi-ok);
+  color: var(--mi-ok);
+  background: var(--mi-ok-soft);
 }
 
 .app-header__dev--active:hover {
-  background: var(--pa-ok-soft);
-  color: var(--pa-ok);
+  background: var(--mi-ok-soft);
+  color: var(--mi-ok);
 }
 
 .user-menu {
@@ -3456,7 +3456,7 @@ textarea,
 }
 
 .user-menu__item--danger:hover {
-  background: var(--pa-alert-soft, rgba(224, 86, 65, 0.1));
+  background: var(--mi-alert-soft, rgba(224, 86, 65, 0.1));
   color: var(--status-alert);
 }
 
@@ -3899,8 +3899,8 @@ textarea,
   height: 44px;
   border-radius: var(--r-full);
   border: 1px solid var(--accent-30);
-  background: var(--pa-av-bg);
-  color: var(--pa-av-fg);
+  background: var(--mi-av-bg);
+  color: var(--mi-av-fg);
   font-family: var(--font-display);
   font-size: var(--fs-sm);
   font-weight: var(--fw-semibold);
@@ -4827,9 +4827,9 @@ textarea,
 .wb-card__badge--soon {
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--pa-watch);
-  background: color-mix(in srgb, var(--pa-watch) 6%, transparent);
-  border-color: color-mix(in srgb, var(--pa-watch) 18%, transparent);
+  color: var(--mi-watch);
+  background: color-mix(in srgb, var(--mi-watch) 6%, transparent);
+  border-color: color-mix(in srgb, var(--mi-watch) 18%, transparent);
 }
 
 .wb-card__filter {

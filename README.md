@@ -78,11 +78,11 @@ authenticate from a bare static build.
 
 ## Salesforce backend (`force-app/main/default/`)
 
-- `classes/` — the Apex REST entry point (`PanoramaRestHandler` / `MiradorApi`,
+- `classes/` — the Apex REST entry point (`MiradorRestHandler` / `MiradorApi`,
   mapped to `/mirador/v1/*`) and the domain services that produce the response
   shapes consumed by the SPA.
 - `externalClientApps/` + `extlClntApp*OauthSets/` — ECA OAuth configuration.
-- `skilltypes/` — `PanoramaLanguage` and `PanoramaExpertise` skill types.
+- `skilltypes/` — `MiradorLanguage` and `MiradorExpertise` skill types.
 
 The HTTP contract is documented in [docs/mirador-REST-API.md](docs/mirador-REST-API.md);
 authentication setup in [docs/salesforce-authentication.md](docs/salesforce-authentication.md).

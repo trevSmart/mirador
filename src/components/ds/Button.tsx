@@ -25,7 +25,7 @@ interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'sty
 }
 
 /**
- * Panorama Button — the product's action control.
+ * Mirador Button — the product's action control.
  * Variants: primary (accent fill), ghost (hairline outline), subtle (surface + border), danger.
  * Sizes: sm / md. Optional leading glyph (unicode or node).
  */
