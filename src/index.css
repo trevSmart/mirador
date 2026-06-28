@@ -1130,34 +1130,47 @@ textarea,
   overflow: auto;
 }
 
-/* The panel shells scroll natively, but the right-most column scrolls via
-   Dockview's own custom scrollbar (.dv-scrollbar — a positioned <div>, not a
-   native bar). At the light-spaced theme that bar falls back to a near-white
-   25% color and is only 4px wide, so it always read thinner and softer than
-   the rest. We can't style it with ::-webkit-scrollbar (its .dv-content-container
-   is overflow:hidden); instead we drive Dockview's own token and match the
-   native panel-shell bars to the same thin, soft look. */
-.panel-shell {
+/* Shared soft, thin scrollbar for every native scroll container in the app, so
+   no native bar reads thicker or harsher than Dockview's own custom bar.
+   Dockview's bar (.dv-scrollbar — a positioned <div>, not a native bar) can't
+   be styled with ::-webkit-scrollbar, so it's driven via --dv-scrollbar-* to
+   match this same thin, soft look. The dark dev console (.dev-console__body) is
+   the one deliberate exception and keeps its own translucent-white bar. */
+.panel-shell,
+.home-side,
+.qsearch-drop-body,
+.floor-editor__canvas,
+.floor-editor__aside-scroll,
+.fe-palette__list,
+.fv-canvas,
+.detail-drawer__scroll,
+.settings-nav,
+.settings-content,
+.ds-select__panel,
+.error-fallback--panel,
+.error-fallback__pre,
+.dev-error-overlay__card,
+.dev-error-overlay__pre {
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) transparent;
-}
 
-.panel-shell::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
 
-.panel-shell::-webkit-scrollbar-track {
-  background: transparent;
-}
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
 
-.panel-shell::-webkit-scrollbar-thumb {
-  background-color: var(--scrollbar-thumb);
-  border-radius: var(--r-pill);
-}
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border-radius: var(--r-pill);
+  }
 
-.panel-shell::-webkit-scrollbar-thumb:hover {
-  background-color: var(--scrollbar-thumb-hover);
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+  }
 }
 
 .panel-shell__header {
@@ -1321,25 +1334,10 @@ textarea,
   gap: var(--sp-6);
   min-height: 0;
   overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) transparent;
-}
-
-.home-side::-webkit-scrollbar {
-  width: 6px;
-}
-
-.home-side::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.home-side::-webkit-scrollbar-thumb {
-  background-color: var(--scrollbar-thumb);
-  border-radius: var(--r-pill);
-}
-
-.home-side::-webkit-scrollbar-thumb:hover {
-  background-color: var(--scrollbar-thumb-hover);
+  /* The scrollbar sits on this column's right edge; pad the content away from it
+     so cards don't butt up against the thumb. Bar styling is shared with
+     .panel-shell above. */
+  padding-right: var(--sp-4);
 }
 
 @media (max-width: 900px) {
@@ -1388,9 +1386,14 @@ textarea,
 
 .panel-section__sort {
   font-size: var(--fs-sm);
-  /* Push the sort control to the far right of the filter row, after the
-     filter chips. `auto` left-margin claims all the free space between the
-     last chip and the sort dropdown. */
+}
+
+/* Push the sort control to the far right of the filter row, after the filter
+   chips. The `panel-section__sort` class lands on the Select's inner trigger
+   button, so the auto-margin must target the `.ds-select` wrapper instead —
+   it's the actual flex child of `.panel-section__filters`. `auto` claims all
+   the free space between the last chip and the sort dropdown. */
+.panel-section__filters > .ds-select {
   margin-left: auto;
 }
 
@@ -1706,7 +1709,9 @@ textarea,
 
 .panel-shell--home .home-layout {
   padding-left: var(--sp-8);
-  padding-right: var(--sp-8);
+  /* The right column (.home-side) owns its own right padding so its scrollbar
+     can hug the panel edge while content stays clear of the thumb. */
+  padding-right: var(--sp-4);
   padding-top: var(--sp-5);
   padding-bottom: var(--sp-8);
 }
@@ -2865,7 +2870,9 @@ textarea,
 .fv-stack__item {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
+  /* No gap between a floor's title and its render — they read as one unit.
+     Separation between different floors comes from `.fv-stack`'s own gap. */
+  gap: 0;
   min-height: 0;
   transition:
     flex-basis 0.35s var(--ease),
@@ -3412,7 +3419,8 @@ textarea,
   inset: 0;
   z-index: 300;
   background: rgba(27, 25, 36, 0.28);
-  backdrop-filter: var(--blur-scrim, blur(2px));
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
   opacity: 0;
   visibility: hidden;
   transition: opacity var(--dur-backdrop) var(--ease), visibility 0s linear var(--dur-backdrop);
@@ -4318,12 +4326,19 @@ textarea,
   border: 0;
   border-radius: var(--r-xs);
   background: transparent;
-  padding: var(--sp-2) var(--sp-3);
+  /* Extra right padding keeps the label off the panel edge. It lives on the
+     option (not the panel) so the hover/active highlight still fills the full
+     width all the way to the right. */
+  padding: var(--sp-2) var(--sp-8) var(--sp-2) var(--sp-3);
   text-align: left;
   font: inherit;
   font-size: var(--fs-sm);
   color: var(--text-body);
   cursor: pointer;
+  /* Keep each option on a single line so the panel sizes to its natural
+     content width. This also lets the trigger's overflow detection measure
+     a real (un-wrapped) scrollWidth and decide whether to flip left. */
+  white-space: nowrap;
 }
 
 .ds-select__option.is-active,

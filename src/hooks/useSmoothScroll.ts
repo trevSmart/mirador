@@ -59,27 +59,45 @@ export function useSmoothScroll<T extends HTMLElement>() {
     lenisByElement.set(element, lenis)
 
     let rafId = 0
+    const runRaf = () => {
+      rafId = requestAnimationFrame(function raf(time) {
+        lenis.raf(time)
+        rafId = requestAnimationFrame(raf)
+      })
+    }
+
+    // Dockview moves panels in and out of the DOM directly (not through React),
+    // so when the user switches panels the element is *disconnected* and later
+    // *reconnected* — the same node — without React ever re-running this ref.
+    // Two failures follow if unhandled: (1) a raf loop on a detached element
+    // pegs the CPU and poisons Lenis's cached scroll limit (it measures 0×0);
+    // (2) on return, nothing rebuilds Lenis, so smooth scroll is dead.
+    //
+    // So: pause the raf loop while detached, and watch the document for the
+    // element being reattached to resume it (with a resize() so Lenis re-reads
+    // the now-visible dimensions). The instance is only destroyed when React
+    // truly unmounts the component (cleanup.current below, fired with null).
+    const observer = new MutationObserver(() => {
+      const connected = element.isConnected
+      if (connected && rafId === 0) {
+        lenis.resize()
+        runRaf()
+      } else if (!connected && rafId !== 0) {
+        cancelAnimationFrame(rafId)
+        rafId = 0
+      }
+    })
+    observer.observe(document.documentElement, { childList: true, subtree: true })
+
     const teardown = () => {
+      observer.disconnect()
       cancelAnimationFrame(rafId)
       lenisByElement.delete(element)
       lenis.destroy()
       cleanup.current = null
     }
 
-    // Mirador renders panels inside Dockview, which destroys panel DOM nodes
-    // directly rather than through React's reconciler. When that happens React
-    // never invokes this callback ref with `null`, so the cleanup below would
-    // never run and Lenis's raf loop would leak — several orphaned loops pegged
-    // the CPU at 100% on load. Guard the loop on `element.isConnected`: the
-    // moment the element leaves the document, the instance self-destructs.
-    rafId = requestAnimationFrame(function raf(time) {
-      if (!element.isConnected) {
-        teardown()
-        return
-      }
-      lenis.raf(time)
-      rafId = requestAnimationFrame(raf)
-    })
+    if (element.isConnected) runRaf()
 
     cleanup.current = teardown
   }, [])
