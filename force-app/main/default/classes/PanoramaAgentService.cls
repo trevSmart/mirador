@@ -342,6 +342,9 @@ public with sharing class PanoramaAgentService {
      * expose whether a status is "busy", so we don't classify them.
      */
     public static List<PresenceStatusDto> getPresenceStatuses() {
+        if (!Schema.sObjectType.ServicePresenceStatus.isAccessible()) {
+            return new List<PresenceStatusDto>();
+        }
         List<PresenceStatusDto> result = new List<PresenceStatusDto>();
         for (ServicePresenceStatus sps : [
             SELECT Id, MasterLabel
