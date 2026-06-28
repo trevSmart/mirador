@@ -1,14 +1,14 @@
-/* Floor editor — pure model logic.
+/* Space editor — pure model logic.
    No React, no DOM: every function takes state and returns new immutable state,
    so the rules stay testable in isolation and the hook stays thin. */
 
-import type { Cell, Dir, Divider, Edge, Floor, FloorPlanData, OpeningKind, Place, Seat } from './types'
+import type { Cell, Dir, Divider, Edge, Space, SpacePlanData, OpeningKind, Place, Seat } from './types'
 
 export const GRID_C = 50
 export const GRID_R = 50
 const SEED_SIZE = 4
 export const UNDO_LIMIT = 10
-export const FLOOR_SCHEMA_VERSION = 2
+export const SPACE_SCHEMA_VERSION = 2
 
 const EDGE_DELTA: Record<Edge, [number, number]> = {
   N: [0, -1],
@@ -44,13 +44,13 @@ function asArray(value: unknown): unknown[] {
   return Array.isArray(value) ? value : []
 }
 
-/** Build a lookup set of "c,r" keys for the floor's cells. */
+/** Build a lookup set of "c,r" keys for the space's cells. */
 function makeCellSet(cells: Cell[]): Set<string> {
   return new Set(cells.map(([c, r]) => cellKey(c, r)))
 }
 
-function hasCell(floor: Floor, c: number, r: number): boolean {
-  return floor.cells.some(([cc, rr]) => cc === c && rr === r)
+function hasCell(space: Space, c: number, r: number): boolean {
+  return space.cells.some(([cc, rr]) => cc === c && rr === r)
 }
 
 /** An edge is exterior when there is no cell on the other side of it. */
@@ -76,7 +76,7 @@ function canonicalDivider(c: number, r: number, edge: Edge): Divider {
 
 /* ── Construction ─────────────────────────────────────────────────────── */
 
-export function seedFloor(name: string): Floor {
+export function seedSpace(name: string): Space {
   const cells: Cell[] = []
   for (let r = 0; r < SEED_SIZE; r += 1) {
     for (let c = 0; c < SEED_SIZE; c += 1) {
@@ -84,7 +84,7 @@ export function seedFloor(name: string): Floor {
     }
   }
   return {
-    id: makeId('floor'),
+    id: makeId('space'),
     name,
     cells,
     seats: [],
@@ -94,21 +94,21 @@ export function seedFloor(name: string): Floor {
   }
 }
 
-export function cloneFloor(floor: Floor, name: string): Floor {
+export function cloneSpace(space: Space, name: string): Space {
   return {
-    id: makeId('floor'),
+    id: makeId('space'),
     name,
-    cells: floor.cells.map(([c, r]) => [c, r] as Cell),
-    seats: floor.seats.map((seat) => ({ ...seat })),
-    openings: floor.openings.map((opening) => ({ ...opening })),
-    dividers: floor.dividers.map((divider) => ({ ...divider })),
-    dir: floor.dir,
+    cells: space.cells.map(([c, r]) => [c, r] as Cell),
+    seats: space.seats.map((seat) => ({ ...seat })),
+    openings: space.openings.map((opening) => ({ ...opening })),
+    dividers: space.dividers.map((divider) => ({ ...divider })),
+    dir: space.dir,
   }
 }
 
-export function defaultFloorPlan(): FloorPlanData {
-  const place: Place = { id: makeId('place'), name: 'Lloc 1', floors: [seedFloor('Planta 1')] }
-  return { v: FLOOR_SCHEMA_VERSION, activePlaceId: place.id, places: [place] }
+export function defaultSpacePlan(): SpacePlanData {
+  const place: Place = { id: makeId('place'), name: 'Lloc 1', spaces: [seedSpace('Planta 1')] }
+  return { v: SPACE_SCHEMA_VERSION, activePlaceId: place.id, places: [place] }
 }
 
 /* ── Connectivity (the room must stay one 4-connected block, no islands) ── */
@@ -140,8 +140,8 @@ function isConnected(cells: Cell[]): boolean {
 }
 
 /** True when a rectangle's cells are adjacent to (or overlap) the existing area. */
-function rectTouchesArea(floor: Floor, c0: number, c1: number, r0: number, r1: number): boolean {
-  const cellSet = makeCellSet(floor.cells)
+function rectTouchesArea(space: Space, c0: number, c1: number, r0: number, r1: number): boolean {
+  const cellSet = makeCellSet(space.cells)
   for (let r = r0; r <= r1; r += 1) {
     for (let c = c0; c <= c1; c += 1) {
       if (
@@ -158,23 +158,23 @@ function rectTouchesArea(floor: Floor, c0: number, c1: number, r0: number, r1: n
   return false
 }
 
-/* ── Tools (floor-level, immutable) ───────────────────────────────────── */
+/* ── Tools (space-level, immutable) ───────────────────────────────────── */
 
 /** Add every cell inside the rectangle spanned by start/end (additive, clamped).
     The room must stay one connected block: a rectangle that does not touch the
-    existing area is rejected wholesale (the first rectangle on an empty floor
+    existing area is rejected wholesale (the first rectangle on an empty space
     seeds freely). */
-export function addCellRect(floor: Floor, start: Cell, end: Cell): Floor {
+export function addCellRect(space: Space, start: Cell, end: Cell): Space {
   const c0 = clamp(Math.min(start[0], end[0]), 0, GRID_C - 1)
   const c1 = clamp(Math.max(start[0], end[0]), 0, GRID_C - 1)
   const r0 = clamp(Math.min(start[1], end[1]), 0, GRID_R - 1)
   const r1 = clamp(Math.max(start[1], end[1]), 0, GRID_R - 1)
 
   // Reject a disconnected rectangle (unless this is the first area painted).
-  if (floor.cells.length > 0 && !rectTouchesArea(floor, c0, c1, r0, r1)) return floor
+  if (space.cells.length > 0 && !rectTouchesArea(space, c0, c1, r0, r1)) return space
 
-  const cellSet = makeCellSet(floor.cells)
-  const cells = [...floor.cells]
+  const cellSet = makeCellSet(space.cells)
+  const cells = [...space.cells]
   let added = false
   for (let r = r0; r <= r1; r += 1) {
     for (let c = c0; c <= c1; c += 1) {
@@ -186,44 +186,44 @@ export function addCellRect(floor: Floor, start: Cell, end: Cell): Floor {
       }
     }
   }
-  if (!added) return floor
+  if (!added) return space
   // Newly added cells can turn an exterior edge interior, invalidating openings.
-  return sanitizeFloor({ ...floor, cells })
+  return sanitizeSpace({ ...space, cells })
 }
 
 /** Remove a cell along with its seat and any orphaned openings/dividers.
     An erase that would split the room into separate islands is rejected. */
-export function eraseCell(floor: Floor, c: number, r: number): Floor {
-  if (!hasCell(floor, c, r)) return floor
+export function eraseCell(space: Space, c: number, r: number): Space {
+  if (!hasCell(space, c, r)) return space
   // Two-step erase: while a seat sits on the cell, the first erase removes only
-  // the seat (and its agent) and keeps the floor area. A second erase, now that
+  // the seat (and its agent) and keeps the space area. A second erase, now that
   // the cell is bare, removes the area itself.
-  const hasSeat = floor.seats.some((seat) => seat.c === c && seat.r === r)
+  const hasSeat = space.seats.some((seat) => seat.c === c && seat.r === r)
   if (hasSeat) {
-    return { ...floor, seats: floor.seats.filter((seat) => !(seat.c === c && seat.r === r)) }
+    return { ...space, seats: space.seats.filter((seat) => !(seat.c === c && seat.r === r)) }
   }
-  const cells = floor.cells.filter(([cc, rr]) => !(cc === c && rr === r))
-  if (!isConnected(cells)) return floor
-  return sanitizeFloor({ ...floor, cells })
+  const cells = space.cells.filter(([cc, rr]) => !(cc === c && rr === r))
+  if (!isConnected(cells)) return space
+  return sanitizeSpace({ ...space, cells })
 }
 
 /** Toggle an empty seat on an existing cell. */
-export function toggleSeat(floor: Floor, c: number, r: number): Floor {
-  if (!hasCell(floor, c, r)) return floor
-  const exists = floor.seats.some((seat) => seat.c === c && seat.r === r)
+export function toggleSeat(space: Space, c: number, r: number): Space {
+  if (!hasCell(space, c, r)) return space
+  const exists = space.seats.some((seat) => seat.c === c && seat.r === r)
   if (exists) {
-    return { ...floor, seats: floor.seats.filter((seat) => !(seat.c === c && seat.r === r)) }
+    return { ...space, seats: space.seats.filter((seat) => !(seat.c === c && seat.r === r)) }
   }
-  return { ...floor, seats: [...floor.seats, { c, r, agentId: null }] }
+  return { ...space, seats: [...space.seats, { c, r, agentId: null }] }
 }
 
 /** Assign (or clear, with agentId null) an agent to the seat at c,r. */
-export function assignAgentToSeat(floor: Floor, c: number, r: number, agentId: string | null): Floor {
-  if (!hasCell(floor, c, r)) return floor
+export function assignAgentToSeat(space: Space, c: number, r: number, agentId: string | null): Space {
+  if (!hasCell(space, c, r)) return space
   // An agent can only occupy one seat: clear it from any other seat first.
   let seats = agentId
-    ? floor.seats.map((seat) => (seat.agentId === agentId ? { ...seat, agentId: null } : seat))
-    : floor.seats
+    ? space.seats.map((seat) => (seat.agentId === agentId ? { ...seat, agentId: null } : seat))
+    : space.seats
 
   const index = seats.findIndex((seat) => seat.c === c && seat.r === r)
   if (index >= 0) {
@@ -231,48 +231,48 @@ export function assignAgentToSeat(floor: Floor, c: number, r: number, agentId: s
   } else {
     seats = [...seats, { c, r, agentId }]
   }
-  return { ...floor, seats }
+  return { ...space, seats }
 }
 
 /** Toggle a door/window on an exterior edge (replacing the other kind if present). */
-export function toggleOpening(floor: Floor, c: number, r: number, edge: Edge, kind: OpeningKind): Floor {
-  const cellSet = makeCellSet(floor.cells)
-  if (!isExteriorEdge(cellSet, c, r, edge)) return floor
-  const existing = floor.openings.find((o) => o.c === c && o.r === r && o.edge === edge)
+export function toggleOpening(space: Space, c: number, r: number, edge: Edge, kind: OpeningKind): Space {
+  const cellSet = makeCellSet(space.cells)
+  if (!isExteriorEdge(cellSet, c, r, edge)) return space
+  const existing = space.openings.find((o) => o.c === c && o.r === r && o.edge === edge)
   if (existing && existing.kind === kind) {
-    return { ...floor, openings: floor.openings.filter((o) => o !== existing) }
+    return { ...space, openings: space.openings.filter((o) => o !== existing) }
   }
-  const without = floor.openings.filter((o) => !(o.c === c && o.r === r && o.edge === edge))
-  return { ...floor, openings: [...without, { c, r, edge, kind }] }
+  const without = space.openings.filter((o) => !(o.c === c && o.r === r && o.edge === edge))
+  return { ...space, openings: [...without, { c, r, edge, kind }] }
 }
 
 /** Toggle an interior divider (stored canonically). */
-export function toggleDivider(floor: Floor, c: number, r: number, edge: Edge): Floor {
-  const cellSet = makeCellSet(floor.cells)
-  if (!isInteriorEdge(cellSet, c, r, edge)) return floor
+export function toggleDivider(space: Space, c: number, r: number, edge: Edge): Space {
+  const cellSet = makeCellSet(space.cells)
+  if (!isInteriorEdge(cellSet, c, r, edge)) return space
   const div = canonicalDivider(c, r, edge)
-  const existing = floor.dividers.find((d) => d.c === div.c && d.r === div.r && d.edge === div.edge)
+  const existing = space.dividers.find((d) => d.c === div.c && d.r === div.r && d.edge === div.edge)
   if (existing) {
-    return { ...floor, dividers: floor.dividers.filter((d) => d !== existing) }
+    return { ...space, dividers: space.dividers.filter((d) => d !== existing) }
   }
-  return { ...floor, dividers: [...floor.dividers, div] }
+  return { ...space, dividers: [...space.dividers, div] }
 }
 
 /** Remove an opening and/or divider sitting on the given edge. */
-export function eraseEdge(floor: Floor, c: number, r: number, edge: Edge): Floor {
-  const openings = floor.openings.filter((o) => !(o.c === c && o.r === r && o.edge === edge))
+export function eraseEdge(space: Space, c: number, r: number, edge: Edge): Space {
+  const openings = space.openings.filter((o) => !(o.c === c && o.r === r && o.edge === edge))
   const div = canonicalDivider(c, r, edge)
-  const dividers = floor.dividers.filter((d) => !(d.c === div.c && d.r === div.r && d.edge === div.edge))
-  if (openings.length === floor.openings.length && dividers.length === floor.dividers.length) {
-    return floor
+  const dividers = space.dividers.filter((d) => !(d.c === div.c && d.r === div.r && d.edge === div.edge))
+  if (openings.length === space.openings.length && dividers.length === space.dividers.length) {
+    return space
   }
-  return { ...floor, openings, dividers }
+  return { ...space, openings, dividers }
 }
 
 /* ── Sanitisation ─────────────────────────────────────────────────────── */
 
-/** Validate and clean a single floor from any (possibly untrusted) input. */
-function sanitizeFloor(raw: unknown): Floor {
+/** Validate and clean a single space from any (possibly untrusted) input. */
+function sanitizeSpace(raw: unknown): Space {
   const source = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
 
   const cellSet = new Set<string>()
@@ -307,7 +307,7 @@ function sanitizeFloor(raw: unknown): Floor {
   }
 
   const openSet = new Set<string>()
-  const openings: Floor['openings'] = []
+  const openings: Space['openings'] = []
   for (const item of asArray(source.openings)) {
     const opening = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>
     const c = num(opening.c)
@@ -342,7 +342,7 @@ function sanitizeFloor(raw: unknown): Floor {
   const rawDir = num(source.dir)
   const dir: Dir = rawDir === 1 || rawDir === 2 || rawDir === 3 ? rawDir : 0
   return {
-    id: typeof source.id === 'string' && source.id ? source.id : makeId('floor'),
+    id: typeof source.id === 'string' && source.id ? source.id : makeId('space'),
     name: typeof source.name === 'string' && source.name.trim() ? source.name.trim().slice(0, 40) : 'Planta',
     cells,
     seats,
@@ -353,24 +353,24 @@ function sanitizeFloor(raw: unknown): Floor {
 }
 
 /** Validate a whole plan from storage; returns null when nothing usable. */
-export function sanitizeFloorPlan(raw: unknown): FloorPlanData | null {
+export function sanitizeSpacePlan(raw: unknown): SpacePlanData | null {
   if (!raw || typeof raw !== 'object') return null
   const data = raw as Record<string, unknown>
-  if (data.v !== FLOOR_SCHEMA_VERSION) return null   // discard old/unknown schema
+  if (data.v !== SPACE_SCHEMA_VERSION) return null   // discard old/unknown schema
   if (!Array.isArray(data.places)) return null
 
   const places: Place[] = []
   for (const item of data.places) {
     const place = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>
-    const floors = asArray(place.floors)
-      .map((floor) => sanitizeFloor(floor))
-      .filter((floor) => floor.cells.length > 0)
-    if (floors.length === 0) continue
+    const spaces = asArray(place.spaces)
+      .map((space) => sanitizeSpace(space))
+      .filter((space) => space.cells.length > 0)
+    if (spaces.length === 0) continue
     places.push({
       id: typeof place.id === 'string' && place.id ? place.id : makeId('place'),
       name:
         typeof place.name === 'string' && place.name.trim() ? place.name.trim().slice(0, 40) : 'Lloc',
-      floors,
+      spaces,
     })
   }
 
@@ -380,10 +380,10 @@ export function sanitizeFloorPlan(raw: unknown): FloorPlanData | null {
       ? data.activePlaceId
       : places[0].id
 
-  return { v: FLOOR_SCHEMA_VERSION, activePlaceId, places }
+  return { v: SPACE_SCHEMA_VERSION, activePlaceId, places }
 }
 
 /** Stable signature used to detect unsaved changes. */
-export function floorPlanSignature(data: FloorPlanData): string {
+export function spacePlanSignature(data: SpacePlanData): string {
   return JSON.stringify(data)
 }

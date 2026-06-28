@@ -1,4 +1,4 @@
-/* Floor editor / viewer — shared 2D grid geometry.
+/* Space editor / viewer — shared 2D grid geometry.
    Both the editable grid and the read-only supervision view lay cells, seats and
    edges out the same way, just at different scales. Keeping the maths here means
    the two stay pixel-consistent. */

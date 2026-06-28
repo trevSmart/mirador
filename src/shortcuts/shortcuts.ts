@@ -12,8 +12,8 @@ export const SHORTCUTS: Shortcut[] = [
   { id: 'open-queues',      key: 'q', run: (ctx) => ctx.openPanel('queues') },
   { id: 'open-skills',      key: 's', run: (ctx) => ctx.openPanel('skills') },
   { id: 'open-work',        key: 'w', run: (ctx) => ctx.openPanel('work') },
-  { id: 'open-floor',       key: 'f', run: (ctx) => ctx.openPanel('floor') },
-  { id: 'open-floor-editor', key: 'e', run: (ctx) => ctx.openPanel('floorEditor') },
+  { id: 'open-space',       key: 'f', run: (ctx) => ctx.openPanel('space') },
+  { id: 'open-space-editor', key: 'e', run: (ctx) => ctx.openPanel('spaceEditor') },
 
   // Settings (mogut de 's' a ',' perquè Skills agafa la 's').
   { id: 'open-settings',    key: ',', run: (ctx) => ctx.openSettings() },

@@ -12,8 +12,8 @@ export type PanelType =
   | 'queues'
   | 'skills'
   | 'work'
-  | 'floor'
-  | 'floorEditor'
+  | 'space'
+  | 'spaceEditor'
 
 type PanelIcon =
   | { name: SfIconName }
@@ -33,8 +33,8 @@ export const PANEL_DEFINITIONS: PanelDefinition[] = [
   { type: 'queues',     title: 'Queues',       icon: { name: 'queue' },                                   component: lazy(() => import('./QueuesPanel').then(m => ({ default: m.QueuesPanel }))) },
   { type: 'skills',     title: 'Skills',       icon: { name: 'skill' },                                   component: lazy(() => import('./SkillsPanel').then(m => ({ default: m.SkillsPanel }))) },
   { type: 'work',       title: 'Work',         icon: { name: 'work' },                                    component: lazy(() => import('./WorkPanel').then(m => ({ default: m.WorkPanel }))) },
-  { type: 'floor',      title: 'Floor',        icon: { sprite: 'standard', symbol: 'business_unit' },      component: lazy(() => import('./FloorPanel').then(m => ({ default: m.FloorPanel }))) },
-  { type: 'floorEditor', title: 'Floor editor', icon: { sprite: 'custom', symbol: 'custom83' },              component: lazy(() => import('./FloorEditorPanel').then(m => ({ default: m.FloorEditorPanel }))) },
+  { type: 'space',      title: 'Space',        icon: { sprite: 'standard', symbol: 'business_unit' },      component: lazy(() => import('./SpacePanel').then(m => ({ default: m.SpacePanel }))) },
+  { type: 'spaceEditor', title: 'Space editor', icon: { sprite: 'custom', symbol: 'custom83' },              component: lazy(() => import('./SpaceEditorPanel').then(m => ({ default: m.SpaceEditorPanel }))) },
 ]
 
 function withPanelErrorBoundary(

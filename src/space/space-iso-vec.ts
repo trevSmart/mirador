@@ -1,13 +1,13 @@
-/* Vectorial reformulation of the isometric projection used by the Floor view.
-   It expresses the floor geometry in terms of two independent basis vectors
+/* Vectorial reformulation of the isometric projection used by the Space view.
+   It expresses the space geometry in terms of two independent basis vectors
    `u` (one step in column c) and `v` (one step in row r) instead of the fixed
-   `±TW / ±TH` offsets the legacy `floor-iso.ts` hardcodes.
+   `±TW / ±TH` offsets the legacy `space-iso.ts` hardcodes.
 
    With `u` and `v` free to be *non-mirror* vectors the azimuth can tilt away
    from the symmetric 45°, which powers the per-room drag-to-orbit camera. */
 
-import { backLeftTrue, backRightTrue, openingQuad, rotateCell } from './floor-iso'
-import type { Cell, Dir, Edge, Floor, Opening } from './types'
+import { backLeftTrue, backRightTrue, openingQuad, rotateCell } from './space-iso'
+import type { Cell, Dir, Edge, Space, Opening } from './types'
 
 export type Point = [number, number]
 
@@ -54,7 +54,7 @@ export function makeBasis(azimuthDeg: number, tilt = 0.5): IsoBasis {
   }
 }
 
-/** Cell centre in screen space (dir-0 space — see `normalizeFloor`). */
+/** Cell centre in screen space (dir-0 space — see `normalizeSpace`). */
 export function projectCellVec(c: number, r: number, b: IsoBasis): Point {
   return [c * b.ux + r * b.vx, c * b.uy + r * b.vy]
 }
@@ -111,7 +111,7 @@ export function towerLeftFace(x: number, y: number, b: IsoBasis, h1: number, h2:
   return faceQuad(left, bottom, h1, h2)
 }
 
-// Floor-slab side faces (front edges) drop DOWN by the slab thickness.
+// Space-slab side faces (front edges) drop DOWN by the slab thickness.
 export function slabRightFaceVec(x: number, y: number, b: IsoBasis): string {
   const { right, bottom } = tileCorners(x, y, b)
   return str(right, bottom, up(bottom, -b.thk), up(right, -b.thk))
@@ -141,9 +141,9 @@ export function backLeftOpeningEdge(x: number, y: number, b: IsoBasis): [Point, 
   return [top, left, up(top, b.wallH), up(left, b.wallH)]
 }
 
-/** Footprint of light cast onto the floor by a window on a back wall.
+/** Footprint of light cast onto the space by a window on a back wall.
    The beam starts at the window's ground sill (a centred slice of the wall's
-   ground edge) and is projected across the floor along a shared sun direction
+   ground edge) and is projected across the space along a shared sun direction
    `(sx, sy)` (screen-space, in cell units) by `length` cells. A common sun
    direction for every window makes all the beams parallel, like one light
    source — far more convincing than each beam shooting straight off its wall.
@@ -224,11 +224,11 @@ export function computeBoundsVec(cells: Cell[], b: IsoBasis, topExtra = 0, pad =
 }
 
 // ---------------------------------------------------------------------------
-// Floor normalisation: collapse the floor's saved camera `dir` into dir-0 cell
+// Space normalisation: collapse the space's saved camera `dir` into dir-0 cell
 // coordinates, so the vectorial projection only ever needs to handle dir 0.
 // ---------------------------------------------------------------------------
 
-export interface NormalizedFloor {
+export interface NormalizedSpace {
   cells: Cell[]
   seats: { c: number; r: number; agentId: string | null }[]
   openings: Opening[]
@@ -245,29 +245,29 @@ function canonicalDivider(a: Cell, b: Cell): { c: number; r: number; edge: 'E' |
   return null
 }
 
-// `rotateEdge` from floor-iso rotates N→E→S→O; we need the same to place openings.
+// `rotateEdge` from space-iso rotates N→E→S→O; we need the same to place openings.
 const EDGE_ORDER: Edge[] = ['N', 'E', 'S', 'O']
 function rotateEdgeLocal(edge: Edge, dir: Dir): Edge {
   const i = EDGE_ORDER.indexOf(edge)
   return i < 0 ? edge : EDGE_ORDER[(i + dir) % 4]
 }
 
-/** Rebuild every floor element in dir-0 space for `makeBasis`-driven rendering. */
-export function normalizeFloor(floor: Floor): NormalizedFloor {
-  const dir = floor.dir
+/** Rebuild every space element in dir-0 space for `makeBasis`-driven rendering. */
+export function normalizeSpace(space: Space): NormalizedSpace {
+  const dir = space.dir
   const rc = (c: number, r: number): Cell => rotateCell(c, r, dir, GRID_N)
 
-  const cells = floor.cells.map(([c, r]) => rc(c, r))
-  const seats = floor.seats.map((s) => {
+  const cells = space.cells.map(([c, r]) => rc(c, r))
+  const seats = space.seats.map((s) => {
     const [c, r] = rc(s.c, s.r)
     return { c, r, agentId: s.agentId }
   })
-  const openings: Opening[] = floor.openings.map((o) => {
+  const openings: Opening[] = space.openings.map((o) => {
     const [c, r] = rc(o.c, o.r)
     return { c, r, edge: rotateEdgeLocal(o.edge, dir), kind: o.kind }
   })
   const dividers: { c: number; r: number; edge: 'E' | 'S' }[] = []
-  for (const d of floor.dividers) {
+  for (const d of space.dividers) {
     const a = rc(d.c, d.r)
     const b = rc(d.edge === 'E' ? d.c + 1 : d.c, d.edge === 'E' ? d.r : d.r + 1)
     const canon = canonicalDivider(a, b)

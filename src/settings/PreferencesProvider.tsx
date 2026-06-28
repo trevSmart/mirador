@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { devLog } from '../dev/dev-log'
 import { PreferencesContext, type PreferencesContextValue } from './preferences-context'
-import { buildFloorCanvasWash } from './floor-canvas-wash'
+import { buildSpaceCanvasWash } from './space-canvas-wash'
 import {
   loadPreferences,
   PREFERENCES_EVENT,
@@ -35,9 +35,9 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.style.setProperty(
       '--fv-canvas-wash',
-      buildFloorCanvasWash(prefs.floorCanvasTint),
+      buildSpaceCanvasWash(prefs.spaceCanvasTint),
     )
-  }, [prefs.floorCanvasTint])
+  }, [prefs.spaceCanvasTint])
 
   const save = useCallback((next: Preferences) => {
     devLog.action('settings:save', next)

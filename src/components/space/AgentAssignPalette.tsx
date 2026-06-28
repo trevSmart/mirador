@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { Agent } from '../../api/types'
-import type { SeatRef } from '../../floor/useFloorPlan'
+import type { SeatRef } from '../../space/useSpacePlan'
 import { presenceLabel } from '../../utils/format'
 import { AgentAvatar } from '../AgentRow'
 import { Button } from '../ds'

@@ -1,21 +1,21 @@
 import {
-  buildFloorCanvasWash,
-  FLOOR_CANVAS_TINT_LABELS,
-  FLOOR_CANVAS_TINTS,
-  type FloorCanvasTint,
-} from '../../settings/floor-canvas-wash'
+  buildSpaceCanvasWash,
+  SPACE_CANVAS_TINT_LABELS,
+  SPACE_CANVAS_TINTS,
+  type SpaceCanvasTint,
+} from '../../settings/space-canvas-wash'
 
 export function TintSwatchField({
   value,
   onChange,
 }: {
-  value: FloorCanvasTint
-  onChange: (value: FloorCanvasTint) => void
+  value: SpaceCanvasTint
+  onChange: (value: SpaceCanvasTint) => void
 }) {
   return (
     <div className="settings-tint-swatches" role="radiogroup" aria-label="To del fons de les sales">
-      {FLOOR_CANVAS_TINTS.map((tint) => {
-        const label = FLOOR_CANVAS_TINT_LABELS[tint]
+      {SPACE_CANVAS_TINTS.map((tint) => {
+        const label = SPACE_CANVAS_TINT_LABELS[tint]
         return (
           <button
             key={tint}
@@ -25,7 +25,7 @@ export function TintSwatchField({
             aria-label={label}
             title={label}
             className={`settings-tint-swatch${tint === 'none' ? ' settings-tint-swatch--none' : ''}${value === tint ? ' is-active' : ''}`}
-            style={tint === 'none' ? undefined : { background: buildFloorCanvasWash(tint) }}
+            style={tint === 'none' ? undefined : { background: buildSpaceCanvasWash(tint) }}
             onClick={() => onChange(tint)}
           />
         )

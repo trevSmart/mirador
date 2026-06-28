@@ -168,15 +168,15 @@ Env (`.env`, see `.env.example`): `SF_CLIENT_ID`, `SF_LOGIN_URL`,
 - `registry.ts` is the single source of truth for panels. Each `PanelDefinition`
   has a `type`, `title`, `icon`, and a **lazy-loaded** component wrapped in a
   per-panel `Suspense` + `ErrorBoundary`. Add a new panel by adding one entry here.
-- Panel types: `home`, `wallboard`, `agents`, `queues`, `skills`, `work`, `floor`,
-  `floorEditor`, and `dev` (**EXPERIMENTAL** — vectorial floor projection; the
+- Panel types: `home`, `wallboard`, `agents`, `queues`, `skills`, `work`, `space`,
+  `spaceEditor`, and `dev` (**EXPERIMENTAL** — vectorial space projection; the
   whole feature lives in `src/dev/` and is meant to be deletable as a unit).
 - `src/dockview/` handles layout persistence, tab groups, context menus, theming.
 
-### Floor view (`src/floor/`, `src/components/floor/`)
+### Space view (`src/space/`, `src/components/space/`)
 
-2D/3D isometric "floor plan" of the contact center (seats, agents, towers).
-Geometry/projection helpers in `src/floor/`; UI in `src/components/floor/`.
+2D/3D isometric "space plan" of the contact center (seats, agents, towers).
+Geometry/projection helpers in `src/space/`; UI in `src/components/space/`.
 `src/dev/` holds an experimental vector-based reimplementation.
 
 ### Other notable areas
@@ -189,7 +189,7 @@ Geometry/projection helpers in `src/floor/`; UI in `src/components/floor/`.
   `vite.config.ts`), and Vite error formatting.
 - `src/settings/` — `Preferences` model (flat object in localStorage, sanitized on
   load), providers, and the settings modal.
-- `src/dev/` — developer console (`devLog`) and experimental floor work.
+- `src/dev/` — developer console (`devLog`) and experimental space work.
 - `src/utils/` — pure helpers (formatting, metrics, color, search, health
   insights). Keep these side-effect-free.
 

@@ -1,22 +1,22 @@
 import { lazy, Suspense, useCallback, useMemo, useRef, useState } from 'react'
 import { useAgents, useQueues } from '../api/data-hooks'
-import { AgentAssignPalette } from '../components/floor/AgentAssignPalette'
-import { FloorGrid } from '../components/floor/FloorGrid'
-import { FloorSidebar } from '../components/floor/FloorSidebar'
-import { FloorToolbar } from '../components/floor/FloorToolbar'
+import { AgentAssignPalette } from '../components/space/AgentAssignPalette'
+import { SpaceGrid } from '../components/space/SpaceGrid'
+import { SpaceSidebar } from '../components/space/SpaceSidebar'
+import { SpaceToolbar } from '../components/space/SpaceToolbar'
 import { PanelSuspenseFallback } from '../components/PanelSuspenseFallback'
 import { PanelShell } from '../components/PanelState'
 
-const FloorView3D = lazy(() =>
-  import('../components/floor/FloorView3D').then(m => ({ default: m.FloorView3D }))
+const SpaceView3D = lazy(() =>
+  import('../components/space/SpaceView3D').then(m => ({ default: m.SpaceView3D }))
 )
-import { useFloorPlan } from '../floor/useFloorPlan'
+import { useSpacePlan } from '../space/useSpacePlan'
 import { useSmoothScroll } from '../hooks/useSmoothScroll'
 
 /** The editor preview is display-only; seat taps do nothing there. */
 const noop = () => {}
 
-const SPLIT_KEY = 'mirador.floor-editor.split'
+const SPLIT_KEY = 'mirador.space-editor.split'
 const MIN_SPLIT = 0.25
 const MAX_SPLIT = 0.75
 
@@ -34,11 +34,11 @@ function loadSplit(): number {
   return 0.3
 }
 
-export function FloorEditorPanel() {
+export function SpaceEditorPanel() {
   const agents = useAgents()
   const queues = useQueues()
-  const fp = useFloorPlan()
-  // The canvas and the floor list scroll inside the editor (not the panel
+  const fp = useSpacePlan()
+  // The canvas and the space list scroll inside the editor (not the panel
   // shell), so each gets its own Lenis instance for smooth wheel scrolling.
   const canvasScrollRef = useSmoothScroll<HTMLDivElement>()
   const asideScrollRef = useSmoothScroll<HTMLDivElement>()
@@ -82,23 +82,23 @@ export function FloorEditorPanel() {
 
   const placedAgentIds = useMemo(() => {
     const ids = new Set<string>()
-    for (const seat of fp.activeFloor?.seats ?? []) {
+    for (const seat of fp.activeSpace?.seats ?? []) {
       if (seat.agentId) ids.add(seat.agentId)
     }
     return ids
-  }, [fp.activeFloor])
+  }, [fp.activeSpace])
 
   const selectedSeatAgentId = useMemo(() => {
-    if (!fp.selectedSeat || !fp.activeFloor) return null
-    const seat = fp.activeFloor.seats.find(
+    if (!fp.selectedSeat || !fp.activeSpace) return null
+    const seat = fp.activeSpace.seats.find(
       (s) => s.c === fp.selectedSeat?.c && s.r === fp.selectedSeat?.r,
     )
     return seat?.agentId ?? null
-  }, [fp.selectedSeat, fp.activeFloor])
+  }, [fp.selectedSeat, fp.activeSpace])
 
   if (!fp.loaded) {
     return (
-      <PanelShell hideHeader smoothScroll={false} className="panel-shell--floor">
+      <PanelShell hideHeader smoothScroll={false} className="panel-shell--space">
         <p className="panel-state panel-state--muted">Carregant plànol…</p>
       </PanelShell>
     )
@@ -111,24 +111,24 @@ export function FloorEditorPanel() {
   } as React.CSSProperties
 
   return (
-    <PanelShell hideHeader smoothScroll={false} className="panel-shell--floor">
-      <div className="floor-editor" ref={layoutRef} style={layoutStyle}>
-        <aside className="floor-editor__aside">
-          <div className="floor-editor__aside-scroll" ref={asideScrollRef}>
-            <FloorSidebar
+    <PanelShell hideHeader smoothScroll={false} className="panel-shell--space">
+      <div className="space-editor" ref={layoutRef} style={layoutStyle}>
+        <aside className="space-editor__aside">
+          <div className="space-editor__aside-scroll" ref={asideScrollRef}>
+            <SpaceSidebar
               places={fp.places}
               activePlace={fp.activePlace}
-              activeFloorIndex={fp.activeFloorIndex}
+              activeSpaceIndex={fp.activeSpaceIndex}
               onSelectPlace={fp.selectPlace}
               onAddPlace={fp.addPlace}
               onRemovePlace={fp.removePlace}
               onRenamePlace={fp.renamePlace}
-              onSelectFloor={fp.selectFloor}
-              onAddFloor={fp.addFloor}
-              onRemoveFloor={fp.removeFloor}
-              onDuplicateFloor={fp.duplicateFloor}
-              onRenameFloor={fp.renameFloor}
-              onReorderFloor={fp.reorderFloor}
+              onSelectSpace={fp.selectSpace}
+              onAddSpace={fp.addSpace}
+              onRemoveSpace={fp.removeSpace}
+              onDuplicateSpace={fp.duplicateSpace}
+              onRenameSpace={fp.renameSpace}
+              onReorderSpace={fp.reorderSpace}
             />
             {fp.tool === 'seat' && fp.selectedSeat ? (
               <AgentAssignPalette
@@ -141,11 +141,11 @@ export function FloorEditorPanel() {
               />
             ) : null}
           </div>
-          {fp.activeFloor && fp.activeFloor.cells.length > 0 ? (
-            <div className="floor-editor__preview" aria-label="Previsualització de la sala">
+          {fp.activeSpace && fp.activeSpace.cells.length > 0 ? (
+            <div className="space-editor__preview" aria-label="Previsualització de la sala">
               <Suspense fallback={<PanelSuspenseFallback />}>
-                <FloorView3D
-                  floor={fp.activeFloor}
+                <SpaceView3D
+                  space={fp.activeSpace}
                   agentsById={agentsById}
                   queuesById={queuesById}
                   showAvatars
@@ -158,33 +158,33 @@ export function FloorEditorPanel() {
         </aside>
 
         <div
-          className="floor-editor__resizer"
+          className="space-editor__resizer"
           role="separator"
           aria-orientation="vertical"
           aria-label="Ajusta la proporció de les columnes"
           onPointerDown={startResize}
         >
-          <span className="floor-editor__resizer-grip" aria-hidden="true" />
+          <span className="space-editor__resizer-grip" aria-hidden="true" />
         </div>
 
-        <div className="floor-editor__main">
-          <FloorToolbar
+        <div className="space-editor__main">
+          <SpaceToolbar
             tool={fp.tool}
-            floor={fp.activeFloor}
+            space={fp.activeSpace}
             dirty={fp.dirty}
             canUndo={fp.canUndo}
             canRedo={fp.canRedo}
             onSelectTool={fp.setTool}
-            onRotate={fp.rotateFloor}
+            onRotate={fp.rotateSpace}
             onUndo={fp.undo}
             onRedo={fp.redo}
             onSave={fp.save}
             onReset={fp.reset}
           />
-          <div className="floor-editor__canvas" ref={canvasScrollRef}>
-            {fp.activeFloor ? (
-              <FloorGrid
-                floor={fp.activeFloor}
+          <div className="space-editor__canvas" ref={canvasScrollRef}>
+            {fp.activeSpace ? (
+              <SpaceGrid
+                space={fp.activeSpace}
                 tool={fp.tool}
                 selectedSeat={fp.selectedSeat}
                 agentsById={agentsById}

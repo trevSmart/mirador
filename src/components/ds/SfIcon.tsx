@@ -36,8 +36,8 @@ export type SfIconName =
   | 'user'
   | 'work'
   | 'agent'
-  | 'floor'
-  | 'floorEditor'
+  | 'space'
+  | 'spaceEditor'
 
 interface NamedIcon {
   sprite: SfSprite
@@ -57,8 +57,8 @@ const NAMED: Record<SfIconName, NamedIcon> = {
   user:        { sprite: 'standard', symbol: 'user' },
   work:        { sprite: 'standard', symbol: 'work_order_item' },
   agent:       { sprite: 'custom',   symbol: 'custom103' },
-  floor:       { sprite: 'standard', symbol: 'business_unit' },
-  floorEditor: { sprite: 'custom',   symbol: 'custom83' },
+  space:       { sprite: 'standard', symbol: 'business_unit' },
+  spaceEditor: { sprite: 'custom',   symbol: 'custom83' },
 }
 
 const CHANNEL: Record<ChannelKey, SfIconName> = {

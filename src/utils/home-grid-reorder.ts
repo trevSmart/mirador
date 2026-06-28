@@ -8,7 +8,7 @@ const HOME_GRID_REORDER = {
   easing: 'cubic-bezier(0.34, 1.24, 0.64, 1)',
 } as const
 
-/** Card opacity while it is moving — keeps the floor in focus for supervisors. */
+/** Card opacity while it is moving — keeps the space in focus for supervisors. */
 const MOVE_OPACITY = 0.18
 
 function remainDeltas(oldCoords: Coords, newCoords: Coords) {
