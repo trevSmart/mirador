@@ -16,7 +16,8 @@ function isDirectPhotoUrl(url: string): boolean {
 
 /**
  * Module-level cache of fetched photo blobs, shared across every
- * `useSalesforcePhoto` consumer. Keyed by `${instanceUrl}|${photoUrl}` so the
+ * `useSalesforcePhoto` consumer. Keyed by the stable `[instanceUrl, photoUrl]`
+ * tuple so the
  * same agent rendered in several places (e.g. a seat and its hover overlay)
  * reuses one object URL instead of each instance re-fetching from scratch —
  * which is what caused the avatar to flicker back to initials on hover.
@@ -94,7 +95,7 @@ export function useSalesforcePhoto(photoUrl: string | null): string | null {
 
   const cacheKey =
     !isDirect && photoUrl && accessToken && instanceUrl
-      ? `${instanceUrl}|${photoUrl}`
+      ? JSON.stringify([instanceUrl, photoUrl])
       : null
 
   const cachedSrc = cacheKey ? (photoCache.get(cacheKey)?.objectUrl ?? null) : null
