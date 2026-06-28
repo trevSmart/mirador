@@ -98,40 +98,33 @@ export function useSalesforcePhoto(photoUrl: string | null): string | null {
       ? `${instanceUrl}\0${photoUrl}`
       : null
 
-  const cachedSrc = cacheKey ? (photoCache.get(cacheKey)?.objectUrl ?? null) : null
-
   // Seed synchronously from the cache so an already-loaded photo shows on the
   // very first render — no flash of initials when a second consumer mounts.
-  const [{ key: loadedKey, src }, setLoadedPhoto] = useState(() => ({
-    key: cacheKey,
-    src: cachedSrc,
-  }))
+  const [src, setSrc] = useState<string | null>(() =>
+    cacheKey ? (photoCache.get(cacheKey)?.objectUrl ?? null) : null,
+  )
+
+  // Adjust state during render when the key changes (React's recommended
+  // pattern over a sync-in-Effect — re-renders immediately, before paint, so
+  // there is no flash of a stale value). The `loadedKey !== cacheKey` guard
+  // keeps this from looping.
+  const [loadedKey, setLoadedKey] = useState<string | null>(cacheKey)
+  if (loadedKey !== cacheKey) {
+    setLoadedKey(cacheKey)
+    setSrc(cacheKey ? (photoCache.get(cacheKey)?.objectUrl ?? null) : null)
+  }
 
   useEffect(() => {
     accessTokenRef.current = accessToken
   }, [accessToken])
 
   useEffect(() => {
-    let cancelled = false
-    if (loadedKey !== cacheKey || src !== cachedSrc) {
-      queueMicrotask(() => {
-        if (!cancelled) {
-          setLoadedPhoto((current) =>
-            current.key === cacheKey && current.src === cachedSrc
-              ? current
-              : { key: cacheKey, src: cachedSrc },
-          )
-        }
-      })
-    }
-
     const currentAccessToken = accessTokenRef.current
     if (!cacheKey || isDirect || !photoUrl || !currentAccessToken) {
-      return () => {
-        cancelled = true
-      }
+      return
     }
 
+    let cancelled = false
     const entry = acquirePhoto(cacheKey, photoUrl, currentAccessToken)
 
     // Resolve asynchronously in every case (even when the blob is already
@@ -139,9 +132,7 @@ export function useSalesforcePhoto(photoUrl: string | null): string | null {
     // synchronous useState seed already covers the already-loaded path.
     void Promise.resolve(entry.objectUrl ?? entry.promise).then((url) => {
       if (!cancelled && url) {
-        setLoadedPhoto((current) =>
-          current.key === cacheKey ? { key: cacheKey, src: url } : current,
-        )
+        setSrc(url)
       }
     })
 
@@ -149,11 +140,11 @@ export function useSalesforcePhoto(photoUrl: string | null): string | null {
       cancelled = true
       releasePhoto(cacheKey)
     }
-  }, [cacheKey, cachedSrc, isDirect, loadedKey, photoUrl, src])
+  }, [cacheKey, isDirect, photoUrl])
 
   if (isDirect) {
     return photoUrl
   }
 
-  return loadedKey === cacheKey ? src : cachedSrc
+  return src
 }
