@@ -25,9 +25,11 @@ import {
   VEC_TW,
   backLeftOpeningEdge,
   backLeftTrue,
+  backLeftWallTopVec,
   backLeftWallVec,
   backRightOpeningEdge,
   backRightTrue,
+  backRightWallTopVec,
   backRightWallVec,
   computeBoundsVec,
   depthCompareVec,
@@ -664,6 +666,8 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
       body.push(<polygon key={`wbr-${key}`} points={backRightWallVec(x, y, basis)} fill={WALL_FILL} />)
       body.push(<polygon key={`wbr2-${key}`} points={backRightWallVec(x, y, basis)} fill="rgba(27,25,36,.032)" stroke="rgba(27,25,36,.05)" strokeWidth={0.5} />)
       body.push(<polygon key={`wbrs-${key}`} points={backRightWallVec(x, y, basis)} fill={`url(#${wallSheenRightId})`} />)
+      body.push(<polygon key={`wbrt-${key}`} points={backRightWallTopVec(x, y, basis)} fill={WALL_FILL} stroke="rgba(27,25,36,.06)" strokeWidth={0.5} />)
+      body.push(<polygon key={`wbrt2-${key}`} points={backRightWallTopVec(x, y, basis)} fill="rgba(255,255,255,.4)" />)
       const op = openingPolys(c, r, 'N', x, y)
       if (op) body.push(op)
     }
@@ -671,6 +675,8 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
       body.push(<polygon key={`wbl-${key}`} points={backLeftWallVec(x, y, basis)} fill={WALL_FILL} />)
       body.push(<polygon key={`wbl2-${key}`} points={backLeftWallVec(x, y, basis)} fill="rgba(27,25,36,.05)" stroke="rgba(27,25,36,.06)" strokeWidth={0.5} />)
       body.push(<polygon key={`wbls-${key}`} points={backLeftWallVec(x, y, basis)} fill={`url(#${wallSheenLeftId})`} />)
+      body.push(<polygon key={`wblt-${key}`} points={backLeftWallTopVec(x, y, basis)} fill={WALL_FILL} stroke="rgba(27,25,36,.07)" strokeWidth={0.5} />)
+      body.push(<polygon key={`wblt2-${key}`} points={backLeftWallTopVec(x, y, basis)} fill="rgba(255,255,255,.28)" />)
       const op = openingPolys(c, r, 'O', x, y)
       if (op) body.push(op)
     }
