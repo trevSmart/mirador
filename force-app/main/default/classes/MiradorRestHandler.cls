@@ -28,6 +28,8 @@ public with sharing class MiradorRestHandler {
                 writeJson(res, 200, MiradorSnapshotService.getSnapshot(scope));
             } else if (path == '/capabilities') {
                 writeJson(res, 200, MiradorCapabilityService.getCapabilities());
+            } else if (path == '/space-plan') {
+                writeJson(res, 200, MiradorSpacePlanService.getPlan());
             } else {
                 writeJson(res, 404, new Map<String, Object>{
                     'error' => 'Not found',
@@ -46,7 +48,24 @@ public with sharing class MiradorRestHandler {
         RestResponse res = RestContext.response;
         String path = normalizePath(req.requestURI, apiPrefix);
         try {
-            if (path.startsWith('/agents/') && path.endsWith('/skills')) {
+            if (path == '/space-plan') {
+                if (req.requestBody == null || String.isBlank(req.requestBody.toString())) {
+                    writeJson(res, 400, new Map<String, Object>{ 'error' => 'Empty request body' });
+                    return;
+                }
+                MiradorSpacePlanService.PlanDto plan;
+                try {
+                    plan = (MiradorSpacePlanService.PlanDto) JSON.deserialize(
+                        req.requestBody.toString(),
+                        MiradorSpacePlanService.PlanDto.class
+                    );
+                } catch (System.JSONException ex) {
+                    writeJson(res, 400, new Map<String, Object>{ 'error' => 'Invalid JSON body' });
+                    return;
+                }
+                MiradorSpacePlanService.savePlan(plan);
+                writeJson(res, 200, new Map<String, Object>{ 'ok' => true });
+            } else if (path.startsWith('/agents/') && path.endsWith('/skills')) {
                 String userId = path.substring('/agents/'.length(), path.length() - '/skills'.length());
                 if (req.requestBody == null || String.isBlank(req.requestBody.toString())) {
                     writeJson(res, 400, new Map<String, Object>{ 'error' => 'Empty request body' });

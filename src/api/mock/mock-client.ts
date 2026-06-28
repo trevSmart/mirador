@@ -102,5 +102,9 @@ export function createMockMiradorClient(): MiradorClient {
       withApiLog('POST', '/records/details', () => ({
         records: body.ids.map(mockRecordDetail),
       } satisfies RecordDetailsResponse)),
+    getSpacePlan: () =>
+      withApiLog('GET', '/space-plan', () => loadSpacePlan(true)),
+    saveSpacePlan: (plan) =>
+      withApiLog('PUT', '/space-plan', () => saveSpacePlan(plan, true)),
   }
 }

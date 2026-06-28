@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Geometry__c</fullName>
+    <description>Serialized JSON geometry of the Space: { cells: [[c,r],...], seats: [{c,r,agentId}], openings: [{c,r,edge,kind}], dividers: [{c,r,edge}] }. Matches the SpacePlanData model 1:1 so it round-trips without conversion. Name and dir are stored in their own fields; everything else lives here.</description>
+    <externalId>false</externalId>
+    <label>Geometry</label>
+    <length>131072</length>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>10</visibleLines>
+</CustomField>
