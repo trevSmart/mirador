@@ -383,6 +383,38 @@ export function sanitizeSpacePlan(raw: unknown): SpacePlanData | null {
   return { v: SPACE_SCHEMA_VERSION, activePlaceId, places }
 }
 
+/** Generate a unique name within a list of existing names by adding a numeric
+    suffix (" 2", " 3", …) on collision. */
+export function uniqueName(base: string, existing: string[]): string {
+  if (!existing.includes(base)) return base
+  let n = 2
+  while (existing.includes(`${base} ${n}`)) n += 1
+  return `${base} ${n}`
+}
+
+/** Validate an imported plan and turn its places into brand-new records: every
+    place and space gets a freshly generated id (so they never collide with
+    existing org records) and place names are de-duplicated against
+    `existingNames`. Returns null when the input is not a usable plan (bad JSON,
+    incompatible schema, or no spaces with cells). The import is purely additive:
+    nothing here references or mutates the current plan's records. */
+export function prepareImportedPlaces(raw: unknown, existingNames: string[]): Place[] | null {
+  const clean = sanitizeSpacePlan(raw)
+  if (!clean) return null
+
+  const names = [...existingNames]
+  const places: Place[] = clean.places.map((place) => {
+    const name = uniqueName(place.name, names)
+    names.push(name)
+    return {
+      id: makeId('place'),
+      name,
+      spaces: place.spaces.map((space) => ({ ...space, id: makeId('space') })),
+    }
+  })
+  return places
+}
+
 /** Stable signature used to detect unsaved changes. */
 export function spacePlanSignature(data: SpacePlanData): string {
   return JSON.stringify(data)

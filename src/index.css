@@ -2174,14 +2174,22 @@ textarea,
 }
 
 .space-editor__preview {
-  flex: 0 0 200px;
-  height: 200px;
-  padding: var(--sp-4);
-  border-top: 1px solid var(--border-subtle);
-  border-radius: 0;
-  overflow: hidden;
-  background: var(--fv-canvas-wash);
+  flex: 0 0 300px;
+  height: 300px;
   display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border-subtle);
+  /* Same shell as .home-space: white card under the fv-canvas wash. */
+  background: var(--surface-card);
+  overflow: hidden;
+}
+
+.space-editor__preview > .fv-canvas {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
 }
 
 /* The preview is a fixed-height box: let the iso SVG scale to fit by height and
