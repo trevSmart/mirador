@@ -21,7 +21,8 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
 }
 
-function defaultRotation(): RoomRotation {
+/** The initial isometric pose every room opens in, before the user orbits. */
+export function defaultRotation(): RoomRotation {
   return { az: ROOM_AZ_DEFAULT, tilt: ROOM_TILT_DEFAULT }
 }
 

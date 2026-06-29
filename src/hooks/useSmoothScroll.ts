@@ -111,8 +111,35 @@ export function useSmoothScroll<T extends HTMLElement>() {
     })
     observer.observe(document.documentElement, { childList: true, subtree: true })
 
+    // When pointed at a custom wrapper/content (as here), Lenis does NOT watch
+    // the content for size changes — it caches the scroll limit at attach time.
+    // Home's columns grow/shrink after mount as queues stream in, filters toggle
+    // and the auto-animated grids reflow, so without this the scroll limit stays
+    // frozen and the list stops scrolling partway. Observing only `element`
+    // misses this: with overflow scroll its own box stays fixed while the inner
+    // `scrollHeight` changes, so we watch each child's content box instead and
+    // re-measure on any reflow.
+    const resizeObserver = new ResizeObserver(() => {
+      if (element.isConnected) lenis.resize()
+    })
+    for (const child of element.children) {
+      resizeObserver.observe(child)
+    }
+    // Children themselves can be added/removed (sections appear, lists swap);
+    // keep the observer pointed at whatever is currently inside.
+    const childObserver = new MutationObserver(() => {
+      resizeObserver.disconnect()
+      for (const child of element.children) {
+        resizeObserver.observe(child)
+      }
+      if (element.isConnected) lenis.resize()
+    })
+    childObserver.observe(element, { childList: true })
+
     const teardown = () => {
       observer.disconnect()
+      resizeObserver.disconnect()
+      childObserver.disconnect()
       cancelAnimationFrame(rafId)
       lenisByElement.delete(element)
       registeredScrollers.delete(element)

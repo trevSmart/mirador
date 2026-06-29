@@ -10,6 +10,7 @@ public with sharing class MiradorSkillService {
         public String id;
         public String name;
         public String type;
+        public String typeId;
         public Integer agents;
         public Integer backlog;
     }
@@ -29,7 +30,7 @@ public with sharing class MiradorSkillService {
         List<SkillDto> skills = new List<SkillDto>();
 
         List<Skill> skillRows = [
-            SELECT Id, MasterLabel, Type.MasterLabel
+            SELECT Id, MasterLabel, TypeId, Type.MasterLabel
             FROM Skill
             ORDER BY Type.MasterLabel NULLS LAST, MasterLabel
             LIMIT 500
@@ -47,6 +48,7 @@ public with sharing class MiradorSkillService {
             dto.id = String.valueOf(s.Id);
             dto.name = s.MasterLabel;
             dto.type = s.Type == null ? null : s.Type.MasterLabel;
+            dto.typeId = s.TypeId == null ? null : String.valueOf(s.TypeId);
             dto.agents = agentsBySkill.containsKey(s.Id) ? agentsBySkill.get(s.Id) : 0;
             dto.backlog = backlogBySkill.containsKey(s.Id) ? backlogBySkill.get(s.Id) : 0;
             skills.add(dto);

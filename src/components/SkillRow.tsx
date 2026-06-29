@@ -24,7 +24,7 @@ export function SkillRow({ skill }: SkillRowProps) {
       }}
     >
       <div className="skill-row__main">
-        <SfIcon name="skill" sldsSize="medium" bg={colorFromString(skill.name)} />
+        <SfIcon name="skill" sldsSize="medium" bg={colorFromString(skill.id)} />
         <div className="skill-row__body">
           <h3 className="skill-row__name" title={skill.name}>{skill.name}</h3>
           <p className="skill-row__meta">

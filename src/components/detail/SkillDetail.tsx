@@ -17,7 +17,7 @@ export function SkillDetail({ skill }: { skill: Skill }) {
   return (
     <>
       <header className="dd-head">
-        <SfIcon name="skill" size={56} bg={colorFromString(skill.name)} />
+        <SfIcon name="skill" size={56} bg={colorFromString(skill.id)} />
         <div className="dd-head__id">
           <h2 className="dd-head__name">{skill.name}</h2>
           <span className="dd-head__sub">{skill.type ?? 'Skill'}</span>

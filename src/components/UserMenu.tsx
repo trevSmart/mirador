@@ -59,7 +59,7 @@ export function UserMenu() {
         aria-label={`Menú d'usuari: ${name}`}
         onClick={() => setOpen((value) => !value)}
       >
-        <AgentAvatar name={name} photo={photo} />
+        <AgentAvatar id={userInfo?.user_id ?? 'mirador-user'} name={name} photo={photo} />
       </button>
 
       <div ref={dropRef} className="user-menu__dropdown dropdown-panel" role="menu" hidden>

@@ -73,6 +73,7 @@ export interface Skill {
   id: string
   name: string
   type: string | null
+  typeId: string | null
   agents: number
   backlog: number
 }

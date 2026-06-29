@@ -59,7 +59,7 @@ export function SpaceSeatTooltip({ agent, queuesById, x, y, open, onExited }: Sp
       hidden
     >
       <div className="fv3d-tip__row">
-        <AgentAvatar name={agent.name} photo={agent.photo} />
+        <AgentAvatar id={agent.id} name={agent.name} photo={agent.photo} />
         <div className="fv3d-tip__main">
           <div className="fv3d-tip__name">{agent.name}</div>
           <div className="fv3d-tip__role">{agent.role}</div>

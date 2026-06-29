@@ -24,19 +24,25 @@ const QUEUE_DEFS: QueueDef[] = [
   { id: 're', name: 'Retenció' },
 ]
 
+const SKILL_TYPE_IDS = {
+  Language: '0C1mock000Lang01',
+  Expertise: '0C1mock000Exprt1',
+  Certification: '0C1mock000Cert01',
+} as const
+
 const SKILL_DEFS: Skill[] = [
-  { id: 'ca', name: 'Català', type: 'Language', agents: 14, backlog: 3 },
-  { id: 'es', name: 'Castellà', type: 'Language', agents: 18, backlog: 7 },
-  { id: 'en', name: 'Anglès', type: 'Language', agents: 9, backlog: 2 },
-  { id: 'fr', name: 'Francès', type: 'Language', agents: 5, backlog: 0 },
-  { id: 'de', name: 'Alemany', type: 'Language', agents: 2, backlog: 1 },
-  { id: 'tec', name: 'Suport tècnic L2', type: 'Expertise', agents: 6, backlog: 5 },
-  { id: 'tec3', name: 'Suport tècnic L3', type: 'Expertise', agents: 3, backlog: 2 },
-  { id: 'ven', name: 'Vendes outbound', type: 'Expertise', agents: 4, backlog: 1 },
-  { id: 'ret', name: 'Retenció premium', type: 'Expertise', agents: 3, backlog: 4 },
-  { id: 'med', name: 'Mediació contractes', type: 'Expertise', agents: 2, backlog: 0 },
-  { id: 'acc', name: 'Accessibilitat', type: 'Certification', agents: 7, backlog: 1 },
-  { id: 'gdpr', name: 'Compliment GDPR', type: 'Certification', agents: 11, backlog: 0 },
+  { id: 'ca', name: 'Català', type: 'Language', typeId: SKILL_TYPE_IDS.Language, agents: 14, backlog: 3 },
+  { id: 'es', name: 'Castellà', type: 'Language', typeId: SKILL_TYPE_IDS.Language, agents: 18, backlog: 7 },
+  { id: 'en', name: 'Anglès', type: 'Language', typeId: SKILL_TYPE_IDS.Language, agents: 9, backlog: 2 },
+  { id: 'fr', name: 'Francès', type: 'Language', typeId: SKILL_TYPE_IDS.Language, agents: 5, backlog: 0 },
+  { id: 'de', name: 'Alemany', type: 'Language', typeId: SKILL_TYPE_IDS.Language, agents: 2, backlog: 1 },
+  { id: 'tec', name: 'Suport tècnic L2', type: 'Expertise', typeId: SKILL_TYPE_IDS.Expertise, agents: 6, backlog: 5 },
+  { id: 'tec3', name: 'Suport tècnic L3', type: 'Expertise', typeId: SKILL_TYPE_IDS.Expertise, agents: 3, backlog: 2 },
+  { id: 'ven', name: 'Vendes outbound', type: 'Expertise', typeId: SKILL_TYPE_IDS.Expertise, agents: 4, backlog: 1 },
+  { id: 'ret', name: 'Retenció premium', type: 'Expertise', typeId: SKILL_TYPE_IDS.Expertise, agents: 3, backlog: 4 },
+  { id: 'med', name: 'Mediació contractes', type: 'Expertise', typeId: SKILL_TYPE_IDS.Expertise, agents: 2, backlog: 0 },
+  { id: 'acc', name: 'Accessibilitat', type: 'Certification', typeId: SKILL_TYPE_IDS.Certification, agents: 7, backlog: 1 },
+  { id: 'gdpr', name: 'Compliment GDPR', type: 'Certification', typeId: SKILL_TYPE_IDS.Certification, agents: 11, backlog: 0 },
 ]
 
 /* The org's full presence-status catalog (as Setup → Presence Statuses would

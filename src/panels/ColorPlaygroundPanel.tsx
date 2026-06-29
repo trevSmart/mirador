@@ -245,7 +245,7 @@ function SyntheticCard() {
 function RealSkillsCard() {
   const skills = useSkills()
   const groups = groupSkillsByType(skills)
-  const hues = skills.map((s) => parseHue(colorFromString(s.name)))
+  const hues = skills.map((s) => parseHue(colorFromString(s.id)))
   const { coverage, emptyBins } = coverageOf(hues)
 
   return (
@@ -266,7 +266,7 @@ function RealSkillsCard() {
         <p className="color-playground__empty">No hi ha skills carregades al snapshot.</p>
       ) : (
         groups.map((group) => (
-          <div key={group.type} className="color-playground__skill-group">
+          <div key={group.typeId ?? group.type} className="color-playground__skill-group">
             <h3 className="color-playground__skill-group-title">
               {group.type} · {group.skills.length} skills
             </h3>

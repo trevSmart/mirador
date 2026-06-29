@@ -83,6 +83,12 @@
   /* ── Avatar fallback (neutral, not tinted) ──────────── */
   --mi-av-bg: var(--mi-surface-2);
   --mi-av-fg: var(--mi-dim);
+  /* Initials over a GENERATED (tinted) background pick one of these two by WCAG
+     contrast — see textColorFromString. --mi-av-fg (the neutral #65616F) is too
+     light to clear 3:1 over the lighter/yellow tints, so the dark choice here is
+     a true charcoal in the theme's hue; the light choice is plain white. */
+  --mi-av-fg-on-dark: #ffffff;
+  --mi-av-fg-on-light: #2A2730;
 
   /* ── SLDS object icon tints ─────────────────────────── */
   --mi-ic-queue: #5867E8;
@@ -1431,15 +1437,15 @@ textarea,
 
 .home-resizer__grip {
   width: 3px;
-  height: 48px;
+  height: 100%;
   border-radius: var(--r-pill);
   background: var(--border-subtle);
   transition: background var(--dur-base) var(--ease);
 }
 
-.home-resizer:hover .home-resizer__grip,
-.home-resizer:active .home-resizer__grip {
-  background: var(--text-muted);
+.home-resizer:active .home-resizer__grip,
+.home-layout.is-resizing .home-resizer__grip {
+  background: var(--accent);
 }
 
 .home-side {
@@ -2137,15 +2143,15 @@ textarea,
 
 .space-editor__resizer-grip {
   width: 3px;
-  height: 48px;
+  height: 100%;
   border-radius: var(--r-pill);
   background: var(--border-subtle);
   transition: background var(--dur-base) var(--ease);
 }
 
-.space-editor__resizer:hover .space-editor__resizer-grip,
-.space-editor__resizer:active .space-editor__resizer-grip {
-  background: var(--text-muted);
+.space-editor__resizer:active .space-editor__resizer-grip,
+.space-editor.is-resizing .space-editor__resizer-grip {
+  background: var(--accent);
 }
 
 .space-editor__canvas {
@@ -2324,6 +2330,18 @@ textarea,
   box-shadow: var(--shadow);
   touch-action: pan-x pan-y;
   user-select: none;
+}
+
+.fe-grid__lines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  shape-rendering: crispEdges;
+}
+
+.fe-grid__lines line {
+  stroke: var(--border-subtle);
+  stroke-width: 1;
 }
 
 .fe-grid[data-tool='cell'] {

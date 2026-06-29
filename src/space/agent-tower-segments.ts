@@ -11,17 +11,8 @@ export interface TowerSegment {
 
 const FALLBACK_COLOR = 'var(--text-muted)'
 
-function resolveQueueColor(
-  queueId: string | null,
-  queueName: string | null | undefined,
-  queuesById: Map<string, Queue>,
-): string {
-  if (queueId) {
-    const byId = queuesById.get(queueId)
-    if (byId) return colorFromString(byId.name)
-  }
-  if (queueName) return colorFromString(queueName)
-  return FALLBACK_COLOR
+function resolveQueueColor(queueId: string | null): string {
+  return queueId ? colorFromString(queueId) : FALLBACK_COLOR
 }
 
 /** Stack tower segments bottom-to-top, one per queue represented in active work. */
@@ -31,14 +22,10 @@ export function agentTowerSegments(
 ): TowerSegment[] {
   if (agent.used <= 0) return []
 
-  const counts = new Map<string, { queueId: string | null; queueName: string | null; count: number }>()
+  const counts = new Map<string, { queueId: string | null; count: number }>()
   for (const item of agent.work) {
-    const key = item.queueId ?? item.queue ?? '__unknown__'
-    const entry = counts.get(key) ?? {
-      queueId: item.queueId,
-      queueName: item.queue,
-      count: 0,
-    }
+    const key = item.queueId ?? '__unknown__'
+    const entry = counts.get(key) ?? { queueId: item.queueId, count: 0 }
     entry.count += 1
     counts.set(key, entry)
   }
@@ -46,22 +33,17 @@ export function agentTowerSegments(
   const unattributed = agent.used - agent.work.length
   if (unattributed > 0) {
     const key = '__unknown__'
-    const entry = counts.get(key) ?? { queueId: null, queueName: null, count: 0 }
+    const entry = counts.get(key) ?? { queueId: null, count: 0 }
     entry.count += unattributed
     counts.set(key, entry)
   }
 
   const used = agent.used
   return [...counts.values()]
-    .sort((a, b) =>
-      queueLabel(a.queueId, a.queueName, queuesById).localeCompare(
-        queueLabel(b.queueId, b.queueName, queuesById),
-        'ca',
-      ),
-    )
-    .map(({ queueId, queueName, count }) => ({
+    .sort((a, b) => queueLabel(a.queueId, queuesById).localeCompare(queueLabel(b.queueId, queuesById), 'ca'))
+    .map(({ queueId, count }) => ({
       queueId,
-      color: resolveQueueColor(queueId, queueName, queuesById),
+      color: resolveQueueColor(queueId),
       count,
       fraction: count / used,
     }))
@@ -77,14 +59,9 @@ export function towerSegmentLabel(
   return 'Sense cua'
 }
 
-function queueLabel(
-  queueId: string | null,
-  queueName: string | null | undefined,
-  queuesById: Map<string, Queue>,
-): string {
+function queueLabel(queueId: string | null, queuesById: Map<string, Queue>): string {
   if (queueId) {
     return queuesById.get(queueId)?.name ?? queueId
   }
-  if (queueName) return queueName
   return '\uffff'
 }

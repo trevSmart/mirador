@@ -14,14 +14,14 @@ export function DetailTabIcon({ target }: { target: DetailTarget }) {
   if (target.kind === 'agent') {
     const agent = agents.find((entry) => entry.id === target.id)
     if (agent) {
-      return <AgentAvatar name={agent.name} photo={agent.photo} />
+      return <AgentAvatar id={agent.id} name={agent.name} photo={agent.photo} />
     }
     return <SfIcon sprite="standard" symbol="customers" sldsSize="x-small" />
   }
 
   if (target.kind === 'queue') {
     const queue = queues.find((entry) => entry.id === target.id)
-    return <SfIcon name="queue" sldsSize="x-small" bg={queue ? colorFromString(queue.name) : undefined} />
+    return <SfIcon name="queue" sldsSize="x-small" bg={queue ? colorFromString(queue.id) : undefined} />
   }
 
   if (target.kind === 'work') {
@@ -34,5 +34,5 @@ export function DetailTabIcon({ target }: { target: DetailTarget }) {
   }
 
   const skill = skills.find((entry) => entry.id === target.id)
-  return <SfIcon name="skill" sldsSize="x-small" bg={skill ? colorFromString(skill.name) : undefined} />
+  return <SfIcon name="skill" sldsSize="x-small" bg={skill ? colorFromString(skill.id) : undefined} />
 }

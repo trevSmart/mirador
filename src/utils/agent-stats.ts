@@ -107,38 +107,45 @@ export function sortSkillsByBacklog(skills: Skill[]): Skill[] {
 /** Label used for skills without a SkillType. */
 export const SKILL_TYPE_FALLBACK = 'Sense tipus'
 
+const UNTYPED_GROUP_KEY = '__untyped__'
+
 export interface SkillTypeGroup {
+  typeId: string | null
   type: string
   skills: Skill[]
   backlog: number
 }
 
 /**
- * Group skills by their Salesforce SkillType. Skills within each group keep the
+ * Group skills by their Salesforce SkillType ID. Skills within each group keep the
  * backlog-first ordering; groups themselves are ordered by total backlog, with the
  * untyped group always last.
  */
 export function groupSkillsByType(skills: Skill[]): SkillTypeGroup[] {
-  const byType = new Map<string, Skill[]>()
+  const byTypeId = new Map<string, Skill[]>()
   for (const skill of skills) {
-    const type = skill.type ?? SKILL_TYPE_FALLBACK
-    const bucket = byType.get(type)
+    const key = skill.typeId ?? UNTYPED_GROUP_KEY
+    const bucket = byTypeId.get(key)
     if (bucket) {
       bucket.push(skill)
     } else {
-      byType.set(type, [skill])
+      byTypeId.set(key, [skill])
     }
   }
 
-  const groups: SkillTypeGroup[] = [...byType.entries()].map(([type, groupSkills]) => ({
-    type,
+  const groups: SkillTypeGroup[] = [...byTypeId.entries()].map(([key, groupSkills]) => ({
+    typeId: key === UNTYPED_GROUP_KEY ? null : key,
+    type:
+      key === UNTYPED_GROUP_KEY
+        ? SKILL_TYPE_FALLBACK
+        : (groupSkills[0]?.type ?? SKILL_TYPE_FALLBACK),
     skills: sortSkillsByBacklog(groupSkills),
     backlog: totalSkillBacklog(groupSkills),
   }))
 
   return groups.sort((left, right) => {
-    const leftFallback = left.type === SKILL_TYPE_FALLBACK
-    const rightFallback = right.type === SKILL_TYPE_FALLBACK
+    const leftFallback = left.typeId === null
+    const rightFallback = right.typeId === null
     if (leftFallback !== rightFallback) {
       return leftFallback ? 1 : -1
     }
