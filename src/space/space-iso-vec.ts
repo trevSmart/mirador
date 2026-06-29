@@ -21,7 +21,7 @@ const VEC_DIV_H = 14
 export const VEC_SEAT_MIN_H = 4
 export const VEC_SEAT_MAX_H = 88
 
-const GRID_N = 50
+const GRID_N = 40
 
 /** Screen basis: `u` = delta per +1 column, `v` = delta per +1 row, plus the
     vertical heights (which always rise straight up the screen). */

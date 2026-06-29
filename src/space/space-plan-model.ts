@@ -4,8 +4,8 @@
 
 import type { Cell, Dir, Divider, Edge, Space, SpacePlanData, OpeningKind, Place, Seat } from './types'
 
-export const GRID_C = 50
-export const GRID_R = 50
+export const GRID_C = 40
+export const GRID_R = 40
 const SEED_SIZE = 4
 export const UNDO_LIMIT = 10
 export const SPACE_SCHEMA_VERSION = 2
