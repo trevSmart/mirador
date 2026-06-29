@@ -2608,7 +2608,7 @@ textarea,
 .fe-plan-tree__thumb {
   flex: 0 0 auto;
   width: 132px;
-  height: 96px;
+  height: 48px;
   overflow: hidden;
   display: grid;
   place-items: center;
