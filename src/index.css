@@ -2483,6 +2483,150 @@ textarea,
   background: var(--surface-well);
 }
 
+/* Plan tree (new, from-scratch places/plants list — step 1: labels only) */
+.space-editor__plan-tree-divider {
+  border: 0;
+  border-top: 1px solid var(--border-subtle);
+  margin: var(--sp-4) 0;
+}
+
+.fe-plan-tree {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-2);
+}
+
+.fe-plan-tree__place {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  column-gap: var(--sp-2);
+}
+
+.fe-plan-tree__place-name {
+  font-weight: 600;
+}
+
+/* Disclosure chevron: rotates 0°→90° on expand with the same easing the
+   collapsible body uses. Disabled (no children) hides it but keeps the column. */
+.fe-plan-tree__chevron {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted, currentColor);
+  cursor: pointer;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fe-plan-tree__place.is-expanded .fe-plan-tree__chevron {
+  transform: rotate(90deg);
+}
+
+.fe-plan-tree__chevron:disabled {
+  cursor: default;
+  visibility: hidden;
+}
+
+/* Collapsible body: grid-template-rows 1fr↔0fr animation (apex-log-viewer). */
+.fe-plan-tree__collapse {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fe-plan-tree__place:not(.is-expanded) .fe-plan-tree__collapse {
+  grid-template-rows: 0fr;
+}
+
+.fe-plan-tree__collapse-inner {
+  min-height: 0;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fe-plan-tree__place:not(.is-expanded) .fe-plan-tree__collapse-inner {
+  opacity: 0;
+}
+
+/* Spaces sit below the place row, indented further and joined to the place
+   with a right-angle "tree" connector. */
+.fe-plan-tree__spaces {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  padding-top: var(--sp-3);
+  /* Indent past the chevron + place icon; the vertical trunk sits in the gutter. */
+  padding-left: var(--sp-10);
+}
+
+/* The vertical trunk line, drawn down the left gutter of the children block. */
+.fe-plan-tree__space {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* Vertical segment: full height for every child, trimmed to the elbow on the
+   last one so the trunk stops at the final branch. The trunk sits in the middle
+   of the children gutter (~half of the --sp-10 indent). */
+.fe-plan-tree__space::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--sp-6) * -1);
+  top: calc(var(--sp-3) * -1);
+  bottom: 0;
+  width: 1.5px;
+  background: var(--border-strong);
+}
+
+.fe-plan-tree__space:last-child::before {
+  bottom: auto;
+  height: 50%;
+}
+
+/* Horizontal elbow: from the trunk across to the child icon. */
+.fe-plan-tree__space::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--sp-6) * -1);
+  top: 50%;
+  width: var(--sp-6);
+  height: 1.5px;
+  background: var(--border-strong);
+}
+
+/* 3D miniature standing in for the old plant icon. Fixed height so the row
+   height is predictable; the render fits inside and never captures pointers. */
+.fe-plan-tree__thumb {
+  flex: 0 0 auto;
+  width: 132px;
+  height: 96px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.fe-plan-tree__thumb .fv3d-wrap {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.fe-plan-tree__thumb .fv3d-svg {
+  max-width: 100%;
+  max-height: 100%;
+}
+
 /* Tree */
 .fe-tree {
   display: flex;
