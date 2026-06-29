@@ -19,7 +19,7 @@ export function QueueDetail({ queue }: { queue: Queue }) {
   return (
     <>
       <header className="dd-head">
-        <SfIcon name="queue" size={56} bg={colorFromString(queue.name)} />
+        <SfIcon name="queue" size={56} bg={colorFromString(queue.id)} />
         <div className="dd-head__id">
           <h2 className="dd-head__name">{queue.name}</h2>
           <span className="dd-head__sub">Cua</span>

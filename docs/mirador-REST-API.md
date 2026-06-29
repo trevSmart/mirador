@@ -416,6 +416,7 @@ Omni-Channel skill catalog with qualified-agent counts and routing backlog.
       "id": "0C5XXXXXXXXXXXXXXX",
       "name": "English",
       "type": "Language",
+      "typeId": "0C1XXXXXXXXXXXXXXX",
       "agents": 24,
       "backlog": 3
     }
@@ -428,6 +429,7 @@ Omni-Channel skill catalog with qualified-agent counts and routing backlog.
 | `id` | string | `Skill` ID. |
 | `name` | string | Master label. |
 | `type` | string \| null | `Skill.Type` master label. |
+| `typeId` | string \| null | `Skill.TypeId` — `SkillType` record ID. |
 | `agents` | integer | Distinct active `ServiceResource` count with this skill. |
 | `backlog` | integer | Pending work (`SkillRequirement` linked to ready `PendingServiceRouting`). |
 

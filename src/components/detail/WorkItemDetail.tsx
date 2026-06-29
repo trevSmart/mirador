@@ -61,7 +61,7 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
             {agent ? <MiniAgentRow agent={agent} onClick={() => openAgent(agent.id)} /> : null}
             {queue ? (
               <DetailRow
-                leading={<SfIcon name="queue" sldsSize="small" bg={colorFromString(queue.name)} />}
+                leading={<SfIcon name="queue" sldsSize="small" bg={colorFromString(queue.id)} />}
                 title={queue.name}
                 meta="Cua"
                 onClick={() => openQueue(queue.id)}

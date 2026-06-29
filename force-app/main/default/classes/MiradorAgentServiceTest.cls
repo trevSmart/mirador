@@ -644,6 +644,7 @@ private class MiradorAgentServiceTest {
         MiradorSkillService.SkillDto dto = new MiradorSkillService.SkillDto();
         dto.id = '0C5000000000001AAA';
         dto.name = 'Català';
+        dto.typeId = '0C1000000000001AAA';
         dto.agents = 3;
         dto.backlog = 7;
         System.assertEquals('Català', dto.name);

@@ -12,7 +12,7 @@ import { useAgents, useQueues, useSkills } from '../api/data-hooks'
 import { devLog } from '../dev/dev-log'
 import type { Agent, PresenceStatus, Queue, Skill } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
-import { colorFromString } from '../utils/color-from-string'
+import { colorFromString, textColorFromString } from '../utils/color-from-string'
 import { resolveWorkItemIcon } from '../utils/salesforce-object-icon'
 import {
   getDetailRecents,
@@ -54,15 +54,16 @@ interface SearchAgentItemProps {
   onSelect: () => void
 }
 
-function SearchAgentAvatar({ name, photo }: { name: string; photo: string | null }) {
+function SearchAgentAvatar({ id, name, photo }: { id: string; name: string; photo: string | null }) {
   const photoSrc = useSalesforcePhoto(photo)
   const [photoFailed, setPhotoFailed] = useState(false)
   const showPhoto = Boolean(photoSrc) && !photoFailed
   const initials = agentInitials(name)
-  const bg = colorFromString(name)
+  const bg = colorFromString(id)
+  const fg = textColorFromString(id)
 
   return (
-    <div className={`si-av${showPhoto ? '' : ' av--initials'}`} style={{ background: bg }}>
+    <div className={`si-av${showPhoto ? '' : ' av--initials'}`} style={{ background: bg, color: fg }}>
       {showPhoto ? (
         <>
           <span className="av-ini">{initials}</span>
@@ -90,7 +91,7 @@ function SearchAgentItem({ agent, active, onSelect }: SearchAgentItemProps) {
       aria-selected={active}
       onClick={onSelect}
     >
-      <SearchAgentAvatar name={agent.name} photo={agent.photo} />
+      <SearchAgentAvatar id={agent.id} name={agent.name} photo={agent.photo} />
       <span className="si-main">
         <div className="si-title">{agent.name}</div>
         <div className="si-meta">{agent.role}</div>
@@ -123,7 +124,7 @@ function SearchQueueItem({ queue, active, onSelect }: SearchQueueItemProps) {
       aria-selected={active}
       onClick={onSelect}
     >
-      <SfIconTile name="queue" size={30} bg={colorFromString(queue.name)} />
+      <SfIconTile name="queue" size={30} bg={colorFromString(queue.id)} />
       <span className="si-main">
         <div className="si-title">{queue.name}</div>
         <div className="si-meta">
@@ -150,7 +151,7 @@ function SearchSkillItem({ skill, active, onSelect }: SearchSkillItemProps) {
       aria-selected={active}
       onClick={onSelect}
     >
-      <SfIconTile name="skill" size={30} bg={colorFromString(skill.name)} />
+      <SfIconTile name="skill" size={30} bg={colorFromString(skill.id)} />
       <span className="si-main">
         <div className="si-title">{skill.name}</div>
         <div className="si-meta">{skill.agents} qualified agents</div>

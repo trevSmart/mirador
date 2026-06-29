@@ -45,7 +45,7 @@ export function AgentAssignPalette({
       <div className="fe-palette__current">
         {current ? (
           <>
-            <AgentAvatar name={current.name} photo={current.photo} />
+            <AgentAvatar id={current.id} name={current.name} photo={current.photo} />
             <div className="fe-palette__current-info">
               <span className="fe-palette__current-name">{current.name}</span>
               <span className="fe-palette__current-meta">{presenceLabel(current.status)}</span>
@@ -83,7 +83,7 @@ export function AgentAssignPalette({
               className={`fe-palette__item${agent.id === currentAgentId ? ' fe-palette__item--on' : ''}`}
               onClick={() => onAssign(seat.c, seat.r, agent.id)}
             >
-              <AgentAvatar name={agent.name} photo={agent.photo} />
+              <AgentAvatar id={agent.id} name={agent.name} photo={agent.photo} />
               <span className="fe-palette__item-name">{agent.name}</span>
               <span className="fe-palette__item-status" data-status={agent.status}>
                 {presenceLabel(agent.status)}

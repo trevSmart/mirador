@@ -79,7 +79,7 @@ export function DetailRow({
 export function MiniAgentRow({ agent, onClick }: { agent: Agent; onClick: () => void }) {
   return (
     <DetailRow
-      leading={<AgentAvatar name={agent.name} photo={agent.photo} />}
+      leading={<AgentAvatar id={agent.id} name={agent.name} photo={agent.photo} />}
       title={agent.name}
       meta={agent.role}
       trailing={<StatusBadge status={agent.status} />}

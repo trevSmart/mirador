@@ -25,7 +25,7 @@ export function QueueRow({ queue }: QueueRowProps) {
       }}
     >
       <div className="queue-row__main">
-        <SfIcon name="queue" sldsSize="medium" bg={colorFromString(queue.name)} />
+        <SfIcon name="queue" sldsSize="medium" bg={colorFromString(queue.id)} />
         <div className="queue-row__body">
           <h3 className="queue-row__name" title={queue.name}>{queue.name}</h3>
           <p className="queue-row__meta">

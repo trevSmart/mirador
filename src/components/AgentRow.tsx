@@ -1,7 +1,7 @@
 import type { Agent, ChannelKey, PresenceStatus } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { useSalesforcePhoto } from '../hooks/useSalesforcePhoto'
-import { colorFromString } from '../utils/color-from-string'
+import { colorFromString, textColorFromString } from '../utils/color-from-string'
 import { agentInitials, formatMinutes } from '../utils/format'
 import { CapacityBar, FadeValue, MetricPill, Ring, SfIcon } from './ds'
 import { StatusBadge } from './StatusBadge'
@@ -16,11 +16,12 @@ const STATUS_COLOR: Record<PresenceStatus, string> = {
 const CHANNELS: ChannelKey[] = ['veu', 'chat', 'wa', 'cas']
 
 interface AgentAvatarProps {
+  id: string
   name: string
   photo?: string | null
 }
 
-export function AgentAvatar({ name, photo = null }: AgentAvatarProps) {
+export function AgentAvatar({ id, name, photo = null }: AgentAvatarProps) {
   const photoSrc = useSalesforcePhoto(photo)
 
   if (photoSrc) {
@@ -37,7 +38,7 @@ export function AgentAvatar({ name, photo = null }: AgentAvatarProps) {
   return (
     <span
       className="agent-avatar"
-      style={{ background: colorFromString(name) }}
+      style={{ background: colorFromString(id), color: textColorFromString(id) }}
       aria-hidden="true"
     >
       {agentInitials(name)}

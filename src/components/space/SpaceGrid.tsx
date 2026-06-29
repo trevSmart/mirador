@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import type { Agent, PresenceStatus } from '../../api/types'
 import { CELL_SIZE, edgeStyle } from '../../space/space-geometry'
 import { GRID_C, GRID_R, cellKey } from '../../space/space-plan-model'
@@ -64,7 +64,7 @@ interface SeatMarkerProps {
 }
 
 function SeatMarker({ agent, selected }: SeatMarkerProps) {
-  const teamColor = agent ? colorFromString(agent.role || agent.name) : 'var(--border-strong)'
+  const seatBorderColor = agent ? colorFromString(agent.id) : 'var(--border-strong)'
   const className = [
     'fe-seat',
     selected ? 'fe-seat--selected' : '',
@@ -74,10 +74,10 @@ function SeatMarker({ agent, selected }: SeatMarkerProps) {
     .join(' ')
 
   return (
-    <div className={className} style={{ borderColor: teamColor }} title={agent ? agent.name : 'Seient buit'}>
+    <div className={className} style={{ borderColor: seatBorderColor }} title={agent ? agent.name : 'Seient buit'}>
       {agent ? (
         <>
-          <AgentAvatar name={agent.name} photo={agent.photo} />
+          <AgentAvatar id={agent.id} name={agent.name} photo={agent.photo} />
           <span className="fe-seat__status" style={{ background: STATUS_COLOR[agent.status] }} />
         </>
       ) : (
@@ -109,6 +109,23 @@ export function SpaceGrid({
     for (const seat of space.seats) map.set(cellKey(seat.c, seat.r), seat)
     return map
   }, [space.seats])
+
+  // Grid drawn as discrete SVG lines rather than a repeating-linear-gradient: a
+  // gradient accumulates sub-pixel error per repeat when the canvas is scaled
+  // (browser zoom, DPR), making whole lines vanish periodically. Individual
+  // lines each snap on their own, so none disappears.
+  const gridLines = useMemo(() => {
+    const lines: ReactNode[] = []
+    for (let c = 0; c <= GRID_C; c++) {
+      const x = c * CELL_SIZE
+      lines.push(<line key={`v${c}`} x1={x} y1={0} x2={x} y2={height} />)
+    }
+    for (let r = 0; r <= GRID_R; r++) {
+      const y = r * CELL_SIZE
+      lines.push(<line key={`h${r}`} x1={0} y1={y} x2={width} y2={y} />)
+    }
+    return lines
+  }, [width, height])
 
   function pointerCell(event: ReactPointerEvent<HTMLDivElement>): PointerCell {
     const rect = ref.current?.getBoundingClientRect()
@@ -180,7 +197,6 @@ export function SpaceGrid({
     }
   }
 
-  const gridLine = 'var(--border-subtle)'
   const previewStyle = preview
     ? {
         left: Math.min(preview.start[0], preview.end[0]) * CELL_SIZE,
@@ -195,16 +211,16 @@ export function SpaceGrid({
       ref={ref}
       className="fe-grid"
       data-tool={tool}
-      style={{
-        width,
-        height,
-        backgroundImage: `repeating-linear-gradient(0deg, ${gridLine} 0 1px, transparent 1px ${CELL_SIZE}px), repeating-linear-gradient(90deg, ${gridLine} 0 1px, transparent 1px ${CELL_SIZE}px)`,
-      }}
+      style={{ width, height }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={endSession}
       onPointerCancel={endSession}
     >
+      <svg className="fe-grid__lines" width={width} height={height} aria-hidden="true">
+        {gridLines}
+      </svg>
+
       {space.cells.map(([c, r]) => {
         const seat = seatByKey.get(cellKey(c, r))
         const agent = seat?.agentId ? agentsById.get(seat.agentId) ?? null : null

@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -11,7 +12,7 @@ import { createPortal } from 'react-dom'
 import { SpaceSeatTooltip } from './SpaceSeatTooltip'
 import { useTowerHeightScale } from '../../hooks/useTowerHeightScale'
 import { useSalesforcePhoto } from '../../hooks/useSalesforcePhoto'
-import { colorFromString } from '../../utils/color-from-string'
+import { colorFromString, textColorFromString } from '../../utils/color-from-string'
 import { agentInitials } from '../../utils/format'
 import { agentTowerSegments, towerSegmentLabel, type TowerSegment } from '../../space/agent-tower-segments'
 import type { Agent, Queue } from '../../api/types'
@@ -51,6 +52,7 @@ import {
   ROOM_AZ_MIN,
   ROOM_TILT_MAX,
   ROOM_TILT_MIN,
+  defaultRotation,
   loadRoomRotation,
   saveRoomRotation,
 } from '../../space/space-rotation-store'
@@ -281,7 +283,7 @@ function AvatarDisc({
       <clipPath id={clipId}>
         <circle cx={cx} cy={cy} r={r} />
       </clipPath>
-      <circle cx={cx} cy={cy} r={r} fill={colorFromString(agent.name)} />
+      <circle cx={cx} cy={cy} r={r} fill={colorFromString(agent.id)} />
       {photo ? (
         <image
           href={photo}
@@ -300,7 +302,7 @@ function AvatarDisc({
           dominantBaseline="central"
           fontSize={r * 0.8}
           fontWeight={600}
-          fill="var(--mi-av-fg, #514E5C)"
+          fill={textColorFromString(agent.id)}
           style={{ fontFamily: 'var(--font-display)' }}
         >
           {agentInitials(agent.name)}
@@ -501,16 +503,20 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
 
   // Per-room camera rotation, hydrated from + persisted to localStorage. When the
   // space prop swaps to a different room, re-hydrate for that space (render-time
-  // reset, matching SpacePanel's prefs pattern).
-  const [rotation, setRotation] = useState<RoomRotation>(() => loadRoomRotation(space.id))
+  // reset, matching SpacePanel's prefs pattern). Non-interactive thumbnails always
+  // use the default isometric pose — they must show the initial perspective
+  // regardless of how the user has orbited the live room.
+  const [rotation, setRotation] = useState<RoomRotation>(() =>
+    interactive ? loadRoomRotation(space.id) : defaultRotation(),
+  )
   const dirtyRef = useRef(false)
   const rotSpaceIdRef = useRef(space.id)
 
   useEffect(() => {
     if (rotSpaceIdRef.current === space.id) return
     rotSpaceIdRef.current = space.id
-    setRotation(loadRoomRotation(space.id))
-  }, [space.id])
+    setRotation(interactive ? loadRoomRotation(space.id) : defaultRotation())
+  }, [interactive, space.id])
 
   // On (re)hydration for a space, clear the dirty flag so the just-loaded value
   // is never written straight back. Declared BEFORE the persist effect so it

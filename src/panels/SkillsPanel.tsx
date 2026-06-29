@@ -23,7 +23,7 @@ export function SkillsPanel() {
       </p>
 
       {groups.map((group) => (
-        <section key={group.type} className="panel-section skill-group">
+        <section key={group.typeId ?? group.type} className="panel-section skill-group">
           <header className="panel-section__header">
             <div className="panel-section__heading">
               <SfIcon
@@ -31,7 +31,7 @@ export function SkillsPanel() {
                 sprite="standard"
                 symbol="skill_entity"
                 sldsSize="x-small"
-                bg={colorFromString(group.type)}
+                bg={group.typeId ? colorFromString(group.typeId) : undefined}
               />
               <h3 className="panel-section__title">{group.type}</h3>
             </div>

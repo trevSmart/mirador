@@ -17,6 +17,7 @@ import { useSmoothScroll } from '../hooks/useSmoothScroll'
 const SPLIT_KEY = 'mirador.home.split'
 const MIN_SPLIT = 0.25
 const MAX_SPLIT = 0.75
+const DEFAULT_SPLIT = 0.62
 
 /** Left-column fraction (0..1) persisted between sessions. */
 function loadSplit(): number {
@@ -29,7 +30,7 @@ function loadSplit(): number {
   } catch {
     /* ignore */
   }
-  return 0.62
+  return DEFAULT_SPLIT
 }
 import {
   sortAgents,
@@ -193,30 +194,53 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
     const layout = layoutRef.current
     if (!layout) return
 
+    // Drive the drag straight through the DOM: writing the CSS var and the
+    // `is-resizing` class avoids re-rendering the (heavy) space view on every
+    // pointermove. React state is only synced once, on release.
+    let latest = split
+    let frame = 0
+    layout.classList.add('is-resizing')
+    // Coalesce pointermove bursts to one DOM write per frame: pointermove can
+    // fire several times between paints, so we only apply the latest value.
+    const flush = () => {
+      frame = 0
+      layout.style.setProperty('--home-split', `${latest / (1 - latest)}fr`)
+    }
     const onMove = (move: PointerEvent) => {
       const rect = layout.getBoundingClientRect()
       const fraction = (move.clientX - rect.left) / rect.width
-      setSplit(Math.min(MAX_SPLIT, Math.max(MIN_SPLIT, fraction)))
+      latest = Math.min(MAX_SPLIT, Math.max(MIN_SPLIT, fraction))
+      if (!frame) frame = requestAnimationFrame(flush)
     }
     const onUp = () => {
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
+      if (frame) cancelAnimationFrame(frame)
       document.body.style.cursor = ''
       document.body.style.userSelect = ''
-      setSplit((current) => {
-        try {
-          localStorage.setItem(SPLIT_KEY, String(current))
-        } catch {
-          /* ignore */
-        }
-        return current
-      })
+      layout.classList.remove('is-resizing')
+      setSplit(latest)
+      try {
+        localStorage.setItem(SPLIT_KEY, String(latest))
+      } catch {
+        /* ignore */
+      }
     }
 
     document.body.style.cursor = 'col-resize'
     document.body.style.userSelect = 'none'
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
+  }, [split])
+
+  // Double-clicking the divider restores the default column proportions.
+  const resetSplit = useCallback(() => {
+    setSplit(DEFAULT_SPLIT)
+    try {
+      localStorage.setItem(SPLIT_KEY, String(DEFAULT_SPLIT))
+    } catch {
+      /* ignore */
+    }
   }, [])
 
   // Single CSS var drives the left column; the right stays at 1fr, so the
@@ -245,8 +269,9 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
           className="home-resizer"
           role="separator"
           aria-orientation="vertical"
-          aria-label="Ajusta la proporció de les columnes"
+          aria-label="Ajusta la proporció de les columnes (doble clic per restablir)"
           onPointerDown={startResize}
+          onDoubleClick={resetSplit}
         >
           <span className="home-resizer__grip" aria-hidden="true" />
         </div>
