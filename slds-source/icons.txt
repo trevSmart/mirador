@@ -4,6 +4,7 @@
 # Quan incorporis una icona nova: afegeix-la aquí i executa `npm run slds:sprites`.
 # Les línies buides i les que comencen per # s'ignoren.
 
+standard#address
 standard#agent_session
 standard#business_unit
 standard#call

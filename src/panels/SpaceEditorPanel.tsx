@@ -3,6 +3,7 @@ import { useAgents, useQueues } from '../api/data-hooks'
 import { AgentAssignPalette } from '../components/space/AgentAssignPalette'
 import { SpaceGrid } from '../components/space/SpaceGrid'
 import { SpaceSidebar } from '../components/space/SpaceSidebar'
+import { SpacePlanTree } from '../components/space/SpacePlanTree'
 import { SpaceToolbar } from '../components/space/SpaceToolbar'
 import { PanelSuspenseFallback } from '../components/PanelSuspenseFallback'
 import { PanelShell } from '../components/PanelState'
@@ -44,7 +45,23 @@ export function SpaceEditorPanel() {
   const asideScrollRef = useSmoothScroll<HTMLDivElement>()
 
   const layoutRef = useRef<HTMLDivElement>(null)
+  const importInputRef = useRef<HTMLInputElement>(null)
   const [split, setSplit] = useState<number>(loadSplit)
+
+  const openImportDialog = useCallback(() => {
+    fp.clearImportError()
+    importInputRef.current?.click()
+  }, [fp])
+
+  const onImportFileChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      // Reset the input so re-selecting the same file fires change again.
+      event.target.value = ''
+      if (file) void fp.importJson(file)
+    },
+    [fp],
+  )
 
   const startResize = useCallback((event: React.PointerEvent) => {
     event.preventDefault()
@@ -129,7 +146,23 @@ export function SpaceEditorPanel() {
               onDuplicateSpace={fp.duplicateSpace}
               onRenameSpace={fp.renameSpace}
               onReorderSpace={fp.reorderSpace}
+              onExport={fp.exportJson}
+              onImport={openImportDialog}
             />
+            <hr className="space-editor__plan-tree-divider" />
+            <SpacePlanTree places={fp.places} agentsById={agentsById} queuesById={queuesById} />
+            <input
+              ref={importInputRef}
+              type="file"
+              accept="application/json,.json"
+              hidden
+              onChange={onImportFileChange}
+            />
+            {fp.importError ? (
+              <div className="space-editor__save-error" role="alert">
+                No s'ha pogut importar: {fp.importError}
+              </div>
+            ) : null}
             {fp.tool === 'seat' && fp.selectedSeat ? (
               <AgentAssignPalette
                 seat={fp.selectedSeat}
@@ -143,16 +176,18 @@ export function SpaceEditorPanel() {
           </div>
           {fp.activeSpace && fp.activeSpace.cells.length > 0 ? (
             <div className="space-editor__preview" aria-label="Previsualització de la sala">
-              <Suspense fallback={<PanelSuspenseFallback />}>
-                <SpaceView3D
-                  space={fp.activeSpace}
-                  agentsById={agentsById}
-                  queuesById={queuesById}
-                  showAvatars
-                  animations={false}
-                  onSelectAgent={noop}
-                />
-              </Suspense>
+              <div className="fv-canvas">
+                <Suspense fallback={<PanelSuspenseFallback />}>
+                  <SpaceView3D
+                    space={fp.activeSpace}
+                    agentsById={agentsById}
+                    queuesById={queuesById}
+                    showAvatars
+                    animations={false}
+                    onSelectAgent={noop}
+                  />
+                </Suspense>
+              </div>
             </div>
           ) : null}
         </aside>

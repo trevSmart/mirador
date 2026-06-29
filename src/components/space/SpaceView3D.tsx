@@ -397,6 +397,7 @@ interface IsoSeatProps {
   b: IsoBasis
   showAvatars: boolean
   animations: boolean
+  towers: boolean
   queuesById: Map<string, Queue>
   onSelect: (agent: Agent) => void
   onPointerOver: (agent: Agent, event: ReactPointerEvent<SVGGElement>) => void
@@ -405,7 +406,7 @@ interface IsoSeatProps {
   clipPrefix: string
 }
 
-function IsoSeat({ agent, x, y, b, showAvatars, animations, queuesById, onSelect, onPointerOver, onPointerMove, onPointerOut, clipPrefix }: IsoSeatProps) {
+function IsoSeat({ agent, x, y, b, showAvatars, animations, towers, queuesById, onSelect, onPointerOver, onPointerMove, onPointerOut, clipPrefix }: IsoSeatProps) {
   const saturated = agent.max > 0 && agent.used >= agent.max
   const ratio = agent.max > 0 ? Math.min(1, agent.used / agent.max) : 0
   const segments = agentTowerSegments(agent, queuesById)
@@ -415,6 +416,8 @@ function IsoSeat({ agent, x, y, b, showAvatars, animations, queuesById, onSelect
   const h = useTowerHeightScale(targetH, true)
   const idBase = `${clipPrefix}-${agent.id}`
 
+  const avatarCy = towers ? y - h - VEC_TH * 0.62 : y
+
   const glow =
     ratio > 0.04 ? (
       <ellipse key="glow" cx={x} cy={y} rx={VEC_TW * 0.92} ry={VEC_TH * 0.92} style={{ fill: topColor }} opacity={0.16 + ratio * 0.34} filter={`url(#${clipPrefix}-glow)`} />
@@ -423,11 +426,11 @@ function IsoSeat({ agent, x, y, b, showAvatars, animations, queuesById, onSelect
   const body = (
     <>
       {glow}
-      <g key="tower">{segmentedTowerFaces(x, y, b, h, segments, idBase)}</g>
+      {towers ? <g key="tower">{segmentedTowerFaces(x, y, b, h, segments, idBase)}</g> : null}
       <g className={`fv3d-avatar${showAvatars ? ' fv3d-avatar--on' : ''}`}>
-        <AvatarDisc key="avatar" agent={agent} cx={x} cy={y - h - VEC_TH * 0.62} r={VEC_TH * 1.05} ring={AVATAR_RING} showPhoto clipPrefix={clipPrefix} />
+        <AvatarDisc key="avatar" agent={agent} cx={x} cy={avatarCy} r={VEC_TH * 1.05} ring={AVATAR_RING} showPhoto clipPrefix={clipPrefix} />
       </g>
-      {saturated ? <SaturationBeacon x={x} avatarCy={y - h - VEC_TH * 0.62} animations={animations} /> : null}
+      {saturated ? <SaturationBeacon x={x} avatarCy={avatarCy} animations={animations} /> : null}
     </>
   )
 
@@ -482,9 +485,14 @@ interface SpaceView3DProps {
   showAvatars: boolean
   animations: boolean
   onSelectAgent: (agent: Agent) => void
+  /** Draw agent towers (default). When false, only the ground avatar shows. */
+  towers?: boolean
+  /** Orbit/drag, tooltips, hover overlay and rotation persistence (default).
+      When false the render is a static, non-interactive thumbnail. */
+  interactive?: boolean
 }
 
-export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animations, onSelectAgent }: SpaceView3DProps) {
+export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animations, onSelectAgent, towers = true, interactive = true }: SpaceView3DProps) {
   const [tooltip, setTooltip] = useState<{ agent: Agent; x: number; y: number } | null>(null)
   const [tooltipOpen, setTooltipOpen] = useState(false)
   // Which seat is hovered, so its avatar can be lifted above every other one
@@ -514,10 +522,11 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
   // Persist only after the user actually orbits, so merely viewing a room never
   // writes a default entry for it.
   useEffect(() => {
+    if (!interactive) return
     if (!dirtyRef.current) return
     const id = window.setTimeout(() => saveRoomRotation(space.id, rotation), 250)
     return () => window.clearTimeout(id)
-  }, [space.id, rotation])
+  }, [interactive, space.id, rotation])
 
   const basis = useMemo(() => makeBasis(rotation.az, rotation.tilt), [rotation.az, rotation.tilt])
 
@@ -724,7 +733,7 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
       const agent = seat.agentId ? agentsById.get(seat.agentId) ?? null : null
       if (agent) {
         body.push(
-          <IsoSeat key={`s-${key}`} agent={agent} x={x} y={y} b={basis} showAvatars={showAvatars} animations={animations} queuesById={queuesById} onSelect={onSelectAgent} onPointerOver={handleSeatOver} onPointerMove={handleSeatMove} onPointerOut={handleSeatOut} clipPrefix={svgIdPrefix} />,
+          <IsoSeat key={`s-${key}`} agent={agent} x={x} y={y} b={basis} showAvatars={showAvatars} animations={animations} towers={towers} queuesById={queuesById} onSelect={onSelectAgent} onPointerOver={handleSeatOver} onPointerMove={handleSeatMove} onPointerOut={handleSeatOut} clipPrefix={svgIdPrefix} />,
         )
       } else {
         body.push(<VacantSeat key={`s-${key}`} x={x} y={y} />)
@@ -741,12 +750,12 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
     <>
       <div
         className="fv3d-wrap"
-        onPointerLeave={handleSeatOut}
-        onPointerDown={onDown}
-        onPointerMove={onMove}
-        onPointerUp={onUp}
-        onPointerCancel={onUp}
-        style={{ cursor: dragging ? 'grabbing' : 'grab', touchAction: 'none' }}
+        onPointerLeave={interactive ? handleSeatOut : undefined}
+        onPointerDown={interactive ? onDown : undefined}
+        onPointerMove={interactive ? onMove : undefined}
+        onPointerUp={interactive ? onUp : undefined}
+        onPointerCancel={interactive ? onUp : undefined}
+        style={{ cursor: interactive ? (dragging ? 'grabbing' : 'grab') : 'default', touchAction: 'none' }}
       >
         <svg className="fv3d-svg" viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`} preserveAspectRatio="xMidYMid meet" style={{ aspectRatio: outerAspectN, ['--fv-aspect-n' as string]: outerAspectN }} xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -789,14 +798,14 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
           </g>
           {body}
           {sunbeams}
-          {showAvatars && hoveredAgent && hoverPos ? (
+          {interactive && showAvatars && hoveredAgent && hoverPos ? (
             // key per agent → fresh mount when moving avatar→avatar, so the height
             // hook starts at the final height instead of sliding from the previous.
             <HoverAvatar key={hoveredAgent.id} agent={hoveredAgent} x={hoverPos[0]} y={hoverPos[1]} animations={animations} clipPrefix={`${svgIdPrefix}-hover`} />
           ) : null}
         </svg>
       </div>
-      {tooltip
+      {interactive && tooltip
         ? createPortal(
             <SpaceSeatTooltip agent={tooltip.agent} queuesById={queuesById} x={tooltip.x} y={tooltip.y} open={tooltipOpen} onExited={handleTooltipExited} />,
             document.body,
