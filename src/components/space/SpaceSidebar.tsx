@@ -77,6 +77,8 @@ interface SpaceSidebarProps {
   onDuplicateSpace: (placeId: string, index: number) => void
   onRenameSpace: (placeId: string, index: number, name: string) => void
   onReorderSpace: (placeId: string, from: number, to: number) => void
+  onExport: () => void
+  onImport: () => void
 }
 
 export function SpaceSidebar({
@@ -93,6 +95,8 @@ export function SpaceSidebar({
   onDuplicateSpace,
   onRenameSpace,
   onReorderSpace,
+  onExport,
+  onImport,
 }: SpaceSidebarProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => {
     const initial = new Set<string>()
@@ -132,6 +136,23 @@ export function SpaceSidebar({
         <div className="fe-tree-panel">
           <header className="fe-tree-panel__head">
             <h3 className="fe-section__title">Llocs i plantes</h3>
+            <button
+              type="button"
+              className="fe-add-btn"
+              onClick={onImport}
+              title="Importa llocs des d'un fitxer JSON"
+            >
+              Importa
+            </button>
+            <button
+              type="button"
+              className="fe-add-btn"
+              onClick={onExport}
+              disabled={places.length === 0}
+              title="Exporta tots els llocs a JSON"
+            >
+              Exporta
+            </button>
             <button type="button" className="fe-add-btn" onClick={onAddPlace} title="Afegeix un lloc">
               + Lloc
             </button>

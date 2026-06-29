@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../auth/auth-context'
 import { useMiradorApi } from '../api/mirador-api-context'
 import { devLog } from '../dev/dev-log'
+import { dateStamp, downloadTextFile } from '../utils/download'
 import {
   loadSpacePlan,
   saveSpacePlan,
@@ -21,10 +22,12 @@ import {
   eraseEdge,
   spacePlanSignature,
   makeId,
+  prepareImportedPlaces,
   seedSpace,
   toggleDivider,
   toggleOpening,
   toggleSeat,
+  uniqueName,
 } from './space-plan-model'
 import type { Cell, Dir, Edge, Space, SpacePlanData, SpaceTool, Place } from './types'
 
@@ -36,14 +39,6 @@ export interface SeatRef {
 function clampIndex(index: number, length: number): number {
   if (length <= 0) return 0
   return Math.min(length - 1, Math.max(0, index))
-}
-
-/** Generate a unique "(còpia)"-style name within a list of existing names. */
-function uniqueName(base: string, existing: string[]): string {
-  if (!existing.includes(base)) return base
-  let n = 2
-  while (existing.includes(`${base} ${n}`)) n += 1
-  return `${base} ${n}`
 }
 
 function placeIndex(d: SpacePlanData, placeId: string): number {
@@ -61,6 +56,7 @@ export function useSpacePlan() {
   const [loaded, setLoaded] = useState(false)
   const [savedSignature, setSavedSignature] = useState('')
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [importError, setImportError] = useState<string | null>(null)
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
 
@@ -386,6 +382,39 @@ export function useSpacePlan() {
       })
   }, [client, isMockMode])
 
+  /** Download the full working plan (all places + spaces) as a JSON file. */
+  const exportJson = useCallback(() => {
+    const current = dataRef.current
+    downloadTextFile(
+      `mirador-plans-${dateStamp()}.json`,
+      JSON.stringify(current, null, 2),
+    )
+  }, [])
+
+  /** Import places from a JSON file, additively: each imported place/space is a
+      brand-new record (fresh ids) appended to the current plan, with place names
+      de-duplicated. Nothing existing is ever overwritten or removed. */
+  const importJson = useCallback(
+    async (file: File) => {
+      setImportError(null)
+      let raw: unknown
+      try {
+        raw = JSON.parse(await file.text())
+      } catch {
+        setImportError('Fitxer incompatible o invàlid')
+        return
+      }
+      const existingNames = dataRef.current.places.map((p) => p.name)
+      const imported = prepareImportedPlaces(raw, existingNames)
+      if (!imported || imported.length === 0) {
+        setImportError('Fitxer incompatible o invàlid')
+        return
+      }
+      apply((d) => ({ ...d, places: [...d.places, ...imported] }))
+    },
+    [apply],
+  )
+
   const reset = useCallback(() => {
     void loadSpacePlan(client, isMockMode).then((stored) => {
       const next = stored ?? defaultSpacePlan()
@@ -445,5 +474,9 @@ export function useSpacePlan() {
     save,
     saveError,
     reset,
+    exportJson,
+    importJson,
+    importError,
+    clearImportError: () => setImportError(null),
   }
 }
