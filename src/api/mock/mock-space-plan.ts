@@ -1,12 +1,14 @@
 import { SPACE_SCHEMA_VERSION } from '../../space/space-plan-model'
-import type { Cell, Edge, Space, SpacePlanData, Opening, OpeningKind, Place, Seat } from '../../space/types'
+import type { Cell, Edge, Space, SpacePlanData, Opening, OpeningKind, Place, Seat, Site } from '../../space/types'
+import { MOCK_AGENT, type MockAgentKey } from './mock-ids'
 
 const MOCK_PLACE_ID = 'mock-place-cc'
+const MOCK_SITE_ID = 'mock-site-cc'
 const MOCK_SPACE_VENDES = 'mock-space-vendes'
 const MOCK_SPACE_ATENCIO = 'mock-space-atencio'
 const MOCK_SPACE_SUPORT = 'mock-space-suport'
 
-type SeatDef = { c: number; r: number; agentId: string | null }
+type SeatDef = { c: number; r: number; agentId: MockAgentKey | null }
 type OpeningDef = { lc: number; lr: number; edge: Edge; kind: OpeningKind }
 
 function rect(c0: number, r0: number, width: number, height: number): Cell[] {
@@ -23,7 +25,7 @@ function seatsAt(originC: number, originR: number, defs: SeatDef[]): Seat[] {
   return defs.map(({ c, r, agentId }) => ({
     c: originC + c,
     r: originR + r,
-    agentId,
+    agentId: agentId ? MOCK_AGENT[agentId] : null,
   }))
 }
 
@@ -163,9 +165,11 @@ export function createMockSpacePlan(): SpacePlanData {
     spaces: [vendes, atencio, suport],
   }
 
+  const site: Site = { id: MOCK_SITE_ID, name: 'Seu Central', image: null, places: [place] }
   return {
     v: SPACE_SCHEMA_VERSION,
+    activeSiteId: site.id,
     activePlaceId: place.id,
-    places: [place],
+    sites: [site],
   }
 }
