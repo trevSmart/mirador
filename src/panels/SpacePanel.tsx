@@ -89,10 +89,14 @@ export function SpacePanel() {
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents])
   const queuesById = useMemo(() => new Map(queues.map((queue) => [queue.id, queue])), [queues])
 
+  const allPlaces = useMemo(
+    () => (data ? data.sites.flatMap((s) => s.places) : []),
+    [data],
+  )
   const activePlace = useMemo(() => {
-    if (!data || data.places.length === 0) return null
-    return data.places.find((p) => p.id === placeId) ?? data.places[0]
-  }, [data, placeId])
+    if (allPlaces.length === 0) return null
+    return allPlaces.find((p) => p.id === placeId) ?? allPlaces[0]
+  }, [allPlaces, placeId])
 
   const spaces = useMemo(() => activePlace?.spaces ?? [], [activePlace])
   const multiSpace = spaces.length > 1
@@ -180,12 +184,12 @@ export function SpacePanel() {
       <div className="space-view">
         <header className="fv-bar">
           <div className="fv-selectors">
-            {data.places.length > 1 ? (
+            {allPlaces.length > 1 ? (
               <Select
                 className="fv-select"
                 ariaLabel="Lloc"
                 value={activePlace.id}
-                options={data.places.map((place) => ({ value: place.id, label: place.name }))}
+                options={allPlaces.map((place) => ({ value: place.id, label: place.name }))}
                 onChange={(id) => setPlaceId(id)}
               />
             ) : (
