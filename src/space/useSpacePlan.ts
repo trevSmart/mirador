@@ -22,14 +22,14 @@ import {
   eraseEdge,
   spacePlanSignature,
   makeId,
-  prepareImportedPlaces,
+  prepareImportedSites,
   seedSpace,
   toggleDivider,
   toggleOpening,
   toggleSeat,
   uniqueName,
 } from './space-plan-model'
-import type { Cell, Dir, Edge, Space, SpacePlanData, SpaceTool, Place } from './types'
+import type { Cell, Dir, Edge, Space, SpacePlanData, SpaceTool, Place, Site } from './types'
 
 export interface SeatRef {
   c: number
@@ -41,9 +41,15 @@ function clampIndex(index: number, length: number): number {
   return Math.min(length - 1, Math.max(0, index))
 }
 
-function placeIndex(d: SpacePlanData, placeId: string): number {
-  const pi = d.places.findIndex((p) => p.id === placeId)
-  return pi >= 0 ? pi : Math.max(0, d.places.findIndex((p) => p.id === d.activePlaceId))
+function placeIndex(places: Place[], placeId: string, activePlaceId: string | null): number {
+  const pi = places.findIndex((p) => p.id === placeId)
+  return pi >= 0 ? pi : Math.max(0, places.findIndex((p) => p.id === activePlaceId))
+}
+
+function activeSiteOf(d: SpacePlanData): { si: number; site: Site } | null {
+  const si = Math.max(0, d.sites.findIndex((s) => s.id === d.activeSiteId))
+  const site = d.sites[si]
+  return site ? { si, site } : null
 }
 
 export function useSpacePlan() {
@@ -122,8 +128,11 @@ export function useSpacePlan() {
   const updateActiveSpace = useCallback(
     (fn: (space: Space) => Space, recordHistory = true) => {
       apply((d) => {
-        const pi = Math.max(0, d.places.findIndex((p) => p.id === d.activePlaceId))
-        const place = d.places[pi]
+        const active = activeSiteOf(d)
+        if (!active) return d
+        const { si, site } = active
+        const pi = Math.max(0, site.places.findIndex((p) => p.id === d.activePlaceId))
+        const place = site.places[pi]
         if (!place) return d
         const fi = clampIndex(spaceIndexRef.current, place.spaces.length)
         const space = place.spaces[fi]
@@ -131,16 +140,19 @@ export function useSpacePlan() {
         const nextSpace = fn(space)
         if (nextSpace === space) return d
         const spaces = place.spaces.map((f, i) => (i === fi ? nextSpace : f))
-        const places = d.places.map((p, i) => (i === pi ? { ...p, spaces } : p))
-        return { ...d, places }
+        const nextPlaces = site.places.map((p, i) => (i === pi ? { ...p, spaces } : p))
+        const sites = d.sites.map((s, i) => (i === si ? { ...s, places: nextPlaces } : s))
+        return { ...d, sites }
       }, recordHistory)
     },
     [apply],
   )
 
   /* ── Derived selectors ──────────────────────────────────────────────── */
-  const activePlaceIndex = Math.max(0, data.places.findIndex((p) => p.id === data.activePlaceId))
-  const activePlace = data.places[activePlaceIndex] ?? data.places[0]
+  const activeSiteIndex = Math.max(0, data.sites.findIndex((s) => s.id === data.activeSiteId))
+  const activeSite = data.sites[activeSiteIndex] ?? data.sites[0]
+  const activePlaceIndex = Math.max(0, activeSite?.places.findIndex((p) => p.id === data.activePlaceId) ?? 0)
+  const activePlace = activeSite?.places[activePlaceIndex] ?? activeSite?.places[0] ?? null
   const safeSpaceIndex = clampIndex(activeSpaceIndex, activePlace?.spaces.length ?? 0)
   const activeSpace = activePlace?.spaces[safeSpaceIndex] ?? null
 
@@ -220,6 +232,20 @@ export function useSpacePlan() {
     [updateActiveSpace],
   )
 
+  /* ── Active-site helper ─────────────────────────────────────────────── */
+  const updateActiveSite = useCallback(
+    (fn: (site: Site) => Site) => {
+      apply((d) => {
+        const active = activeSiteOf(d)
+        if (!active) return d
+        const next = fn(active.site)
+        if (next === active.site) return d
+        return { ...d, sites: d.sites.map((s, i) => (i === active.si ? next : s)) }
+      })
+    },
+    [apply],
+  )
+
   /* ── Place / space management ───────────────────────────────────────── */
   const selectPlace = useCallback((placeId: string) => {
     apply((d) => (d.activePlaceId === placeId ? d : { ...d, activePlaceId: placeId }), false)
@@ -234,114 +260,203 @@ export function useSpacePlan() {
   }, [apply])
 
   const addPlace = useCallback(() => {
-    apply((d) => {
-      const names = d.places.map((p) => p.name)
+    let newPlaceId = ''
+    updateActiveSite((site) => {
+      const names = site.places.map((p) => p.name)
       const place: Place = {
         id: makeId('place'),
-        name: uniqueName(`Lloc ${d.places.length + 1}`, names),
+        name: uniqueName(`Lloc ${site.places.length + 1}`, names),
         spaces: [seedSpace('Planta 1')],
       }
-      return { ...d, places: [...d.places, place], activePlaceId: place.id }
+      newPlaceId = place.id
+      return { ...site, places: [...site.places, place] }
     })
+    if (newPlaceId) setData((d) => ({ ...d, activePlaceId: newPlaceId }))
     setActiveSpaceIndex(0)
     setSelectedSeat(null)
-  }, [apply])
+  }, [updateActiveSite])
 
   const removePlace = useCallback((placeId: string) => {
-    apply((d) => {
-      if (d.places.length <= 1) return d
-      const places = d.places.filter((p) => p.id !== placeId)
-      const activePlaceId = d.activePlaceId === placeId ? places[0].id : d.activePlaceId
-      return { ...d, places, activePlaceId }
+    updateActiveSite((site) => {
+      if (site.places.length <= 1) return site
+      return { ...site, places: site.places.filter((p) => p.id !== placeId) }
     })
+    apply((d) => {
+      const site = d.sites.find((s) => s.id === d.activeSiteId)
+      const activePlaceId = site && !site.places.some((p) => p.id === d.activePlaceId)
+        ? site.places[0]?.id ?? d.activePlaceId
+        : d.activePlaceId
+      return activePlaceId === d.activePlaceId ? d : { ...d, activePlaceId }
+    }, false)
     setActiveSpaceIndex(0)
     setSelectedSeat(null)
-  }, [apply])
+  }, [updateActiveSite, apply])
 
   const renamePlace = useCallback((placeId: string, name: string) => {
     const trimmed = name.trim().slice(0, 40)
     if (!trimmed) return
-    apply((d) => ({
-      ...d,
-      places: d.places.map((p) => (p.id === placeId ? { ...p, name: trimmed } : p)),
+    updateActiveSite((site) => ({
+      ...site,
+      places: site.places.map((p) => (p.id === placeId ? { ...p, name: trimmed } : p)),
     }))
-  }, [apply])
+  }, [updateActiveSite])
 
   const addSpace = useCallback((placeId: string) => {
     let newIndex = 0
-    apply((d) => {
-      const pi = placeIndex(d, placeId)
-      const place = d.places[pi]
-      if (!place) return d
+    updateActiveSite((site) => {
+      const pi = placeIndex(site.places, placeId, null)
+      const place = site.places[pi]
+      if (!place) return site
       const names = place.spaces.map((f) => f.name)
       const space = seedSpace(uniqueName(`Planta ${place.spaces.length + 1}`, names))
       const spaces = [...place.spaces, space]
       newIndex = spaces.length - 1
-      const places = d.places.map((p, i) => (i === pi ? { ...p, spaces } : p))
-      return { ...d, places, activePlaceId: place.id }
+      return { ...site, places: site.places.map((p, i) => (i === pi ? { ...p, spaces } : p)) }
     })
+    apply((d) => {
+      const active = activeSiteOf(d)
+      if (!active) return d
+      const pi = placeIndex(active.site.places, placeId, d.activePlaceId)
+      const place = active.site.places[pi]
+      return place ? { ...d, activePlaceId: place.id } : d
+    }, false)
     setActiveSpaceIndex(newIndex)
     setSelectedSeat(null)
-  }, [apply])
+  }, [updateActiveSite, apply])
 
   const removeSpace = useCallback((placeId: string, index: number) => {
-    apply((d) => {
-      const pi = placeIndex(d, placeId)
-      const place = d.places[pi]
-      if (!place || place.spaces.length <= 1) return d
+    updateActiveSite((site) => {
+      const pi = placeIndex(site.places, placeId, null)
+      const place = site.places[pi]
+      if (!place || place.spaces.length <= 1) return site
       const spaces = place.spaces.filter((_, i) => i !== index)
-      const places = d.places.map((p, i) => (i === pi ? { ...p, spaces } : p))
-      return { ...d, places, activePlaceId: place.id }
+      return { ...site, places: site.places.map((p, i) => (i === pi ? { ...p, spaces } : p)) }
     })
+    apply((d) => {
+      const active = activeSiteOf(d)
+      if (!active) return d
+      const pi = placeIndex(active.site.places, placeId, d.activePlaceId)
+      const place = active.site.places[pi]
+      return place ? { ...d, activePlaceId: place.id } : d
+    }, false)
     setActiveSpaceIndex((cur) => Math.max(0, cur > index ? cur - 1 : cur === index ? cur - 1 : cur))
     setSelectedSeat(null)
-  }, [apply])
+  }, [updateActiveSite, apply])
 
   const duplicateSpace = useCallback((placeId: string, index: number) => {
     let newIndex = index
-    apply((d) => {
-      const pi = placeIndex(d, placeId)
-      const place = d.places[pi]
+    updateActiveSite((site) => {
+      const pi = placeIndex(site.places, placeId, null)
+      const place = site.places[pi]
       const source = place?.spaces[index]
-      if (!place || !source) return d
+      if (!place || !source) return site
       const names = place.spaces.map((f) => f.name)
       const copy = cloneSpace(source, uniqueName(`${source.name} (còpia)`, names))
       const spaces = [...place.spaces.slice(0, index + 1), copy, ...place.spaces.slice(index + 1)]
       newIndex = index + 1
-      const places = d.places.map((p, i) => (i === pi ? { ...p, spaces } : p))
-      return { ...d, places, activePlaceId: place.id }
+      return { ...site, places: site.places.map((p, i) => (i === pi ? { ...p, spaces } : p)) }
     })
+    apply((d) => {
+      const active = activeSiteOf(d)
+      if (!active) return d
+      const pi = placeIndex(active.site.places, placeId, d.activePlaceId)
+      const place = active.site.places[pi]
+      return place ? { ...d, activePlaceId: place.id } : d
+    }, false)
     setActiveSpaceIndex(newIndex)
     setSelectedSeat(null)
-  }, [apply])
+  }, [updateActiveSite, apply])
 
   const renameSpace = useCallback((placeId: string, index: number, name: string) => {
     const trimmed = name.trim().slice(0, 40)
     if (!trimmed) return
-    apply((d) => {
-      const pi = placeIndex(d, placeId)
-      const place = d.places[pi]
-      if (!place || !place.spaces[index]) return d
+    updateActiveSite((site) => {
+      const pi = placeIndex(site.places, placeId, null)
+      const place = site.places[pi]
+      if (!place || !place.spaces[index]) return site
       const spaces = place.spaces.map((f, i) => (i === index ? { ...f, name: trimmed } : f))
-      const places = d.places.map((p, i) => (i === pi ? { ...p, spaces } : p))
-      return { ...d, places }
+      return { ...site, places: site.places.map((p, i) => (i === pi ? { ...p, spaces } : p)) }
     })
-  }, [apply])
+  }, [updateActiveSite])
 
   const reorderSpace = useCallback((placeId: string, from: number, to: number) => {
     if (from === to) return
-    apply((d) => {
-      const pi = placeIndex(d, placeId)
-      const place = d.places[pi]
-      if (!place) return d
+    updateActiveSite((site) => {
+      const pi = placeIndex(site.places, placeId, null)
+      const place = site.places[pi]
+      if (!place) return site
       const spaces = [...place.spaces]
-      if (from < 0 || from >= spaces.length || to < 0 || to >= spaces.length) return d
+      if (from < 0 || from >= spaces.length || to < 0 || to >= spaces.length) return site
       const [moved] = spaces.splice(from, 1)
       spaces.splice(to, 0, moved)
-      const places = d.places.map((p, i) => (i === pi ? { ...p, spaces } : p))
-      return { ...d, places, activePlaceId: place.id }
+      return { ...site, places: site.places.map((p, i) => (i === pi ? { ...p, spaces } : p)) }
     })
+    apply((d) => {
+      const active = activeSiteOf(d)
+      if (!active) return d
+      const pi = placeIndex(active.site.places, placeId, d.activePlaceId)
+      const place = active.site.places[pi]
+      return place ? { ...d, activePlaceId: place.id } : d
+    }, false)
     setActiveSpaceIndex(to)
+  }, [updateActiveSite, apply])
+
+  /* ── Site actions ───────────────────────────────────────────────────── */
+  const selectSite = useCallback((siteId: string) => {
+    apply((d) => {
+      if (d.activeSiteId === siteId) return d
+      const site = d.sites.find((s) => s.id === siteId)
+      return { ...d, activeSiteId: siteId, activePlaceId: site?.places[0]?.id ?? d.activePlaceId }
+    }, false)
+    setActiveSpaceIndex(0)
+    setSelectedSeat(null)
+  }, [apply])
+
+  const addSite = useCallback(() => {
+    apply((d) => {
+      const names = d.sites.map((s) => s.name)
+      const place: Place = { id: makeId('place'), name: 'Lloc 1', spaces: [seedSpace('Planta 1')] }
+      const site: Site = {
+        id: makeId('site'),
+        name: uniqueName(`Site ${d.sites.length + 1}`, names),
+        image: null,
+        places: [place],
+      }
+      return { ...d, sites: [...d.sites, site], activeSiteId: site.id, activePlaceId: place.id }
+    })
+    setActiveSpaceIndex(0)
+    setSelectedSeat(null)
+  }, [apply])
+
+  const removeSite = useCallback((siteId: string) => {
+    apply((d) => {
+      if (d.sites.length <= 1) return d
+      const sites = d.sites.filter((s) => s.id !== siteId)
+      const activeSiteId = d.activeSiteId === siteId ? sites[0].id : d.activeSiteId
+      const active = sites.find((s) => s.id === activeSiteId) ?? sites[0]
+      const activePlaceId = active.places.some((p) => p.id === d.activePlaceId)
+        ? d.activePlaceId
+        : active.places[0].id
+      return { ...d, sites, activeSiteId, activePlaceId }
+    })
+    setActiveSpaceIndex(0)
+    setSelectedSeat(null)
+  }, [apply])
+
+  const renameSite = useCallback((siteId: string, name: string) => {
+    const trimmed = name.trim().slice(0, 40)
+    if (!trimmed) return
+    apply((d) => ({
+      ...d,
+      sites: d.sites.map((s) => (s.id === siteId ? { ...s, name: trimmed } : s)),
+    }))
+  }, [apply])
+
+  const setSiteLogo = useCallback((siteId: string, dataUrl: string | null) => {
+    apply((d) => ({
+      ...d,
+      sites: d.sites.map((s) => (s.id === siteId ? { ...s, image: dataUrl } : s)),
+    }))
   }, [apply])
 
   /* ── History ────────────────────────────────────────────────────────── */
@@ -391,8 +506,8 @@ export function useSpacePlan() {
     )
   }, [])
 
-  /** Import places from a JSON file, additively: each imported place/space is a
-      brand-new record (fresh ids) appended to the current plan, with place names
+  /** Import sites from a JSON file, additively: each imported site is a
+      brand-new record (fresh ids) appended to the current plan, with site names
       de-duplicated. Nothing existing is ever overwritten or removed. */
   const importJson = useCallback(
     async (file: File) => {
@@ -404,13 +519,13 @@ export function useSpacePlan() {
         setImportError('Fitxer incompatible o invàlid')
         return
       }
-      const existingNames = dataRef.current.places.map((p) => p.name)
-      const imported = prepareImportedPlaces(raw, existingNames)
+      const existingNames = dataRef.current.sites.map((s) => s.name)
+      const imported = prepareImportedSites(raw, existingNames)
       if (!imported || imported.length === 0) {
         setImportError('Fitxer incompatible o invàlid')
         return
       }
-      apply((d) => ({ ...d, places: [...d.places, ...imported] }))
+      apply((d) => ({ ...d, sites: [...d.sites, ...imported] }))
     },
     [apply],
   )
@@ -437,7 +552,8 @@ export function useSpacePlan() {
   return {
     loaded,
     data,
-    places: data.places,
+    sites: data.sites,
+    activeSite,
     activePlace,
     activeSpace,
     activeSpaceIndex: safeSpaceIndex,
@@ -458,6 +574,11 @@ export function useSpacePlan() {
     assignAgent,
     removeSeat,
     // structure
+    selectSite,
+    addSite,
+    removeSite,
+    renameSite,
+    setSiteLogo,
     selectPlace,
     selectSpace,
     addPlace,
