@@ -7,7 +7,6 @@ import { useDevConsole } from '../dev/useDevConsole'
 import { useDeveloperMode } from '../hooks/useDeveloperMode'
 import { SfIcon } from './ds/SfIcon'
 import { GlobalSearch } from './GlobalSearch'
-import { HeaderClock } from './HeaderClock'
 import { UserMenu } from './UserMenu'
 
 export function AppHeader() {
@@ -78,10 +77,6 @@ export function AppHeader() {
             DEV
           </button>
         ) : null}
-      </div>
-
-      <div className="app-header__center">
-        <HeaderClock />
       </div>
 
       <div className="app-header__right">

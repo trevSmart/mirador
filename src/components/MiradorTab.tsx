@@ -158,7 +158,7 @@ export function MiradorTab({
             <PanelIcon type={panelType} sldsSize="x-small" />
           </span>
         ) : null}
-        {title}
+        <span className="mirador-tab__label">{title}</span>
       </span>
       {!effectiveHideClose ? (
         <div

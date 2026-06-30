@@ -10,7 +10,8 @@ export const LOGO_MAX_PX = 256
 function readAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result))
+    // readAsDataURL always yields a string result; narrow for the type checker.
+    reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '')
     reader.onerror = () => reject(new Error("No s'ha pogut llegir el fitxer"))
     reader.readAsDataURL(file)
   })

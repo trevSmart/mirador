@@ -5,7 +5,7 @@ import { cellKey, GRID_C } from '../../space/space-plan-model'
 import { rotateCell, rotateEdge, roomBounds2D } from '../../space/space-iso'
 import type { Dir, Space } from '../../space/types'
 import { useSalesforcePhoto } from '../../hooks/useSalesforcePhoto'
-import { colorFromString, textColorFromString } from '../../utils/color-from-string'
+import { colorFromRecordId, textColorFromRecordId } from '../../utils/color-from-string'
 import { agentInitials, presenceLabel } from '../../utils/format'
 import { Ring } from '../ds'
 import { roomAspect } from './space-view-aspect'
@@ -43,8 +43,8 @@ function SpaceSeat({ agent, onSelect, showAvatars, animations }: SpaceSeatProps)
         size={VIEW_CELL - 10}
         photo={showAvatars ? photo : null}
         initials={agentInitials(agent.name)}
-        faceBg={colorFromString(agent.id)}
-        faceFg={textColorFromString(agent.id)}
+        faceBg={colorFromRecordId(agent.id)}
+        faceFg={textColorFromRecordId(agent.id)}
         breathe={animations && agent.status === 'busy'}
       />
     </button>

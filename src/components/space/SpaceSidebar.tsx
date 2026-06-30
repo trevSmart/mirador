@@ -203,7 +203,7 @@ export function SpaceSidebar({
             </button>
           </header>
 
-          <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={onLogoFile} />
+          <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={(e) => void onLogoFile(e)} />
           {logoError ? <p className="fe-tree__error" role="alert">{logoError}</p> : null}
 
           <div className="fe-tree" role="tree" aria-label="Sites, llocs i plantes">

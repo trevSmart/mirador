@@ -8,7 +8,6 @@ import { SPACE_CANVAS_TINTS, type SpaceCanvasTint } from './space-canvas-wash'
 
 export type SpaceViewMode = '2d' | '3d'
 export type Lang = 'ca' | 'es' | 'en'
-export type TimeFormat = '24h' | '12h'
 
 export interface Preferences {
   /** Override data source to mock mode regardless of server config. */
@@ -40,7 +39,6 @@ export interface Preferences {
   /** Background wash tint behind space room renders. */
   spaceCanvasTint: SpaceCanvasTint
   lang: Lang
-  timeFormat: TimeFormat
 
   /** Allow browser push notifications when the tab is hidden. */
   browserNotifs: boolean
@@ -66,7 +64,6 @@ export const PREFERENCES_DEFAULTS: Preferences = {
   animations: true,
   spaceCanvasTint: 'none',
   lang: 'ca',
-  timeFormat: '24h',
 
   browserNotifs: false,
   queueAlert: true,
@@ -113,7 +110,6 @@ function sanitizePreferences(raw: Partial<Preferences> | null | undefined): Pref
     animations: asBool(p.animations, d.animations),
     spaceCanvasTint: oneOf(p.spaceCanvasTint, SPACE_CANVAS_TINTS, d.spaceCanvasTint),
     lang: oneOf(p.lang, ['ca', 'es', 'en'], d.lang),
-    timeFormat: oneOf(p.timeFormat, ['24h', '12h'], d.timeFormat),
 
     browserNotifs: asBool(p.browserNotifs, d.browserNotifs),
     queueAlert: asBool(p.queueAlert, d.queueAlert),

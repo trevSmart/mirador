@@ -1,6 +1,6 @@
 import type { Skill } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
-import { colorFromString } from '../utils/color-from-string'
+import { colorFromRecordId } from '../utils/color-from-string'
 import { FadeValue, MetricPill, SfIcon } from './ds'
 
 interface SkillRowProps {
@@ -24,9 +24,11 @@ export function SkillRow({ skill }: SkillRowProps) {
       }}
     >
       <div className="skill-row__main">
-        <SfIcon name="skill" sldsSize="medium" bg={colorFromString(skill.id)} />
+        <SfIcon name="skill" sldsSize="medium" bg={colorFromRecordId(skill.id)} />
         <div className="skill-row__body">
-          <h3 className="skill-row__name" title={skill.name}>{skill.name}</h3>
+          <h3 className="skill-row__name" title={skill.name} style={{ color: colorFromRecordId(skill.id) }}>
+            {skill.name}
+          </h3>
           <p className="skill-row__meta">
             {skill.type ?? 'Sense tipus'} · <FadeValue value={skill.agents} /> agents qualificats
           </p>

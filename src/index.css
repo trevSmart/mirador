@@ -469,7 +469,7 @@ textarea,
   position: relative;
   z-index: 50;
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
   gap: var(--sp-5);
   flex-shrink: 0;
@@ -491,21 +491,8 @@ textarea,
   justify-self: start;
 }
 
-.app-header__center {
-  justify-self: center;
-}
-
 .app-header__right {
   justify-self: end;
-}
-
-.app-header__clock {
-  font-family: var(--font-body);
-  font-variant-numeric: tabular-nums;
-  font-size: calc(var(--fs-title) - 2px);
-  font-weight: var(--fw-regular);
-  color: var(--text-strong);
-  white-space: nowrap;
 }
 
 .app-header__logo {
@@ -527,7 +514,7 @@ textarea,
 .app-header .app-header__status {
   font-family: var(--font-body);
   font-size: 10.5px;
-  font-weight: 700;
+  /* font-weight: 700; */
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--status-watch);
@@ -1075,6 +1062,19 @@ textarea,
   align-items: center;
   gap: 6px;
   font-size: calc(var(--fs-sm) + 0.3px);
+  /* Allow the label to shrink below its content width so ellipsis can kick in
+     inside the flex row instead of pushing the tab wider. */
+  min-width: 0;
+  flex: 1;
+}
+
+/* Truncate the tab title so every tab keeps the same fixed width regardless of
+   how long its label is. */
+.mirador-tab__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .mirador-tab__icon {
@@ -1105,10 +1105,32 @@ textarea,
   /* 1px tighter than the shared --dv-tab-border-radius (--r-sm = 10px), without
      affecting the add-panel "+" button that reuses that variable. */
   border-radius: 9px;
+  /* Every tab is the same fixed width regardless of its title length; longer
+     titles truncate with an ellipsis (see .mirador-tab__label). */
+  width: var(--dv-tab-width, 130px);
+  box-sizing: border-box;
+}
+
+/* The default-tab wrapper must fill the fixed-width tab and let its label
+   flex/shrink so the ellipsis applies. */
+.dockview-container .dv-tab .dv-default-tab {
+  width: 100%;
+  min-width: 0;
 }
 
 .dockview-container .dv-tab.dv-active-tab .mirador-tab__icon {
   color: inherit;
+}
+
+/* Inactive tab icons render colourless; only the visible (active) tab keeps its
+   tile/avatar colour. grayscale(1) strips the SLDS tile hue and avatar tint. */
+.dockview-container .dv-tab.dv-inactive-tab .mirador-tab__icon {
+  filter: grayscale(1) opacity(0.65);
+}
+
+/* Inactive tabs read one weight step lighter than the active tab (600). */
+.dockview-container .dv-tab.dv-inactive-tab {
+  font-weight: 300;
 }
 
 .dockview-container .dv-tab.dv-active-tab {
@@ -1606,7 +1628,7 @@ textarea,
 .work-row__main {
   display: flex;
   align-items: center;
-  gap: var(--sp-4);
+  gap: calc(var(--sp-4) - 1px);
   min-width: 0;
 }
 
@@ -1644,9 +1666,9 @@ textarea,
 .queue-row__meta,
 .skill-row__meta,
 .work-row__meta {
-  margin: var(--sp-1) 0 0;
-  font-size: var(--fs-xs);
-  color: var(--text-muted);
+  margin: calc(var(--sp-1) - 3px) 0 0;
+  font-size: calc(var(--fs-xs) + 0.3px);
+  /* color: color-mix(in oklab, var(--text-muted) 88%, var(--text-body)); */
 }
 
 .agent-row__metrics,
@@ -1654,7 +1676,8 @@ textarea,
 .skill-row__metrics {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-2);
+  justify-content: space-between;
+  gap: var(--sp-5);
 }
 
 .agent-row__skills {
@@ -1814,13 +1837,10 @@ textarea,
    <StatusPill> primitive (src/components/ds/StatusPill.tsx). */
 .metric-pill {
   display: inline-flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
+  align-items: center;
   gap: 2px;
-  min-width: 72px;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-xs);
-  background: var(--surface-well);
-  padding: var(--sp-2);
+  min-width: 64px;
 }
 
 .metric-pill__label {
@@ -1833,9 +1853,10 @@ textarea,
 .metric-pill__value {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: calc(var(--fs-sm) + var(--mono-fs-nudge));
-  font-weight: var(--fw-semibold);
+  font-size: calc(var(--fs-body-lg) + var(--mono-fs-nudge));
+  font-weight: var(--fw-regular);
   color: var(--text-strong);
+  line-height: 1.1;
 }
 
 /* ── Insights banner (Mirador ops-summary) ── */
@@ -6311,13 +6332,11 @@ textarea,
 
 /* Bins de la franja de hue exclosa: ratllat tènue, no és un buit de cobertura. */
 .color-playground__bar--excluded .color-playground__bar-fill {
-  background: repeating-linear-gradient(
-    45deg,
-    color-mix(in srgb, var(--mi-dim) 12%, transparent),
-    color-mix(in srgb, var(--mi-dim) 12%, transparent) 4px,
-    transparent 4px,
-    transparent 8px
-  );
+  background: repeating-linear-gradient(45deg,
+      color-mix(in srgb, var(--mi-dim) 12%, transparent),
+      color-mix(in srgb, var(--mi-dim) 12%, transparent) 4px,
+      transparent 4px,
+      transparent 8px);
   border-radius: var(--r-sm);
 }
 
@@ -6364,4 +6383,63 @@ textarea,
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+/* ── Site level (editor sidebar + 3D plan tree) ─────────────────────────────
+   Added with the Site/logo feature. The sidebar site row mirrors .fe-tree__place
+   layout; the 3D tree site row mirrors .fe-plan-tree__place and gets its own
+   collapse rules scoped with the child combinator so expanding a site does not
+   rotate/animate the chevrons of its child places. */
+.fe-tree__site {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-2);
+  border-radius: var(--r-sm);
+}
+
+.fe-site__name {
+  flex: 1 1 auto;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Logos never distort: contain within the box, keep their slot fixed. */
+.fe-site__logo,
+.fe-plan-tree__logo {
+  border-radius: 3px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.fe-tree__error {
+  margin: var(--sp-1) var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--status-alert);
+}
+
+.fe-plan-tree__site {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  column-gap: var(--sp-2);
+}
+
+.fe-plan-tree__site-name {
+  font-weight: 600;
+}
+
+.fe-plan-tree__site.is-expanded > .fe-plan-tree__chevron {
+  transform: rotate(90deg);
+}
+
+.fe-plan-tree__site:not(.is-expanded) > .fe-plan-tree__collapse {
+  grid-template-rows: 0fr;
+}
+
+.fe-plan-tree__site:not(.is-expanded) > .fe-plan-tree__collapse > .fe-plan-tree__collapse-inner {
+  opacity: 0;
 }
