@@ -12,7 +12,6 @@ import {
   type SpaceViewMode,
   type Lang,
   type Preferences,
-  type TimeFormat,
 } from '../../settings/preferences'
 import {
   NumberField,
@@ -350,20 +349,6 @@ export function AparencaSection({ draft, patch }: SectionProps) {
                 { value: 'en', label: 'English' },
               ]}
               disabled
-            />
-          }
-        />
-        <SettingsRow
-          title="Format horari"
-          control={
-            <SelectField<TimeFormat>
-              label="Format horari"
-              value={draft.timeFormat}
-              onChange={(v) => patch({ timeFormat: v })}
-              options={[
-                { value: '24h', label: '24 h' },
-                { value: '12h', label: '12 h (AM/PM)' },
-              ]}
             />
           }
         />

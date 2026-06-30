@@ -12,7 +12,7 @@ import { createPortal } from 'react-dom'
 import { SpaceSeatTooltip } from './SpaceSeatTooltip'
 import { useTowerHeightScale } from '../../hooks/useTowerHeightScale'
 import { useSalesforcePhoto } from '../../hooks/useSalesforcePhoto'
-import { colorFromString, textColorFromString } from '../../utils/color-from-string'
+import { colorFromRecordId, textColorFromRecordId } from '../../utils/color-from-string'
 import { agentInitials } from '../../utils/format'
 import { agentTowerSegments, towerSegmentLabel, type TowerSegment } from '../../space/agent-tower-segments'
 import type { Agent, Queue } from '../../api/types'
@@ -283,7 +283,7 @@ function AvatarDisc({
       <clipPath id={clipId}>
         <circle cx={cx} cy={cy} r={r} />
       </clipPath>
-      <circle cx={cx} cy={cy} r={r} fill={colorFromString(agent.id)} />
+      <circle cx={cx} cy={cy} r={r} fill={colorFromRecordId(agent.id)} />
       {photo ? (
         <image
           href={photo}
@@ -302,7 +302,7 @@ function AvatarDisc({
           dominantBaseline="central"
           fontSize={r * 0.8}
           fontWeight={600}
-          fill={textColorFromString(agent.id)}
+          fill={textColorFromRecordId(agent.id)}
           style={{ fontFamily: 'var(--font-display)' }}
         >
           {agentInitials(agent.name)}
@@ -625,7 +625,13 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
   }, [plan])
 
   const ordered = useMemo(() => [...plan.cells].sort(depthCompareVec(basis)), [plan, basis])
-  const svgIdPrefix = `fv3d-${space.id}`
+  // Unique per mounted instance: the same space can render twice at once (e.g.
+  // the Space Editor's sidebar thumbnail and its big preview). Keying SVG ids on
+  // space.id alone would duplicate every <clipPath>/<filter> id across the two
+  // SVGs, and `url(#id)` resolves to the first match in document order — so the
+  // preview's avatar <image> would clip against the thumbnail's circle and vanish.
+  const instanceId = useId().replace(/:/g, '')
+  const svgIdPrefix = `fv3d-${space.id}-${instanceId}`
   const spaceGrainId = `${svgIdPrefix}-space-grain`
   const spaceSheenId = `${svgIdPrefix}-space-sheen`
   const wallSheenRightId = `${svgIdPrefix}-wall-sheen-r`

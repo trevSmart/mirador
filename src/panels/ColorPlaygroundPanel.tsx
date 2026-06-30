@@ -3,7 +3,7 @@ import { useSkills } from '../api/data-hooks'
 import { FadeValue } from '../components/ds'
 import { SkillRow } from '../components/SkillRow'
 import { groupSkillsByType, totalSkillBacklog } from '../utils/agent-stats'
-import { colorFromString, EXCLUDED_HUE_RANGE, oklchForHue } from '../utils/color-from-string'
+import { colorFromRecordId, colorFromString, EXCLUDED_HUE_RANGE, oklchForHue } from '../utils/color-from-string'
 
 /* ──────────────────────────────────────────────────────────────────────────
    Color Playground — eina de dev per inspeccionar colorFromString(). Té dues
@@ -245,7 +245,7 @@ function SyntheticCard() {
 function RealSkillsCard() {
   const skills = useSkills()
   const groups = groupSkillsByType(skills)
-  const hues = skills.map((s) => parseHue(colorFromString(s.id)))
+  const hues = skills.map((s) => parseHue(colorFromRecordId(s.id)))
   const { coverage, emptyBins } = coverageOf(hues)
 
   return (

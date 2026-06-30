@@ -9,54 +9,81 @@ import type {
   WorkItem,
 } from '../types'
 import { workItemIconFields } from '../../utils/salesforce-object-icon'
+import {
+  MOCK_AGENT,
+  MOCK_PRESENCE,
+  MOCK_QUEUE,
+  MOCK_SKILL,
+  MOCK_SKILL_TYPE,
+  mockAgentSeq,
+  mockServiceResourceSkillId,
+  mockWorkItemId,
+  type MockAgentKey,
+  type MockQueueKey,
+  type MockSkillKey,
+} from './mock-ids'
 
 // Deterministic seed — baseline snapshot for mock mode. On each refresh,
 // `mock-state` applies small incremental changes so the contact center evolves
 // naturally over time without re-shuffling on hot-reload.
 
-type QueueDef = { id: string; name: string }
+type QueueDef = { key: MockQueueKey; name: string }
 
 const QUEUE_DEFS: QueueDef[] = [
-  { id: 'ac', name: 'Atenció Client' },
-  { id: 'in', name: 'Incidències' },
-  { id: 've', name: 'Vendes' },
-  { id: 'st', name: 'Suport Tècnic' },
-  { id: 're', name: 'Retenció' },
+  { key: 'ac', name: 'Atenció Client' },
+  { key: 'in', name: 'Incidències' },
+  { key: 've', name: 'Vendes' },
+  { key: 'st', name: 'Suport Tècnic' },
+  { key: 're', name: 'Retenció' },
 ]
 
-const SKILL_TYPE_IDS = {
-  Language: '0C1mock000Lang01',
-  Expertise: '0C1mock000Exprt1',
-  Certification: '0C1mock000Cert01',
-} as const
+const SKILL_BACKLOG: Record<MockSkillKey, { agents: number; backlog: number }> = {
+  ca: { agents: 14, backlog: 3 },
+  es: { agents: 18, backlog: 7 },
+  en: { agents: 9, backlog: 2 },
+  fr: { agents: 5, backlog: 0 },
+  de: { agents: 2, backlog: 1 },
+  tec: { agents: 6, backlog: 5 },
+  tec3: { agents: 3, backlog: 2 },
+  ven: { agents: 4, backlog: 1 },
+  ret: { agents: 3, backlog: 4 },
+  med: { agents: 2, backlog: 0 },
+  acc: { agents: 7, backlog: 1 },
+  gdpr: { agents: 11, backlog: 0 },
+}
 
-const SKILL_DEFS: Skill[] = [
-  { id: 'ca', name: 'Català', type: 'Language', typeId: SKILL_TYPE_IDS.Language, agents: 14, backlog: 3 },
-  { id: 'es', name: 'Castellà', type: 'Language', typeId: SKILL_TYPE_IDS.Language, agents: 18, backlog: 7 },
-  { id: 'en', name: 'Anglès', type: 'Language', typeId: SKILL_TYPE_IDS.Language, agents: 9, backlog: 2 },
-  { id: 'fr', name: 'Francès', type: 'Language', typeId: SKILL_TYPE_IDS.Language, agents: 5, backlog: 0 },
-  { id: 'de', name: 'Alemany', type: 'Language', typeId: SKILL_TYPE_IDS.Language, agents: 2, backlog: 1 },
-  { id: 'tec', name: 'Suport tècnic L2', type: 'Expertise', typeId: SKILL_TYPE_IDS.Expertise, agents: 6, backlog: 5 },
-  { id: 'tec3', name: 'Suport tècnic L3', type: 'Expertise', typeId: SKILL_TYPE_IDS.Expertise, agents: 3, backlog: 2 },
-  { id: 'ven', name: 'Vendes outbound', type: 'Expertise', typeId: SKILL_TYPE_IDS.Expertise, agents: 4, backlog: 1 },
-  { id: 'ret', name: 'Retenció premium', type: 'Expertise', typeId: SKILL_TYPE_IDS.Expertise, agents: 3, backlog: 4 },
-  { id: 'med', name: 'Mediació contractes', type: 'Expertise', typeId: SKILL_TYPE_IDS.Expertise, agents: 2, backlog: 0 },
-  { id: 'acc', name: 'Accessibilitat', type: 'Certification', typeId: SKILL_TYPE_IDS.Certification, agents: 7, backlog: 1 },
-  { id: 'gdpr', name: 'Compliment GDPR', type: 'Certification', typeId: SKILL_TYPE_IDS.Certification, agents: 11, backlog: 0 },
+const SKILL_DEFS_BASE: Omit<Skill, 'agents' | 'backlog'>[] = [
+  { id: MOCK_SKILL.ca, name: 'Català', type: 'Language', typeId: MOCK_SKILL_TYPE.Language },
+  { id: MOCK_SKILL.es, name: 'Castellà', type: 'Language', typeId: MOCK_SKILL_TYPE.Language },
+  { id: MOCK_SKILL.en, name: 'Anglès', type: 'Language', typeId: MOCK_SKILL_TYPE.Language },
+  { id: MOCK_SKILL.fr, name: 'Francès', type: 'Language', typeId: MOCK_SKILL_TYPE.Language },
+  { id: MOCK_SKILL.de, name: 'Alemany', type: 'Language', typeId: MOCK_SKILL_TYPE.Language },
+  { id: MOCK_SKILL.tec, name: 'Suport tècnic L2', type: 'Expertise', typeId: MOCK_SKILL_TYPE.Expertise },
+  { id: MOCK_SKILL.tec3, name: 'Suport tècnic L3', type: 'Expertise', typeId: MOCK_SKILL_TYPE.Expertise },
+  { id: MOCK_SKILL.ven, name: 'Vendes outbound', type: 'Expertise', typeId: MOCK_SKILL_TYPE.Expertise },
+  { id: MOCK_SKILL.ret, name: 'Retenció premium', type: 'Expertise', typeId: MOCK_SKILL_TYPE.Expertise },
+  { id: MOCK_SKILL.med, name: 'Mediació contractes', type: 'Expertise', typeId: MOCK_SKILL_TYPE.Expertise },
+  { id: MOCK_SKILL.acc, name: 'Accessibilitat', type: 'Certification', typeId: MOCK_SKILL_TYPE.Certification },
+  { id: MOCK_SKILL.gdpr, name: 'Compliment GDPR', type: 'Certification', typeId: MOCK_SKILL_TYPE.Certification },
 ]
+
+const SKILL_DEFS: Skill[] = (Object.keys(MOCK_SKILL) as MockSkillKey[]).map((key) => {
+  const row = SKILL_DEFS_BASE.find((s) => s.id === MOCK_SKILL[key])!
+  return { ...row, ...SKILL_BACKLOG[key] }
+})
 
 /* The org's full presence-status catalog (as Setup → Presence Statuses would
    define it), independent of which agents currently hold them. The Home builds
    one filter chip per entry here. Just id + label — Salesforce doesn't expose a
    busy/available flag, so the catalog carries no category. */
 const MOCK_PRESENCE_CATALOG: PresenceStatusOption[] = [
-  { id: '0N5mock0000Avail', label: 'Disponible' },
-  { id: '0N5mock000AvailV', label: 'Disponible per a veu' },
-  { id: '0N5mock00000Busy', label: 'En trucada' },
-  { id: '0N5mock00000Away', label: 'En pausa' },
-  { id: '0N5mock0000Lunch', label: 'Dinar' },
-  { id: '0N5mock00Meeting', label: 'Reunió' },
-  { id: '0N5mock00Offline', label: 'Desconnectat' },
+  { id: MOCK_PRESENCE.available, label: 'Disponible' },
+  { id: MOCK_PRESENCE.availableVoice, label: 'Disponible per a veu' },
+  { id: MOCK_PRESENCE.busy, label: 'En trucada' },
+  { id: MOCK_PRESENCE.away, label: 'En pausa' },
+  { id: MOCK_PRESENCE.lunch, label: 'Dinar' },
+  { id: MOCK_PRESENCE.meeting, label: 'Reunió' },
+  { id: MOCK_PRESENCE.offline, label: 'Desconnectat' },
 ]
 
 /* Which catalog status each seeded agent gets, keyed by the agent's own
@@ -77,17 +104,17 @@ export function getMockPresenceStatuses(): PresenceStatusOption[] {
 }
 
 type AgentSpec = {
-  id: string
+  id: MockAgentKey
   name: string
   role: string
   status: 'online' | 'busy' | 'away' | 'offline'
   max: number
   used: number
-  queueIds: string[]
+  queueIds: MockQueueKey[]
   loginMin: number
   chans: Record<ChannelKey, number>
-  work: { channelKey: ChannelKey; subject: string; queueId: string; ageSec: number }[]
-  skillIds: string[]
+  work: { channelKey: ChannelKey; subject: string; queueId: MockQueueKey; ageSec: number }[]
+  skillIds: MockSkillKey[]
 }
 
 /* Profile photos bundled locally (downloaded from randomuser.me) so the mock
@@ -126,9 +153,9 @@ const NO_PHOTO_AGENTS = new Set([
   'a34', 'a35', 'a36', 'a37', 'a38', 'a39', 'a40', 'a41',
 ])
 
-function agentPhoto(agentId: string): string | null {
-  if (NO_PHOTO_AGENTS.has(agentId)) return null
-  const stem = AGENT_PHOTOS[agentId]
+function agentPhoto(agentKey: MockAgentKey): string | null {
+  if (NO_PHOTO_AGENTS.has(agentKey)) return null
+  const stem = AGENT_PHOTOS[agentKey]
   return stem ? AVATAR_URLS[stem] ?? null : null
 }
 
@@ -542,17 +569,20 @@ const AGENT_SPECS: AgentSpec[] = [
 
 const MOCK_SKILL_EPOCH = Date.UTC(2025, 0, 1)
 
-const queueNameById = new Map(QUEUE_DEFS.map((q) => [q.id, q.name]))
+const queueNameById = new Map(
+  QUEUE_DEFS.map((q) => [MOCK_QUEUE[q.key], q.name] as const),
+)
 
 function agentSkillRows(spec: AgentSpec): AgentSkill[] {
-  return spec.skillIds.map((skillId, si) => {
-    const skillDef = SKILL_DEFS.find((s) => s.id === skillId)
-    const span = (spec.id.length + si) * 37
+  const agentSeq = mockAgentSeq(spec.id)
+  return spec.skillIds.map((skillKey, si) => {
+    const skillDef = SKILL_DEFS.find((s) => s.id === MOCK_SKILL[skillKey])
+    const span = (agentSeq + si) * 37
     const start = MOCK_SKILL_EPOCH + span * 86_400_000
     return {
-      id: `${spec.id}-${skillId}`,
-      skillId,
-      name: skillDef?.name ?? skillId,
+      id: mockServiceResourceSkillId(agentSeq, si),
+      skillId: MOCK_SKILL[skillKey],
+      name: skillDef?.name ?? skillKey,
       type: skillDef?.type ?? null,
       level: (si % 5) + 1,
       startDate: new Date(start).toISOString(),
@@ -564,22 +594,22 @@ function agentSkillRows(spec: AgentSpec): AgentSkill[] {
 
 function buildAgent(spec: AgentSpec): Agent {
   const workItems: AgentWorkItem[] = spec.work.map((w, wi) => ({
-    id: `${spec.id}-work-${wi}`,
+    id: mockWorkItemId(agentSeqWorkBase(spec.id) + wi),
     recordId: null,
     label: w.subject,
     subject: w.subject,
     channel: null,
     channelKey: w.channelKey,
     status: 'assigned',
-    queue: queueNameById.get(w.queueId) ?? null,
-    queueId: w.queueId,
+    queue: queueNameById.get(MOCK_QUEUE[w.queueId]) ?? null,
+    queueId: MOCK_QUEUE[w.queueId],
     ageMin: Math.max(1, Math.floor(w.ageSec / 60)),
   }))
 
   const presence = MOCK_PRESENCE_BY_CATEGORY[spec.status]
 
   return {
-    id: spec.id,
+    id: MOCK_AGENT[spec.id],
     name: spec.name,
     role: spec.role,
     recordUrl: null,
@@ -588,7 +618,7 @@ function buildAgent(spec: AgentSpec): Agent {
     presenceStatusLabel: presence?.label ?? null,
     max: spec.max,
     used: spec.used,
-    queueIds: spec.queueIds,
+    queueIds: spec.queueIds.map((key) => MOCK_QUEUE[key]),
     loginMin: spec.loginMin,
     photo: agentPhoto(spec.id),
     chans: spec.chans,
@@ -597,8 +627,13 @@ function buildAgent(spec: AgentSpec): Agent {
   }
 }
 
+/** Stable work-item id block per agent so assigned rows don't collide. */
+function agentSeqWorkBase(agentKey: MockAgentKey): number {
+  return mockAgentSeq(agentKey) * 100 + 1
+}
+
 function buildQueues(agentRoster: Agent[]): Queue[] {
-  const QUEUE_DATA: Record<string, { backlog: number; longest: number; avg: number }> = {
+  const QUEUE_DATA: Record<MockQueueKey, { backlog: number; longest: number; avg: number }> = {
     ac: { backlog: 4, longest: 145, avg: 67 },
     in: { backlog: 8, longest: 312, avg: 180 },
     ve: { backlog: 3, longest: 78, avg: 45 },
@@ -606,24 +641,25 @@ function buildQueues(agentRoster: Agent[]): Queue[] {
     re: { backlog: 2, longest: 55, avg: 30 },
   }
   return QUEUE_DEFS.map((q) => ({
-    ...q,
-    ...(QUEUE_DATA[q.id] ?? { backlog: 2, longest: 60, avg: 40 }),
+    id: MOCK_QUEUE[q.key],
+    name: q.name,
+    ...(QUEUE_DATA[q.key] ?? { backlog: 2, longest: 60, avg: 40 }),
     online:
       agentRoster.filter(
-        (a) => a.queueIds.includes(q.id) && a.status === 'online',
+        (a) => a.queueIds.includes(MOCK_QUEUE[q.key]) && a.status === 'online',
       ).length || 1,
   }))
 }
 
 function buildWork(agentRoster: Agent[]): WorkItem[] {
   const items: WorkItem[] = []
-  let n = 0
+  let n = 5000
 
   agentRoster.forEach((agent) => {
     agent.work.forEach((workItem) => {
       const icon = workItemIconFields(workItem.channelKey)
       items.push({
-        id: `w${n++}`,
+        id: workItem.id,
         subject: workItem.subject ?? workItem.label,
         channelKey: workItem.channelKey,
         queueId: workItem.queueId,
@@ -639,7 +675,7 @@ function buildWork(agentRoster: Agent[]): WorkItem[] {
     })
   })
 
-  const QUEUED_ITEMS: { queueId: string; channelKey: ChannelKey; subject: string; ageSec: number }[] = [
+  const QUEUED_ITEMS: { queueId: MockQueueKey; channelKey: ChannelKey; subject: string; ageSec: number }[] = [
     { queueId: 'ac', channelKey: 'veu', subject: 'Trucada entrant', ageSec: 45 },
     { queueId: 'ac', channelKey: 'chat', subject: 'Xat web', ageSec: 78 },
     { queueId: 'ac', channelKey: 'email', subject: 'Email consulta general', ageSec: 920 },
@@ -668,10 +704,10 @@ function buildWork(agentRoster: Agent[]): WorkItem[] {
   QUEUED_ITEMS.forEach((q) => {
     const icon = workItemIconFields(q.channelKey)
     items.push({
-      id: `w${n++}`,
+      id: mockWorkItemId(n++),
       subject: q.subject,
       channelKey: q.channelKey,
-      queueId: q.queueId,
+      queueId: MOCK_QUEUE[q.queueId],
       agentId: null,
       status: 'queued',
       ageSec: q.ageSec,
@@ -706,6 +742,7 @@ export const skills: Skill[] = SKILL_DEFS.slice()
 export const work: WorkItem[] = buildWork(agents)
 
 export function getAgentSkills(agentId: string): AgentSkill[] {
-  const spec = AGENT_SPECS.find((s) => s.id === agentId)
+  const entry = Object.entries(MOCK_AGENT).find(([, id]) => id === agentId)
+  const spec = entry ? AGENT_SPECS.find((s) => s.id === entry[0]) : undefined
   return spec ? agentSkillRows(spec) : []
 }

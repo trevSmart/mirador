@@ -4,7 +4,7 @@ import { CELL_SIZE, edgeStyle } from '../../space/space-geometry'
 import { GRID_C, GRID_R, cellKey } from '../../space/space-plan-model'
 import type { Cell, Edge, Space, SpaceTool } from '../../space/types'
 import type { SeatRef } from '../../space/useSpacePlan'
-import { colorFromString } from '../../utils/color-from-string'
+import { colorFromRecordId } from '../../utils/color-from-string'
 import { AgentAvatar } from '../AgentRow'
 
 /** How close (fraction of a cell) to a border counts as an edge hit. */
@@ -64,7 +64,7 @@ interface SeatMarkerProps {
 }
 
 function SeatMarker({ agent, selected }: SeatMarkerProps) {
-  const seatBorderColor = agent ? colorFromString(agent.id) : 'var(--border-strong)'
+  const seatBorderColor = agent ? colorFromRecordId(agent.id) : 'var(--border-strong)'
   const className = [
     'fe-seat',
     selected ? 'fe-seat--selected' : '',

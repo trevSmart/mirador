@@ -1,6 +1,6 @@
 import { useAgents, useQueues, useSkills, useWork } from '../../api/data-hooks'
 import type { DetailTarget } from '../../detail/detail-drawer-context'
-import { colorFromString } from '../../utils/color-from-string'
+import { colorFromRecordId } from '../../utils/color-from-string'
 import { resolveWorkItemIcon } from '../../utils/salesforce-object-icon'
 import { AgentAvatar } from '../AgentRow'
 import { SfIcon } from '../ds'
@@ -21,7 +21,7 @@ export function DetailTabIcon({ target }: { target: DetailTarget }) {
 
   if (target.kind === 'queue') {
     const queue = queues.find((entry) => entry.id === target.id)
-    return <SfIcon name="queue" sldsSize="x-small" bg={queue ? colorFromString(queue.id) : undefined} />
+    return <SfIcon name="queue" sldsSize="x-small" bg={queue ? colorFromRecordId(queue.id) : undefined} />
   }
 
   if (target.kind === 'work') {
@@ -34,5 +34,5 @@ export function DetailTabIcon({ target }: { target: DetailTarget }) {
   }
 
   const skill = skills.find((entry) => entry.id === target.id)
-  return <SfIcon name="skill" sldsSize="x-small" bg={skill ? colorFromString(skill.id) : undefined} />
+  return <SfIcon name="skill" sldsSize="x-small" bg={skill ? colorFromRecordId(skill.id) : undefined} />
 }

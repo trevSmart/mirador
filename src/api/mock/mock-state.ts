@@ -8,6 +8,12 @@ import type {
 } from '../types'
 import { workItemIconFields } from '../../utils/salesforce-object-icon'
 import {
+  MOCK_QUEUE,
+  MOCK_QUEUE_KEYS,
+  mockWorkItemId,
+  type MockQueueKey,
+} from './mock-ids'
+import {
   agents as seedAgents,
   getAgentSkills,
   queues as seedQueues,
@@ -29,17 +35,16 @@ type MockLiveState = {
   loadBias: number
 }
 
-const QUEUE_IDS = ['ac', 'in', 've', 'st', 're'] as const
-const CHANNELS: ChannelKey[] = ['veu', 'chat', 'email', 'wa', 'cas']
-
 /** Target backlog per queue — simulation drifts around these levels. */
-const QUEUE_TARGET_BACKLOG: Record<(typeof QUEUE_IDS)[number], number> = {
+const QUEUE_TARGET_BACKLOG: Record<MockQueueKey, number> = {
   ac: 7,
   in: 13,
   ve: 5,
   st: 10,
   re: 4,
 }
+
+const CHANNELS: ChannelKey[] = ['veu', 'chat', 'email', 'wa', 'cas']
 
 const EMAIL_SUBJECTS = [
   'Email consulta general',
@@ -91,7 +96,7 @@ function cloneInitialState(): MockLiveState {
     agents,
     queued,
     skills,
-    workIdSeq: seedWork.length,
+    workIdSeq: 6000,
     caseSeq,
     evolutionStep: 0,
     loadBias: 0,
@@ -99,7 +104,7 @@ function cloneInitialState(): MockLiveState {
 }
 
 function nextWorkId(stateRef: MockLiveState): string {
-  const id = `w${stateRef.workIdSeq}`
+  const id = mockWorkItemId(stateRef.workIdSeq)
   stateRef.workIdSeq += 1
   return id
 }
@@ -146,18 +151,19 @@ function availableAgents(stateRef: MockLiveState): Agent[] {
 }
 
 function pickWeightedQueue(stateRef: MockLiveState, rand: () => number): string {
-  const weights = QUEUE_IDS.map((queueId) => {
+  const weights = MOCK_QUEUE_KEYS.map((key) => {
+    const queueId = MOCK_QUEUE[key]
     const backlog = queueBacklog(stateRef, queueId)
-    const target = QUEUE_TARGET_BACKLOG[queueId]
+    const target = QUEUE_TARGET_BACKLOG[key]
     return Math.max(0.15, target + 1 - backlog * 0.35)
   })
   const total = weights.reduce((sum, weight) => sum + weight, 0)
   let roll = rand() * total
-  for (let i = 0; i < QUEUE_IDS.length; i++) {
+  for (let i = 0; i < MOCK_QUEUE_KEYS.length; i++) {
     roll -= weights[i]
-    if (roll <= 0) return QUEUE_IDS[i]
+    if (roll <= 0) return MOCK_QUEUE[MOCK_QUEUE_KEYS[i]!]
   }
-  return QUEUE_IDS[QUEUE_IDS.length - 1]
+  return MOCK_QUEUE[MOCK_QUEUE_KEYS[MOCK_QUEUE_KEYS.length - 1]!]
 }
 
 function syncAgentChannels(agent: Agent): void {
@@ -369,7 +375,9 @@ function enqueueIncomingWork(stateRef: MockLiveState, rand: () => number): void 
   for (let i = 0; i < count; i++) {
     const queueId = pickWeightedQueue(stateRef, rand)
     const backlog = queueBacklog(stateRef, queueId)
-    const target = QUEUE_TARGET_BACKLOG[queueId as (typeof QUEUE_IDS)[number]]
+    const target = QUEUE_TARGET_BACKLOG[
+      MOCK_QUEUE_KEYS.find((key) => MOCK_QUEUE[key] === queueId) ?? 'ac'
+    ]
     if (backlog >= target * 3.2 && rand() < 0.65) continue
 
     pushQueuedWork(stateRef, queueId, pick(CHANNELS, rand), rand)

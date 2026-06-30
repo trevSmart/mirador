@@ -2,7 +2,7 @@ import { useAgents } from '../../api/data-hooks'
 import type { Skill } from '../../api/types'
 import { useDetailDrawer } from '../../detail/detail-drawer-context'
 import { sortAgentsByPresence } from '../../utils/agent-stats'
-import { colorFromString } from '../../utils/color-from-string'
+import { colorFromRecordId } from '../../utils/color-from-string'
 import { SfIcon, Badge } from '../ds'
 import { DrawerSection, EmptyHint, MiniAgentRow, Stat, StatGrid } from './parts'
 
@@ -17,9 +17,11 @@ export function SkillDetail({ skill }: { skill: Skill }) {
   return (
     <>
       <header className="dd-head">
-        <SfIcon name="skill" size={56} bg={colorFromString(skill.id)} />
+        <SfIcon name="skill" size={56} bg={colorFromRecordId(skill.id)} />
         <div className="dd-head__id">
-          <h2 className="dd-head__name">{skill.name}</h2>
+          <h2 className="dd-head__name" style={{ color: colorFromRecordId(skill.id) }}>
+            {skill.name}
+          </h2>
           <span className="dd-head__sub">{skill.type ?? 'Skill'}</span>
           <Badge tone={skill.backlog > 4 ? 'alert' : 'neutral'}>{skill.backlog} backlog</Badge>
         </div>

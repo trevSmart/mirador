@@ -1,5 +1,5 @@
 import type { Agent, Queue } from '../api/types'
-import { colorFromString } from '../utils/color-from-string'
+import { colorFromRecordId } from '../utils/color-from-string'
 
 export interface TowerSegment {
   queueId: string | null
@@ -12,7 +12,7 @@ export interface TowerSegment {
 const FALLBACK_COLOR = 'var(--text-muted)'
 
 function resolveQueueColor(queueId: string | null): string {
-  return queueId ? colorFromString(queueId) : FALLBACK_COLOR
+  return queueId ? colorFromRecordId(queueId) : FALLBACK_COLOR
 }
 
 /** Stack tower segments bottom-to-top, one per queue represented in active work. */

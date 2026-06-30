@@ -32,7 +32,9 @@ export function WorkRow({ item, agentName, queueName }: WorkRowProps) {
       <div className="work-row__main">
         <SfIcon sprite={icon.sprite} symbol={icon.symbol} size={32} bg={icon.tint} />
         <div className="work-row__body">
-          <h3 className="work-row__subject" title={item.subject ?? undefined}>{item.subject}</h3>
+          <h3 className="work-row__subject" title={item.subject ?? undefined} style={{ color: icon.tint }}>
+            {item.subject}
+          </h3>
           <p className="work-row__meta">
             {channelLabel(item.channelKey)} · {workStatusLabel(item.status)} ·{' '}
             <FadeValue value={formatSeconds(item.ageSec)} />

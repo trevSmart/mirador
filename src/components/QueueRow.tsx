@@ -1,6 +1,6 @@
 import type { Queue } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
-import { colorFromString } from '../utils/color-from-string'
+import { colorFromRecordId } from '../utils/color-from-string'
 import { formatSeconds } from '../utils/format'
 import { FadeValue, MetricPill, SfIcon } from './ds'
 
@@ -25,9 +25,11 @@ export function QueueRow({ queue }: QueueRowProps) {
       }}
     >
       <div className="queue-row__main">
-        <SfIcon name="queue" sldsSize="medium" bg={colorFromString(queue.id)} />
+        <SfIcon name="queue" sldsSize="medium" bg={colorFromRecordId(queue.id)} />
         <div className="queue-row__body">
-          <h3 className="queue-row__name" title={queue.name}>{queue.name}</h3>
+          <h3 className="queue-row__name" title={queue.name} style={{ color: colorFromRecordId(queue.id) }}>
+            {queue.name}
+          </h3>
           <p className="queue-row__meta">
             <FadeValue value={queue.online} /> agents en línia
           </p>

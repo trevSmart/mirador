@@ -82,6 +82,15 @@ In mock mode, `MiradorApiProvider` builds a `createMockMiradorClient()`
 (`src/api/mock/`) instead of a network client — no auth required. Use
 `npm run dev:mock` to develop UI without an org.
 
+**Mock record Ids:** every Salesforce-shaped entity in mock data (agents, queues,
+skills, work items, presence statuses, etc.) must use **18-character Ids** with
+the correct object key prefix (`005` User, `00G` Group/queue, `0C5` Skill, …).
+Never use short placeholder strings like `'ac'` or `'a0'` as record Ids — they
+do not match production and skew behaviour that depends on Id shape (e.g.
+`colorFromRecordId`). Centralize Ids in `src/api/mock/mock-ids.ts` via
+`mockSfId()` and keyed maps (`MOCK_QUEUE`, `MOCK_AGENT`, …); seed specs may
+keep short internal keys but must resolve to real Ids at build time.
+
 ## Architecture
 
 ### Provider tree (`src/App.tsx`)

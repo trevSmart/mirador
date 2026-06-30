@@ -3,7 +3,7 @@ import { MiradorApiError } from '../../api/mirador-client'
 import { useAgents, useQueues } from '../../api/data-hooks'
 import type { WorkItem } from '../../api/types'
 import { useDetailDrawer } from '../../detail/detail-drawer-context'
-import { colorFromString } from '../../utils/color-from-string'
+import { colorFromRecordId } from '../../utils/color-from-string'
 import { channelLabel, formatDateTime, formatSeconds, workStatusLabel } from '../../utils/format'
 import { objectLabel, resolveWorkItemIcon } from '../../utils/salesforce-object-icon'
 import { Badge, FadeValue, SfIcon } from '../ds'
@@ -40,7 +40,9 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
       <header className="dd-head">
         <SfIcon sprite={icon.sprite} symbol={icon.symbol} size={56} bg={icon.tint} />
         <div className="dd-head__id">
-          <h2 className="dd-head__name">{item.subject}</h2>
+          <h2 className="dd-head__name" style={{ color: icon.tint }}>
+            {item.subject}
+          </h2>
           <span className="dd-head__sub">{objectLabel(item)}</span>
           <Badge tone="neutral">{workStatusLabel(item.status)}</Badge>
         </div>
@@ -61,7 +63,7 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
             {agent ? <MiniAgentRow agent={agent} onClick={() => openAgent(agent.id)} /> : null}
             {queue ? (
               <DetailRow
-                leading={<SfIcon name="queue" sldsSize="small" bg={colorFromString(queue.id)} />}
+                leading={<SfIcon name="queue" sldsSize="small" bg={colorFromRecordId(queue.id)} />}
                 title={queue.name}
                 meta="Cua"
                 onClick={() => openQueue(queue.id)}

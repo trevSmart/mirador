@@ -1,8 +1,12 @@
 /**
  * Color OKLCH determinístic derivat d'un string. Mateix string → mateix color.
  *
- * Per a registres de Salesforce (agents, cues, skills), passa el camp `id`:
- * és immutable i el color persisteix encara que canviï el nom del registre.
+ * Per a registres de Salesforce (agents, cues, skills), passa l'`id` a
+ * `colorFromRecordId` / `textColorFromRecordId` — no a `colorFromString` directament.
+ * Els IDs comparteixen prefix (clau d'objecte + org) i, si es hashegen crus,
+ * acumulen tons similars (p. ex. verd) dins una mateixa llista. `recordIdColorKey`
+ * entrelaca l'ID amb la seva reversa abans del hash perquè la cua variable
+ * pesi tant com el prefix, sense trencar la determinística id → color.
  *
  * Dues decisions clau:
  *
@@ -118,32 +122,6 @@ function maxChroma(L: number, hueDeg: number): number {
   return lo
 }
 
-/** OKLCH (L, C, hue) → sRGB lineal (0–1, sense clamp). Reusa la mateixa
-    conversió OKLab→sRGB d'outOfGamut; aquí en retornem els canals per mesurar
-    lluminància en lloc de comprovar el gamut. */
-function oklchToLinearSrgb(L: number, C: number, hueDeg: number): [number, number, number] {
-  const h = (hueDeg * Math.PI) / 180
-  const a = C * Math.cos(h)
-  const b = C * Math.sin(h)
-  const l_ = L + 0.3963377774 * a + 0.2158037573 * b
-  const m_ = L - 0.1055613458 * a - 0.0638541728 * b
-  const s_ = L - 0.0894841775 * a - 1.291485548 * b
-  const l = l_ * l_ * l_
-  const m = m_ * m_ * m_
-  const s = s_ * s_ * s_
-  return [
-    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
-    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
-    -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
-  ]
-}
-
-/** Lluminància relativa WCAG d'un color en sRGB lineal (canals clampats a 0–1). */
-function relativeLuminance([r, g, b]: [number, number, number]): number {
-  const clamp = (c: number) => (c < 0 ? 0 : c > 1 ? 1 : c)
-  return 0.2126 * clamp(r) + 0.7152 * clamp(g) + 0.0722 * clamp(b)
-}
-
 /**
  * Color OKLCH per a un hue donat, amb la lluminositat i el croma adaptats de
  * colorFromString. Útil per pintar escales/llegendes de hue coherents amb els
@@ -179,52 +157,68 @@ function fractionFromString(str: string): number {
   return (h >>> 0) / 0x100000000
 }
 
+/** Entrelaca un string amb la seva reversa caràcter a caràcter. La cua del string
+    pesa tant com el cap al hash — clau per IDs amb prefix comú (Salesforce, mock). */
+function foldWithReverse(s: string): string {
+  const rev = s.split('').reverse().join('')
+  let folded = ''
+  for (let i = 0; i < s.length; i++) {
+    folded += s[i]! + rev[i]!
+  }
+  return folded
+}
+
+const SF_RECORD_ID = /^[a-zA-Z0-9]{15}([a-zA-Z0-9]{3})?$/
+
+/** Clau de hash per a un ID de registre immutable (Salesforce o mock). */
+export function recordIdColorKey(id: string): string {
+  const s = String(id ?? '').trim()
+  if (!s) return s
+  if (SF_RECORD_ID.test(s)) return foldWithReverse(s)
+  if (/^[a-zA-Z0-9_-]+$/.test(s)) return `${s}\0${s.split('').reverse().join('')}`
+  return s
+}
+
 export function colorFromString(str: string): string {
   // Hue uniforme sobre el cercle perceptual OKLCH, saltant la franja exclosa.
   return oklchForHue(fractionToHue(fractionFromString(str)))
 }
 
-/** Lluminància relativa WCAG d'un color hex sRGB. */
-function luminanceOfHex(hex: string): number {
-  const n = parseInt(hex.slice(1), 16)
-  const channel = (v: number) => {
-    const c = v / 255
-    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
-  }
-  return relativeLuminance([channel((n >> 16) & 255), channel((n >> 8) & 255), channel(n & 255)])
+/** Color estable per a un registre identificat per ID immutable (agent, cua, skill…). */
+export function colorFromRecordId(id: string): string {
+  return colorFromString(recordIdColorKey(id))
 }
 
 /** Els dos colors candidats per al text de les inicials sobre un fons generat,
     apariats amb les variables CSS --mi-av-fg-on-dark / --mi-av-fg-on-light. El
-    fosc és un carbó de debò (#2A2730): el neutre --mi-av-fg (#65616F) és massa
-    clar i no arriba a 3:1 sobre els tints clars/grocs. Mantén-los sincronitzats
-    amb el CSS. */
-const FG_LIGHT = { css: 'var(--mi-av-fg-on-dark, #ffffff)', luminance: 1 }
-const FG_DARK = { css: 'var(--mi-av-fg-on-light, #2A2730)', luminance: luminanceOfHex('#2A2730') }
+    fosc és un carbó de debò (#2A2730); el clar és blanc pur. Mantén-los
+    sincronitzats amb el CSS. */
+const FG_LIGHT = 'var(--mi-av-fg-on-dark, #ffffff)'
+const FG_DARK = 'var(--mi-av-fg-on-light, #2A2730)'
 
-/** Ràtio de contrast WCAG entre dues lluminàncies relatives. */
-function contrastRatio(a: number, b: number): number {
-  const hi = Math.max(a, b)
-  const lo = Math.min(a, b)
-  return (hi + 0.05) / (lo + 0.05)
-}
+/** Llindar de lluminositat OKLCH del fons per sota del qual les inicials van en
+    BLANC. Decisió de DISSENY, no de WCAG pur: amb aquesta paleta (L≈0.72–0.86,
+    molt saturada) el carbó sempre guanya el contrast estricte, així que un criteri
+    WCAG deixaria les inicials fosques a tot arreu. Volem el blanc als colors vius
+    (verds, blaus, liles, cians, rosats, vermells — L≲0.78), i reservem el text
+    fosc només per als tints realment clars (grocs i taronges, L>0.78), on el blanc
+    seria il·legible. Ajusta aquest valor per moure el tall clar/fosc. */
+const WHITE_TEXT_L_THRESHOLD = 0.78
 
 /**
  * Color de text llegible (clar o fosc) per a un fons generat amb el MATEIX
- * string que colorFromString. Decideix per CONTRAST WCAG real, no per la L
- * d'OKLCH: els fons d'aquesta paleta tenen L≈0.72 però són molt saturats, així
- * que la seva lluminància relativa és prou baixa perquè el text BLANC hi
- * contrasti millor que el carbó a gairebé tot el cercle (només els tints clars i
- * els grocs prefereixen el text fosc). Reusa el hash i la corba de color
- * exactes, de manera que la decisió és precisa i no estimada a partir del CSS
- * resolt. Tria sempre l'opció de més contrast (≥ 3:1 a tot el cercle).
+ * string que colorFromString. Reusa el hash i la corba de color exactes per
+ * obtenir la L OKLCH real del fons i decideix per LLINDAR de lluminositat
+ * (WHITE_TEXT_L_THRESHOLD): blanc als colors vius/foscos, carbó als tints clars.
+ * No fem servir contrast WCAG estricte a propòsit — vegeu la nota del llindar.
  */
 export function textColorFromString(str: string): string {
   const hue = fractionToHue(fractionFromString(str))
   const L = lightnessForHue(hue)
-  const chroma = maxChroma(L, hue) * CHROMA_FRACTION
-  const bgLuminance = relativeLuminance(oklchToLinearSrgb(L, chroma, hue))
-  const lightContrast = contrastRatio(bgLuminance, FG_LIGHT.luminance)
-  const darkContrast = contrastRatio(bgLuminance, FG_DARK.luminance)
-  return lightContrast > darkContrast ? FG_LIGHT.css : FG_DARK.css
+  return L <= WHITE_TEXT_L_THRESHOLD ? FG_LIGHT : FG_DARK
+}
+
+/** Color de text per a un fons generat amb `colorFromRecordId` del mateix ID. */
+export function textColorFromRecordId(id: string): string {
+  return textColorFromString(recordIdColorKey(id))
 }
