@@ -271,10 +271,10 @@ export function useSpacePlan() {
       newPlaceId = place.id
       return { ...site, places: [...site.places, place] }
     })
-    if (newPlaceId) setData((d) => ({ ...d, activePlaceId: newPlaceId }))
+    if (newPlaceId) apply((d) => ({ ...d, activePlaceId: newPlaceId }), false)
     setActiveSpaceIndex(0)
     setSelectedSeat(null)
-  }, [updateActiveSite])
+  }, [updateActiveSite, apply])
 
   const removePlace = useCallback((placeId: string) => {
     updateActiveSite((site) => {
