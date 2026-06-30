@@ -55,9 +55,18 @@ export interface Place {
   spaces: Space[]
 }
 
+export interface Site {
+  id: string
+  name: string
+  /** Logo as a base64 data-URL ("data:image/png;base64,…"), or null. */
+  image: string | null
+  places: Place[]
+}
+
 export interface SpacePlanData {
   /** Schema version, for forward-compatible migrations. */
   v: number
+  activeSiteId: string | null
   activePlaceId: string | null
-  places: Place[]
+  sites: Site[]
 }

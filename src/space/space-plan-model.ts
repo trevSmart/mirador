@@ -2,13 +2,23 @@
    No React, no DOM: every function takes state and returns new immutable state,
    so the rules stay testable in isolation and the hook stays thin. */
 
-import type { Cell, Dir, Divider, Edge, Space, SpacePlanData, OpeningKind, Place, Seat } from './types'
+import type { Cell, Dir, Divider, Edge, Space, SpacePlanData, OpeningKind, Place, Seat, Site } from './types'
 
 export const GRID_C = 40
 export const GRID_R = 40
 const SEED_SIZE = 4
 export const UNDO_LIMIT = 10
-export const SPACE_SCHEMA_VERSION = 2
+export const SPACE_SCHEMA_VERSION = 3
+export const LOGO_MAX_CHARS = 150_000
+
+const IMAGE_DATA_URL = /^data:image\/(png|jpeg|jpg|webp|svg\+xml);base64,/
+
+/** Accept only well-formed image data-URLs under the size cap; else null. */
+export function sanitizeImage(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  if (value.length > LOGO_MAX_CHARS) return null
+  return IMAGE_DATA_URL.test(value) ? value : null
+}
 
 const EDGE_DELTA: Record<Edge, [number, number]> = {
   N: [0, -1],
@@ -108,7 +118,8 @@ export function cloneSpace(space: Space, name: string): Space {
 
 export function defaultSpacePlan(): SpacePlanData {
   const place: Place = { id: makeId('place'), name: 'Lloc 1', spaces: [seedSpace('Planta 1')] }
-  return { v: SPACE_SCHEMA_VERSION, activePlaceId: place.id, places: [place] }
+  const site: Site = { id: makeId('site'), name: 'Site 1', image: null, places: [place] }
+  return { v: SPACE_SCHEMA_VERSION, activeSiteId: site.id, activePlaceId: place.id, sites: [site] }
 }
 
 /* ── Connectivity (the room must stay one 4-connected block, no islands) ── */
@@ -352,35 +363,53 @@ function sanitizeSpace(raw: unknown): Space {
   }
 }
 
+function sanitizePlace(raw: unknown): Place | null {
+  const place = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
+  const spaces = asArray(place.spaces)
+    .map((space) => sanitizeSpace(space))
+    .filter((space) => space.cells.length > 0)
+  if (spaces.length === 0) return null
+  return {
+    id: typeof place.id === 'string' && place.id ? place.id : makeId('place'),
+    name: typeof place.name === 'string' && place.name.trim() ? place.name.trim().slice(0, 40) : 'Lloc',
+    spaces,
+  }
+}
+
 /** Validate a whole plan from storage; returns null when nothing usable. */
 export function sanitizeSpacePlan(raw: unknown): SpacePlanData | null {
   if (!raw || typeof raw !== 'object') return null
   const data = raw as Record<string, unknown>
   if (data.v !== SPACE_SCHEMA_VERSION) return null   // discard old/unknown schema
-  if (!Array.isArray(data.places)) return null
+  if (!Array.isArray(data.sites)) return null
 
-  const places: Place[] = []
-  for (const item of data.places) {
-    const place = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>
-    const spaces = asArray(place.spaces)
-      .map((space) => sanitizeSpace(space))
-      .filter((space) => space.cells.length > 0)
-    if (spaces.length === 0) continue
-    places.push({
-      id: typeof place.id === 'string' && place.id ? place.id : makeId('place'),
-      name:
-        typeof place.name === 'string' && place.name.trim() ? place.name.trim().slice(0, 40) : 'Lloc',
-      spaces,
+  const sites: Site[] = []
+  for (const item of data.sites) {
+    const site = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>
+    const places = asArray(site.places)
+      .map((place) => sanitizePlace(place))
+      .filter((place): place is Place => place !== null)
+    if (places.length === 0) continue
+    sites.push({
+      id: typeof site.id === 'string' && site.id ? site.id : makeId('site'),
+      name: typeof site.name === 'string' && site.name.trim() ? site.name.trim().slice(0, 40) : 'Site',
+      image: sanitizeImage(site.image),
+      places,
     })
   }
 
-  if (places.length === 0) return null
+  if (sites.length === 0) return null
+  const activeSiteId =
+    typeof data.activeSiteId === 'string' && sites.some((s) => s.id === data.activeSiteId)
+      ? data.activeSiteId
+      : sites[0].id
+  const activeSite = sites.find((s) => s.id === activeSiteId) ?? sites[0]
   const activePlaceId =
-    typeof data.activePlaceId === 'string' && places.some((p) => p.id === data.activePlaceId)
+    typeof data.activePlaceId === 'string' && activeSite.places.some((p) => p.id === data.activePlaceId)
       ? data.activePlaceId
-      : places[0].id
+      : activeSite.places[0].id
 
-  return { v: SPACE_SCHEMA_VERSION, activePlaceId, places }
+  return { v: SPACE_SCHEMA_VERSION, activeSiteId, activePlaceId, sites }
 }
 
 /** Generate a unique name within a list of existing names by adding a numeric
@@ -392,27 +421,30 @@ export function uniqueName(base: string, existing: string[]): string {
   return `${base} ${n}`
 }
 
-/** Validate an imported plan and turn its places into brand-new records: every
-    place and space gets a freshly generated id (so they never collide with
-    existing org records) and place names are de-duplicated against
-    `existingNames`. Returns null when the input is not a usable plan (bad JSON,
-    incompatible schema, or no spaces with cells). The import is purely additive:
-    nothing here references or mutates the current plan's records. */
-export function prepareImportedPlaces(raw: unknown, existingNames: string[]): Place[] | null {
+/** Validate an imported plan and turn its sites into brand-new records: every
+    site, place and space gets a freshly generated id (so they never collide with
+    existing org records) and site names are de-duplicated against
+    `existingNames`. Logos are preserved. Additive: nothing here mutates the
+    current plan. Returns null when the input is not a usable plan. */
+export function prepareImportedSites(raw: unknown, existingNames: string[]): Site[] | null {
   const clean = sanitizeSpacePlan(raw)
   if (!clean) return null
 
   const names = [...existingNames]
-  const places: Place[] = clean.places.map((place) => {
-    const name = uniqueName(place.name, names)
+  return clean.sites.map((site) => {
+    const name = uniqueName(site.name, names)
     names.push(name)
     return {
-      id: makeId('place'),
+      id: makeId('site'),
       name,
-      spaces: place.spaces.map((space) => ({ ...space, id: makeId('space') })),
+      image: site.image,
+      places: site.places.map((place) => ({
+        id: makeId('place'),
+        name: place.name,
+        spaces: place.spaces.map((space) => ({ ...space, id: makeId('space') })),
+      })),
     }
   })
-  return places
 }
 
 /** Stable signature used to detect unsaved changes. */
