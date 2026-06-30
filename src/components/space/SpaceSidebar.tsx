@@ -1,6 +1,8 @@
 import { useCallback, useRef, useState } from 'react'
-import type { Place } from '../../space/types'
+import type { Place, Site } from '../../space/types'
 import { ButtonIcon } from '../ds/ButtonIcon'
+import { SfIcon } from '../ds/SfIcon'
+import { fileToLogoDataUrl } from '../../space/site-logo'
 
 // Font Awesome "clone" (regular), viewBox 0 0 640 640.
 const CLONE_ICON_PATH =
@@ -64,9 +66,17 @@ function EditableLabel({ value, className, onCommit }: EditableLabelProps) {
 }
 
 interface SpaceSidebarProps {
-  places: Place[]
+  sites: Site[]
+  activeSite: Site | null
   activePlace: Place | null
   activeSpaceIndex: number
+  onSelectSite: (id: string) => void
+  onAddSite: () => void
+  onRemoveSite: (id: string) => void
+  onRenameSite: (id: string, name: string) => void
+  onSetSiteLogo: (id: string, dataUrl: string | null) => void
+  logoError: string | null
+  onLogoError: (msg: string) => void
   onSelectPlace: (id: string) => void
   onAddPlace: () => void
   onRemovePlace: (id: string) => void
@@ -82,9 +92,17 @@ interface SpaceSidebarProps {
 }
 
 export function SpaceSidebar({
-  places,
+  sites,
+  activeSite,
   activePlace,
   activeSpaceIndex,
+  onSelectSite,
+  onAddSite,
+  onRemoveSite,
+  onRenameSite,
+  onSetSiteLogo,
+  logoError,
+  onLogoError,
   onSelectPlace,
   onAddPlace,
   onRemovePlace,
@@ -100,11 +118,32 @@ export function SpaceSidebar({
 }: SpaceSidebarProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => {
     const initial = new Set<string>()
+    if (activeSite?.id) initial.add(activeSite.id)
     if (activePlace?.id) initial.add(activePlace.id)
     return initial
   })
   const [dragState, setDragState] = useState<{ placeId: string; index: number } | null>(null)
   const [dropState, setDropState] = useState<{ placeId: string; index: number } | null>(null)
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [logoTargetId, setLogoTargetId] = useState<string | null>(null)
+
+  const pickLogo = (siteId: string) => {
+    setLogoTargetId(siteId)
+    fileInputRef.current?.click()
+  }
+
+  const onLogoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file || !logoTargetId) return
+    try {
+      const dataUrl = await fileToLogoDataUrl(file)
+      onSetSiteLogo(logoTargetId, dataUrl)
+    } catch (err) {
+      onLogoError(err instanceof Error ? err.message : 'Error en carregar la imatge')
+    }
+  }
 
   const expandPlace = useCallback((placeId: string) => {
     setExpandedIds((prev) => {
@@ -115,27 +154,30 @@ export function SpaceSidebar({
     })
   }, [])
 
-  const toggleExpand = useCallback((placeId: string) => {
+  const toggleExpand = useCallback((id: string) => {
     setExpandedIds((prev) => {
       const next = new Set(prev)
-      if (next.has(placeId)) next.delete(placeId)
-      else next.add(placeId)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }, [])
-
 
   const handleSelectPlace = (placeId: string) => {
     expandPlace(placeId)
     onSelectPlace(placeId)
   }
 
+  // The total count of places across all sites, used to determine when to
+  // disable the Exporta button (mirrors old `places.length === 0` check).
+  const totalPlaces = sites.reduce((acc, s) => acc + s.places.length, 0)
+
   return (
     <div className="fe-sidebar">
       <section className="fe-section">
         <div className="fe-tree-panel">
           <header className="fe-tree-panel__head">
-            <h3 className="fe-section__title">Llocs i plantes</h3>
+            <h3 className="fe-section__title">Sites, llocs i plantes</h3>
             <button
               type="button"
               className="fe-add-btn"
@@ -148,7 +190,7 @@ export function SpaceSidebar({
               type="button"
               className="fe-add-btn"
               onClick={onExport}
-              disabled={places.length === 0}
+              disabled={totalPlaces === 0}
               title="Exporta tots els llocs a JSON"
             >
               Exporta
@@ -156,36 +198,27 @@ export function SpaceSidebar({
             <button type="button" className="fe-add-btn" onClick={onAddPlace} title="Afegeix un lloc">
               + Lloc
             </button>
+            <button type="button" className="fe-add-btn" onClick={onAddSite} title="Afegeix un site">
+              + Site
+            </button>
           </header>
 
-          <div className="fe-tree" role="tree" aria-label="Llocs i plantes">
-          {places.map((place) => {
-            const isExpanded = expandedIds.has(place.id)
-            const isActivePlace = place.id === activePlace?.id
+          <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={onLogoFile} />
+          {logoError ? <p className="fe-tree__error" role="alert">{logoError}</p> : null}
+
+          <div className="fe-tree" role="tree" aria-label="Sites, llocs i plantes">
+          {sites.map((site) => {
+            const isSiteExpanded = expandedIds.has(site.id)
+            const isActiveSite = site.id === activeSite?.id
 
             return (
-              <div key={place.id} role="none">
-                <div
-                  role="treeitem"
-                  aria-level={1}
-                  aria-expanded={isExpanded}
-                  className={[
-                    'fe-tree__place',
-                    isExpanded ? 'fe-tree__place--expanded' : '',
-                    isActivePlace ? 'fe-tree__place--active' : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                  onClick={() => handleSelectPlace(place.id)}
-                >
+              <div key={site.id} role="none">
+                <div className="fe-tree__site" role="treeitem" aria-level={1}>
                   <button
                     type="button"
                     className="fe-tree__chevron"
-                    aria-label={isExpanded ? 'Replega' : 'Desplega'}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      toggleExpand(place.id)
-                    }}
+                    aria-label={isSiteExpanded ? 'Replega' : 'Desplega'}
+                    onClick={() => toggleExpand(site.id)}
                   >
                     <svg width={12} height={12} viewBox="0 0 12 12" aria-hidden="true">
                       <path
@@ -198,33 +231,49 @@ export function SpaceSidebar({
                       />
                     </svg>
                   </button>
+                  {site.image
+                    ? <img className="fe-site__logo" src={site.image} alt="" width={20} height={20} />
+                    : <SfIcon sprite="standard" symbol="home" sldsSize="x-small" />}
                   <EditableLabel
-                    className="fe-place__name"
-                    value={place.name}
-                    onCommit={(name) => onRenamePlace(place.id, name)}
+                    className="fe-site__name"
+                    value={site.name}
+                    onCommit={(n) => onRenameSite(site.id, n)}
                   />
-                  <span className="fe-place__count">{place.spaces.length}</span>
                   <button
                     type="button"
                     className="fe-add-btn fe-add-btn--inline"
-                    title="Afegeix una planta"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      expandPlace(place.id)
-                      onAddSpace(place.id)
-                    }}
+                    onClick={() => pickLogo(site.id)}
+                    title="Carrega un logo"
                   >
-                    + Planta
+                    Logo
+                  </button>
+                  {site.image
+                    ? (
+                      <button
+                        type="button"
+                        className="fe-mini-btn"
+                        title="Treu el logo"
+                        onClick={() => onSetSiteLogo(site.id, null)}
+                      >
+                        ⌫
+                      </button>
+                    )
+                    : null}
+                  <button
+                    type="button"
+                    className="fe-add-btn fe-add-btn--inline"
+                    onClick={() => { onSelectSite(site.id); onAddPlace() }}
+                    title="Afegeix un lloc"
+                  >
+                    + Lloc
                   </button>
                   <button
                     type="button"
                     className="fe-mini-btn"
-                    title="Elimina el lloc"
-                    disabled={places.length <= 1}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      if (window.confirm(`Vols eliminar el lloc "${place.name}"?`)) {
-                        onRemovePlace(place.id)
+                    disabled={sites.length <= 1}
+                    onClick={() => {
+                      if (window.confirm(`Vols eliminar el site "${site.name}"?`)) {
+                        onRemoveSite(site.id)
                       }
                     }}
                   >
@@ -232,94 +281,174 @@ export function SpaceSidebar({
                   </button>
                 </div>
 
-                {isExpanded ? (
+                {isSiteExpanded ? (
                   <div className="fe-tree__children" role="group">
-                    {place.spaces.map((space, index) => {
-                      const isActiveSpace = isActivePlace && index === activeSpaceIndex
-                      const isDropTarget =
-                        dropState?.placeId === place.id &&
-                        dropState.index === index &&
-                        (dragState?.placeId !== place.id || dragState.index !== index)
+                    {site.places.map((place) => {
+                      const isExpanded = expandedIds.has(place.id)
+                      const isActivePlace = place.id === activePlace?.id && isActiveSite
 
                       return (
-                        <div
-                          key={space.id}
-                          role="treeitem"
-                          aria-level={2}
-                          aria-selected={isActiveSpace}
-                          className={[
-                            'fe-space',
-                            isActiveSpace ? 'fe-space--on' : '',
-                            isDropTarget ? 'fe-space--drop' : '',
-                          ]
-                            .filter(Boolean)
-                            .join(' ')}
-                          draggable
-                          onDragStart={() => setDragState({ placeId: place.id, index })}
-                          onDragOver={(e) => {
-                            e.preventDefault()
-                            if (dragState?.placeId === place.id) {
-                              setDropState({ placeId: place.id, index })
-                            }
-                          }}
-                          onDrop={() => {
-                            if (
-                              dragState?.placeId === place.id &&
-                              dragState.index !== index
-                            ) {
-                              onReorderSpace(place.id, dragState.index, index)
-                            }
-                            setDragState(null)
-                            setDropState(null)
-                          }}
-                          onDragEnd={() => {
-                            setDragState(null)
-                            setDropState(null)
-                          }}
-                          onClick={() => onSelectSpace(place.id, index)}
-                        >
-                          <span className="fe-space__grip" aria-hidden="true">
-                            ⠿
-                          </span>
-                          <div className="fe-space__body">
+                        <div key={place.id} role="none">
+                          <div
+                            role="treeitem"
+                            aria-level={2}
+                            aria-expanded={isExpanded}
+                            className={[
+                              'fe-tree__place',
+                              isExpanded ? 'fe-tree__place--expanded' : '',
+                              isActivePlace ? 'fe-tree__place--active' : '',
+                            ]
+                              .filter(Boolean)
+                              .join(' ')}
+                            onClick={() => { onSelectSite(site.id); handleSelectPlace(place.id) }}
+                          >
+                            <button
+                              type="button"
+                              className="fe-tree__chevron"
+                              aria-label={isExpanded ? 'Replega' : 'Desplega'}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                toggleExpand(place.id)
+                              }}
+                            >
+                              <svg width={12} height={12} viewBox="0 0 12 12" aria-hidden="true">
+                                <path
+                                  d="M4 2l4 4-4 4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth={1.5}
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            </button>
                             <EditableLabel
-                              className="fe-space__name"
-                              value={space.name}
-                              onCommit={(name) => onRenameSpace(place.id, index, name)}
+                              className="fe-place__name"
+                              value={place.name}
+                              onCommit={(name) => onRenamePlace(place.id, name)}
                             />
-                            <span className="fe-space__meta">
-                              {space.seats.length} llocs de treball ·{' '}
-                              {space.seats.filter((s) => s.agentId).length} agents
-                            </span>
+                            <span className="fe-place__count">{place.spaces.length}</span>
+                            <button
+                              type="button"
+                              className="fe-add-btn fe-add-btn--inline"
+                              title="Afegeix una planta"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                expandPlace(place.id)
+                                onAddSpace(place.id)
+                              }}
+                            >
+                              + Planta
+                            </button>
+                            <button
+                              type="button"
+                              className="fe-mini-btn"
+                              title="Elimina el lloc"
+                              disabled={site.places.length <= 1}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (window.confirm(`Vols eliminar el lloc "${place.name}"?`)) {
+                                  onRemovePlace(place.id)
+                                }
+                              }}
+                            >
+                              ✕
+                            </button>
                           </div>
-                          <ButtonIcon
-                            className="fe-mini-btn"
-                            title="Clona la planta"
-                            aria-label="Clona la planta"
-                            size={14}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              onDuplicateSpace(place.id, index)
-                            }}
-                          >
-                            <svg width={14} height={14} viewBox="0 0 640 640" aria-hidden="true" fill="currentColor">
-                              <path d={CLONE_ICON_PATH} />
-                            </svg>
-                          </ButtonIcon>
-                          <button
-                            type="button"
-                            className="fe-mini-btn"
-                            title="Elimina la planta"
-                            disabled={place.spaces.length <= 1}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              if (window.confirm(`Vols eliminar la planta "${space.name}"?`)) {
-                                onRemoveSpace(place.id, index)
-                              }
-                            }}
-                          >
-                            ✕
-                          </button>
+
+                          {isExpanded ? (
+                            <div className="fe-tree__children" role="group">
+                              {place.spaces.map((space, index) => {
+                                const isActiveSpace = isActivePlace && index === activeSpaceIndex
+                                const isDropTarget =
+                                  dropState?.placeId === place.id &&
+                                  dropState.index === index &&
+                                  (dragState?.placeId !== place.id || dragState.index !== index)
+
+                                return (
+                                  <div
+                                    key={space.id}
+                                    role="treeitem"
+                                    aria-level={3}
+                                    aria-selected={isActiveSpace}
+                                    className={[
+                                      'fe-space',
+                                      isActiveSpace ? 'fe-space--on' : '',
+                                      isDropTarget ? 'fe-space--drop' : '',
+                                    ]
+                                      .filter(Boolean)
+                                      .join(' ')}
+                                    draggable
+                                    onDragStart={() => setDragState({ placeId: place.id, index })}
+                                    onDragOver={(e) => {
+                                      e.preventDefault()
+                                      if (dragState?.placeId === place.id) {
+                                        setDropState({ placeId: place.id, index })
+                                      }
+                                    }}
+                                    onDrop={() => {
+                                      if (
+                                        dragState?.placeId === place.id &&
+                                        dragState.index !== index
+                                      ) {
+                                        onReorderSpace(place.id, dragState.index, index)
+                                      }
+                                      setDragState(null)
+                                      setDropState(null)
+                                    }}
+                                    onDragEnd={() => {
+                                      setDragState(null)
+                                      setDropState(null)
+                                    }}
+                                    onClick={() => onSelectSpace(place.id, index)}
+                                  >
+                                    <span className="fe-space__grip" aria-hidden="true">
+                                      ⠿
+                                    </span>
+                                    <div className="fe-space__body">
+                                      <EditableLabel
+                                        className="fe-space__name"
+                                        value={space.name}
+                                        onCommit={(name) => onRenameSpace(place.id, index, name)}
+                                      />
+                                      <span className="fe-space__meta">
+                                        {space.seats.length} llocs de treball ·{' '}
+                                        {space.seats.filter((s) => s.agentId).length} agents
+                                      </span>
+                                    </div>
+                                    <ButtonIcon
+                                      className="fe-mini-btn"
+                                      title="Clona la planta"
+                                      aria-label="Clona la planta"
+                                      size={14}
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        onDuplicateSpace(place.id, index)
+                                      }}
+                                    >
+                                      <svg width={14} height={14} viewBox="0 0 640 640" aria-hidden="true" fill="currentColor">
+                                        <path d={CLONE_ICON_PATH} />
+                                      </svg>
+                                    </ButtonIcon>
+                                    <button
+                                      type="button"
+                                      className="fe-mini-btn"
+                                      title="Elimina la planta"
+                                      disabled={place.spaces.length <= 1}
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        if (window.confirm(`Vols eliminar la planta "${space.name}"?`)) {
+                                          onRemoveSpace(place.id, index)
+                                        }
+                                      }}
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          ) : null}
                         </div>
                       )
                     })}

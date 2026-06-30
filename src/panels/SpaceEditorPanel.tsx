@@ -48,6 +48,7 @@ export function SpaceEditorPanel() {
   const layoutRef = useRef<HTMLDivElement>(null)
   const importInputRef = useRef<HTMLInputElement>(null)
   const [split, setSplit] = useState<number>(loadSplit)
+  const [logoError, setLogoError] = useState<string | null>(null)
 
   const openImportDialog = useCallback(() => {
     fp.clearImportError()
@@ -157,9 +158,17 @@ export function SpaceEditorPanel() {
         <aside className="space-editor__aside">
           <div className="space-editor__aside-scroll" ref={asideScrollRef}>
             <SpaceSidebar
-              places={fp.places}
+              sites={fp.sites}
+              activeSite={fp.activeSite}
               activePlace={fp.activePlace}
               activeSpaceIndex={fp.activeSpaceIndex}
+              onSelectSite={fp.selectSite}
+              onAddSite={fp.addSite}
+              onRemoveSite={fp.removeSite}
+              onRenameSite={fp.renameSite}
+              onSetSiteLogo={fp.setSiteLogo}
+              logoError={logoError}
+              onLogoError={setLogoError}
               onSelectPlace={fp.selectPlace}
               onAddPlace={fp.addPlace}
               onRemovePlace={fp.removePlace}
@@ -174,7 +183,7 @@ export function SpaceEditorPanel() {
               onImport={openImportDialog}
             />
             <hr className="space-editor__plan-tree-divider" />
-            <SpacePlanTree places={fp.places} agentsById={agentsById} queuesById={queuesById} />
+            <SpacePlanTree sites={fp.sites} agentsById={agentsById} queuesById={queuesById} />
             <input
               ref={importInputRef}
               type="file"
