@@ -1,7 +1,7 @@
 import { recoverAccessSession } from '../auth/salesforce-oauth'
 import { devLog } from '../dev/dev-log'
 import type { OAuthSession } from '../auth/types'
-import type { WireSpacePlanV2 } from '../space/space-plan-model'
+import type { WireSpacePlan } from '../space/space-plan-model'
 import type {
   AgentScope,
   AgentSkillsResponse,
@@ -47,10 +47,10 @@ export interface MiradorClient {
   getWork: () => Promise<WorkResponse>
   getSnapshot: (scope?: AgentScope) => Promise<SnapshotResponse>
   getRecordDetails: (body: RecordDetailsRequest) => Promise<RecordDetailsResponse>
-  /** Loads the org space plan (v2 wire shape), or null when none exists. */
-  getSpacePlan: () => Promise<WireSpacePlanV2 | null>
-  /** Full-replace save of the org space plan (v2 wire shape). */
-  saveSpacePlan: (plan: WireSpacePlanV2) => Promise<void>
+  /** Loads the org space plan (v4 wire shape), or null when none exists. */
+  getSpacePlan: () => Promise<WireSpacePlan | null>
+  /** Full-replace save of the org space plan (v4 wire shape). */
+  saveSpacePlan: (plan: WireSpacePlan) => Promise<void>
 }
 
 type SessionGetter = () => OAuthSession | null | Promise<OAuthSession | null>
@@ -165,7 +165,7 @@ export function createMiradorClient(getSession: SessionGetter): MiradorClient {
         method: 'POST',
         body: JSON.stringify(body),
       }),
-    getSpacePlan: () => request<WireSpacePlanV2 | null>('/space-plan'),
+    getSpacePlan: () => request<WireSpacePlan | null>('/space-plan'),
     saveSpacePlan: async (plan) => {
       await request<{ ok: boolean }>('/space-plan', {
         method: 'PUT',

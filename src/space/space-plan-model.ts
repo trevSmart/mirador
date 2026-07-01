@@ -422,55 +422,20 @@ function firstSpaceId(folders: Folder[]): string | null {
   return null
 }
 
-/** Stable id for the synthetic site when upgrading an Apex v2 wire plan (flat
-    `places` with no `sites`). Keeps `activeSiteId` stable across reloads. */
-export const LEGACY_WIRE_SITE_ID = 'legacy-site'
+/** The wire shape is now the v4 plan itself: a folder tree. */
+export type WireSpacePlan = SpacePlanData
 
-/** Wire format the Apex REST handler reads/writes today (schema v2, flat places). */
-export interface WireSpacePlanV2 {
-  v: 2
-  activePlaceId: string | null
-  places: Place[]
-}
-
-/** Accept a v3 plan (`sites`) or the v2 Apex wire shape (`places` at root). */
+/** Accept only a valid v4 folder plan. There is no legacy data to migrate, so
+    this just delegates to sanitizeSpacePlan (which returns null for anything
+    that isn't a well-formed v4 plan). */
 export function parseStoredSpacePlan(raw: unknown): SpacePlanData | null {
-  if (!raw || typeof raw !== 'object') return null
-  const data = raw as Record<string, unknown>
-
-  if (data.v === SPACE_SCHEMA_VERSION && Array.isArray(data.sites)) {
-    return sanitizeSpacePlan(data)
-  }
-
-  if (Array.isArray(data.places)) {
-    const places = data.places
-      .map((place) => sanitizePlace(place))
-      .filter((place): place is Place => place !== null)
-    if (places.length === 0) return null
-    const activePlaceId =
-      typeof data.activePlaceId === 'string' && places.some((p) => p.id === data.activePlaceId)
-        ? data.activePlaceId
-        : places[0].id
-    return sanitizeSpacePlan({
-      v: SPACE_SCHEMA_VERSION,
-      activeSiteId: LEGACY_WIRE_SITE_ID,
-      activePlaceId,
-      sites: [{ id: LEGACY_WIRE_SITE_ID, name: 'Site 1', image: null, places, active: true }],
-    })
-  }
-
-  return null
+  return sanitizeSpacePlan(raw)
 }
 
-/** Flatten a v3 plan to the v2 wire shape the Apex service persists today. Site
-    names/logos are not stored server-side until Site__c exists. */
-export function toWireSpacePlan(data: SpacePlanData): WireSpacePlanV2 {
-  const clean = sanitizeSpacePlan(data) ?? data
-  return {
-    v: 2,
-    activePlaceId: clean.activePlaceId,
-    places: clean.sites.flatMap((site) => site.places),
-  }
+/** The plan is persisted as-is (v4). Sanitised so the server always receives a
+    clean tree. */
+export function toWireSpacePlan(data: SpacePlanData): WireSpacePlan {
+  return sanitizeSpacePlan(data) ?? data
 }
 
 /** Validate a whole plan from storage; returns null when nothing usable. */
@@ -511,31 +476,25 @@ export function uniqueName(base: string, existing: string[]): string {
   return `${base} ${n}`
 }
 
-/** Validate an imported plan and turn its sites into brand-new records: every
-    site, place and space gets a freshly generated id (so they never collide with
-    existing org records) and site names are de-duplicated against
-    `existingNames`. Logos are preserved. Additive: nothing here mutates the
-    current plan. Returns null when the input is not a usable plan. */
-export function prepareImportedSites(raw: unknown, existingNames: string[]): Site[] | null {
-  const clean = sanitizeSpacePlan(raw)
+/** Deep-clone folders with fresh ids (folders and spaces) so imported records
+    never collide with existing ones; de-dupe top-level names. Returns null when
+    the input is not a usable plan. */
+export function prepareImportedFolders(raw: unknown, existingNames: string[]): Folder[] | null {
+  const clean = parseStoredSpacePlan(raw)
   if (!clean) return null
-
   const names = [...existingNames]
-  return clean.sites.map((site) => {
-    const name = uniqueName(site.name, names)
+  const reid = (folder: Folder): Folder => ({
+    id: makeId('folder'),
+    name: folder.name,
+    image: folder.image,
+    active: folder.active,
+    spaces: folder.spaces.map((s) => ({ ...s, id: makeId('space') })),
+    folders: folder.folders.map(reid),
+  })
+  return clean.folders.map((folder) => {
+    const name = uniqueName(folder.name, names)
     names.push(name)
-    return {
-      id: makeId('site'),
-      name,
-      image: site.image,
-      active: site.active,
-      places: site.places.map((place) => ({
-        id: makeId('place'),
-        name: place.name,
-        active: place.active,
-        spaces: place.spaces.map((space) => ({ ...space, id: makeId('space') })),
-      })),
-    }
+    return { ...reid(folder), name }
   })
 }
 

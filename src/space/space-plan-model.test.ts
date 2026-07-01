@@ -1,40 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import {
-  SPACE_SCHEMA_VERSION,
-  LEGACY_WIRE_SITE_ID,
   uniqueName,
   sanitizeImage,
   sanitizeSpacePlan,
   parseStoredSpacePlan,
   toWireSpacePlan,
   defaultSpacePlan,
-  prepareImportedSites,
+  prepareImportedFolders,
   visibleSpaces,
   visibleSpaceFolders,
   seedFolder,
   MAX_FOLDER_DEPTH,
 } from './space-plan-model'
-import type { SpacePlanData, Place } from './types'
-
-function validPlace(name = 'Lloc A'): Place {
-  return {
-    id: 'p1',
-    name,
-    active: true,
-    spaces: [
-      { id: 's1', name: 'Planta 1', cells: [[0, 0]], seats: [], openings: [], dividers: [], dir: 0, active: true },
-    ],
-  }
-}
-
-function validPlan(siteName = 'Site A'): SpacePlanData {
-  return {
-    v: SPACE_SCHEMA_VERSION,
-    activeSiteId: 'site1',
-    activePlaceId: 'p1',
-    sites: [{ id: 'site1', name: siteName, image: null, active: true, places: [validPlace()] }],
-  }
-}
+import type { SpacePlanData } from './types'
 
 describe('uniqueName', () => {
   it('returns the base name when there is no collision', () => {
@@ -70,156 +48,14 @@ describe('sanitizeImage', () => {
   })
 })
 
-describe('defaultSpacePlan', () => {
-  it('returns exactly one site with one place', () => {
-    const plan = defaultSpacePlan()
-    expect(plan.v).toBe(SPACE_SCHEMA_VERSION)
-    expect(plan.sites).toHaveLength(1)
-    expect(plan.sites[0].image).toBeNull()
-    expect(plan.sites[0].places).toHaveLength(1)
-    expect(plan.activeSiteId).toBe(plan.sites[0].id)
-  })
-
-  it('seeds site, place and space as active', () => {
-    const plan = defaultSpacePlan()
-    expect(plan.sites[0].active).toBe(true)
-    expect(plan.sites[0].places[0].active).toBe(true)
-    expect(plan.sites[0].places[0].spaces[0].active).toBe(true)
-  })
-})
-
-describe('sanitizeSpacePlan (active flag)', () => {
-  it('defaults missing active flags to true (legacy plans)', () => {
-    const plan = validPlan()
-    delete (plan.sites[0] as { active?: boolean }).active
-    delete (plan.sites[0].places[0] as { active?: boolean }).active
-    delete (plan.sites[0].places[0].spaces[0] as { active?: boolean }).active
-    const clean = sanitizeSpacePlan(plan)
-    expect(clean?.sites[0].active).toBe(true)
-    expect(clean?.sites[0].places[0].active).toBe(true)
-    expect(clean?.sites[0].places[0].spaces[0].active).toBe(true)
-  })
-
-  it('preserves an explicit active=false at every level', () => {
-    const plan = validPlan()
-    plan.sites[0].active = false
-    plan.sites[0].places[0].active = false
-    plan.sites[0].places[0].spaces[0].active = false
-    const clean = sanitizeSpacePlan(plan)
-    expect(clean?.sites[0].active).toBe(false)
-    expect(clean?.sites[0].places[0].active).toBe(false)
-    expect(clean?.sites[0].places[0].spaces[0].active).toBe(false)
-  })
-})
-
-describe('sanitizeSpacePlan (sites)', () => {
-  it('keeps a valid plan and its logo', () => {
-    const plan = validPlan()
-    plan.sites[0].image = 'data:image/png;base64,iVBORw0KGgo='
-    const clean = sanitizeSpacePlan(plan)
-    expect(clean?.sites[0].image).toBe('data:image/png;base64,iVBORw0KGgo=')
-  })
-  it('nulls an invalid logo but keeps the site', () => {
-    const plan = validPlan()
-    ;(plan.sites[0] as { image: unknown }).image = 'nope'
-    expect(sanitizeSpacePlan(plan)?.sites[0].image).toBeNull()
-  })
-  it('drops sites with no usable place', () => {
-    const plan = validPlan()
-    plan.sites.push({ id: 'empty', name: 'Buit', image: null, active: true, places: [] })
-    expect(sanitizeSpacePlan(plan)?.sites).toHaveLength(1)
-  })
-  it('falls back activeSiteId/activePlaceId to the first available', () => {
-    const plan = validPlan()
-    plan.activeSiteId = 'ghost'
-    plan.activePlaceId = 'ghost'
-    const clean = sanitizeSpacePlan(plan)
-    expect(clean?.activeSiteId).toBe(clean?.sites[0].id)
-    expect(clean?.activePlaceId).toBe(clean?.sites[0].places[0].id)
-  })
-  it('rejects a wrong schema version', () => {
-    expect(sanitizeSpacePlan({ ...validPlan(), v: 2 })).toBeNull()
-  })
-})
-
-describe('prepareImportedSites', () => {
-  it('rejects an incompatible schema version', () => {
-    expect(prepareImportedSites({ ...validPlan(), v: 0 }, [])).toBeNull()
-  })
-  it('recreates sites with fresh ids and preserves the logo', () => {
-    const plan = validPlan()
-    plan.sites[0].image = 'data:image/png;base64,iVBORw0KGgo='
-    const sites = prepareImportedSites(plan, [])
-    expect(sites).toHaveLength(1)
-    expect(sites?.[0].id).not.toBe('site1')
-    expect(sites?.[0].places[0].id).not.toBe('p1')
-    expect(sites?.[0].image).toBe('data:image/png;base64,iVBORw0KGgo=')
-  })
-  it('de-dupes site names against existing names', () => {
-    const sites = prepareImportedSites(validPlan('Site A'), ['Site A'])
-    expect(sites?.[0].name).toBe('Site A 2')
-  })
-
-  it('preserves active flags on imported sites/places/spaces', () => {
-    const plan = validPlan()
-    plan.sites[0].active = false
-    plan.sites[0].places[0].spaces[0].active = false
-    const sites = prepareImportedSites(plan, [])
-    expect(sites?.[0].active).toBe(false)
-    expect(sites?.[0].places[0].active).toBe(true)
-    expect(sites?.[0].places[0].spaces[0].active).toBe(false)
-  })
-})
-
-describe('visibleSpaces / visibleSpaceFolders', () => {
-  const space = (id: string, active = true) => ({ id, name: id, cells: [[0, 0]], seats: [], openings: [], dividers: [], dir: 0, active })
-  const plan = (folders: any[]): SpacePlanData => ({ v: 4, activeFolderId: null, activeSpaceId: null, folders })
-
-  it('returns only active spaces of a folder', () => {
-    const f = { id: 'f', name: 'F', image: null, active: true, folders: [], spaces: [space('s1'), space('s2', false)] }
-    expect(visibleSpaces(f).map((s) => s.id)).toEqual(['s1'])
-  })
-
-  it('lists folders that directly hold a visible space, with their path', () => {
-    const child = { id: 'c', name: 'Child', image: null, active: true, folders: [], spaces: [space('s1')] }
-    const root = { id: 'r', name: 'Root', image: null, active: true, folders: [child], spaces: [] }
-    const out = visibleSpaceFolders(plan([root]))
-    expect(out).toHaveLength(1)
-    expect(out[0].folder.id).toBe('c')
-    expect(out[0].path).toEqual(['Root', 'Child'])
-  })
-
-  it('hides a folder (and descendants) when it is inactive', () => {
-    const child = { id: 'c', name: 'Child', image: null, active: true, folders: [], spaces: [space('s1')] }
-    const root = { id: 'r', name: 'Root', image: null, active: false, folders: [child], spaces: [] }
-    expect(visibleSpaceFolders(plan([root]))).toHaveLength(0)
-  })
-
-  it('hides a folder whose only space is inactive', () => {
-    const root = { id: 'r', name: 'Root', image: null, active: true, folders: [], spaces: [space('s1', false)] }
-    expect(visibleSpaceFolders(plan([root]))).toHaveLength(0)
-  })
-})
-
-describe('parseStoredSpacePlan / toWireSpacePlan', () => {
-  it('round-trips a v3 plan through the v2 wire shape', () => {
-    const plan = validPlan()
-    const wire = toWireSpacePlan(plan)
-    expect(wire.v).toBe(2)
-    expect(wire.places).toHaveLength(1)
-    expect(wire.activePlaceId).toBe('p1')
-    const restored = parseStoredSpacePlan(wire)
-    expect(restored?.sites).toHaveLength(1)
-    expect(restored?.sites[0].id).toBe(LEGACY_WIRE_SITE_ID)
-    expect(restored?.sites[0].places[0].id).toBe('p1')
-  })
-
-  it('upgrades a legacy v2 wire plan into a single site', () => {
-    const legacy = { v: 2, activePlaceId: 'p1', places: [validPlace()] }
-    const plan = parseStoredSpacePlan(legacy)
-    expect(plan?.v).toBe(SPACE_SCHEMA_VERSION)
-    expect(plan?.activeSiteId).toBe(LEGACY_WIRE_SITE_ID)
-    expect(plan?.sites[0].places).toHaveLength(1)
+describe('seedFolder', () => {
+  it('creates an active, empty folder with no image', () => {
+    const folder = seedFolder('Lloc 1')
+    expect(folder.name).toBe('Lloc 1')
+    expect(folder.active).toBe(true)
+    expect(folder.image).toBeNull()
+    expect(folder.folders).toEqual([])
+    expect(folder.spaces).toEqual([])
   })
 })
 
@@ -278,5 +114,105 @@ describe('sanitizeSpacePlan (v4 folder tree)', () => {
     ] })
     expect(out!.activeFolderId).toBe('f1')
     expect(out!.activeSpaceId).toBe('s1')
+  })
+
+  it('defaults missing active flags to true (legacy folders)', () => {
+    const raw = {
+      v: 4,
+      activeFolderId: null,
+      activeSpaceId: null,
+      folders: [
+        { id: 'f1', name: 'A', image: null, spaces: [{ id: 's1', name: 'P', cells: [[0, 0]], seats: [], openings: [], dividers: [], dir: 0 }], folders: [] },
+      ],
+    }
+    const out = sanitizeSpacePlan(raw)
+    expect(out!.folders[0].active).toBe(true)
+    expect(out!.folders[0].spaces[0].active).toBe(true)
+  })
+
+  it('preserves an explicit active=false at every level', () => {
+    const raw = {
+      v: 4,
+      activeFolderId: null,
+      activeSpaceId: null,
+      folders: [
+        { id: 'f1', name: 'A', image: null, active: false, spaces: [space('s1')], folders: [] },
+      ],
+    }
+    const out = sanitizeSpacePlan(raw)
+    expect(out!.folders[0].active).toBe(false)
+  })
+})
+
+describe('parseStoredSpacePlan / toWireSpacePlan (v4)', () => {
+  it('round-trips a v4 folder plan', () => {
+    const plan = defaultSpacePlan()
+    const wire = toWireSpacePlan(plan)
+    expect(wire.v).toBe(4)
+    const back = parseStoredSpacePlan(wire)
+    expect(back!.folders[0].name).toBe('Lloc 1')
+  })
+
+  it('rejects a non-v4 payload (no legacy migration)', () => {
+    expect(parseStoredSpacePlan({ v: 2, places: [] })).toBeNull()
+    expect(parseStoredSpacePlan({ v: 3, sites: [] })).toBeNull()
+    expect(parseStoredSpacePlan(null)).toBeNull()
+  })
+})
+
+describe('prepareImportedFolders', () => {
+  const plan = () => ({
+    v: 4, activeFolderId: 'f1', activeSpaceId: 's1',
+    folders: [{ id: 'f1', name: 'Lloc', image: 'data:image/png;base64,AAAA', active: true, folders: [], spaces: [
+      { id: 's1', name: 'Planta', cells: [[0, 0]], seats: [], openings: [], dividers: [], dir: 0, active: true },
+    ] }],
+  })
+
+  it('rejects an incompatible schema version', () => {
+    expect(prepareImportedFolders({ v: 2, places: [] }, [])).toBeNull()
+  })
+
+  it('recreates folders with fresh ids and preserves images and active flags', () => {
+    const out = prepareImportedFolders(plan(), [])
+    expect(out).not.toBeNull()
+    expect(out![0].id).not.toBe('f1')
+    expect(out![0].spaces[0].id).not.toBe('s1')
+    expect(out![0].image).toBe('data:image/png;base64,AAAA')
+    expect(out![0].active).toBe(true)
+  })
+
+  it('de-dupes top-level folder names against existing names', () => {
+    const out = prepareImportedFolders(plan(), ['Lloc'])
+    expect(out![0].name).toBe('Lloc 2')
+  })
+})
+
+describe('visibleSpaces / visibleSpaceFolders', () => {
+  const space = (id: string, active = true) => ({ id, name: id, cells: [[0, 0]], seats: [], openings: [], dividers: [], dir: 0, active })
+  const plan = (folders: any[]): SpacePlanData => ({ v: 4, activeFolderId: null, activeSpaceId: null, folders })
+
+  it('returns only active spaces of a folder', () => {
+    const f = { id: 'f', name: 'F', image: null, active: true, folders: [], spaces: [space('s1'), space('s2', false)] }
+    expect(visibleSpaces(f).map((s) => s.id)).toEqual(['s1'])
+  })
+
+  it('lists folders that directly hold a visible space, with their path', () => {
+    const child = { id: 'c', name: 'Child', image: null, active: true, folders: [], spaces: [space('s1')] }
+    const root = { id: 'r', name: 'Root', image: null, active: true, folders: [child], spaces: [] }
+    const out = visibleSpaceFolders(plan([root]))
+    expect(out).toHaveLength(1)
+    expect(out[0].folder.id).toBe('c')
+    expect(out[0].path).toEqual(['Root', 'Child'])
+  })
+
+  it('hides a folder (and descendants) when it is inactive', () => {
+    const child = { id: 'c', name: 'Child', image: null, active: true, folders: [], spaces: [space('s1')] }
+    const root = { id: 'r', name: 'Root', image: null, active: false, folders: [child], spaces: [] }
+    expect(visibleSpaceFolders(plan([root]))).toHaveLength(0)
+  })
+
+  it('hides a folder whose only space is inactive', () => {
+    const root = { id: 'r', name: 'Root', image: null, active: true, folders: [], spaces: [space('s1', false)] }
+    expect(visibleSpaceFolders(plan([root]))).toHaveLength(0)
   })
 })
