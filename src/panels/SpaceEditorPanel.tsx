@@ -158,35 +158,30 @@ export function SpaceEditorPanel() {
         <aside className="space-editor__aside">
           <div className="space-editor__aside-scroll" ref={asideScrollRef}>
             <SpaceSidebar
-              sites={fp.sites}
-              activeSite={fp.activeSite}
-              activePlace={fp.activePlace}
-              activeSpaceIndex={fp.activeSpaceIndex}
-              onSelectSite={fp.selectSite}
-              onAddSite={fp.addSite}
-              onRemoveSite={fp.removeSite}
-              onRenameSite={fp.renameSite}
-              onSetSiteLogo={fp.setSiteLogo}
-              onToggleSiteActive={fp.toggleSiteActive}
+              folders={fp.folders}
+              activeFolderId={fp.data.activeFolderId}
+              activeSpaceId={fp.data.activeSpaceId}
+              onSelectFolder={fp.selectFolder}
+              onAddFolder={fp.addFolder}
+              onRemoveFolder={fp.removeFolder}
+              onRenameFolder={fp.renameFolder}
+              onSetFolderImage={fp.setFolderImage}
+              onToggleFolderActive={fp.toggleFolderActive}
+              onMoveFolder={fp.moveFolder}
               logoError={logoError}
               onLogoError={setLogoError}
-              onSelectPlace={fp.selectPlace}
-              onAddPlace={fp.addPlace}
-              onRemovePlace={fp.removePlace}
-              onRenamePlace={fp.renamePlace}
-              onTogglePlaceActive={fp.togglePlaceActive}
               onSelectSpace={fp.selectSpace}
               onAddSpace={fp.addSpace}
               onRemoveSpace={fp.removeSpace}
               onDuplicateSpace={fp.duplicateSpace}
               onRenameSpace={fp.renameSpace}
               onToggleSpaceActive={fp.toggleSpaceActive}
-              onReorderSpace={fp.reorderSpace}
+              onMoveSpace={fp.moveSpace}
               onExport={fp.exportJson}
               onImport={openImportDialog}
             />
             <hr className="space-editor__plan-tree-divider" />
-            <SpacePlanTree sites={fp.sites} agentsById={agentsById} queuesById={queuesById} />
+            <SpacePlanTree folders={fp.folders} agentsById={agentsById} queuesById={queuesById} />
             <input
               ref={importInputRef}
               type="file"
