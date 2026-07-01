@@ -1,9 +1,8 @@
 import { SPACE_SCHEMA_VERSION } from '../../space/space-plan-model'
-import type { Cell, Edge, Space, SpacePlanData, Opening, OpeningKind, Place, Seat, Site } from '../../space/types'
+import type { Cell, Edge, Space, SpacePlanData, Opening, OpeningKind, Folder, Seat } from '../../space/types'
 import { MOCK_AGENT, type MockAgentKey } from './mock-ids'
 
-const MOCK_PLACE_ID = 'mock-place-cc'
-const MOCK_SITE_ID = 'mock-site-cc'
+const MOCK_FOLDER_ID = 'mock-folder-cc'
 const MOCK_SPACE_VENDES = 'mock-space-vendes'
 const MOCK_SPACE_ATENCIO = 'mock-space-atencio'
 const MOCK_SPACE_SUPORT = 'mock-space-suport'
@@ -160,18 +159,19 @@ export function createMockSpacePlan(): SpacePlanData {
     ],
   )
 
-  const place: Place = {
-    id: MOCK_PLACE_ID,
+  const folder: Folder = {
+    id: MOCK_FOLDER_ID,
     name: 'Contact Center Barcelona',
-    spaces: [vendes, atencio, suport],
+    image: null,
     active: true,
+    folders: [],
+    spaces: [vendes, atencio, suport],
   }
 
-  const site: Site = { id: MOCK_SITE_ID, name: 'Seu Central', image: null, places: [place], active: true }
   return {
     v: SPACE_SCHEMA_VERSION,
-    activeSiteId: site.id,
-    activePlaceId: place.id,
-    sites: [site],
+    activeFolderId: folder.id,
+    activeSpaceId: vendes.id,
+    folders: [folder],
   }
 }
