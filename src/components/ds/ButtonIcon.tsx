@@ -21,6 +21,9 @@ interface ButtonIconProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children?: ReactNode
   /** Pixel size of the glyph (not the button box). */
   size?: number
+  /** Force the SLDS tile on/off (only for `icon`). Standard/custom sprites tile
+      by default; pass `false` to render them monochrome with currentColor. */
+  tile?: boolean
 }
 
 function parseSldsId(id: string): { sprite: SfSprite; symbol: string } | null {
@@ -34,6 +37,7 @@ export function ButtonIcon({
   src,
   children,
   size = 18,
+  tile,
   type = 'button',
   className,
   ...rest
@@ -43,7 +47,7 @@ export function ButtonIcon({
   return (
     <button type={type} className={className} {...rest}>
       {slds ? (
-        <SfIcon sprite={slds.sprite} symbol={slds.symbol} size={size} />
+        <SfIcon sprite={slds.sprite} symbol={slds.symbol} size={size} tile={tile} />
       ) : src ? (
         <img src={src} alt="" width={size} height={size} aria-hidden="true" />
       ) : (

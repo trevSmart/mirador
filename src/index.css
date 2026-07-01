@@ -2712,6 +2712,13 @@ textarea,
   cursor: not-allowed;
 }
 
+/* Active-state toggle (◉/○ node visibility): the active node glows in the app
+   accent so an enabled folder/plant reads at a glance; hover keeps the accent. */
+.fe-mini-btn[aria-pressed='true'],
+.fe-mini-btn[aria-pressed='true']:hover:not(:disabled) {
+  color: var(--accent);
+}
+
 .fe-rename {
   flex: 1 1 auto;
   min-width: 0;
