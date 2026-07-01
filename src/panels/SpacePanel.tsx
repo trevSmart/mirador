@@ -9,7 +9,7 @@ import { PanelShell } from '../components/PanelState'
 import { Select } from '../components/ds/Select'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { useSpacePlanData } from '../space/useSpacePlanData'
-import { visiblePlaces, visibleSpaces } from '../space/space-plan-model'
+import { visibleSpaceFolders, visibleSpaces } from '../space/space-plan-model'
 import { useSmoothScroll } from '../hooks/useSmoothScroll'
 import { usePreferences } from '../settings/preferences-context'
 import { presenceLabel } from '../utils/format'
@@ -37,7 +37,7 @@ export function SpacePanel() {
   const { prefs, save } = usePreferences()
   const canvasScrollRef = useSmoothScroll<HTMLDivElement>()
   const wheelCleanupRef = useRef<(() => void) | null>(null)
-  const [placeId, setPlaceId] = useState<string | null>(null)
+  const [folderId, setFolderId] = useState<string | null>(null)
   const [zoom, setZoom] = useState<number>(loadSpaceZoom)
 
   const setCanvasRef = useCallback(
@@ -90,14 +90,15 @@ export function SpacePanel() {
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents])
   const queuesById = useMemo(() => new Map(queues.map((queue) => [queue.id, queue])), [queues])
 
-  // Live views hide anything inactive or hanging off something inactive.
-  const allPlaces = useMemo(() => (data ? visiblePlaces(data) : []), [data])
-  const activePlace = useMemo(() => {
-    if (allPlaces.length === 0) return null
-    return allPlaces.find((p) => p.id === placeId) ?? allPlaces[0]
-  }, [allPlaces, placeId])
+  // Live views hide anything inactive or hanging off something inactive. Each
+  // entry is a folder that directly holds visible spaces, with its name path.
+  const spaceFolders = useMemo(() => (data ? visibleSpaceFolders(data) : []), [data])
+  const activeEntry = useMemo(() => {
+    if (spaceFolders.length === 0) return null
+    return spaceFolders.find((e) => e.folder.id === folderId) ?? spaceFolders[0]
+  }, [spaceFolders, folderId])
 
-  const spaces = useMemo(() => (activePlace ? visibleSpaces(activePlace) : []), [activePlace])
+  const spaces = useMemo(() => (activeEntry ? visibleSpaces(activeEntry.folder) : []), [activeEntry])
   const multiSpace = spaces.length > 1
 
   const stackStyle = {
@@ -168,7 +169,7 @@ export function SpacePanel() {
     )
   }
 
-  if (!data || !activePlace || spaces.length === 0) {
+  if (!data || !activeEntry || spaces.length === 0) {
     return (
       <PanelShell hideHeader smoothScroll={false} className="panel-shell--space">
         <p className="panel-state panel-state--muted">
@@ -183,16 +184,16 @@ export function SpacePanel() {
       <div className="space-view">
         <header className="fv-bar">
           <div className="fv-selectors">
-            {allPlaces.length > 1 ? (
+            {spaceFolders.length > 1 ? (
               <Select
                 className="fv-select"
-                ariaLabel="Lloc"
-                value={activePlace.id}
-                options={allPlaces.map((place) => ({ value: place.id, label: place.name }))}
-                onChange={(id) => setPlaceId(id)}
+                ariaLabel="Carpeta"
+                value={activeEntry.folder.id}
+                options={spaceFolders.map((entry) => ({ value: entry.folder.id, label: entry.path.join(' / ') }))}
+                onChange={(id) => setFolderId(id)}
               />
             ) : (
-              <span className="fv-place-name">{activePlace.name}</span>
+              <span className="fv-place-name">{activeEntry.path.join(' / ')}</span>
             )}
 
             {!multiSpace ? <span className="fv-space-name">{spaces[0].name}</span> : null}
