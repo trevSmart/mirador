@@ -11,6 +11,8 @@ import {
   prepareImportedSites,
   visiblePlaces,
   visibleSpaces,
+  seedFolder,
+  MAX_FOLDER_DEPTH,
 } from './space-plan-model'
 import type { SpacePlanData, Place } from './types'
 
@@ -222,5 +224,63 @@ describe('parseStoredSpacePlan / toWireSpacePlan', () => {
     expect(plan?.v).toBe(SPACE_SCHEMA_VERSION)
     expect(plan?.activeSiteId).toBe(LEGACY_WIRE_SITE_ID)
     expect(plan?.sites[0].places).toHaveLength(1)
+  })
+})
+
+describe('defaultSpacePlan (v4 folders)', () => {
+  it('returns one root folder holding one space, both active', () => {
+    const plan = defaultSpacePlan()
+    expect(plan.v).toBe(4)
+    expect(plan.folders).toHaveLength(1)
+    expect(plan.folders[0].active).toBe(true)
+    expect(plan.folders[0].spaces).toHaveLength(1)
+    expect(plan.folders[0].spaces[0].active).toBe(true)
+    expect(plan.activeFolderId).toBe(plan.folders[0].id)
+    expect(plan.activeSpaceId).toBe(plan.folders[0].spaces[0].id)
+  })
+})
+
+describe('sanitizeSpacePlan (v4 folder tree)', () => {
+  const space = (id: string) => ({ id, name: 'P', cells: [[0, 0]], seats: [], openings: [], dividers: [], dir: 0, active: true })
+
+  it('keeps nested folders, images and empty folders', () => {
+    const raw = {
+      v: 4,
+      activeFolderId: 'f1',
+      activeSpaceId: null,
+      folders: [
+        { id: 'f1', name: 'A', image: null, active: true, spaces: [space('s1')], folders: [
+          { id: 'f2', name: 'B', image: null, active: true, spaces: [], folders: [] },
+        ] },
+      ],
+    }
+    const out = sanitizeSpacePlan(raw)
+    expect(out).not.toBeNull()
+    expect(out!.folders[0].folders[0].id).toBe('f2') // empty folder preserved
+  })
+
+  it('rejects a non-v4 schema', () => {
+    expect(sanitizeSpacePlan({ v: 3, sites: [] })).toBeNull()
+  })
+
+  it('caps recursion at MAX_FOLDER_DEPTH', () => {
+    let node: any = { id: 'leaf', name: 'x', image: null, active: true, spaces: [space('sx')], folders: [] }
+    for (let i = 0; i < MAX_FOLDER_DEPTH + 5; i += 1) {
+      node = { id: `f${i}`, name: 'x', image: null, active: true, spaces: [], folders: [node] }
+    }
+    const out = sanitizeSpacePlan({ v: 4, activeFolderId: null, activeSpaceId: null, folders: [node] })
+    // Walk down and assert depth never exceeds the cap.
+    let depth = 0
+    let cur = out!.folders[0]
+    while (cur.folders.length > 0) { depth += 1; cur = cur.folders[0] }
+    expect(depth + 1).toBeLessThanOrEqual(MAX_FOLDER_DEPTH)
+  })
+
+  it('falls back activeFolderId/activeSpaceId when the referenced ids are gone', () => {
+    const out = sanitizeSpacePlan({ v: 4, activeFolderId: 'nope', activeSpaceId: 'nope', folders: [
+      { id: 'f1', name: 'A', image: null, active: true, spaces: [space('s1')], folders: [] },
+    ] })
+    expect(out!.activeFolderId).toBe('f1')
+    expect(out!.activeSpaceId).toBe('s1')
   })
 })

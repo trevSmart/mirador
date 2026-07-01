@@ -2,14 +2,15 @@
    No React, no DOM: every function takes state and returns new immutable state,
    so the rules stay testable in isolation and the hook stays thin. */
 
-import type { Cell, Dir, Divider, Edge, Space, SpacePlanData, OpeningKind, Place, Seat, Site } from './types'
+import type { Cell, Dir, Divider, Edge, Space, SpacePlanData, OpeningKind, Seat, Folder } from './types'
 
 export const GRID_C = 40
 export const GRID_R = 40
 const SEED_SIZE = 4
 export const UNDO_LIMIT = 10
-export const SPACE_SCHEMA_VERSION = 3
-export const LOGO_MAX_CHARS = 150_000
+export const SPACE_SCHEMA_VERSION = 4
+export const LOGO_MAX_CHARS = 120_000
+export const MAX_FOLDER_DEPTH = 12
 
 const IMAGE_DATA_URL = /^data:image\/(png|jpeg|jpg|webp|svg\+xml);base64,/
 
@@ -124,10 +125,14 @@ export function cloneSpace(space: Space, name: string): Space {
   }
 }
 
+export function seedFolder(name: string): Folder {
+  return { id: makeId('folder'), name, image: null, active: true, folders: [], spaces: [] }
+}
+
 export function defaultSpacePlan(): SpacePlanData {
-  const place: Place = { id: makeId('place'), name: 'Lloc 1', spaces: [seedSpace('Planta 1')], active: true }
-  const site: Site = { id: makeId('site'), name: 'Site 1', image: null, places: [place], active: true }
-  return { v: SPACE_SCHEMA_VERSION, activeSiteId: site.id, activePlaceId: place.id, sites: [site] }
+  const space = seedSpace('Planta 1')
+  const folder: Folder = { id: makeId('folder'), name: 'Lloc 1', image: null, active: true, folders: [], spaces: [space] }
+  return { v: SPACE_SCHEMA_VERSION, activeFolderId: folder.id, activeSpaceId: space.id, folders: [folder] }
 }
 
 /* ── Connectivity (the room must stay one 4-connected block, no islands) ── */
@@ -372,18 +377,49 @@ function sanitizeSpace(raw: unknown): Space {
   }
 }
 
-function sanitizePlace(raw: unknown): Place | null {
-  const place = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
-  const spaces = asArray(place.spaces)
+/** Validate and clean a folder subtree from untrusted input. Empty folders are
+    kept (intentional organisation); recursion is bounded by MAX_FOLDER_DEPTH. */
+export function sanitizeFolder(raw: unknown, depth: number): Folder | null {
+  const src = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
+  const spaces = asArray(src.spaces)
     .map((space) => sanitizeSpace(space))
     .filter((space) => space.cells.length > 0)
-  if (spaces.length === 0) return null
+  const folders = depth >= MAX_FOLDER_DEPTH
+    ? []
+    : asArray(src.folders)
+        .map((child) => sanitizeFolder(child, depth + 1))
+        .filter((child): child is Folder => child !== null)
   return {
-    id: typeof place.id === 'string' && place.id ? place.id : makeId('place'),
-    name: typeof place.name === 'string' && place.name.trim() ? place.name.trim().slice(0, 40) : 'Lloc',
+    id: typeof src.id === 'string' && src.id ? src.id : makeId('folder'),
+    name: typeof src.name === 'string' && src.name.trim() ? src.name.trim().slice(0, 40) : 'Carpeta',
+    image: sanitizeImage(src.image),
+    active: activeFlag(src.active),
+    folders,
     spaces,
-    active: activeFlag(place.active),
   }
+}
+
+/** Collect every folder id in the tree (for active-id validation). */
+function collectFolderIds(folders: Folder[], out: Set<string>): void {
+  for (const f of folders) { out.add(f.id); collectFolderIds(f.folders, out) }
+}
+
+/** Collect every space id in the tree. */
+function collectSpaceIds(folders: Folder[], out: Set<string>): void {
+  for (const f of folders) {
+    for (const s of f.spaces) out.add(s.id)
+    collectSpaceIds(f.folders, out)
+  }
+}
+
+/** First space id found in DFS order, or null. */
+function firstSpaceId(folders: Folder[]): string | null {
+  for (const f of folders) {
+    if (f.spaces.length > 0) return f.spaces[0].id
+    const nested = firstSpaceId(f.folders)
+    if (nested) return nested
+  }
+  return null
 }
 
 /** Stable id for the synthetic site when upgrading an Apex v2 wire plan (flat
@@ -441,37 +477,29 @@ export function toWireSpacePlan(data: SpacePlanData): WireSpacePlanV2 {
 export function sanitizeSpacePlan(raw: unknown): SpacePlanData | null {
   if (!raw || typeof raw !== 'object') return null
   const data = raw as Record<string, unknown>
-  if (data.v !== SPACE_SCHEMA_VERSION) return null   // discard old/unknown schema
-  if (!Array.isArray(data.sites)) return null
+  if (data.v !== SPACE_SCHEMA_VERSION) return null
+  if (!Array.isArray(data.folders)) return null
 
-  const sites: Site[] = []
-  for (const item of data.sites) {
-    const site = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>
-    const places = asArray(site.places)
-      .map((place) => sanitizePlace(place))
-      .filter((place): place is Place => place !== null)
-    if (places.length === 0) continue
-    sites.push({
-      id: typeof site.id === 'string' && site.id ? site.id : makeId('site'),
-      name: typeof site.name === 'string' && site.name.trim() ? site.name.trim().slice(0, 40) : 'Site',
-      image: sanitizeImage(site.image),
-      places,
-      active: activeFlag(site.active),
-    })
-  }
+  const folders = data.folders
+    .map((f) => sanitizeFolder(f, 1))
+    .filter((f): f is Folder => f !== null)
+  if (folders.length === 0) return null
 
-  if (sites.length === 0) return null
-  const activeSiteId =
-    typeof data.activeSiteId === 'string' && sites.some((s) => s.id === data.activeSiteId)
-      ? data.activeSiteId
-      : sites[0].id
-  const activeSite = sites.find((s) => s.id === activeSiteId) ?? sites[0]
-  const activePlaceId =
-    typeof data.activePlaceId === 'string' && activeSite.places.some((p) => p.id === data.activePlaceId)
-      ? data.activePlaceId
-      : activeSite.places[0].id
+  const folderIds = new Set<string>()
+  collectFolderIds(folders, folderIds)
+  const spaceIds = new Set<string>()
+  collectSpaceIds(folders, spaceIds)
 
-  return { v: SPACE_SCHEMA_VERSION, activeSiteId, activePlaceId, sites }
+  const activeFolderId =
+    typeof data.activeFolderId === 'string' && folderIds.has(data.activeFolderId)
+      ? data.activeFolderId
+      : folders[0].id
+  const activeSpaceId =
+    typeof data.activeSpaceId === 'string' && spaceIds.has(data.activeSpaceId)
+      ? data.activeSpaceId
+      : firstSpaceId(folders)
+
+  return { v: SPACE_SCHEMA_VERSION, activeFolderId, activeSpaceId, folders }
 }
 
 /** Generate a unique name within a list of existing names by adding a numeric
