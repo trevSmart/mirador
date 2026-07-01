@@ -177,6 +177,7 @@ export function SpaceEditorPanel() {
               onRenameSpace={fp.renameSpace}
               onToggleSpaceActive={fp.toggleSpaceActive}
               onMoveSpace={fp.moveSpace}
+              onMoveSpaceToFolder={fp.moveSpaceToFolder}
               onExport={fp.exportJson}
               onImport={openImportDialog}
             />
