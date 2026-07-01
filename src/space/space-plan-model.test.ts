@@ -12,7 +12,7 @@ import {
   seedFolder,
   MAX_FOLDER_DEPTH,
 } from './space-plan-model'
-import type { SpacePlanData } from './types'
+import type { SpacePlanData, Folder } from './types'
 
 describe('uniqueName', () => {
   it('returns the base name when there is no collision', () => {
@@ -188,8 +188,8 @@ describe('prepareImportedFolders', () => {
 })
 
 describe('visibleSpaces / visibleSpaceFolders', () => {
-  const space = (id: string, active = true) => ({ id, name: id, cells: [[0, 0]], seats: [], openings: [], dividers: [], dir: 0, active })
-  const plan = (folders: any[]): SpacePlanData => ({ v: 4, activeFolderId: null, activeSpaceId: null, folders })
+  const space = (id: string, active = true) => ({ id, name: id, cells: [[0, 0]] as [number, number][], seats: [], openings: [], dividers: [], dir: 0 as const, active })
+  const plan = (folders: Folder[]): SpacePlanData => ({ v: 4, activeFolderId: null, activeSpaceId: null, folders })
 
   it('returns only active spaces of a folder', () => {
     const f = { id: 'f', name: 'F', image: null, active: true, folders: [], spaces: [space('s1'), space('s2', false)] }
