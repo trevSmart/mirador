@@ -294,3 +294,27 @@ the **Commands** section above; the notes below are the non-obvious cloud caveat
 - Apex/Salesforce work (`force-app/`, `sf` CLI, `npm run` has no Apex hook) cannot
   be deployed or tested from the cloud VM without an org; treat the backend as
   read-only reference unless an org is provided.
+
+### Real (Salesforce) mode
+
+The VM has outbound access to `login.salesforce.com` / `test.salesforce.com`, so
+real mode works here when configured. To run it:
+
+- Provide `SF_CLIENT_ID`, `SF_LOGIN_URL`, `SF_REDIRECT_URI` either as **env-var
+  secrets** (preferred — `vite.config.ts` `loadEnv(mode, cwd, '')` merges
+  `process.env`, so no file is needed and they survive to fresh VMs) or as a local
+  `.env` (git-ignored, so a `.env` does NOT persist across sessions). Then run
+  `npm run dev` (default `MIRADOR_DATA_SOURCE=salesforce`). Confirm with
+  `curl -s localhost:3000/api/config` → non-empty `sfClientId` + `"dataSource":"salesforce"`.
+- Complete the OAuth Authorization-Code+PKCE login in the VM's Chrome. **Login
+  cannot be made fully headless/automatic** for two reasons: (1) Salesforce fires
+  an email/OTP "Verify Your Identity" device-activation challenge on each fresh VM
+  (unknown IP), which needs a human-relayed code (or a configured TOTP authenticator
+  + seed); (2) the OAuth session is encrypted in `localStorage` but its AES key is
+  in `sessionStorage` (`src/auth/oauth-session-storage.ts`), so the saved session
+  is undecryptable after a browser/tab restart or on a new VM → expect to re-auth
+  every session. For zero-touch automation you'd need a headless auth path (e.g.
+  OAuth JWT-bearer), which is a code change, not env setup.
+- The ECA's callback URL must exactly match `SF_REDIRECT_URI`
+  (`http://localhost:3000/oauth/callback`), and the org must have the Mirador Apex
+  REST deployed for data to load.
