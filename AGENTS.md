@@ -273,3 +273,52 @@ Common Salesforce CLI commands: `sf project deploy start`,
   disabling Lenis entirely does not stop the loop; removing/re-adding a Dockview
   container in devtools does, because it forces a clean relayout). Don't reintroduce
   root scrolling.
+
+## Cursor Cloud specific instructions
+
+The startup update script runs `npm install` after pulling the latest code, so
+dependencies are already present when a session begins. Standard commands live in
+the **Commands** section above; the notes below are the non-obvious cloud caveats.
+
+- **No Salesforce org / secrets are available in the cloud VM.** Run and test the
+  SPA in **mock mode** with `npm run dev:mock` (dev server on port `3000`, no
+  `.env` or OAuth needed). `npm run dev` (real-data mode) will only render the
+  login flow and cannot fetch data here. Confirm the server is up and in mock mode
+  with `curl -s http://localhost:3000/api/config` → `"dataSource":"mock"`.
+- **Manual UI testing works headless** against the mock dev server: the whole
+  dashboard (agents, queues, skills, work, space view, agent detail drawer) is
+  populated from `src/api/mock/`, so no backend is required to exercise core flows.
+- `npm install` prints Babel 8 `EBADENGINE` warnings on the VM's Node (the Babel
+  toolchain wants Node ≥ 22.18); these are harmless — install, `npm run build`,
+  `npm run test`, and the dev server all work regardless.
+- Apex/Salesforce work (`force-app/`, `sf` CLI, `npm run` has no Apex hook) cannot
+  be deployed or tested from the cloud VM without an org; treat the backend as
+  read-only reference unless an org is provided.
+
+### Real (Salesforce) mode
+
+The VM has outbound access to `login.salesforce.com` / `test.salesforce.com`, so
+real mode works here when configured. To run it:
+
+- Provide `SF_CLIENT_ID`, `SF_LOGIN_URL`, `SF_REDIRECT_URI` either as **env-var
+  secrets** (preferred — `vite.config.ts` `loadEnv(mode, cwd, '')` merges
+  `process.env`, so no file is needed and they survive to fresh VMs) or as a local
+  `.env` (git-ignored, so a `.env` does NOT persist across sessions). Then run
+  `npm run dev` (default `MIRADOR_DATA_SOURCE=salesforce`). Confirm with
+  `curl -s localhost:3000/api/config` → non-empty `sfClientId` + `"dataSource":"salesforce"`.
+- Dev-org credentials are available as secrets `SF_TEST_USERNAME` /
+  `SF_TEST_PASSWORD`; enter them into the Salesforce login form. `SF_TEST_OTP_SEED`
+  is a placeholder ("ask user"), **not** a real TOTP seed — the verification code
+  changes each login and must be requested from the user interactively.
+- Complete the OAuth Authorization-Code+PKCE login in the VM's Chrome. **Login
+  cannot be made fully headless/automatic** for two reasons: (1) Salesforce fires
+  an email/OTP "Verify Your Identity" challenge on each fresh VM (unknown IP) whose
+  code must be obtained from the user each time; (2) the OAuth session is encrypted
+  in `localStorage` but its AES key is in `sessionStorage`
+  (`src/auth/oauth-session-storage.ts`), so the saved session is undecryptable after
+  a browser/tab restart or on a new VM → expect to re-auth every session. For
+  zero-touch automation you'd need a headless auth path (e.g. OAuth JWT-bearer),
+  which is a code change, not env setup.
+- The ECA's callback URL must exactly match `SF_REDIRECT_URI`
+  (`http://localhost:3000/oauth/callback`), and the org must have the Mirador Apex
+  REST deployed for data to load.
