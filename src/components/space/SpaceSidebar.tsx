@@ -191,40 +191,41 @@ function FolderNode({ folder, depth, ctx }: { folder: Folder; depth: number; ctx
           onCommit={(name) => ctx.onRenameFolder(folder.id, name)}
         />
         {folder.spaces.length > 0 ? <span className="fe-place__count">{folder.spaces.length}</span> : null}
-        <button
-          type="button"
-          className="fe-add-btn fe-add-btn--inline"
+        <ButtonIcon
+          className="fe-mini-btn"
+          icon="utility:image"
+          size={14}
           title="Carrega una imatge"
+          aria-label="Carrega una imatge"
           onClick={(e) => { e.stopPropagation(); ctx.pickImage(folder.id) }}
-        >
-          Imatge
-        </button>
+        />
         {folder.image ? (
-          <button
-            type="button"
+          <ButtonIcon
             className="fe-mini-btn"
+            icon="utility:clear"
+            size={14}
             title="Treu la imatge"
+            aria-label="Treu la imatge"
             onClick={(e) => { e.stopPropagation(); ctx.onSetFolderImage(folder.id, null) }}
-          >
-            ⌫
-          </button>
+          />
         ) : null}
-        <button
-          type="button"
-          className="fe-add-btn fe-add-btn--inline"
+        <ButtonIcon
+          className="fe-mini-btn"
+          icon="utility:open_folder"
+          size={14}
           title="Afegeix una subcarpeta"
+          aria-label="Afegeix una subcarpeta"
           onClick={(e) => { e.stopPropagation(); ctx.expandFolder(folder.id); ctx.onAddFolder(folder.id) }}
-        >
-          + Carpeta
-        </button>
-        <button
-          type="button"
-          className="fe-add-btn fe-add-btn--inline"
+        />
+        <ButtonIcon
+          className="fe-mini-btn"
+          icon="standard:business_unit"
+          tile={false}
+          size={14}
           title="Afegeix una planta"
+          aria-label="Afegeix una planta"
           onClick={(e) => { e.stopPropagation(); ctx.expandFolder(folder.id); ctx.onAddSpace(folder.id) }}
-        >
-          + Planta
-        </button>
+        />
         <button
           type="button"
           className="fe-mini-btn"
@@ -234,10 +235,12 @@ function FolderNode({ folder, depth, ctx }: { folder: Folder; depth: number; ctx
         >
           {folder.active ? '◉' : '○'}
         </button>
-        <button
-          type="button"
+        <ButtonIcon
           className="fe-mini-btn"
+          icon="utility:delete"
+          size={14}
           title="Elimina la carpeta"
+          aria-label="Elimina la carpeta"
           disabled={depth === 1 && ctx.rootCount <= 1}
           onClick={(e) => {
             e.stopPropagation()
@@ -245,9 +248,7 @@ function FolderNode({ folder, depth, ctx }: { folder: Folder; depth: number; ctx
               ctx.onRemoveFolder(folder.id)
             }
           }}
-        >
-          ✕
-        </button>
+        />
       </div>
 
       {isExpanded ? (
@@ -339,19 +340,19 @@ function FolderNode({ folder, depth, ctx }: { folder: Folder; depth: number; ctx
                 >
                   {space.active ? '◉' : '○'}
                 </button>
-                <button
-                  type="button"
+                <ButtonIcon
                   className="fe-mini-btn"
+                  icon="utility:delete"
+                  size={14}
                   title="Elimina la planta"
+                  aria-label="Elimina la planta"
                   onClick={(e) => {
                     e.stopPropagation()
                     if (window.confirm(`Vols eliminar la planta "${space.name}"?`)) {
                       ctx.onRemoveSpace(folder.id, space.id)
                     }
                   }}
-                >
-                  ✕
-                </button>
+                />
               </div>
             )
           })}
