@@ -9,8 +9,8 @@ import {
   toWireSpacePlan,
   defaultSpacePlan,
   prepareImportedSites,
-  visiblePlaces,
   visibleSpaces,
+  visibleSpaceFolders,
   seedFolder,
   MAX_FOLDER_DEPTH,
 } from './space-plan-model'
@@ -171,37 +171,33 @@ describe('prepareImportedSites', () => {
   })
 })
 
-describe('visiblePlaces / visibleSpaces', () => {
-  it('hides places of an inactive site', () => {
-    const plan = validPlan()
-    plan.sites[0].active = false
-    expect(visiblePlaces(plan)).toHaveLength(0)
+describe('visibleSpaces / visibleSpaceFolders', () => {
+  const space = (id: string, active = true) => ({ id, name: id, cells: [[0, 0]], seats: [], openings: [], dividers: [], dir: 0, active })
+  const plan = (folders: any[]): SpacePlanData => ({ v: 4, activeFolderId: null, activeSpaceId: null, folders })
+
+  it('returns only active spaces of a folder', () => {
+    const f = { id: 'f', name: 'F', image: null, active: true, folders: [], spaces: [space('s1'), space('s2', false)] }
+    expect(visibleSpaces(f).map((s) => s.id)).toEqual(['s1'])
   })
 
-  it('hides an inactive place', () => {
-    const plan = validPlan()
-    plan.sites[0].places[0].active = false
-    expect(visiblePlaces(plan)).toHaveLength(0)
+  it('lists folders that directly hold a visible space, with their path', () => {
+    const child = { id: 'c', name: 'Child', image: null, active: true, folders: [], spaces: [space('s1')] }
+    const root = { id: 'r', name: 'Root', image: null, active: true, folders: [child], spaces: [] }
+    const out = visibleSpaceFolders(plan([root]))
+    expect(out).toHaveLength(1)
+    expect(out[0].folder.id).toBe('c')
+    expect(out[0].path).toEqual(['Root', 'Child'])
   })
 
-  it('hides a place whose only space is inactive', () => {
-    const plan = validPlan()
-    plan.sites[0].places[0].spaces[0].active = false
-    expect(visiblePlaces(plan)).toHaveLength(0)
+  it('hides a folder (and descendants) when it is inactive', () => {
+    const child = { id: 'c', name: 'Child', image: null, active: true, folders: [], spaces: [space('s1')] }
+    const root = { id: 'r', name: 'Root', image: null, active: false, folders: [child], spaces: [] }
+    expect(visibleSpaceFolders(plan([root]))).toHaveLength(0)
   })
 
-  it('keeps an active place under an active site', () => {
-    const plan = validPlan()
-    expect(visiblePlaces(plan)).toHaveLength(1)
-  })
-
-  it('returns only active spaces of a place', () => {
-    const place = validPlace()
-    place.spaces = [
-      { ...place.spaces[0], id: 'a', active: true },
-      { ...place.spaces[0], id: 'b', active: false },
-    ]
-    expect(visibleSpaces(place).map((s) => s.id)).toEqual(['a'])
+  it('hides a folder whose only space is inactive', () => {
+    const root = { id: 'r', name: 'Root', image: null, active: true, folders: [], spaces: [space('s1', false)] }
+    expect(visibleSpaceFolders(plan([root]))).toHaveLength(0)
   })
 })
 

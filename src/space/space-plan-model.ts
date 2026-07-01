@@ -541,22 +541,34 @@ export function prepareImportedSites(raw: unknown, existingNames: string[]): Sit
 
 /* ── Live-view visibility ─────────────────────────────────────────────────
    Home and the space view hide anything inactive or hanging off something
-   inactive: a place inside an inactive site is hidden, a space inside an
-   inactive place/site is hidden. The editor, by contrast, always shows
-   everything so inactive items can be toggled back on. */
+   inactive: a folder inside an inactive ancestor is hidden. The editor always
+   shows everything so inactive items can be toggled back on. */
 
-/** Active spaces of a place. */
-export function visibleSpaces(place: Place): Space[] {
-  return place.spaces.filter((space) => space.active)
+/** Active spaces of a folder. */
+export function visibleSpaces(folder: Folder): Space[] {
+  return folder.spaces.filter((space) => space.active)
 }
 
-/** Places shown in live views: active places of active sites that still have at
-    least one active space to render. */
-export function visiblePlaces(data: SpacePlanData): Place[] {
-  return data.sites
-    .filter((site) => site.active)
-    .flatMap((site) => site.places)
-    .filter((place) => place.active && visibleSpaces(place).length > 0)
+export interface VisibleSpaceFolder {
+  folder: Folder
+  /** Ancestor names ending with the folder's own name, for a breadcrumb label. */
+  path: string[]
+}
+
+/** Every active folder (all ancestors active) that directly holds at least one
+    active space, in DFS order, each tagged with its name path. */
+export function visibleSpaceFolders(data: SpacePlanData): VisibleSpaceFolder[] {
+  const out: VisibleSpaceFolder[] = []
+  const walk = (folders: Folder[], parents: string[]): void => {
+    for (const folder of folders) {
+      if (!folder.active) continue
+      const path = [...parents, folder.name]
+      if (visibleSpaces(folder).length > 0) out.push({ folder, path })
+      walk(folder.folders, path)
+    }
+  }
+  walk(data.folders, [])
+  return out
 }
 
 /** Stable signature used to detect unsaved changes. */
