@@ -51,28 +51,25 @@ export interface Space {
   active: boolean
 }
 
-export interface Place {
+/** A recursive organisational node. Replaces the old Site/Place levels: folders
+    nest arbitrarily and each can hold BOTH subfolders and spaces. */
+export interface Folder {
   id: string
   name: string
-  spaces: Space[]
-  /** Whether the place (and its spaces) show up in live views. Defaults to true. */
-  active: boolean
-}
-
-export interface Site {
-  id: string
-  name: string
-  /** Logo as a base64 data-URL ("data:image/png;base64,…"), or null. */
+  /** Folder image as a base64 data-URL ("data:image/png;base64,…"), or null. */
   image: string | null
-  places: Place[]
-  /** Whether the site (and everything under it) shows up in live views. Defaults to true. */
+  /** Whether the folder (and everything under it) shows up in live views. Defaults to true. */
   active: boolean
+  folders: Folder[]
+  spaces: Space[]
 }
 
 export interface SpacePlanData {
   /** Schema version, for forward-compatible migrations. */
   v: number
-  activeSiteId: string | null
-  activePlaceId: string | null
-  sites: Site[]
+  /** Folder whose spaces the editor is currently editing (null = none). */
+  activeFolderId: string | null
+  /** Space currently selected within the active folder (null = none). */
+  activeSpaceId: string | null
+  folders: Folder[]
 }
