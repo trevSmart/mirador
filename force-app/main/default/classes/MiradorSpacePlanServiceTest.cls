@@ -1,8 +1,9 @@
 @IsTest
 private class MiradorSpacePlanServiceTest {
 
-    /** Builds a two-place plan: place A with two spaces (one with full geometry),
-        place B with no spaces. */
+    /** Builds a nested plan: root folder "Barcelona" (with an image) holding two
+        spaces (one with full geometry, inactive) and one nested child folder
+        "Madrid" (inactive, empty). */
     private static MiradorSpacePlanService.PlanDto samplePlan() {
         MiradorSpacePlanService.SeatDto seat = new MiradorSpacePlanService.SeatDto();
         seat.c = 3;
@@ -44,24 +45,39 @@ private class MiradorSpacePlanServiceTest {
         space2.openings = new List<MiradorSpacePlanService.OpeningDto>();
         space2.dividers = new List<MiradorSpacePlanService.DividerDto>();
 
-        MiradorSpacePlanService.PlaceDto placeA = new MiradorSpacePlanService.PlaceDto();
-        placeA.id = 'place_aaa';
-        placeA.name = 'Barcelona';
-        placeA.spaces = new List<MiradorSpacePlanService.SpaceDto>{ space1, space2 };
+        // Nested child folder, explicitly inactive and empty.
+        MiradorSpacePlanService.FolderDto child = new MiradorSpacePlanService.FolderDto();
+        child.id = 'folder_child';
+        child.name = 'Madrid';
+        child.active = false; // explicitly inactive; must round-trip
+        child.folders = new List<MiradorSpacePlanService.FolderDto>();
+        child.spaces = new List<MiradorSpacePlanService.SpaceDto>();
 
-        // placeA.active left unset → defaults to true on save/load.
-
-        MiradorSpacePlanService.PlaceDto placeB = new MiradorSpacePlanService.PlaceDto();
-        placeB.id = 'place_bbb';
-        placeB.name = 'Madrid';
-        placeB.active = false; // explicitly inactive; must round-trip
-        placeB.spaces = new List<MiradorSpacePlanService.SpaceDto>();
+        MiradorSpacePlanService.FolderDto root = new MiradorSpacePlanService.FolderDto();
+        root.id = 'folder_root';
+        root.name = 'Barcelona';
+        root.image = 'data:image/png;base64,AAAA';
+        // root.active left unset → defaults to true on save/load.
+        root.folders = new List<MiradorSpacePlanService.FolderDto>{ child };
+        root.spaces = new List<MiradorSpacePlanService.SpaceDto>{ space1, space2 };
 
         MiradorSpacePlanService.PlanDto plan = new MiradorSpacePlanService.PlanDto();
-        plan.v = 2;
-        plan.activePlaceId = 'space_aaa';
-        plan.places = new List<MiradorSpacePlanService.PlaceDto>{ placeA, placeB };
+        plan.v = 4;
+        plan.activeFolderId = 'folder_root';
+        plan.activeSpaceId = 'space_aaa';
+        plan.folders = new List<MiradorSpacePlanService.FolderDto>{ root };
         return plan;
+    }
+
+    private static MiradorSpacePlanService.FolderDto folderById(
+        List<MiradorSpacePlanService.FolderDto> folders, String appId
+    ) {
+        for (MiradorSpacePlanService.FolderDto f : folders) {
+            if (f.id == appId) {
+                return f;
+            }
+        }
+        return null;
     }
 
     @IsTest
@@ -70,7 +86,7 @@ private class MiradorSpacePlanServiceTest {
         MiradorSpacePlanService.PlanDto plan = MiradorSpacePlanService.getPlan();
         Test.stopTest();
 
-        System.assertEquals(null, plan, 'no places saved → null plan');
+        System.assertEquals(null, plan, 'no folders saved → null plan');
     }
 
     @IsTest
@@ -81,33 +97,30 @@ private class MiradorSpacePlanServiceTest {
         Test.stopTest();
 
         System.assertNotEquals(null, loaded, 'plan loads back');
-        System.assertEquals(2, loaded.v, 'schema version preserved');
-        System.assertEquals('space_aaa', loaded.activePlaceId, 'active id preserved');
-        System.assertEquals(2, loaded.places.size(), 'both places loaded');
+        System.assertEquals(4, loaded.v, 'schema version preserved');
+        System.assertEquals('folder_root', loaded.activeFolderId, 'active folder id preserved');
+        System.assertEquals('space_aaa', loaded.activeSpaceId, 'active space id preserved');
+        System.assertEquals(1, loaded.folders.size(), 'one root folder');
 
-        MiradorSpacePlanService.PlaceDto placeA;
-        for (MiradorSpacePlanService.PlaceDto p : loaded.places) {
-            if (p.id == 'place_aaa') {
-                placeA = p;
-            }
-        }
-        System.assertNotEquals(null, placeA, 'place A round-trips by app id');
-        System.assertEquals('Barcelona', placeA.name, 'place name preserved');
-        System.assertEquals(true, placeA.active, 'unset place active defaults to true');
-        System.assertEquals(2, placeA.spaces.size(), 'both spaces loaded');
+        MiradorSpacePlanService.FolderDto root = loaded.folders[0];
+        System.assertEquals('folder_root', root.id, 'root round-trips by app id');
+        System.assertEquals('Barcelona', root.name, 'folder name preserved');
+        System.assertEquals('data:image/png;base64,AAAA', root.image, 'folder image preserved');
+        System.assertEquals(true, root.active, 'unset folder active defaults to true');
+        System.assertEquals(2, root.spaces.size(), 'both spaces loaded');
+        System.assertEquals(1, root.folders.size(), 'nested child folder loaded');
 
-        // Inactive place B must come back inactive.
-        for (MiradorSpacePlanService.PlaceDto p : loaded.places) {
-            if (p.id == 'place_bbb') {
-                System.assertEquals(false, p.active, 'inactive place stays inactive');
-            }
-        }
+        // Inactive child folder must come back inactive, with no image.
+        MiradorSpacePlanService.FolderDto child = root.folders[0];
+        System.assertEquals('folder_child', child.id, 'child round-trips');
+        System.assertEquals(false, child.active, 'inactive folder stays inactive');
+        System.assertEquals(0, child.spaces.size(), 'empty folder preserved');
 
         // SortOrder must keep the original space ordering.
-        System.assertEquals('space_aaa', placeA.spaces[0].id, 'first space order');
-        System.assertEquals('space_bbb', placeA.spaces[1].id, 'second space order');
+        System.assertEquals('space_aaa', root.spaces[0].id, 'first space order');
+        System.assertEquals('space_bbb', root.spaces[1].id, 'second space order');
 
-        MiradorSpacePlanService.SpaceDto s1 = placeA.spaces[0];
+        MiradorSpacePlanService.SpaceDto s1 = root.spaces[0];
         System.assertEquals('Planta Vendes', s1.name, 'space name preserved');
         System.assertEquals(2, s1.dir, 'dir preserved');
         System.assertEquals(false, s1.active, 'inactive space stays inactive');
@@ -125,40 +138,42 @@ private class MiradorSpacePlanServiceTest {
     static void savePlanIsFullReplace() {
         MiradorSpacePlanService.savePlan(samplePlan());
 
-        // Second save with a single, different place must wipe the first plan.
+        // Second save with a single, different folder must wipe the first plan.
         MiradorSpacePlanService.SpaceDto space = new MiradorSpacePlanService.SpaceDto();
         space.id = 'space_new';
         space.name = 'Nova';
         space.dir = 0;
 
-        MiradorSpacePlanService.PlaceDto place = new MiradorSpacePlanService.PlaceDto();
-        place.id = 'place_new';
-        place.name = 'Girona';
-        place.spaces = new List<MiradorSpacePlanService.SpaceDto>{ space };
+        MiradorSpacePlanService.FolderDto folder = new MiradorSpacePlanService.FolderDto();
+        folder.id = 'folder_new';
+        folder.name = 'Girona';
+        folder.folders = new List<MiradorSpacePlanService.FolderDto>();
+        folder.spaces = new List<MiradorSpacePlanService.SpaceDto>{ space };
 
         MiradorSpacePlanService.PlanDto plan = new MiradorSpacePlanService.PlanDto();
-        plan.v = 2;
-        plan.activePlaceId = 'space_new';
-        plan.places = new List<MiradorSpacePlanService.PlaceDto>{ place };
+        plan.v = 4;
+        plan.activeFolderId = 'folder_new';
+        plan.activeSpaceId = 'space_new';
+        plan.folders = new List<MiradorSpacePlanService.FolderDto>{ folder };
 
         Test.startTest();
         MiradorSpacePlanService.savePlan(plan);
         MiradorSpacePlanService.PlanDto loaded = MiradorSpacePlanService.getPlan();
         Test.stopTest();
 
-        System.assertEquals(1, loaded.places.size(), 'old places replaced');
-        System.assertEquals('place_new', loaded.places[0].id, 'only new place remains');
-        System.assertEquals(1, [SELECT COUNT() FROM Place__c], 'one Place row in org');
+        System.assertEquals(1, loaded.folders.size(), 'old folders replaced');
+        System.assertEquals('folder_new', loaded.folders[0].id, 'only new folder remains');
+        System.assertEquals(1, [SELECT COUNT() FROM Folder__c], 'one Folder row in org');
         System.assertEquals(1, [SELECT COUNT() FROM Space__c], 'one Space row in org');
     }
 
     @IsTest
-    static void savePlanWithNoPlacesClears() {
+    static void savePlanWithNoFoldersClears() {
         MiradorSpacePlanService.savePlan(samplePlan());
 
         MiradorSpacePlanService.PlanDto empty = new MiradorSpacePlanService.PlanDto();
-        empty.v = 2;
-        empty.places = new List<MiradorSpacePlanService.PlaceDto>();
+        empty.v = 4;
+        empty.folders = new List<MiradorSpacePlanService.FolderDto>();
 
         Test.startTest();
         MiradorSpacePlanService.savePlan(empty);
@@ -166,7 +181,8 @@ private class MiradorSpacePlanServiceTest {
         Test.stopTest();
 
         System.assertEquals(null, loaded, 'empty save clears the plan');
-        System.assertEquals(0, [SELECT COUNT() FROM Place__c], 'no Place rows left');
+        System.assertEquals(0, [SELECT COUNT() FROM Folder__c], 'no Folder rows left');
+        System.assertEquals(0, [SELECT COUNT() FROM Space__c], 'no Space rows left');
     }
 
     @IsTest
@@ -185,20 +201,21 @@ private class MiradorSpacePlanServiceTest {
     @IsTest
     static void longNamesAreClipped() {
         String longName = 'x'.repeat(120);
-        MiradorSpacePlanService.PlaceDto place = new MiradorSpacePlanService.PlaceDto();
-        place.id = 'place_long';
-        place.name = longName;
-        place.spaces = new List<MiradorSpacePlanService.SpaceDto>();
+        MiradorSpacePlanService.FolderDto folder = new MiradorSpacePlanService.FolderDto();
+        folder.id = 'folder_long';
+        folder.name = longName;
+        folder.folders = new List<MiradorSpacePlanService.FolderDto>();
+        folder.spaces = new List<MiradorSpacePlanService.SpaceDto>();
 
         MiradorSpacePlanService.PlanDto plan = new MiradorSpacePlanService.PlanDto();
-        plan.v = 2;
-        plan.places = new List<MiradorSpacePlanService.PlaceDto>{ place };
+        plan.v = 4;
+        plan.folders = new List<MiradorSpacePlanService.FolderDto>{ folder };
 
         Test.startTest();
         MiradorSpacePlanService.savePlan(plan);
         Test.stopTest();
 
-        Place__c row = [SELECT Name FROM Place__c LIMIT 1];
+        Folder__c row = [SELECT Name FROM Folder__c LIMIT 1];
         System.assertEquals(80, row.Name.length(), 'name clipped to 80 chars');
     }
 
@@ -234,7 +251,8 @@ private class MiradorSpacePlanServiceTest {
         MiradorSpacePlanService.PlanDto loaded =
             (MiradorSpacePlanService.PlanDto) JSON.deserialize(body, MiradorSpacePlanService.PlanDto.class);
         System.assertNotEquals(null, loaded, 'GET returns the saved plan');
-        System.assertEquals(2, loaded.places.size(), 'both places returned over REST');
+        System.assertEquals(1, loaded.folders.size(), 'root folder returned over REST');
+        System.assertEquals(1, loaded.folders[0].folders.size(), 'nested folder returned over REST');
     }
 
     @IsTest
