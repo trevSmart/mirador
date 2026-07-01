@@ -2735,7 +2735,7 @@ textarea,
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 0 var(--sp-1) var(--sp-2) var(--sp-4);
+  padding: 0 var(--sp-1) var(--sp-2) var(--sp-6);
 }
 
 .fe-tree .fe-space {
