@@ -3,7 +3,6 @@ import { useAgents, useQueues } from '../api/data-hooks'
 import { AgentAssignPalette } from '../components/space/AgentAssignPalette'
 import { SpaceGrid } from '../components/space/SpaceGrid'
 import { SpaceSidebar } from '../components/space/SpaceSidebar'
-import { SpacePlanTree } from '../components/space/SpacePlanTree'
 import { SpaceToolbar } from '../components/space/SpaceToolbar'
 import { PanelSuspenseFallback } from '../components/PanelSuspenseFallback'
 import { PanelShell } from '../components/PanelState'
@@ -181,8 +180,6 @@ export function SpaceEditorPanel() {
               onExport={fp.exportJson}
               onImport={openImportDialog}
             />
-            <hr className="space-editor__plan-tree-divider" />
-            <SpacePlanTree folders={fp.folders} agentsById={agentsById} queuesById={queuesById} />
             <input
               ref={importInputRef}
               type="file"

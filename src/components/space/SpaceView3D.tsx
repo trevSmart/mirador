@@ -52,7 +52,6 @@ import {
   ROOM_AZ_MIN,
   ROOM_TILT_MAX,
   ROOM_TILT_MIN,
-  defaultRotation,
   loadRoomRotation,
   saveRoomRotation,
 } from '../../space/space-rotation-store'
@@ -399,7 +398,6 @@ interface IsoSeatProps {
   b: IsoBasis
   showAvatars: boolean
   animations: boolean
-  towers: boolean
   queuesById: Map<string, Queue>
   onSelect: (agent: Agent) => void
   onPointerOver: (agent: Agent, event: ReactPointerEvent<SVGGElement>) => void
@@ -408,7 +406,7 @@ interface IsoSeatProps {
   clipPrefix: string
 }
 
-function IsoSeat({ agent, x, y, b, showAvatars, animations, towers, queuesById, onSelect, onPointerOver, onPointerMove, onPointerOut, clipPrefix }: IsoSeatProps) {
+function IsoSeat({ agent, x, y, b, showAvatars, animations, queuesById, onSelect, onPointerOver, onPointerMove, onPointerOut, clipPrefix }: IsoSeatProps) {
   const saturated = agent.max > 0 && agent.used >= agent.max
   const ratio = agent.max > 0 ? Math.min(1, agent.used / agent.max) : 0
   const segments = agentTowerSegments(agent, queuesById)
@@ -418,7 +416,7 @@ function IsoSeat({ agent, x, y, b, showAvatars, animations, towers, queuesById, 
   const h = useTowerHeightScale(targetH, true)
   const idBase = `${clipPrefix}-${agent.id}`
 
-  const avatarCy = towers ? y - h - VEC_TH * 0.62 : y
+  const avatarCy = y - h - VEC_TH * 0.62
 
   const glow =
     ratio > 0.04 ? (
@@ -428,7 +426,7 @@ function IsoSeat({ agent, x, y, b, showAvatars, animations, towers, queuesById, 
   const body = (
     <>
       {glow}
-      {towers ? <g key="tower">{segmentedTowerFaces(x, y, b, h, segments, idBase)}</g> : null}
+      <g key="tower">{segmentedTowerFaces(x, y, b, h, segments, idBase)}</g>
       <g className={`fv3d-avatar${showAvatars ? ' fv3d-avatar--on' : ''}`}>
         <AvatarDisc key="avatar" agent={agent} cx={x} cy={avatarCy} r={VEC_TH * 1.05} ring={AVATAR_RING} showPhoto clipPrefix={clipPrefix} />
       </g>
@@ -487,14 +485,9 @@ interface SpaceView3DProps {
   showAvatars: boolean
   animations: boolean
   onSelectAgent: (agent: Agent) => void
-  /** Draw agent towers (default). When false, only the ground avatar shows. */
-  towers?: boolean
-  /** Orbit/drag, tooltips, hover overlay and rotation persistence (default).
-      When false the render is a static, non-interactive thumbnail. */
-  interactive?: boolean
 }
 
-export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animations, onSelectAgent, towers = true, interactive = true }: SpaceView3DProps) {
+export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animations, onSelectAgent }: SpaceView3DProps) {
   const [tooltip, setTooltip] = useState<{ agent: Agent; x: number; y: number } | null>(null)
   const [tooltipOpen, setTooltipOpen] = useState(false)
   // Which seat is hovered, so its avatar can be lifted above every other one
@@ -503,20 +496,16 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
 
   // Per-room camera rotation, hydrated from + persisted to localStorage. When the
   // space prop swaps to a different room, re-hydrate for that space (render-time
-  // reset, matching SpacePanel's prefs pattern). Non-interactive thumbnails always
-  // use the default isometric pose — they must show the initial perspective
-  // regardless of how the user has orbited the live room.
-  const [rotation, setRotation] = useState<RoomRotation>(() =>
-    interactive ? loadRoomRotation(space.id) : defaultRotation(),
-  )
+  // reset, matching SpacePanel's prefs pattern).
+  const [rotation, setRotation] = useState<RoomRotation>(() => loadRoomRotation(space.id))
   const dirtyRef = useRef(false)
   const rotSpaceIdRef = useRef(space.id)
 
   useEffect(() => {
     if (rotSpaceIdRef.current === space.id) return
     rotSpaceIdRef.current = space.id
-    setRotation(interactive ? loadRoomRotation(space.id) : defaultRotation())
-  }, [interactive, space.id])
+    setRotation(loadRoomRotation(space.id))
+  }, [space.id])
 
   // On (re)hydration for a space, clear the dirty flag so the just-loaded value
   // is never written straight back. Declared BEFORE the persist effect so it
@@ -528,11 +517,10 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
   // Persist only after the user actually orbits, so merely viewing a room never
   // writes a default entry for it.
   useEffect(() => {
-    if (!interactive) return
     if (!dirtyRef.current) return
     const id = window.setTimeout(() => saveRoomRotation(space.id, rotation), 250)
     return () => window.clearTimeout(id)
-  }, [interactive, space.id, rotation])
+  }, [space.id, rotation])
 
   const basis = useMemo(() => makeBasis(rotation.az, rotation.tilt), [rotation.az, rotation.tilt])
 
@@ -745,7 +733,7 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
       const agent = seat.agentId ? agentsById.get(seat.agentId) ?? null : null
       if (agent) {
         body.push(
-          <IsoSeat key={`s-${key}`} agent={agent} x={x} y={y} b={basis} showAvatars={showAvatars} animations={animations} towers={towers} queuesById={queuesById} onSelect={onSelectAgent} onPointerOver={handleSeatOver} onPointerMove={handleSeatMove} onPointerOut={handleSeatOut} clipPrefix={svgIdPrefix} />,
+          <IsoSeat key={`s-${key}`} agent={agent} x={x} y={y} b={basis} showAvatars={showAvatars} animations={animations} queuesById={queuesById} onSelect={onSelectAgent} onPointerOver={handleSeatOver} onPointerMove={handleSeatMove} onPointerOut={handleSeatOut} clipPrefix={svgIdPrefix} />,
         )
       } else {
         body.push(<VacantSeat key={`s-${key}`} x={x} y={y} />)
@@ -762,12 +750,12 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
     <>
       <div
         className="fv3d-wrap"
-        onPointerLeave={interactive ? handleSeatOut : undefined}
-        onPointerDown={interactive ? onDown : undefined}
-        onPointerMove={interactive ? onMove : undefined}
-        onPointerUp={interactive ? onUp : undefined}
-        onPointerCancel={interactive ? onUp : undefined}
-        style={{ cursor: interactive ? (dragging ? 'grabbing' : 'grab') : 'default', touchAction: 'none' }}
+        onPointerLeave={handleSeatOut}
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+        onPointerCancel={onUp}
+        style={{ cursor: dragging ? 'grabbing' : 'grab', touchAction: 'none' }}
       >
         <svg className="fv3d-svg" viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`} preserveAspectRatio="xMidYMid meet" style={{ aspectRatio: outerAspectN, ['--fv-aspect-n' as string]: outerAspectN }} xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -810,14 +798,14 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
           </g>
           {body}
           {sunbeams}
-          {interactive && showAvatars && hoveredAgent && hoverPos ? (
+          {showAvatars && hoveredAgent && hoverPos ? (
             // key per agent → fresh mount when moving avatar→avatar, so the height
             // hook starts at the final height instead of sliding from the previous.
             <HoverAvatar key={hoveredAgent.id} agent={hoveredAgent} x={hoverPos[0]} y={hoverPos[1]} animations={animations} clipPrefix={`${svgIdPrefix}-hover`} />
           ) : null}
         </svg>
       </div>
-      {interactive && tooltip
+      {tooltip
         ? createPortal(
             <SpaceSeatTooltip agent={tooltip.agent} queuesById={queuesById} x={tooltip.x} y={tooltip.y} open={tooltipOpen} onExited={handleTooltipExited} />,
             document.body,
