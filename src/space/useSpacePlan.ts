@@ -1,7 +1,8 @@
 /* Space editor — React state hook.
    Owns the working plan, the selected tool/seat, undo/redo history and the
    dirty/save lifecycle. Keeps a ref mirror of the data so action callbacks never
-   read stale state, and delegates every mutation to the pure model functions. */
+   read stale state, and delegates every mutation to the pure model functions and
+   the pure folder-tree operations. */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../auth/auth-context'
@@ -21,35 +22,25 @@ import {
   eraseCell,
   eraseEdge,
   spacePlanSignature,
-  makeId,
-  prepareImportedSites,
+  prepareImportedFolders,
+  seedFolder,
   seedSpace,
   toggleDivider,
   toggleOpening,
   toggleSeat,
   uniqueName,
 } from './space-plan-model'
-import type { Cell, Dir, Edge, Space, SpacePlanData, SpaceTool, Place, Site } from './types'
+import {
+  findFolder,
+  insertFolder,
+  removeFolderById,
+  updateFolder,
+} from './space-tree-ops'
+import type { Cell, Dir, Edge, Space, SpacePlanData, SpaceTool } from './types'
 
 export interface SeatRef {
   c: number
   r: number
-}
-
-function clampIndex(index: number, length: number): number {
-  if (length <= 0) return 0
-  return Math.min(length - 1, Math.max(0, index))
-}
-
-function placeIndex(places: Place[], placeId: string, activePlaceId: string | null): number {
-  const pi = places.findIndex((p) => p.id === placeId)
-  return pi >= 0 ? pi : Math.max(0, places.findIndex((p) => p.id === activePlaceId))
-}
-
-function activeSiteOf(d: SpacePlanData): { si: number; site: Site } | null {
-  const si = Math.max(0, d.sites.findIndex((s) => s.id === d.activeSiteId))
-  const site = d.sites[si]
-  return site ? { si, site } : null
 }
 
 export function useSpacePlan() {
@@ -57,7 +48,6 @@ export function useSpacePlan() {
   const client = useMiradorApi()
   const [data, setData] = useState<SpacePlanData>(() => defaultSpacePlan())
   const [tool, setToolState] = useState<SpaceTool>('cell')
-  const [activeSpaceIndex, setActiveSpaceIndex] = useState(0)
   const [selectedSeat, setSelectedSeat] = useState<SeatRef | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [savedSignature, setSavedSignature] = useState('')
@@ -68,7 +58,6 @@ export function useSpacePlan() {
 
   const dataRef = useRef(data)
   const toolRef = useRef(tool)
-  const spaceIndexRef = useRef(activeSpaceIndex)
   const activeSpaceRef = useRef<Space | null>(null)
   const undoStack = useRef<SpacePlanData[]>([])
   const redoStack = useRef<SpacePlanData[]>([])
@@ -81,9 +70,6 @@ export function useSpacePlan() {
   useEffect(() => {
     toolRef.current = tool
   }, [tool])
-  useEffect(() => {
-    spaceIndexRef.current = activeSpaceIndex
-  }, [activeSpaceIndex])
 
   const syncHistoryFlags = useCallback(() => {
     setCanUndo(undoStack.current.length > 0)
@@ -101,7 +87,6 @@ export function useSpacePlan() {
       dataRef.current = next
       setData(next)
       setSavedSignature(spacePlanSignature(next))
-      setActiveSpaceIndex(0)
       setSelectedSeat(null)
       syncHistoryFlags()
       setLoaded(true)
@@ -125,36 +110,33 @@ export function useSpacePlan() {
     setData(next)
   }, [syncHistoryFlags])
 
+  /** Mutate the space that is currently active (activeFolderId + activeSpaceId). */
   const updateActiveSpace = useCallback(
     (fn: (space: Space) => Space, recordHistory = true) => {
       apply((d) => {
-        const active = activeSiteOf(d)
-        if (!active) return d
-        const { si, site } = active
-        const pi = Math.max(0, site.places.findIndex((p) => p.id === d.activePlaceId))
-        const place = site.places[pi]
-        if (!place) return d
-        const fi = clampIndex(spaceIndexRef.current, place.spaces.length)
-        const space = place.spaces[fi]
-        if (!space) return d
-        const nextSpace = fn(space)
-        if (nextSpace === space) return d
-        const spaces = place.spaces.map((f, i) => (i === fi ? nextSpace : f))
-        const nextPlaces = site.places.map((p, i) => (i === pi ? { ...p, spaces } : p))
-        const sites = d.sites.map((s, i) => (i === si ? { ...s, places: nextPlaces } : s))
-        return { ...d, sites }
+        if (!d.activeFolderId || !d.activeSpaceId) return d
+        const folders = updateFolder(d.folders, d.activeFolderId, (folder) => {
+          const idx = folder.spaces.findIndex((s) => s.id === d.activeSpaceId)
+          if (idx < 0) return folder
+          const nextSpace = fn(folder.spaces[idx])
+          if (nextSpace === folder.spaces[idx]) return folder
+          return { ...folder, spaces: folder.spaces.map((s, i) => (i === idx ? nextSpace : s)) }
+        })
+        return folders === d.folders ? d : { ...d, folders }
       }, recordHistory)
     },
     [apply],
   )
 
   /* ── Derived selectors ──────────────────────────────────────────────── */
-  const activeSiteIndex = Math.max(0, data.sites.findIndex((s) => s.id === data.activeSiteId))
-  const activeSite = data.sites[activeSiteIndex] ?? data.sites[0]
-  const activePlaceIndex = Math.max(0, activeSite?.places.findIndex((p) => p.id === data.activePlaceId) ?? 0)
-  const activePlace = activeSite?.places[activePlaceIndex] ?? activeSite?.places[0] ?? null
-  const safeSpaceIndex = clampIndex(activeSpaceIndex, activePlace?.spaces.length ?? 0)
-  const activeSpace = activePlace?.spaces[safeSpaceIndex] ?? null
+  const activeFolder = useMemo(
+    () => (data.activeFolderId ? findFolder(data.folders, data.activeFolderId) : null),
+    [data],
+  )
+  const activeSpace = useMemo(() => {
+    if (!activeFolder || !data.activeSpaceId) return null
+    return activeFolder.spaces.find((s) => s.id === data.activeSpaceId) ?? null
+  }, [activeFolder, data.activeSpaceId])
 
   const dirty = useMemo(() => spacePlanSignature(data) !== savedSignature, [data, savedSignature])
 
@@ -232,257 +214,159 @@ export function useSpacePlan() {
     [updateActiveSpace],
   )
 
-  /* ── Active-site helper ─────────────────────────────────────────────── */
-  const updateActiveSite = useCallback(
-    (fn: (site: Site) => Site) => {
-      apply((d) => {
-        const active = activeSiteOf(d)
-        if (!active) return d
-        const next = fn(active.site)
-        if (next === active.site) return d
-        return { ...d, sites: d.sites.map((s, i) => (i === active.si ? next : s)) }
-      })
-    },
-    [apply],
-  )
-
-  /* ── Place / space management ───────────────────────────────────────── */
-  const selectPlace = useCallback((placeId: string) => {
-    apply((d) => (d.activePlaceId === placeId ? d : { ...d, activePlaceId: placeId }), false)
-    setActiveSpaceIndex(0)
+  /* ── Folder navigation + management ─────────────────────────────────── */
+  const selectFolder = useCallback((id: string) => {
+    apply((d) => {
+      const folder = findFolder(d.folders, id)
+      if (!folder) return d
+      return { ...d, activeFolderId: id, activeSpaceId: folder.spaces[0]?.id ?? null }
+    }, false)
     setSelectedSeat(null)
   }, [apply])
 
-  const selectSpace = useCallback((placeId: string, index: number) => {
-    apply((d) => (d.activePlaceId === placeId ? d : { ...d, activePlaceId: placeId }), false)
-    setActiveSpaceIndex(index)
+  const selectSpace = useCallback((folderId: string, spaceId: string) => {
+    apply((d) => ({ ...d, activeFolderId: folderId, activeSpaceId: spaceId }), false)
     setSelectedSeat(null)
   }, [apply])
 
-  const addPlace = useCallback(() => {
-    let newPlaceId = ''
-    updateActiveSite((site) => {
-      const names = site.places.map((p) => p.name)
-      const place: Place = {
-        id: makeId('place'),
-        name: uniqueName(`Lloc ${site.places.length + 1}`, names),
-        spaces: [seedSpace('Planta 1')],
-        active: true,
+  const addFolder = useCallback((parentId: string | null) => {
+    apply((d) => {
+      const siblings = parentId ? (findFolder(d.folders, parentId)?.folders ?? []) : d.folders
+      const folder = seedFolder(uniqueName(`Carpeta ${siblings.length + 1}`, siblings.map((f) => f.name)))
+      return {
+        ...d,
+        folders: insertFolder(d.folders, parentId, folder, siblings.length),
+        activeFolderId: folder.id,
+        activeSpaceId: null,
       }
-      newPlaceId = place.id
-      return { ...site, places: [...site.places, place] }
     })
-    if (newPlaceId) apply((d) => ({ ...d, activePlaceId: newPlaceId }), false)
-    setActiveSpaceIndex(0)
     setSelectedSeat(null)
-  }, [updateActiveSite, apply])
+  }, [apply])
 
-  const removePlace = useCallback((placeId: string) => {
-    updateActiveSite((site) => {
-      if (site.places.length <= 1) return site
-      return { ...site, places: site.places.filter((p) => p.id !== placeId) }
-    })
+  const removeFolder = useCallback((id: string) => {
     apply((d) => {
-      const site = d.sites.find((s) => s.id === d.activeSiteId)
-      const activePlaceId = site && !site.places.some((p) => p.id === d.activePlaceId)
-        ? site.places[0]?.id ?? d.activePlaceId
-        : d.activePlaceId
-      return activePlaceId === d.activePlaceId ? d : { ...d, activePlaceId }
-    }, false)
-    setActiveSpaceIndex(0)
+      // Keep at least one root folder in the plan.
+      if (d.folders.length <= 1 && d.folders[0]?.id === id) return d
+      const folders = removeFolderById(d.folders, id)
+      if (folders === d.folders) return d
+      const stillActive = d.activeFolderId ? findFolder(folders, d.activeFolderId) : null
+      const nextFolder = stillActive ?? folders[0] ?? null
+      return {
+        ...d,
+        folders,
+        activeFolderId: nextFolder?.id ?? null,
+        activeSpaceId: nextFolder?.spaces[0]?.id ?? null,
+      }
+    })
     setSelectedSeat(null)
-  }, [updateActiveSite, apply])
+  }, [apply])
 
-  const renamePlace = useCallback((placeId: string, name: string) => {
+  const renameFolder = useCallback((id: string, name: string) => {
     const trimmed = name.trim().slice(0, 40)
     if (!trimmed) return
-    updateActiveSite((site) => ({
-      ...site,
-      places: site.places.map((p) => (p.id === placeId ? { ...p, name: trimmed } : p)),
+    apply((d) => ({ ...d, folders: updateFolder(d.folders, id, (f) => ({ ...f, name: trimmed })) }))
+  }, [apply])
+
+  const toggleFolderActive = useCallback((id: string) => {
+    apply((d) => ({ ...d, folders: updateFolder(d.folders, id, (f) => ({ ...f, active: !f.active })) }))
+  }, [apply])
+
+  const setFolderImage = useCallback((id: string, dataUrl: string | null) => {
+    apply((d) => ({ ...d, folders: updateFolder(d.folders, id, (f) => ({ ...f, image: dataUrl })) }))
+  }, [apply])
+
+  const moveFolder = useCallback((id: string, parentId: string | null, index: number) => {
+    apply((d) => {
+      const moving = findFolder(d.folders, id)
+      if (!moving) return d
+      // Reject dropping a folder onto itself or into its own subtree.
+      if (parentId === id) return d
+      if (parentId && findFolder(moving.folders, parentId)) return d
+      const without = removeFolderById(d.folders, id)
+      return { ...d, folders: insertFolder(without, parentId, moving, index) }
+    })
+  }, [apply])
+
+  /* ── Space management ───────────────────────────────────────────────── */
+  const addSpace = useCallback((folderId: string) => {
+    apply((d) => {
+      const folder = findFolder(d.folders, folderId)
+      if (!folder) return d
+      const space = seedSpace(uniqueName(`Planta ${folder.spaces.length + 1}`, folder.spaces.map((s) => s.name)))
+      return {
+        ...d,
+        folders: updateFolder(d.folders, folderId, (f) => ({ ...f, spaces: [...f.spaces, space] })),
+        activeFolderId: folderId,
+        activeSpaceId: space.id,
+      }
+    })
+    setSelectedSeat(null)
+  }, [apply])
+
+  const removeSpace = useCallback((folderId: string, spaceId: string) => {
+    apply((d) => ({
+      ...d,
+      folders: updateFolder(d.folders, folderId, (f) => ({
+        ...f,
+        spaces: f.spaces.filter((s) => s.id !== spaceId),
+      })),
+      activeSpaceId: d.activeSpaceId === spaceId ? null : d.activeSpaceId,
     }))
-  }, [updateActiveSite])
+    setSelectedSeat(null)
+  }, [apply])
 
-  const togglePlaceActive = useCallback((placeId: string) => {
-    updateActiveSite((site) => ({
-      ...site,
-      places: site.places.map((p) => (p.id === placeId ? { ...p, active: !p.active } : p)),
+  const duplicateSpace = useCallback((folderId: string, spaceId: string) => {
+    let newId = ''
+    apply((d) => ({
+      ...d,
+      folders: updateFolder(d.folders, folderId, (f) => {
+        const idx = f.spaces.findIndex((s) => s.id === spaceId)
+        if (idx < 0) return f
+        const source = f.spaces[idx]
+        const copy = cloneSpace(source, uniqueName(`${source.name} (còpia)`, f.spaces.map((s) => s.name)))
+        newId = copy.id
+        return { ...f, spaces: [...f.spaces.slice(0, idx + 1), copy, ...f.spaces.slice(idx + 1)] }
+      }),
     }))
-  }, [updateActiveSite])
-
-  const addSpace = useCallback((placeId: string) => {
-    let newIndex = 0
-    updateActiveSite((site) => {
-      const pi = placeIndex(site.places, placeId, null)
-      const place = site.places[pi]
-      if (!place) return site
-      const names = place.spaces.map((f) => f.name)
-      const space = seedSpace(uniqueName(`Planta ${place.spaces.length + 1}`, names))
-      const spaces = [...place.spaces, space]
-      newIndex = spaces.length - 1
-      return { ...site, places: site.places.map((p, i) => (i === pi ? { ...p, spaces } : p)) }
-    })
-    apply((d) => {
-      const active = activeSiteOf(d)
-      if (!active) return d
-      const pi = placeIndex(active.site.places, placeId, d.activePlaceId)
-      const place = active.site.places[pi]
-      return place ? { ...d, activePlaceId: place.id } : d
-    }, false)
-    setActiveSpaceIndex(newIndex)
+    if (newId) apply((d) => ({ ...d, activeFolderId: folderId, activeSpaceId: newId }), false)
     setSelectedSeat(null)
-  }, [updateActiveSite, apply])
+  }, [apply])
 
-  const removeSpace = useCallback((placeId: string, index: number) => {
-    updateActiveSite((site) => {
-      const pi = placeIndex(site.places, placeId, null)
-      const place = site.places[pi]
-      if (!place || place.spaces.length <= 1) return site
-      const spaces = place.spaces.filter((_, i) => i !== index)
-      return { ...site, places: site.places.map((p, i) => (i === pi ? { ...p, spaces } : p)) }
-    })
-    apply((d) => {
-      const active = activeSiteOf(d)
-      if (!active) return d
-      const pi = placeIndex(active.site.places, placeId, d.activePlaceId)
-      const place = active.site.places[pi]
-      return place ? { ...d, activePlaceId: place.id } : d
-    }, false)
-    setActiveSpaceIndex((cur) => Math.max(0, cur > index ? cur - 1 : cur === index ? cur - 1 : cur))
-    setSelectedSeat(null)
-  }, [updateActiveSite, apply])
-
-  const duplicateSpace = useCallback((placeId: string, index: number) => {
-    let newIndex = index
-    updateActiveSite((site) => {
-      const pi = placeIndex(site.places, placeId, null)
-      const place = site.places[pi]
-      const source = place?.spaces[index]
-      if (!place || !source) return site
-      const names = place.spaces.map((f) => f.name)
-      const copy = cloneSpace(source, uniqueName(`${source.name} (còpia)`, names))
-      const spaces = [...place.spaces.slice(0, index + 1), copy, ...place.spaces.slice(index + 1)]
-      newIndex = index + 1
-      return { ...site, places: site.places.map((p, i) => (i === pi ? { ...p, spaces } : p)) }
-    })
-    apply((d) => {
-      const active = activeSiteOf(d)
-      if (!active) return d
-      const pi = placeIndex(active.site.places, placeId, d.activePlaceId)
-      const place = active.site.places[pi]
-      return place ? { ...d, activePlaceId: place.id } : d
-    }, false)
-    setActiveSpaceIndex(newIndex)
-    setSelectedSeat(null)
-  }, [updateActiveSite, apply])
-
-  const renameSpace = useCallback((placeId: string, index: number, name: string) => {
+  const renameSpace = useCallback((folderId: string, spaceId: string, name: string) => {
     const trimmed = name.trim().slice(0, 40)
     if (!trimmed) return
-    updateActiveSite((site) => {
-      const pi = placeIndex(site.places, placeId, null)
-      const place = site.places[pi]
-      if (!place || !place.spaces[index]) return site
-      const spaces = place.spaces.map((f, i) => (i === index ? { ...f, name: trimmed } : f))
-      return { ...site, places: site.places.map((p, i) => (i === pi ? { ...p, spaces } : p)) }
-    })
-  }, [updateActiveSite])
+    apply((d) => ({
+      ...d,
+      folders: updateFolder(d.folders, folderId, (f) => ({
+        ...f,
+        spaces: f.spaces.map((s) => (s.id === spaceId ? { ...s, name: trimmed } : s)),
+      })),
+    }))
+  }, [apply])
 
-  const toggleSpaceActive = useCallback((placeId: string, index: number) => {
-    updateActiveSite((site) => {
-      const pi = placeIndex(site.places, placeId, null)
-      const place = site.places[pi]
-      if (!place || !place.spaces[index]) return site
-      const spaces = place.spaces.map((f, i) => (i === index ? { ...f, active: !f.active } : f))
-      return { ...site, places: site.places.map((p, i) => (i === pi ? { ...p, spaces } : p)) }
-    })
-  }, [updateActiveSite])
+  const toggleSpaceActive = useCallback((folderId: string, spaceId: string) => {
+    apply((d) => ({
+      ...d,
+      folders: updateFolder(d.folders, folderId, (f) => ({
+        ...f,
+        spaces: f.spaces.map((s) => (s.id === spaceId ? { ...s, active: !s.active } : s)),
+      })),
+    }))
+  }, [apply])
 
-  const reorderSpace = useCallback((placeId: string, from: number, to: number) => {
+  const moveSpace = useCallback((folderId: string, from: number, to: number) => {
     if (from === to) return
-    updateActiveSite((site) => {
-      const pi = placeIndex(site.places, placeId, null)
-      const place = site.places[pi]
-      if (!place) return site
-      const spaces = [...place.spaces]
-      if (from < 0 || from >= spaces.length || to < 0 || to >= spaces.length) return site
-      const [moved] = spaces.splice(from, 1)
-      spaces.splice(to, 0, moved)
-      return { ...site, places: site.places.map((p, i) => (i === pi ? { ...p, spaces } : p)) }
-    })
-    apply((d) => {
-      const active = activeSiteOf(d)
-      if (!active) return d
-      const pi = placeIndex(active.site.places, placeId, d.activePlaceId)
-      const place = active.site.places[pi]
-      return place ? { ...d, activePlaceId: place.id } : d
-    }, false)
-    setActiveSpaceIndex(to)
-  }, [updateActiveSite, apply])
-
-  /* ── Site actions ───────────────────────────────────────────────────── */
-  const selectSite = useCallback((siteId: string) => {
-    apply((d) => {
-      if (d.activeSiteId === siteId) return d
-      const site = d.sites.find((s) => s.id === siteId)
-      return { ...d, activeSiteId: siteId, activePlaceId: site?.places[0]?.id ?? d.activePlaceId }
-    }, false)
-    setActiveSpaceIndex(0)
-    setSelectedSeat(null)
-  }, [apply])
-
-  const addSite = useCallback(() => {
-    apply((d) => {
-      const names = d.sites.map((s) => s.name)
-      const place: Place = { id: makeId('place'), name: 'Lloc 1', spaces: [seedSpace('Planta 1')], active: true }
-      const site: Site = {
-        id: makeId('site'),
-        name: uniqueName(`Site ${d.sites.length + 1}`, names),
-        image: null,
-        places: [place],
-        active: true,
-      }
-      return { ...d, sites: [...d.sites, site], activeSiteId: site.id, activePlaceId: place.id }
-    })
-    setActiveSpaceIndex(0)
-    setSelectedSeat(null)
-  }, [apply])
-
-  const removeSite = useCallback((siteId: string) => {
-    apply((d) => {
-      if (d.sites.length <= 1) return d
-      const sites = d.sites.filter((s) => s.id !== siteId)
-      const activeSiteId = d.activeSiteId === siteId ? sites[0].id : d.activeSiteId
-      const active = sites.find((s) => s.id === activeSiteId) ?? sites[0]
-      const activePlaceId = active.places.some((p) => p.id === d.activePlaceId)
-        ? d.activePlaceId
-        : active.places[0].id
-      return { ...d, sites, activeSiteId, activePlaceId }
-    })
-    setActiveSpaceIndex(0)
-    setSelectedSeat(null)
-  }, [apply])
-
-  const renameSite = useCallback((siteId: string, name: string) => {
-    const trimmed = name.trim().slice(0, 40)
-    if (!trimmed) return
     apply((d) => ({
       ...d,
-      sites: d.sites.map((s) => (s.id === siteId ? { ...s, name: trimmed } : s)),
+      folders: updateFolder(d.folders, folderId, (f) => {
+        if (from < 0 || from >= f.spaces.length || to < 0 || to >= f.spaces.length) return f
+        const spaces = [...f.spaces]
+        const [moved] = spaces.splice(from, 1)
+        spaces.splice(to, 0, moved)
+        return { ...f, spaces }
+      }),
     }))
-  }, [apply])
-
-  const setSiteLogo = useCallback((siteId: string, dataUrl: string | null) => {
-    apply((d) => ({
-      ...d,
-      sites: d.sites.map((s) => (s.id === siteId ? { ...s, image: dataUrl } : s)),
-    }))
-  }, [apply])
-
-  const toggleSiteActive = useCallback((siteId: string) => {
-    apply((d) => ({
-      ...d,
-      sites: d.sites.map((s) => (s.id === siteId ? { ...s, active: !s.active } : s)),
-    }))
+    setSelectedSeat(null)
   }, [apply])
 
   /* ── History ────────────────────────────────────────────────────────── */
@@ -523,7 +407,7 @@ export function useSpacePlan() {
       })
   }, [client, isMockMode])
 
-  /** Download the full working plan (all places + spaces) as a JSON file. */
+  /** Download the full working plan (all folders + spaces) as a JSON file. */
   const exportJson = useCallback(() => {
     const current = dataRef.current
     downloadTextFile(
@@ -532,9 +416,9 @@ export function useSpacePlan() {
     )
   }, [])
 
-  /** Import sites from a JSON file, additively: each imported site is a
-      brand-new record (fresh ids) appended to the current plan, with site names
-      de-duplicated. Nothing existing is ever overwritten or removed. */
+  /** Import folders from a JSON file, additively: each imported folder is a
+      brand-new record (fresh ids) appended to the current plan, with top-level
+      names de-duplicated. Nothing existing is ever overwritten or removed. */
   const importJson = useCallback(
     async (file: File) => {
       setImportError(null)
@@ -545,13 +429,13 @@ export function useSpacePlan() {
         setImportError('Fitxer incompatible o invàlid')
         return
       }
-      const existingNames = dataRef.current.sites.map((s) => s.name)
-      const imported = prepareImportedSites(raw, existingNames)
+      const existingNames = dataRef.current.folders.map((f) => f.name)
+      const imported = prepareImportedFolders(raw, existingNames)
       if (!imported || imported.length === 0) {
         setImportError('Fitxer incompatible o invàlid')
         return
       }
-      apply((d) => ({ ...d, sites: [...d.sites, ...imported] }))
+      apply((d) => ({ ...d, folders: [...d.folders, ...imported] }))
     },
     [apply],
   )
@@ -564,7 +448,6 @@ export function useSpacePlan() {
       dataRef.current = next
       setData(next)
       setSavedSignature(spacePlanSignature(next))
-      setActiveSpaceIndex(0)
       setSelectedSeat(null)
       syncHistoryFlags()
     })
@@ -578,11 +461,9 @@ export function useSpacePlan() {
   return {
     loaded,
     data,
-    sites: data.sites,
-    activeSite,
-    activePlace,
+    folders: data.folders,
+    activeFolder,
     activeSpace,
-    activeSpaceIndex: safeSpaceIndex,
     tool,
     setTool,
     selectedSeat,
@@ -600,24 +481,20 @@ export function useSpacePlan() {
     assignAgent,
     removeSeat,
     // structure
-    selectSite,
-    addSite,
-    removeSite,
-    renameSite,
-    setSiteLogo,
-    toggleSiteActive,
-    selectPlace,
+    selectFolder,
+    addFolder,
+    removeFolder,
+    renameFolder,
+    toggleFolderActive,
+    setFolderImage,
+    moveFolder,
     selectSpace,
-    addPlace,
-    removePlace,
-    renamePlace,
-    togglePlaceActive,
     addSpace,
     removeSpace,
     duplicateSpace,
     renameSpace,
     toggleSpaceActive,
-    reorderSpace,
+    moveSpace,
     // history + persistence
     undo,
     redo,
