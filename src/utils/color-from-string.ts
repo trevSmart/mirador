@@ -163,7 +163,7 @@ function foldWithReverse(s: string): string {
   const rev = s.split('').reverse().join('')
   let folded = ''
   for (let i = 0; i < s.length; i++) {
-    folded += s[i]! + rev[i]!
+    folded += s[i] + rev[i]
   }
   return folded
 }

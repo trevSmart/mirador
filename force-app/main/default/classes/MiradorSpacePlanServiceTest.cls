@@ -33,6 +33,7 @@ private class MiradorSpacePlanServiceTest {
         space1.seats = new List<MiradorSpacePlanService.SeatDto>{ seat, emptySeat };
         space1.openings = new List<MiradorSpacePlanService.OpeningDto>{ opening };
         space1.dividers = new List<MiradorSpacePlanService.DividerDto>{ divider };
+        space1.active = false; // explicitly inactive; must round-trip
 
         MiradorSpacePlanService.SpaceDto space2 = new MiradorSpacePlanService.SpaceDto();
         space2.id = 'space_bbb';
@@ -48,9 +49,12 @@ private class MiradorSpacePlanServiceTest {
         placeA.name = 'Barcelona';
         placeA.spaces = new List<MiradorSpacePlanService.SpaceDto>{ space1, space2 };
 
+        // placeA.active left unset → defaults to true on save/load.
+
         MiradorSpacePlanService.PlaceDto placeB = new MiradorSpacePlanService.PlaceDto();
         placeB.id = 'place_bbb';
         placeB.name = 'Madrid';
+        placeB.active = false; // explicitly inactive; must round-trip
         placeB.spaces = new List<MiradorSpacePlanService.SpaceDto>();
 
         MiradorSpacePlanService.PlanDto plan = new MiradorSpacePlanService.PlanDto();
@@ -89,7 +93,15 @@ private class MiradorSpacePlanServiceTest {
         }
         System.assertNotEquals(null, placeA, 'place A round-trips by app id');
         System.assertEquals('Barcelona', placeA.name, 'place name preserved');
+        System.assertEquals(true, placeA.active, 'unset place active defaults to true');
         System.assertEquals(2, placeA.spaces.size(), 'both spaces loaded');
+
+        // Inactive place B must come back inactive.
+        for (MiradorSpacePlanService.PlaceDto p : loaded.places) {
+            if (p.id == 'place_bbb') {
+                System.assertEquals(false, p.active, 'inactive place stays inactive');
+            }
+        }
 
         // SortOrder must keep the original space ordering.
         System.assertEquals('space_aaa', placeA.spaces[0].id, 'first space order');
@@ -98,6 +110,7 @@ private class MiradorSpacePlanServiceTest {
         MiradorSpacePlanService.SpaceDto s1 = placeA.spaces[0];
         System.assertEquals('Planta Vendes', s1.name, 'space name preserved');
         System.assertEquals(2, s1.dir, 'dir preserved');
+        System.assertEquals(false, s1.active, 'inactive space stays inactive');
         System.assertEquals(2, s1.cells.size(), 'cells preserved');
         System.assertEquals(2, s1.seats.size(), 'seats preserved (incl. empty)');
         System.assertEquals(1, s1.openings.size(), 'openings preserved');

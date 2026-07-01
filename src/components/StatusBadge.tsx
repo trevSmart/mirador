@@ -8,14 +8,16 @@ interface StatusBadgeProps {
    *  Falls back to the normalized category label when omitted. */
   label?: string | null
   compact?: boolean
+  soft?: boolean
 }
 
-export function StatusBadge({ status, label, compact = false }: StatusBadgeProps) {
+export function StatusBadge({ status, label, compact = false, soft = false }: StatusBadgeProps) {
   return (
     <StatusPill
       status={status}
       label={label ?? presenceLabel(status)}
       compact={compact}
+      soft={soft}
     />
   )
 }

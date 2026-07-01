@@ -3928,8 +3928,8 @@ textarea,
 
 .dd-head {
   display: flex;
-  align-items: center;
-  gap: var(--sp-4);
+  align-items: flex-start;
+  gap: calc(var(--sp-4) - 1px);
   padding-right: 40px;
   margin-bottom: var(--sp-5);
 }
@@ -3937,7 +3937,7 @@ textarea,
 .dd-head__id {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
 }
 
@@ -3950,8 +3950,8 @@ textarea,
 }
 
 .dd-head__sub {
-  font-size: var(--fs-sm);
-  color: var(--text-muted);
+  font-size: calc(var(--fs-sm) + 0.1px);
+  color: color-mix(in oklab, var(--text-muted) 88%, var(--text-body));
 }
 
 .dd-head__id .status-pill,
@@ -4141,28 +4141,30 @@ textarea,
 /* ── Agent card grid ───────────────────────────────────────────────────── */
 .agents-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: var(--sp-3);
 }
 
 .agent-card {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-4) var(--sp-3);
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
   border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
+  border-radius: 14px;
   background: var(--surface-card);
   box-shadow: var(--shadow);
   cursor: pointer;
-  text-align: center;
-  transition: box-shadow var(--dur-base) var(--ease), border-color var(--dur-base) var(--ease);
+  text-align: left;
+  transition: transform 0.22s var(--ease), box-shadow 0.22s var(--ease), border-color 0.22s var(--ease);
 }
 
 .agent-card:hover {
   border-color: var(--border-strong);
-  box-shadow: var(--shadow-hover);
+  box-shadow: var(--shadow-lift);
+  transform: translateY(-1px);
 }
 
 .agent-card:focus-visible {
@@ -4205,6 +4207,14 @@ textarea,
   border: 2px solid var(--surface-card);
 }
 
+.agent-card__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .agent-card__name {
   margin: 0;
   font-size: var(--fs-sm);
@@ -4224,37 +4234,6 @@ textarea,
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 100%;
-}
-
-.agent-card__metrics {
-  display: flex;
-  gap: var(--sp-2);
-  margin-top: var(--sp-1);
-  width: 100%;
-  justify-content: center;
-}
-
-.agent-card__metric {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  min-width: 32px;
-}
-
-.agent-card__metric-value {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
-  color: var(--text-strong);
-  line-height: 1;
-}
-
-.agent-card__metric-label {
-  font-size: var(--fs-2xs);
-  color: var(--text-muted);
-  line-height: 1;
 }
 
 /* ── Settings modal ────────────────────────────────────────────────────── */
@@ -6419,6 +6398,34 @@ textarea,
   margin: var(--sp-1) var(--sp-2);
   font-size: var(--fs-xs);
   color: var(--status-alert);
+}
+
+/* Inactive sites/places/spaces stay in the editor (so they can be toggled back
+   on) but are dimmed and struck through to show they are hidden from the live
+   home/space views. The active-state toggle button keeps full opacity so it
+   stays usable. */
+.fe-tree__site.is-inactive,
+.fe-tree__place.is-inactive,
+.fe-space.is-inactive,
+.fe-plan-tree__site.is-inactive,
+.fe-plan-tree__place.is-inactive,
+.fe-plan-tree__space.is-inactive {
+  opacity: 0.5;
+}
+
+.fe-tree__site.is-inactive .fe-site__name,
+.fe-tree__place.is-inactive .fe-place__name,
+.fe-space.is-inactive .fe-space__name,
+.fe-plan-tree__site.is-inactive .fe-plan-tree__site-name,
+.fe-plan-tree__place.is-inactive .fe-plan-tree__place-name,
+.fe-plan-tree__space.is-inactive .fe-plan-tree__space-name {
+  text-decoration: line-through;
+}
+
+.fe-tree__site.is-inactive [aria-pressed],
+.fe-tree__place.is-inactive [aria-pressed],
+.fe-space.is-inactive [aria-pressed] {
+  opacity: 1;
 }
 
 .fe-plan-tree__site {

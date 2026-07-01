@@ -9,6 +9,7 @@ import { PanelShell } from '../components/PanelState'
 import { Select } from '../components/ds/Select'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { useSpacePlanData } from '../space/useSpacePlanData'
+import { visiblePlaces, visibleSpaces } from '../space/space-plan-model'
 import { useSmoothScroll } from '../hooks/useSmoothScroll'
 import { usePreferences } from '../settings/preferences-context'
 import { presenceLabel } from '../utils/format'
@@ -89,16 +90,14 @@ export function SpacePanel() {
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents])
   const queuesById = useMemo(() => new Map(queues.map((queue) => [queue.id, queue])), [queues])
 
-  const allPlaces = useMemo(
-    () => (data ? data.sites.flatMap((s) => s.places) : []),
-    [data],
-  )
+  // Live views hide anything inactive or hanging off something inactive.
+  const allPlaces = useMemo(() => (data ? visiblePlaces(data) : []), [data])
   const activePlace = useMemo(() => {
     if (allPlaces.length === 0) return null
     return allPlaces.find((p) => p.id === placeId) ?? allPlaces[0]
   }, [allPlaces, placeId])
 
-  const spaces = useMemo(() => activePlace?.spaces ?? [], [activePlace])
+  const spaces = useMemo(() => (activePlace ? visibleSpaces(activePlace) : []), [activePlace])
   const multiSpace = spaces.length > 1
 
   const stackStyle = {

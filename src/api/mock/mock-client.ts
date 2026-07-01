@@ -9,6 +9,7 @@ import type {
   SnapshotResponse,
 } from '../types'
 import { loadMockSpacePlan, saveMockSpacePlan } from '../../space/space-plan-repository'
+import { parseStoredSpacePlan, toWireSpacePlan } from '../../space/space-plan-model'
 import { MOCK_CAPABILITIES } from './capabilities'
 import { getAgentSkills, getMockPresenceStatuses } from './mock-seed'
 import {
@@ -104,8 +105,14 @@ export function createMockMiradorClient(): MiradorClient {
         records: body.ids.map(mockRecordDetail),
       } satisfies RecordDetailsResponse)),
     getSpacePlan: () =>
-      withApiLog('GET', '/space-plan', () => loadMockSpacePlan()),
+      withApiLog('GET', '/space-plan', async () => {
+        const plan = await loadMockSpacePlan()
+        return plan ? toWireSpacePlan(plan) : null
+      }),
     saveSpacePlan: (plan) =>
-      withApiLog('PUT', '/space-plan', () => saveMockSpacePlan(plan)),
+      withApiLog('PUT', '/space-plan', () => {
+        const parsed = parseStoredSpacePlan(plan)
+        return parsed ? saveMockSpacePlan(parsed) : Promise.resolve()
+      }),
   }
 }

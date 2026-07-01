@@ -267,6 +267,7 @@ export function useSpacePlan() {
         id: makeId('place'),
         name: uniqueName(`Lloc ${site.places.length + 1}`, names),
         spaces: [seedSpace('Planta 1')],
+        active: true,
       }
       newPlaceId = place.id
       return { ...site, places: [...site.places, place] }
@@ -298,6 +299,13 @@ export function useSpacePlan() {
     updateActiveSite((site) => ({
       ...site,
       places: site.places.map((p) => (p.id === placeId ? { ...p, name: trimmed } : p)),
+    }))
+  }, [updateActiveSite])
+
+  const togglePlaceActive = useCallback((placeId: string) => {
+    updateActiveSite((site) => ({
+      ...site,
+      places: site.places.map((p) => (p.id === placeId ? { ...p, active: !p.active } : p)),
     }))
   }, [updateActiveSite])
 
@@ -379,6 +387,16 @@ export function useSpacePlan() {
     })
   }, [updateActiveSite])
 
+  const toggleSpaceActive = useCallback((placeId: string, index: number) => {
+    updateActiveSite((site) => {
+      const pi = placeIndex(site.places, placeId, null)
+      const place = site.places[pi]
+      if (!place || !place.spaces[index]) return site
+      const spaces = place.spaces.map((f, i) => (i === index ? { ...f, active: !f.active } : f))
+      return { ...site, places: site.places.map((p, i) => (i === pi ? { ...p, spaces } : p)) }
+    })
+  }, [updateActiveSite])
+
   const reorderSpace = useCallback((placeId: string, from: number, to: number) => {
     if (from === to) return
     updateActiveSite((site) => {
@@ -415,12 +433,13 @@ export function useSpacePlan() {
   const addSite = useCallback(() => {
     apply((d) => {
       const names = d.sites.map((s) => s.name)
-      const place: Place = { id: makeId('place'), name: 'Lloc 1', spaces: [seedSpace('Planta 1')] }
+      const place: Place = { id: makeId('place'), name: 'Lloc 1', spaces: [seedSpace('Planta 1')], active: true }
       const site: Site = {
         id: makeId('site'),
         name: uniqueName(`Site ${d.sites.length + 1}`, names),
         image: null,
         places: [place],
+        active: true,
       }
       return { ...d, sites: [...d.sites, site], activeSiteId: site.id, activePlaceId: place.id }
     })
@@ -456,6 +475,13 @@ export function useSpacePlan() {
     apply((d) => ({
       ...d,
       sites: d.sites.map((s) => (s.id === siteId ? { ...s, image: dataUrl } : s)),
+    }))
+  }, [apply])
+
+  const toggleSiteActive = useCallback((siteId: string) => {
+    apply((d) => ({
+      ...d,
+      sites: d.sites.map((s) => (s.id === siteId ? { ...s, active: !s.active } : s)),
     }))
   }, [apply])
 
@@ -579,15 +605,18 @@ export function useSpacePlan() {
     removeSite,
     renameSite,
     setSiteLogo,
+    toggleSiteActive,
     selectPlace,
     selectSpace,
     addPlace,
     removePlace,
     renamePlace,
+    togglePlaceActive,
     addSpace,
     removeSpace,
     duplicateSpace,
     renameSpace,
+    toggleSpaceActive,
     reorderSpace,
     // history + persistence
     undo,

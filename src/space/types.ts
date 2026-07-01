@@ -47,12 +47,16 @@ export interface Space {
   dividers: Divider[]
   /** Saved camera rotation for this space (0..3, 90° steps). */
   dir: Dir
+  /** Whether the space shows up in live views (home/space). Defaults to true. */
+  active: boolean
 }
 
 export interface Place {
   id: string
   name: string
   spaces: Space[]
+  /** Whether the place (and its spaces) show up in live views. Defaults to true. */
+  active: boolean
 }
 
 export interface Site {
@@ -61,6 +65,8 @@ export interface Site {
   /** Logo as a base64 data-URL ("data:image/png;base64,…"), or null. */
   image: string | null
   places: Place[]
+  /** Whether the site (and everything under it) shows up in live views. Defaults to true. */
+  active: boolean
 }
 
 export interface SpacePlanData {

@@ -32,6 +32,7 @@ public with sharing class MiradorSpacePlanService {
     public class PlaceDto {
         public String id;
         public String name;
+        public Boolean active;
         public List<SpaceDto> spaces;
     }
 
@@ -39,6 +40,7 @@ public with sharing class MiradorSpacePlanService {
         public String id;
         public String name;
         public Integer dir;
+        public Boolean active;
         public List<List<Integer>> cells;
         public List<SeatDto> seats;
         public List<OpeningDto> openings;
@@ -80,9 +82,9 @@ public with sharing class MiradorSpacePlanService {
      */
     public static PlanDto getPlan() {
         List<Place__c> places = [
-            SELECT Id, Name, AppId__c, ActivePlaceId__c, SchemaVersion__c,
+            SELECT Id, Name, AppId__c, ActivePlaceId__c, SchemaVersion__c, Active__c,
                 (
-                    SELECT Id, Name, AppId__c, Direction__c, SortOrder__c, Geometry__c
+                    SELECT Id, Name, AppId__c, Direction__c, SortOrder__c, Geometry__c, Active__c
                     FROM Spaces__r
                     ORDER BY SortOrder__c ASC NULLS LAST, Name ASC
                 )
@@ -109,6 +111,7 @@ public with sharing class MiradorSpacePlanService {
             PlaceDto pd = new PlaceDto();
             pd.id = String.isNotBlank(p.AppId__c) ? p.AppId__c : p.Id;
             pd.name = p.Name;
+            pd.active = p.Active__c == null ? true : p.Active__c;
             pd.spaces = new List<SpaceDto>();
 
             for (Space__c s : p.Spaces__r) {
@@ -124,6 +127,7 @@ public with sharing class MiradorSpacePlanService {
         sd.id = String.isNotBlank(s.AppId__c) ? s.AppId__c : s.Id;
         sd.name = s.Name;
         sd.dir = s.Direction__c == null ? 0 : (Integer) s.Direction__c;
+        sd.active = s.Active__c == null ? true : s.Active__c;
 
         GeometryDto g = String.isBlank(s.Geometry__c)
             ? new GeometryDto()
@@ -166,6 +170,7 @@ public with sharing class MiradorSpacePlanService {
             p.AppId__c = pd.id;
             p.ActivePlaceId__c = plan.activePlaceId;
             p.SchemaVersion__c = version;
+            p.Active__c = pd.active == null ? true : pd.active;
             placeRows.add(p);
         }
         insert placeRows;
@@ -195,6 +200,7 @@ public with sharing class MiradorSpacePlanService {
         s.AppId__c = sd.id;
         s.Direction__c = sd.dir == null ? 0 : sd.dir;
         s.SortOrder__c = order;
+        s.Active__c = sd.active == null ? true : sd.active;
 
         GeometryDto g = new GeometryDto();
         g.cells = sd.cells == null ? new List<List<Integer>>() : sd.cells;

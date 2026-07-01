@@ -18,23 +18,56 @@ interface StatusPillProps {
   color?: string
   label?: string
   compact?: boolean
+  /** Larger, sentence-case pill with a leading dot — for prominent presence badges. */
+  soft?: boolean
   style?: CSSProperties
 }
 
 /**
- * StatusPill — uppercase micro pill with a leading dot.
+ * StatusPill — micro pill with a leading dot.
  * Pass a presence key (online/busy/away/offline) or a custom color+label.
+ * `soft` renders a larger, sentence-case badge; otherwise it's an uppercase micro pill.
  */
 export function StatusPill({
   status = 'online',
   color,
   label,
   compact = false,
+  soft = false,
   style = {},
 }: StatusPillProps) {
   const p = PRESENCE[status] ?? PRESENCE.online
   const c = color ?? p.color
   const text = label ?? p.label
+
+  if (soft) {
+    return (
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          alignSelf: 'center',
+          width: 'fit-content',
+          gap: 5,
+          flexShrink: 0,
+          whiteSpace: 'nowrap',
+          fontFamily: 'var(--font-body)',
+          fontSize: 11,
+          fontWeight: 600,
+          padding: '3px 9px',
+          borderRadius: 'var(--r-pill)',
+          color: c,
+          background: `color-mix(in srgb, ${c} 12%, transparent)`,
+          lineHeight: 1.2,
+          ...style,
+        }}
+      >
+        <i style={{ width: 6, height: 6, borderRadius: '50%', background: c }} />
+        {text}
+      </span>
+    )
+  }
+
   return (
     <span
       style={{

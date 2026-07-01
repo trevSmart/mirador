@@ -35,7 +35,7 @@ export function SpacePlanTree({ sites, agentsById, queuesById }: SpacePlanTreePr
         return (
           <div
             key={site.id}
-            className={`fe-plan-tree__site${siteExpanded ? ' is-expanded' : ''}`}
+            className={`fe-plan-tree__site${siteExpanded ? ' is-expanded' : ''}${site.active ? '' : ' is-inactive'}`}
           >
             <button
               type="button"
@@ -71,7 +71,7 @@ export function SpacePlanTree({ sites, agentsById, queuesById }: SpacePlanTreePr
                   return (
                     <div
                       key={place.id}
-                      className={`fe-plan-tree__place${expanded ? ' is-expanded' : ''}`}
+                      className={`fe-plan-tree__place${expanded ? ' is-expanded' : ''}${place.active ? '' : ' is-inactive'}`}
                     >
                       <button
                         type="button"
@@ -98,7 +98,10 @@ export function SpacePlanTree({ sites, agentsById, queuesById }: SpacePlanTreePr
                         <div className="fe-plan-tree__collapse-inner">
                           <div className="fe-plan-tree__spaces">
                             {place.spaces.map((space) => (
-                              <div key={space.id} className="fe-plan-tree__space">
+                              <div
+                                key={space.id}
+                                className={`fe-plan-tree__space${space.active ? '' : ' is-inactive'}`}
+                              >
                                 <SpacePlanThumb space={space} agentsById={agentsById} queuesById={queuesById} />
                                 <span className="fe-plan-tree__space-name">{space.name}</span>
                               </div>
