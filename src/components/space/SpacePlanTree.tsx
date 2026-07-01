@@ -1,20 +1,94 @@
 import { useState } from 'react'
 import type { Agent, Queue } from '../../api/types'
-import type { Site } from '../../space/types'
+import type { Folder } from '../../space/types'
 import { SfIcon } from '../ds/SfIcon'
 import { SpacePlanThumb } from './SpacePlanThumb'
 
 interface SpacePlanTreeProps {
-  sites: Site[]
+  folders: Folder[]
   agentsById: Map<string, Agent>
   queuesById: Map<string, Queue>
 }
 
-/* New, from-scratch replacement for the sites/places/plants list. The hierarchy
-   is a tree of labelled nodes (Site → Place → Space); nodes with children
-   expand/collapse with the grid-template-rows 1fr↔0fr animation used across
-   apex-log-viewer. A Site shows its logo when set, else a fallback icon. */
-export function SpacePlanTree({ sites, agentsById, queuesById }: SpacePlanTreeProps) {
+const Chevron = () => (
+  <svg width={12} height={12} viewBox="0 0 12 12" aria-hidden="true">
+    <path
+      d="M4 2l4 4-4 4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
+interface FolderNodeProps {
+  folder: Folder
+  agentsById: Map<string, Agent>
+  queuesById: Map<string, Queue>
+  collapsedIds: Set<string>
+  toggle: (id: string) => void
+}
+
+function FolderNode({ folder, agentsById, queuesById, collapsedIds, toggle }: FolderNodeProps) {
+  const hasChildren = folder.folders.length > 0 || folder.spaces.length > 0
+  const expanded = hasChildren && !collapsedIds.has(folder.id)
+
+  return (
+    <div className={`fe-plan-tree__site${expanded ? ' is-expanded' : ''}${folder.active ? '' : ' is-inactive'}`}>
+      <button
+        type="button"
+        className="fe-plan-tree__chevron"
+        aria-label={expanded ? 'Replega' : 'Desplega'}
+        aria-expanded={expanded}
+        disabled={!hasChildren}
+        onClick={() => toggle(folder.id)}
+      >
+        <Chevron />
+      </button>
+      {folder.image ? (
+        <img className="fe-plan-tree__logo" src={folder.image} alt="" width={16} height={16} />
+      ) : (
+        <SfIcon sprite="standard" symbol="folder" sldsSize="x-small" />
+      )}
+      <span className="fe-plan-tree__site-name">{folder.name}</span>
+      <div className="fe-plan-tree__collapse">
+        <div className="fe-plan-tree__collapse-inner">
+          {folder.folders.map((child) => (
+            <FolderNode
+              key={child.id}
+              folder={child}
+              agentsById={agentsById}
+              queuesById={queuesById}
+              collapsedIds={collapsedIds}
+              toggle={toggle}
+            />
+          ))}
+          {folder.spaces.length > 0 ? (
+            <div className="fe-plan-tree__spaces">
+              {folder.spaces.map((space) => (
+                <div
+                  key={space.id}
+                  className={`fe-plan-tree__space${space.active ? '' : ' is-inactive'}`}
+                >
+                  <SpacePlanThumb space={space} agentsById={agentsById} queuesById={queuesById} />
+                  <span className="fe-plan-tree__space-name">{space.name}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* Read-only preview of the folder tree shown under the editor. Folders nest
+   arbitrarily; each shows its image when set, else a fallback icon. Nodes with
+   children expand/collapse with the grid-template-rows 1fr↔0fr animation used
+   across the app. */
+export function SpacePlanTree({ folders, agentsById, queuesById }: SpacePlanTreeProps) {
   // Everything starts expanded; collapsing removes the id from the set.
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set())
 
@@ -29,94 +103,16 @@ export function SpacePlanTree({ sites, agentsById, queuesById }: SpacePlanTreePr
 
   return (
     <div className="fe-plan-tree">
-      {sites.map((site) => {
-        const siteExpanded = !collapsedIds.has(site.id)
-
-        return (
-          <div
-            key={site.id}
-            className={`fe-plan-tree__site${siteExpanded ? ' is-expanded' : ''}${site.active ? '' : ' is-inactive'}`}
-          >
-            <button
-              type="button"
-              className="fe-plan-tree__chevron"
-              aria-label={siteExpanded ? 'Replega' : 'Desplega'}
-              aria-expanded={siteExpanded}
-              disabled={site.places.length === 0}
-              onClick={() => toggle(site.id)}
-            >
-              <svg width={12} height={12} viewBox="0 0 12 12" aria-hidden="true">
-                <path
-                  d="M4 2l4 4-4 4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={1.5}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-            {site.image ? (
-              <img className="fe-plan-tree__logo" src={site.image} alt="" width={16} height={16} />
-            ) : (
-              <SfIcon sprite="standard" symbol="home" sldsSize="x-small" />
-            )}
-            <span className="fe-plan-tree__site-name">{site.name}</span>
-            <div className="fe-plan-tree__collapse">
-              <div className="fe-plan-tree__collapse-inner">
-                {site.places.map((place) => {
-                  const hasChildren = place.spaces.length > 0
-                  const expanded = hasChildren && !collapsedIds.has(place.id)
-
-                  return (
-                    <div
-                      key={place.id}
-                      className={`fe-plan-tree__place${expanded ? ' is-expanded' : ''}${place.active ? '' : ' is-inactive'}`}
-                    >
-                      <button
-                        type="button"
-                        className="fe-plan-tree__chevron"
-                        aria-label={expanded ? 'Replega' : 'Desplega'}
-                        aria-expanded={expanded}
-                        disabled={!hasChildren}
-                        onClick={() => toggle(place.id)}
-                      >
-                        <svg width={12} height={12} viewBox="0 0 12 12" aria-hidden="true">
-                          <path
-                            d="M4 2l4 4-4 4"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth={1.5}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </button>
-                      <SfIcon sprite="standard" symbol="address" sldsSize="x-small" />
-                      <span className="fe-plan-tree__place-name">{place.name}</span>
-                      <div className="fe-plan-tree__collapse">
-                        <div className="fe-plan-tree__collapse-inner">
-                          <div className="fe-plan-tree__spaces">
-                            {place.spaces.map((space) => (
-                              <div
-                                key={space.id}
-                                className={`fe-plan-tree__space${space.active ? '' : ' is-inactive'}`}
-                              >
-                                <SpacePlanThumb space={space} agentsById={agentsById} queuesById={queuesById} />
-                                <span className="fe-plan-tree__space-name">{space.name}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-        )
-      })}
+      {folders.map((folder) => (
+        <FolderNode
+          key={folder.id}
+          folder={folder}
+          agentsById={agentsById}
+          queuesById={queuesById}
+          collapsedIds={collapsedIds}
+          toggle={toggle}
+        />
+      ))}
     </div>
   )
 }
