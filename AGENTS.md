@@ -273,3 +273,24 @@ Common Salesforce CLI commands: `sf project deploy start`,
   disabling Lenis entirely does not stop the loop; removing/re-adding a Dockview
   container in devtools does, because it forces a clean relayout). Don't reintroduce
   root scrolling.
+
+## Cursor Cloud specific instructions
+
+The startup update script runs `npm install` after pulling the latest code, so
+dependencies are already present when a session begins. Standard commands live in
+the **Commands** section above; the notes below are the non-obvious cloud caveats.
+
+- **No Salesforce org / secrets are available in the cloud VM.** Run and test the
+  SPA in **mock mode** with `npm run dev:mock` (dev server on port `3000`, no
+  `.env` or OAuth needed). `npm run dev` (real-data mode) will only render the
+  login flow and cannot fetch data here. Confirm the server is up and in mock mode
+  with `curl -s http://localhost:3000/api/config` → `"dataSource":"mock"`.
+- **Manual UI testing works headless** against the mock dev server: the whole
+  dashboard (agents, queues, skills, work, space view, agent detail drawer) is
+  populated from `src/api/mock/`, so no backend is required to exercise core flows.
+- `npm install` prints Babel 8 `EBADENGINE` warnings on the VM's Node (the Babel
+  toolchain wants Node ≥ 22.18); these are harmless — install, `npm run build`,
+  `npm run test`, and the dev server all work regardless.
+- Apex/Salesforce work (`force-app/`, `sf` CLI, `npm run` has no Apex hook) cannot
+  be deployed or tested from the cloud VM without an org; treat the backend as
+  read-only reference unless an org is provided.
