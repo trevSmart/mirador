@@ -369,6 +369,30 @@ export function useSpacePlan() {
     setSelectedSeat(null)
   }, [apply])
 
+  /** Move a space out of its folder and into another one at the given index. */
+  const moveSpaceToFolder = useCallback(
+    (fromFolderId: string, spaceId: string, toFolderId: string, index: number) => {
+      if (fromFolderId === toFolderId) return
+      apply((d) => {
+        const from = findFolder(d.folders, fromFolderId)
+        const space = from?.spaces.find((s) => s.id === spaceId)
+        if (!space || !findFolder(d.folders, toFolderId)) return d
+        const without = updateFolder(d.folders, fromFolderId, (f) => ({
+          ...f,
+          spaces: f.spaces.filter((s) => s.id !== spaceId),
+        }))
+        const folders = updateFolder(without, toFolderId, (f) => {
+          const spaces = [...f.spaces]
+          spaces.splice(Math.max(0, Math.min(index, spaces.length)), 0, space)
+          return { ...f, spaces }
+        })
+        return { ...d, folders, activeFolderId: toFolderId, activeSpaceId: spaceId }
+      })
+      setSelectedSeat(null)
+    },
+    [apply],
+  )
+
   /* ── History ────────────────────────────────────────────────────────── */
   const undo = useCallback(() => {
     if (undoStack.current.length === 0) return
@@ -495,6 +519,7 @@ export function useSpacePlan() {
     renameSpace,
     toggleSpaceActive,
     moveSpace,
+    moveSpaceToFolder,
     // history + persistence
     undo,
     redo,

@@ -80,7 +80,7 @@ const Chevron = () => (
 
 /** Drag payload: either a space within a folder, or a whole folder subtree. */
 type DragState =
-  | { type: 'space'; folderId: string; index: number }
+  | { type: 'space'; folderId: string; spaceId: string; index: number }
   | { type: 'folder'; id: string }
   | null
 
@@ -113,6 +113,7 @@ interface TreeCtx {
   onRenameSpace: (folderId: string, spaceId: string, name: string) => void
   onToggleSpaceActive: (folderId: string, spaceId: string) => void
   onMoveSpace: (folderId: string, from: number, to: number) => void
+  onMoveSpaceToFolder: (fromFolderId: string, spaceId: string, toFolderId: string, index: number) => void
   rootCount: number
 }
 
@@ -140,17 +141,28 @@ function FolderNode({ folder, depth, ctx }: { folder: Folder; depth: number; ctx
           ctx.setDragState({ type: 'folder', id: folder.id })
         }}
         onDragOver={(e) => {
-          if (ctx.dragState?.type === 'folder' && ctx.dragState.id !== folder.id) {
+          const drag = ctx.dragState
+          // Accept another folder (reparent) or a space from a different folder.
+          if (
+            (drag?.type === 'folder' && drag.id !== folder.id) ||
+            (drag?.type === 'space' && drag.folderId !== folder.id)
+          ) {
             e.preventDefault()
             e.stopPropagation()
             ctx.setDropFolderId(folder.id)
           }
         }}
         onDrop={(e) => {
-          if (ctx.dragState?.type === 'folder' && ctx.dragState.id !== folder.id) {
+          const drag = ctx.dragState
+          if (drag?.type === 'folder' && drag.id !== folder.id) {
             e.stopPropagation()
             // Drop a folder onto another folder → becomes its last child.
-            ctx.onMoveFolder(ctx.dragState.id, folder.id, folder.folders.length)
+            ctx.onMoveFolder(drag.id, folder.id, folder.folders.length)
+            ctx.expandFolder(folder.id)
+          } else if (drag?.type === 'space' && drag.folderId !== folder.id) {
+            e.stopPropagation()
+            // Drop a space onto a folder → moves it in as the last space.
+            ctx.onMoveSpaceToFolder(drag.folderId, drag.spaceId, folder.id, folder.spaces.length)
             ctx.expandFolder(folder.id)
           }
           ctx.setDragState(null)
@@ -265,23 +277,26 @@ function FolderNode({ folder, depth, ctx }: { folder: Folder; depth: number; ctx
                 draggable
                 onDragStart={(e) => {
                   e.stopPropagation()
-                  ctx.setDragState({ type: 'space', folderId: folder.id, index })
+                  ctx.setDragState({ type: 'space', folderId: folder.id, spaceId: space.id, index })
                 }}
                 onDragOver={(e) => {
-                  if (ctx.dragState?.type === 'space' && ctx.dragState.folderId === folder.id) {
+                  // Accept a space drag from this or any other folder.
+                  if (ctx.dragState?.type === 'space') {
                     e.preventDefault()
                     e.stopPropagation()
                     ctx.setDropSpace({ folderId: folder.id, index })
                   }
                 }}
                 onDrop={(e) => {
-                  if (
-                    ctx.dragState?.type === 'space' &&
-                    ctx.dragState.folderId === folder.id &&
-                    ctx.dragState.index !== index
-                  ) {
+                  const drag = ctx.dragState
+                  if (drag?.type === 'space') {
                     e.stopPropagation()
-                    ctx.onMoveSpace(folder.id, ctx.dragState.index, index)
+                    if (drag.folderId === folder.id) {
+                      if (drag.index !== index) ctx.onMoveSpace(folder.id, drag.index, index)
+                    } else {
+                      // Cross-folder: drop it into this folder at this position.
+                      ctx.onMoveSpaceToFolder(drag.folderId, drag.spaceId, folder.id, index)
+                    }
                   }
                   ctx.setDragState(null)
                   ctx.setDropSpace(null)
@@ -366,6 +381,7 @@ interface SpaceSidebarProps {
   onRenameSpace: (folderId: string, spaceId: string, name: string) => void
   onToggleSpaceActive: (folderId: string, spaceId: string) => void
   onMoveSpace: (folderId: string, from: number, to: number) => void
+  onMoveSpaceToFolder: (fromFolderId: string, spaceId: string, toFolderId: string, index: number) => void
   onExport: () => void
   onImport: () => void
 }
@@ -390,6 +406,7 @@ export function SpaceSidebar({
   onRenameSpace,
   onToggleSpaceActive,
   onMoveSpace,
+  onMoveSpaceToFolder,
   onExport,
   onImport,
 }: SpaceSidebarProps) {
@@ -468,6 +485,7 @@ export function SpaceSidebar({
     onRenameSpace,
     onToggleSpaceActive,
     onMoveSpace,
+    onMoveSpaceToFolder,
     rootCount: folders.length,
   }
 
