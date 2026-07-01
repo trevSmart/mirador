@@ -75,17 +75,20 @@ interface SpaceSidebarProps {
   onRemoveSite: (id: string) => void
   onRenameSite: (id: string, name: string) => void
   onSetSiteLogo: (id: string, dataUrl: string | null) => void
+  onToggleSiteActive: (id: string) => void
   logoError: string | null
   onLogoError: (msg: string) => void
   onSelectPlace: (id: string) => void
   onAddPlace: () => void
   onRemovePlace: (id: string) => void
   onRenamePlace: (id: string, name: string) => void
+  onTogglePlaceActive: (id: string) => void
   onSelectSpace: (placeId: string, index: number) => void
   onAddSpace: (placeId: string) => void
   onRemoveSpace: (placeId: string, index: number) => void
   onDuplicateSpace: (placeId: string, index: number) => void
   onRenameSpace: (placeId: string, index: number, name: string) => void
+  onToggleSpaceActive: (placeId: string, index: number) => void
   onReorderSpace: (placeId: string, from: number, to: number) => void
   onExport: () => void
   onImport: () => void
@@ -101,17 +104,20 @@ export function SpaceSidebar({
   onRemoveSite,
   onRenameSite,
   onSetSiteLogo,
+  onToggleSiteActive,
   logoError,
   onLogoError,
   onSelectPlace,
   onAddPlace,
   onRemovePlace,
   onRenamePlace,
+  onTogglePlaceActive,
   onSelectSpace,
   onAddSpace,
   onRemoveSpace,
   onDuplicateSpace,
   onRenameSpace,
+  onToggleSpaceActive,
   onReorderSpace,
   onExport,
   onImport,
@@ -213,7 +219,11 @@ export function SpaceSidebar({
 
             return (
               <div key={site.id} role="none">
-                <div className="fe-tree__site" role="treeitem" aria-level={1}>
+                <div
+                  className={`fe-tree__site${site.active ? '' : ' is-inactive'}`}
+                  role="treeitem"
+                  aria-level={1}
+                >
                   <button
                     type="button"
                     className="fe-tree__chevron"
@@ -270,6 +280,15 @@ export function SpaceSidebar({
                   <button
                     type="button"
                     className="fe-mini-btn"
+                    aria-pressed={site.active}
+                    title={site.active ? 'Site actiu — clic per amagar-lo a les vistes' : 'Site inactiu — clic per mostrar-lo'}
+                    onClick={() => onToggleSiteActive(site.id)}
+                  >
+                    {site.active ? '◉' : '○'}
+                  </button>
+                  <button
+                    type="button"
+                    className="fe-mini-btn"
                     disabled={sites.length <= 1}
                     onClick={() => {
                       if (window.confirm(`Vols eliminar el site "${site.name}"?`)) {
@@ -297,6 +316,7 @@ export function SpaceSidebar({
                               'fe-tree__place',
                               isExpanded ? 'fe-tree__place--expanded' : '',
                               isActivePlace ? 'fe-tree__place--active' : '',
+                              place.active ? '' : 'is-inactive',
                             ]
                               .filter(Boolean)
                               .join(' ')}
@@ -343,6 +363,18 @@ export function SpaceSidebar({
                             <button
                               type="button"
                               className="fe-mini-btn"
+                              aria-pressed={place.active}
+                              title={place.active ? 'Lloc actiu — clic per amagar-lo a les vistes' : 'Lloc inactiu — clic per mostrar-lo'}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onTogglePlaceActive(place.id)
+                              }}
+                            >
+                              {place.active ? '◉' : '○'}
+                            </button>
+                            <button
+                              type="button"
+                              className="fe-mini-btn"
                               title="Elimina el lloc"
                               disabled={site.places.length <= 1}
                               onClick={(e) => {
@@ -375,6 +407,7 @@ export function SpaceSidebar({
                                       'fe-space',
                                       isActiveSpace ? 'fe-space--on' : '',
                                       isDropTarget ? 'fe-space--drop' : '',
+                                      space.active ? '' : 'is-inactive',
                                     ]
                                       .filter(Boolean)
                                       .join(' ')}
@@ -430,6 +463,18 @@ export function SpaceSidebar({
                                         <path d={CLONE_ICON_PATH} />
                                       </svg>
                                     </ButtonIcon>
+                                    <button
+                                      type="button"
+                                      className="fe-mini-btn"
+                                      aria-pressed={space.active}
+                                      title={space.active ? 'Planta activa — clic per amagar-la a les vistes' : 'Planta inactiva — clic per mostrar-la'}
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        onToggleSpaceActive(place.id, index)
+                                      }}
+                                    >
+                                      {space.active ? '◉' : '○'}
+                                    </button>
                                     <button
                                       type="button"
                                       className="fe-mini-btn"

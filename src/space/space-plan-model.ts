@@ -27,6 +27,12 @@ const EDGE_DELTA: Record<Edge, [number, number]> = {
   O: [-1, 0],
 }
 
+/** Read an `active` flag from untrusted input: only an explicit `false` turns it
+    off, so legacy records (no flag) and new records both default to active. */
+function activeFlag(value: unknown): boolean {
+  return value !== false
+}
+
 let idCounter = 0
 
 export function makeId(prefix: string): string {
@@ -101,6 +107,7 @@ export function seedSpace(name: string): Space {
     openings: [],
     dividers: [],
     dir: 0,
+    active: true,
   }
 }
 
@@ -113,12 +120,13 @@ export function cloneSpace(space: Space, name: string): Space {
     openings: space.openings.map((opening) => ({ ...opening })),
     dividers: space.dividers.map((divider) => ({ ...divider })),
     dir: space.dir,
+    active: space.active,
   }
 }
 
 export function defaultSpacePlan(): SpacePlanData {
-  const place: Place = { id: makeId('place'), name: 'Lloc 1', spaces: [seedSpace('Planta 1')] }
-  const site: Site = { id: makeId('site'), name: 'Site 1', image: null, places: [place] }
+  const place: Place = { id: makeId('place'), name: 'Lloc 1', spaces: [seedSpace('Planta 1')], active: true }
+  const site: Site = { id: makeId('site'), name: 'Site 1', image: null, places: [place], active: true }
   return { v: SPACE_SCHEMA_VERSION, activeSiteId: site.id, activePlaceId: place.id, sites: [site] }
 }
 
@@ -360,6 +368,7 @@ function sanitizeSpace(raw: unknown): Space {
     openings,
     dividers,
     dir,
+    active: activeFlag(source.active),
   }
 }
 
@@ -373,6 +382,58 @@ function sanitizePlace(raw: unknown): Place | null {
     id: typeof place.id === 'string' && place.id ? place.id : makeId('place'),
     name: typeof place.name === 'string' && place.name.trim() ? place.name.trim().slice(0, 40) : 'Lloc',
     spaces,
+    active: activeFlag(place.active),
+  }
+}
+
+/** Stable id for the synthetic site when upgrading an Apex v2 wire plan (flat
+    `places` with no `sites`). Keeps `activeSiteId` stable across reloads. */
+export const LEGACY_WIRE_SITE_ID = 'legacy-site'
+
+/** Wire format the Apex REST handler reads/writes today (schema v2, flat places). */
+export interface WireSpacePlanV2 {
+  v: 2
+  activePlaceId: string | null
+  places: Place[]
+}
+
+/** Accept a v3 plan (`sites`) or the v2 Apex wire shape (`places` at root). */
+export function parseStoredSpacePlan(raw: unknown): SpacePlanData | null {
+  if (!raw || typeof raw !== 'object') return null
+  const data = raw as Record<string, unknown>
+
+  if (data.v === SPACE_SCHEMA_VERSION && Array.isArray(data.sites)) {
+    return sanitizeSpacePlan(data)
+  }
+
+  if (Array.isArray(data.places)) {
+    const places = data.places
+      .map((place) => sanitizePlace(place))
+      .filter((place): place is Place => place !== null)
+    if (places.length === 0) return null
+    const activePlaceId =
+      typeof data.activePlaceId === 'string' && places.some((p) => p.id === data.activePlaceId)
+        ? data.activePlaceId
+        : places[0].id
+    return sanitizeSpacePlan({
+      v: SPACE_SCHEMA_VERSION,
+      activeSiteId: LEGACY_WIRE_SITE_ID,
+      activePlaceId,
+      sites: [{ id: LEGACY_WIRE_SITE_ID, name: 'Site 1', image: null, places, active: true }],
+    })
+  }
+
+  return null
+}
+
+/** Flatten a v3 plan to the v2 wire shape the Apex service persists today. Site
+    names/logos are not stored server-side until Site__c exists. */
+export function toWireSpacePlan(data: SpacePlanData): WireSpacePlanV2 {
+  const clean = sanitizeSpacePlan(data) ?? data
+  return {
+    v: 2,
+    activePlaceId: clean.activePlaceId,
+    places: clean.sites.flatMap((site) => site.places),
   }
 }
 
@@ -395,6 +456,7 @@ export function sanitizeSpacePlan(raw: unknown): SpacePlanData | null {
       name: typeof site.name === 'string' && site.name.trim() ? site.name.trim().slice(0, 40) : 'Site',
       image: sanitizeImage(site.image),
       places,
+      active: activeFlag(site.active),
     })
   }
 
@@ -438,13 +500,35 @@ export function prepareImportedSites(raw: unknown, existingNames: string[]): Sit
       id: makeId('site'),
       name,
       image: site.image,
+      active: site.active,
       places: site.places.map((place) => ({
         id: makeId('place'),
         name: place.name,
+        active: place.active,
         spaces: place.spaces.map((space) => ({ ...space, id: makeId('space') })),
       })),
     }
   })
+}
+
+/* ── Live-view visibility ─────────────────────────────────────────────────
+   Home and the space view hide anything inactive or hanging off something
+   inactive: a place inside an inactive site is hidden, a space inside an
+   inactive place/site is hidden. The editor, by contrast, always shows
+   everything so inactive items can be toggled back on. */
+
+/** Active spaces of a place. */
+export function visibleSpaces(place: Place): Space[] {
+  return place.spaces.filter((space) => space.active)
+}
+
+/** Places shown in live views: active places of active sites that still have at
+    least one active space to render. */
+export function visiblePlaces(data: SpacePlanData): Place[] {
+  return data.sites
+    .filter((site) => site.active)
+    .flatMap((site) => site.places)
+    .filter((place) => place.active && visibleSpaces(place).length > 0)
 }
 
 /** Stable signature used to detect unsaved changes. */

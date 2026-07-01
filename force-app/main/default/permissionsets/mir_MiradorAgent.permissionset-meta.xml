@@ -79,12 +79,22 @@
         <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
+        <field>Place__c.Active__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
         <field>Place__c.AppId__c</field>
         <readable>true</readable>
         <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Place__c.SchemaVersion__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Space__c.Active__c</field>
         <readable>true</readable>
         <editable>true</editable>
     </fieldPermissions>

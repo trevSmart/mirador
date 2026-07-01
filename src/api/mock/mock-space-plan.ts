@@ -61,6 +61,7 @@ function buildSpace(
     openings: roomOpenings(originC, originR, openingDefs),
     dividers: [],
     dir: 0,
+    active: true,
   }
 }
 
@@ -163,9 +164,10 @@ export function createMockSpacePlan(): SpacePlanData {
     id: MOCK_PLACE_ID,
     name: 'Contact Center Barcelona',
     spaces: [vendes, atencio, suport],
+    active: true,
   }
 
-  const site: Site = { id: MOCK_SITE_ID, name: 'Seu Central', image: null, places: [place] }
+  const site: Site = { id: MOCK_SITE_ID, name: 'Seu Central', image: null, places: [place], active: true }
   return {
     v: SPACE_SCHEMA_VERSION,
     activeSiteId: site.id,

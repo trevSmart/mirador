@@ -161,9 +161,9 @@ function pickWeightedQueue(stateRef: MockLiveState, rand: () => number): string 
   let roll = rand() * total
   for (let i = 0; i < MOCK_QUEUE_KEYS.length; i++) {
     roll -= weights[i]
-    if (roll <= 0) return MOCK_QUEUE[MOCK_QUEUE_KEYS[i]!]
+    if (roll <= 0) return MOCK_QUEUE[MOCK_QUEUE_KEYS[i]]
   }
-  return MOCK_QUEUE[MOCK_QUEUE_KEYS[MOCK_QUEUE_KEYS.length - 1]!]
+  return MOCK_QUEUE[MOCK_QUEUE_KEYS[MOCK_QUEUE_KEYS.length - 1]]
 }
 
 function syncAgentChannels(agent: Agent): void {

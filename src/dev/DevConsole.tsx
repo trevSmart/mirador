@@ -235,8 +235,8 @@ export function DevConsole() {
      dispara una animació espúria pel simple fet de minimitzar — només quan
      arriba realment una entrada nova. Inicialitzat a `undefined` per distingir
      el primer cop (que no anima) d'un canvi real d'id. */
-  const [enteringId, setEnteringId] = useState<string | null>(null)
-  const lastPreviewIdRef = useRef<string | null | undefined>(undefined)
+  const [enteringId, setEnteringId] = useState<number | null>(null)
+  const lastPreviewIdRef = useRef<number | null | undefined>(undefined)
   useLayoutEffect(() => {
     if (!minimized) return
     if (

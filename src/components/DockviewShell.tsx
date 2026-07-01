@@ -119,7 +119,7 @@ export function DockviewShell({ ref }: DockviewShellProps) {
         ensureHomePanel(event.api)
         syncOpenTypes(event.api)
       }),
-      event.api.onDidActivePanelChange((panel) => {
+      event.api.onDidActivePanelChange(({ panel }) => {
         if (panel) devLog.action('panel:activate', panel.title ?? panel.id)
       }),
     ]

@@ -1,11 +1,12 @@
 /* Space editor — persistence abstraction.
    Two backends sit behind one seam so consumers never branch on data source:
 
-   - Mock mode: an in-memory store seeded from `createMockSpacePlan()`, so demo
-     spaces stay separate from a supervisor's real data.
+   - Mock mode: localStorage (with in-memory cache), seeded from
+     `createMockSpacePlan()` until the first explicit save.
    - Real mode: a Salesforce-backed store. The plan round-trips through the
      MiradorClient (`/space-plan` GET/PUT), which maps to the Place__c / Space__c
-     custom objects server-side. The async API was in place from day one for this.
+     custom objects server-side. v3 app data is flattened to the v2 wire shape on
+     save and re-wrapped into a single site on load until Site__c exists.
 
    The previous localStorage backend is gone for real mode: the plan now lives in
    the org so it follows the user across browsers and devices. (Local-first caching
@@ -14,8 +15,10 @@
 import type { MiradorClient } from '../api/mirador-client'
 import { createMockSpacePlan } from '../api/mock/mock-space-plan'
 import { devLog } from '../dev/dev-log'
-import { sanitizeSpacePlan } from './space-plan-model'
+import { parseStoredSpacePlan, sanitizeSpacePlan, toWireSpacePlan } from './space-plan-model'
 import type { SpacePlanData } from './types'
+
+const MOCK_STORAGE_KEY = 'mirador.spacePlan.v3'
 
 /* Lightweight pub/sub so the live supervision view reloads the moment the editor
    saves, within the same app instance. */
@@ -31,23 +34,53 @@ function notify(): void {
   for (const listener of listeners) listener()
 }
 
+function readMockFromStorage(): SpacePlanData | null {
+  try {
+    const raw = localStorage.getItem(MOCK_STORAGE_KEY)
+    if (!raw) return null
+    return parseStoredSpacePlan(JSON.parse(raw))
+  } catch {
+    return null
+  }
+}
+
+function writeMockToStorage(data: SpacePlanData): void {
+  try {
+    localStorage.setItem(MOCK_STORAGE_KEY, JSON.stringify(data))
+  } catch {
+    /* quota exceeded or storage unavailable — in-memory cache still holds the plan */
+  }
+}
+
 /* ---------------------------------------------------------------- mock ---- */
 
 class MockSpacePlanRepository {
-  private cache: SpacePlanData = createMockSpacePlan()
+  private cache: SpacePlanData | null = null
+
+  private resolved(): SpacePlanData {
+    if (this.cache) return this.cache
+    this.cache = readMockFromStorage() ?? createMockSpacePlan()
+    return this.cache
+  }
 
   load(): Promise<SpacePlanData | null> {
-    return Promise.resolve(structuredClone(this.cache))
+    return Promise.resolve(structuredClone(this.resolved()))
   }
 
   save(data: SpacePlanData): Promise<void> {
     this.cache = sanitizeSpacePlan(data) ?? data
+    writeMockToStorage(this.cache)
     notify()
     return Promise.resolve()
   }
 
   reset(): void {
     this.cache = createMockSpacePlan()
+    try {
+      localStorage.removeItem(MOCK_STORAGE_KEY)
+    } catch {
+      /* ignore */
+    }
     notify()
   }
 }
@@ -72,7 +105,7 @@ export function resetMockSpacePlan(): void {
 async function loadFromOrg(client: MiradorClient): Promise<SpacePlanData | null> {
   try {
     const stored = await client.getSpacePlan()
-    return stored ? sanitizeSpacePlan(stored) : null
+    return stored ? parseStoredSpacePlan(stored) : null
   } catch (error) {
     devLog.api('GET', '/space-plan', `failed: ${String(error)}`)
     return null
@@ -81,7 +114,7 @@ async function loadFromOrg(client: MiradorClient): Promise<SpacePlanData | null>
 
 async function saveToOrg(client: MiradorClient, data: SpacePlanData): Promise<void> {
   const clean = sanitizeSpacePlan(data) ?? data
-  await client.saveSpacePlan(clean)
+  await client.saveSpacePlan(toWireSpacePlan(clean))
   notify()
 }
 

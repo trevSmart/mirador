@@ -9,7 +9,7 @@ import { MOCK_QUEUE_ID_LIST } from '../api/mock/mock-ids'
 
 function parseHue(color: string): number {
   const m = color.match(/oklch\([\d.]+\s+[\d.]+\s+([\d.]+)/)
-  return m ? parseFloat(m[1]!) : 0
+  return m ? parseFloat(m[1]) : 0
 }
 
 describe('colorFromRecordId', () => {
