@@ -2130,12 +2130,15 @@ textarea,
 }
 
 /* The aside lives on the left, the canvas on the right, with a draggable
-   resizer in between that drives the left column via --fe-split. */
+   resizer in between that drives the left column via --fe-split. Both columns
+   are floating cards on the panel wash (matching the home) — the resizer is the
+   transparent gap between them, so there's no hard dividing border. */
 .space-editor {
   display: grid;
   grid-template-columns: minmax(0, var(--fe-split, 0.43fr)) auto minmax(0, 1fr);
   height: 100%;
   min-height: 0;
+  padding: var(--sp-5) var(--sp-6) var(--sp-6);
 }
 
 .space-editor__main {
@@ -2145,6 +2148,12 @@ textarea,
   /* Without min-height:0 a column flex item refuses to shrink below its
      content, so the canvas grows instead of scrolling. */
   min-height: 0;
+  /* Card shell shared with .home-space: white card under the working surface. */
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--surface-card);
+  box-shadow: var(--shadow);
+  overflow: hidden;
 }
 
 .space-editor__save-error {
@@ -2162,8 +2171,6 @@ textarea,
   width: var(--sp-6);
   cursor: col-resize;
   touch-action: none;
-  background: var(--surface-raised);
-  border-right: 1px solid var(--border-subtle);
 }
 
 .space-editor__resizer-grip {
@@ -2195,7 +2202,13 @@ textarea,
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  background: var(--surface-raised);
+  /* Card shell shared with .home-space, so the left column reads as a floating
+     container with margins rather than a stark compartment. */
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--surface-card);
+  box-shadow: var(--shadow);
+  overflow: hidden;
 }
 
 .space-editor__aside-scroll {
@@ -2248,6 +2261,9 @@ textarea,
 @media (max-width: 900px) {
   .space-editor {
     grid-template-columns: 1fr;
+    /* The resizer normally supplies the gap between the two cards; stacked, it's
+       hidden, so restore the separation with a row gap. */
+    gap: var(--sp-6);
   }
 
   .space-editor__resizer {
