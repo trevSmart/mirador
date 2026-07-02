@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Agent, ChannelKey, PresenceStatus } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { useSalesforcePhoto } from '../hooks/useSalesforcePhoto'
@@ -23,14 +24,16 @@ interface AgentAvatarProps {
 
 export function AgentAvatar({ id, name, photo = null }: AgentAvatarProps) {
   const photoSrc = useSalesforcePhoto(photo)
+  const [failedSrc, setFailedSrc] = useState<string | null>(null)
 
-  if (photoSrc) {
+  if (photoSrc && photoSrc !== failedSrc) {
     return (
       <img
         className="agent-avatar agent-avatar--photo"
         src={photoSrc}
         alt=""
         aria-hidden="true"
+        onError={() => setFailedSrc(photoSrc)}
       />
     )
   }

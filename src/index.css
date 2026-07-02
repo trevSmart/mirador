@@ -1461,8 +1461,12 @@ textarea,
   width: 3px;
   height: 100%;
   border-radius: var(--r-pill);
-  background: var(--border-subtle);
+  background: transparent;
   transition: background var(--dur-base) var(--ease);
+}
+
+.home-resizer:hover .home-resizer__grip {
+  background: var(--border-subtle);
 }
 
 .home-resizer:active .home-resizer__grip,
@@ -2166,8 +2170,12 @@ textarea,
   width: 3px;
   height: 100%;
   border-radius: var(--r-pill);
-  background: var(--border-subtle);
+  background: transparent;
   transition: background var(--dur-base) var(--ease);
+}
+
+.space-editor__resizer:hover .space-editor__resizer-grip {
+  background: var(--border-subtle);
 }
 
 .space-editor__resizer:active .space-editor__resizer-grip,
