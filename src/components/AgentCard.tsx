@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Agent, PresenceStatus } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { colorFromRecordId, textColorFromRecordId } from '../utils/color-from-string'
@@ -14,11 +15,18 @@ const STATUS_COLOR: Record<PresenceStatus, string> = {
 
 function AgentCardAvatar({ id, name, photo, color }: { id: string; name: string; photo: string | null; color: string }) {
   const photoSrc = useSalesforcePhoto(photo)
+  const [failedSrc, setFailedSrc] = useState<string | null>(null)
 
   return (
     <div className="agent-card__avatar-wrap">
-      {photoSrc ? (
-        <img className="agent-card__avatar agent-card__avatar--photo" src={photoSrc} alt="" aria-hidden="true" />
+      {photoSrc && photoSrc !== failedSrc ? (
+        <img
+          className="agent-card__avatar agent-card__avatar--photo"
+          src={photoSrc}
+          alt=""
+          aria-hidden="true"
+          onError={() => setFailedSrc(photoSrc)}
+        />
       ) : (
         <span
           className="agent-card__avatar"
