@@ -126,10 +126,13 @@ function menuIcon(sprite: 'utility' | 'standard', symbol: string) {
   return <SfIcon sprite={sprite} symbol={symbol} size={16} tile={false} />
 }
 
-function FolderNode({ folder, depth, ctx }: { folder: Folder; depth: number; ctx: TreeCtx }) {
+function FolderNode({ folder, depth, ancestorInactive = false, ctx }: { folder: Folder; depth: number; ancestorInactive?: boolean; ctx: TreeCtx }) {
   const isExpanded = ctx.expandedIds.has(folder.id)
   const isActive = folder.id === ctx.activeFolderId
   const isFolderDropTarget = ctx.dropFolderId === folder.id && ctx.dragState?.type === 'folder' && ctx.dragState.id !== folder.id
+  // Inactivity flows downhill: a node dims if it is inactive itself OR any
+  // ancestor folder is. The per-node toggle still reflects the node's own flag.
+  const inactive = ancestorInactive || !folder.active
 
   const folderActions: ActionMenuItem[] = [
     {
@@ -182,7 +185,7 @@ function FolderNode({ folder, depth, ctx }: { folder: Folder; depth: number; ctx
           'fe-tree__place',
           isExpanded ? 'fe-tree__place--expanded' : '',
           isActive ? 'fe-tree__place--active' : '',
-          folder.active ? '' : 'is-inactive',
+          inactive ? 'is-inactive' : '',
           isFolderDropTarget ? 'fe-tree__place--drop' : '',
         ].filter(Boolean).join(' ')}
         draggable
@@ -256,7 +259,7 @@ function FolderNode({ folder, depth, ctx }: { folder: Folder; depth: number; ctx
       {isExpanded ? (
         <div className="fe-tree__children" role="group">
           {folder.folders.map((child) => (
-            <FolderNode key={child.id} folder={child} depth={depth + 1} ctx={ctx} />
+            <FolderNode key={child.id} folder={child} depth={depth + 1} ancestorInactive={inactive} ctx={ctx} />
           ))}
           {folder.spaces.map((space, index) => {
             const isActiveSpace = space.id === ctx.activeSpaceId
@@ -275,7 +278,7 @@ function FolderNode({ folder, depth, ctx }: { folder: Folder; depth: number; ctx
                   'fe-space',
                   isActiveSpace ? 'fe-space--on' : '',
                   isDropTarget ? 'fe-space--drop' : '',
-                  space.active ? '' : 'is-inactive',
+                  inactive || !space.active ? 'is-inactive' : '',
                 ].filter(Boolean).join(' ')}
                 draggable
                 onDragStart={(e) => {
