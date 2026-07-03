@@ -485,9 +485,12 @@ interface SpaceView3DProps {
   showAvatars: boolean
   animations: boolean
   onSelectAgent: (agent: Agent) => void
+  /** Show the agent tooltip on seat hover. Off for display-only surfaces
+      (sidebar thumbnails, the editor preview). Defaults to true. */
+  showTooltip?: boolean
 }
 
-export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animations, onSelectAgent }: SpaceView3DProps) {
+export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animations, onSelectAgent, showTooltip = true }: SpaceView3DProps) {
   const [tooltip, setTooltip] = useState<{ agent: Agent; x: number; y: number } | null>(null)
   const [tooltipOpen, setTooltipOpen] = useState(false)
   // Which seat is hovered, so its avatar can be lifted above every other one
@@ -567,9 +570,10 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
   }, [])
 
   const tipAt = useCallback((agent: Agent, clientX: number, clientY: number) => {
+    if (!showTooltip) return
     setTooltip({ agent, x: clientX + 14, y: clientY + 14 })
     setTooltipOpen(true)
-  }, [])
+  }, [showTooltip])
   const handleSeatOver = useCallback(
     (agent: Agent, e: ReactPointerEvent<SVGGElement>) => {
       setHoveredId(agent.id)

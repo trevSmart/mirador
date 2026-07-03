@@ -260,6 +260,7 @@ export function GlobalSearch() {
   const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const heightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const justOpenedRef = useRef(false)
 
   const normalizedQuery = query.trim().toLowerCase()
   // Deferred: search runs at lower priority so keystrokes never block the input.
@@ -381,6 +382,13 @@ export function GlobalSearch() {
     if (!open) return
     const prevHeight = bodyRef.current?.offsetHeight ?? 0
     syncContentHeight(prevHeight)
+    // Reset scroll to the top only on the open transition, after syncContentHeight
+    // has re-applied `has-scroll` (setting scrollTop while overflow is hidden is a
+    // no-op and the browser would otherwise restore the previous position).
+    if (justOpenedRef.current && bodyRef.current) {
+      bodyRef.current.scrollTop = 0
+      justOpenedRef.current = false
+    }
   }, [open, deferredQuery, recentsVersion, searchResults, activeIdx, syncContentHeight])
 
   const closePanel = useCallback((clear = false) => {
@@ -414,6 +422,7 @@ export function GlobalSearch() {
 
   const openPanel = useCallback(() => {
     clearTimeout(blurTimerRef.current ?? undefined)
+    justOpenedRef.current = true
     setOpen(true)
     inputRef.current?.setAttribute('aria-expanded', 'true')
   }, [])

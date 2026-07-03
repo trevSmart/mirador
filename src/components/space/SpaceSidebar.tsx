@@ -1,7 +1,9 @@
 import { useCallback, useRef, useState } from 'react'
+import type { Agent, Queue } from '../../api/types'
 import type { Folder } from '../../space/types'
-import { ButtonIcon } from '../ds/ButtonIcon'
+import { ActionMenu, type ActionMenuItem } from '../ds/ActionMenu'
 import { SfIcon } from '../ds/SfIcon'
+import { SpacePlanThumb } from './SpacePlanThumb'
 import { fileToLogoDataUrl } from '../../space/site-logo'
 
 // Font Awesome "clone" (regular), viewBox 0 0 640 640.
@@ -87,6 +89,8 @@ type DragState =
 /** Everything a FolderNode needs, bundled so the recursive component stays
     module-level (avoids remounting inputs on every parent render). */
 interface TreeCtx {
+  agentsById: Map<string, Agent>
+  queuesById: Map<string, Queue>
   activeFolderId: string | null
   activeSpaceId: string | null
   expandedIds: Set<string>
@@ -117,10 +121,56 @@ interface TreeCtx {
   rootCount: number
 }
 
+/** Small monochrome glyph for a menu item. */
+function menuIcon(sprite: 'utility' | 'standard', symbol: string) {
+  return <SfIcon sprite={sprite} symbol={symbol} size={16} tile={false} />
+}
+
 function FolderNode({ folder, depth, ctx }: { folder: Folder; depth: number; ctx: TreeCtx }) {
   const isExpanded = ctx.expandedIds.has(folder.id)
   const isActive = folder.id === ctx.activeFolderId
   const isFolderDropTarget = ctx.dropFolderId === folder.id && ctx.dragState?.type === 'folder' && ctx.dragState.id !== folder.id
+
+  const folderActions: ActionMenuItem[] = [
+    {
+      key: 'image',
+      label: 'Carrega una imatge',
+      icon: menuIcon('utility', 'image'),
+      onSelect: () => ctx.pickImage(folder.id),
+    },
+    ...(folder.image
+      ? [{
+          key: 'clear-image',
+          label: 'Treu la imatge',
+          icon: menuIcon('utility', 'clear'),
+          onSelect: () => ctx.onSetFolderImage(folder.id, null),
+        } satisfies ActionMenuItem]
+      : []),
+    {
+      key: 'add-folder',
+      label: 'Afegeix una subcarpeta',
+      icon: menuIcon('utility', 'open_folder'),
+      onSelect: () => { ctx.expandFolder(folder.id); ctx.onAddFolder(folder.id) },
+    },
+    {
+      key: 'add-space',
+      label: 'Afegeix una planta',
+      icon: menuIcon('standard', 'business_unit'),
+      onSelect: () => { ctx.expandFolder(folder.id); ctx.onAddSpace(folder.id) },
+    },
+    {
+      key: 'delete',
+      label: 'Elimina la carpeta',
+      icon: menuIcon('utility', 'delete'),
+      danger: true,
+      disabled: depth === 1 && ctx.rootCount <= 1,
+      onSelect: () => {
+        if (window.confirm(`Vols eliminar la carpeta "${folder.name}"?`)) {
+          ctx.onRemoveFolder(folder.id)
+        }
+      },
+    },
+  ]
 
   return (
     <div role="none">
@@ -191,41 +241,6 @@ function FolderNode({ folder, depth, ctx }: { folder: Folder; depth: number; ctx
           onCommit={(name) => ctx.onRenameFolder(folder.id, name)}
         />
         {folder.spaces.length > 0 ? <span className="fe-place__count">{folder.spaces.length}</span> : null}
-        <ButtonIcon
-          className="fe-mini-btn"
-          icon="utility:image"
-          size={14}
-          title="Carrega una imatge"
-          aria-label="Carrega una imatge"
-          onClick={(e) => { e.stopPropagation(); ctx.pickImage(folder.id) }}
-        />
-        {folder.image ? (
-          <ButtonIcon
-            className="fe-mini-btn"
-            icon="utility:clear"
-            size={14}
-            title="Treu la imatge"
-            aria-label="Treu la imatge"
-            onClick={(e) => { e.stopPropagation(); ctx.onSetFolderImage(folder.id, null) }}
-          />
-        ) : null}
-        <ButtonIcon
-          className="fe-mini-btn"
-          icon="utility:open_folder"
-          size={14}
-          title="Afegeix una subcarpeta"
-          aria-label="Afegeix una subcarpeta"
-          onClick={(e) => { e.stopPropagation(); ctx.expandFolder(folder.id); ctx.onAddFolder(folder.id) }}
-        />
-        <ButtonIcon
-          className="fe-mini-btn"
-          icon="standard:business_unit"
-          tile={false}
-          size={14}
-          title="Afegeix una planta"
-          aria-label="Afegeix una planta"
-          onClick={(e) => { e.stopPropagation(); ctx.expandFolder(folder.id); ctx.onAddSpace(folder.id) }}
-        />
         <button
           type="button"
           className="fe-mini-btn"
@@ -235,20 +250,7 @@ function FolderNode({ folder, depth, ctx }: { folder: Folder; depth: number; ctx
         >
           {folder.active ? '◉' : '○'}
         </button>
-        <ButtonIcon
-          className="fe-mini-btn"
-          icon="utility:delete"
-          size={14}
-          title="Elimina la carpeta"
-          aria-label="Elimina la carpeta"
-          disabled={depth === 1 && ctx.rootCount <= 1}
-          onClick={(e) => {
-            e.stopPropagation()
-            if (window.confirm(`Vols eliminar la carpeta "${folder.name}"?`)) {
-              ctx.onRemoveFolder(folder.id)
-            }
-          }}
-        />
+        <ActionMenu label="Accions de la carpeta" items={folderActions} />
       </div>
 
       {isExpanded ? (
@@ -309,6 +311,7 @@ function FolderNode({ folder, depth, ctx }: { folder: Folder; depth: number; ctx
                 onClick={() => ctx.onSelectSpace(folder.id, space.id)}
               >
                 <span className="fe-space__grip" aria-hidden="true">⠿</span>
+                <SpacePlanThumb space={space} agentsById={ctx.agentsById} queuesById={ctx.queuesById} />
                 <div className="fe-space__body">
                   <EditableLabel
                     className="fe-space__name"
@@ -320,17 +323,6 @@ function FolderNode({ folder, depth, ctx }: { folder: Folder; depth: number; ctx
                     {space.seats.filter((s) => s.agentId).length} agents
                   </span>
                 </div>
-                <ButtonIcon
-                  className="fe-mini-btn"
-                  title="Clona la planta"
-                  aria-label="Clona la planta"
-                  size={14}
-                  onClick={(e) => { e.stopPropagation(); ctx.onDuplicateSpace(folder.id, space.id) }}
-                >
-                  <svg width={14} height={14} viewBox="0 0 640 640" aria-hidden="true" fill="currentColor">
-                    <path d={CLONE_ICON_PATH} />
-                  </svg>
-                </ButtonIcon>
                 <button
                   type="button"
                   className="fe-mini-btn"
@@ -340,18 +332,31 @@ function FolderNode({ folder, depth, ctx }: { folder: Folder; depth: number; ctx
                 >
                   {space.active ? '◉' : '○'}
                 </button>
-                <ButtonIcon
-                  className="fe-mini-btn"
-                  icon="utility:delete"
-                  size={14}
-                  title="Elimina la planta"
-                  aria-label="Elimina la planta"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    if (window.confirm(`Vols eliminar la planta "${space.name}"?`)) {
-                      ctx.onRemoveSpace(folder.id, space.id)
-                    }
-                  }}
+                <ActionMenu
+                  label="Accions de la planta"
+                  items={[
+                    {
+                      key: 'duplicate',
+                      label: 'Clona la planta',
+                      icon: (
+                        <svg width={16} height={16} viewBox="0 0 640 640" aria-hidden="true" fill="currentColor">
+                          <path d={CLONE_ICON_PATH} />
+                        </svg>
+                      ),
+                      onSelect: () => ctx.onDuplicateSpace(folder.id, space.id),
+                    },
+                    {
+                      key: 'delete',
+                      label: 'Elimina la planta',
+                      icon: menuIcon('utility', 'delete'),
+                      danger: true,
+                      onSelect: () => {
+                        if (window.confirm(`Vols eliminar la planta "${space.name}"?`)) {
+                          ctx.onRemoveSpace(folder.id, space.id)
+                        }
+                      },
+                    },
+                  ]}
                 />
               </div>
             )
@@ -364,6 +369,8 @@ function FolderNode({ folder, depth, ctx }: { folder: Folder; depth: number; ctx
 
 interface SpaceSidebarProps {
   folders: Folder[]
+  agentsById: Map<string, Agent>
+  queuesById: Map<string, Queue>
   activeFolderId: string | null
   activeSpaceId: string | null
   onSelectFolder: (id: string) => void
@@ -389,6 +396,8 @@ interface SpaceSidebarProps {
 
 export function SpaceSidebar({
   folders,
+  agentsById,
+  queuesById,
   activeFolderId,
   activeSpaceId,
   onSelectFolder,
@@ -460,6 +469,8 @@ export function SpaceSidebar({
   }, [])
 
   const ctx: TreeCtx = {
+    agentsById,
+    queuesById,
     activeFolderId,
     activeSpaceId,
     expandedIds,
