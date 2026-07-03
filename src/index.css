@@ -2148,12 +2148,9 @@ textarea,
   /* Without min-height:0 a column flex item refuses to shrink below its
      content, so the canvas grows instead of scrolling. */
   min-height: 0;
-  /* Card shell shared with .home-space: white card under the working surface. */
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
-  background: var(--surface-card);
-  box-shadow: var(--shadow);
-  overflow: hidden;
+  /* Toolbar and canvas are two stacked cards; the gap mirrors the resizer's
+     width, so their separation matches the one between the two columns. */
+  gap: var(--sp-6);
 }
 
 .space-editor__save-error {
@@ -2161,6 +2158,8 @@ textarea,
   font-size: 13px;
   background: color-mix(in srgb, var(--status-alert) 12%, transparent);
   color: var(--status-alert);
+  border: 1px solid color-mix(in srgb, var(--status-alert) 24%, transparent);
+  border-radius: var(--r-md);
 }
 
 .space-editor__resizer {
@@ -2195,6 +2194,11 @@ textarea,
   overflow: auto;
   padding: var(--sp-6);
   background: var(--surface-canvas);
+  /* Card shell shared with the aside, so the canvas floats as its own container
+     below the toolbar card. */
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow);
 }
 
 .space-editor__aside {
@@ -2202,13 +2206,9 @@ textarea,
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  /* Card shell shared with .home-space, so the left column reads as a floating
-     container with margins rather than a stark compartment. */
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
-  background: var(--surface-card);
-  box-shadow: var(--shadow);
-  overflow: hidden;
+  /* Tree view and 3D preview are two stacked cards; the gap mirrors the
+     resizer's width, matching the separation used elsewhere in the editor. */
+  gap: var(--sp-6);
 }
 
 .space-editor__aside-scroll {
@@ -2218,7 +2218,11 @@ textarea,
   display: flex;
   flex-direction: column;
   gap: var(--sp-5);
-  padding: var(--sp-5);
+  /* Its own card, stacked above the preview card. */
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--surface-card);
+  box-shadow: var(--shadow);
 }
 
 .space-editor__preview {
@@ -2226,9 +2230,11 @@ textarea,
   height: 300px;
   display: flex;
   flex-direction: column;
-  border-top: 1px solid var(--border-subtle);
-  /* Same shell as .home-space: white card under the fv-canvas wash. */
+  /* Own card shell, shared with .home-space: white card under the fv-canvas wash. */
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
   background: var(--surface-card);
+  box-shadow: var(--shadow);
   overflow: hidden;
 }
 
@@ -2277,9 +2283,11 @@ textarea,
   align-items: center;
   gap: var(--sp-4);
   flex-wrap: wrap;
-  padding: var(--sp-4) var(--sp-6);
-  border-bottom: 1px solid var(--border-subtle);
-  background: var(--surface-raised);
+  /* Its own card, stacked above the canvas card (see .space-editor__main). */
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--surface-card);
+  box-shadow: var(--shadow);
 }
 
 .fe-toolbar__tools {
@@ -2536,12 +2544,12 @@ textarea,
   font-size: 10px;
 }
 
-/* Tree panel */
+/* Tree panel — the containing card (.space-editor__aside-scroll) already
+   provides the border, radius and background, so this is just a bare wrapper. */
 .fe-tree-panel {
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
-  background: var(--surface-card);
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .fe-tree-panel__head {
@@ -2558,7 +2566,18 @@ textarea,
 .fe-tree {
   display: flex;
   flex-direction: column;
+  gap: var(--sp-2);
   padding: var(--sp-2);
+}
+
+/* Each folder subtree wraps its own row plus its children in a bare
+   [role=none] div. Making that a flex column with the same gap gives the
+   row↔children boundary the same breathing room as sibling rows, so spacing
+   is uniform across the whole tree (not just between siblings). */
+.fe-tree [role='none'] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
 }
 
 .fe-tree > [role='none']:not(:last-child) {
@@ -2614,7 +2633,7 @@ textarea,
 .fe-tree__children {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--sp-2);
   padding: 0 var(--sp-1) var(--sp-2) var(--sp-6);
 }
 
@@ -2712,6 +2731,45 @@ textarea,
   color: var(--text-muted);
 }
 
+/* Per-plant miniature of the 3D render, shown before the name in the tree.
+   Decorative only (aria-hidden + pointer-events:none): the whole row handles
+   selection, so the thumb must never capture clicks or hovers. Fixed box with
+   overflow clipped; the render fits inside via max-width/height. */
+.fe-space__thumb {
+  flex: 0 0 auto;
+  width: 72px;
+  height: 44px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  /* Transparent by request: the SVG's own drop-shadow (below) separates the
+     near-white render from the light row. */
+  pointer-events: none;
+}
+
+.fe-space__thumb .fv3d-wrap {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.fe-space__thumb .fv3d-svg {
+  max-width: 100%;
+  max-height: 100%;
+  /* The render is near-white; on a transparent tile it would vanish. A tight
+     omnidirectional halo outlines every edge (like a hairline stroke), and a
+     softer offset shadow grounds the geometry so it reads at thumbnail size. */
+  filter:
+    drop-shadow(0 0 0.5px rgba(12, 10, 22, 0.55))
+    drop-shadow(0 1px 1.5px rgba(12, 10, 22, 0.22));
+}
+
+.fe-space.is-inactive .fe-space__thumb {
+  opacity: 0.5;
+}
+
 .fe-mini-btn {
   flex: 0 0 auto;
   width: 22px;
@@ -2741,6 +2799,86 @@ textarea,
 .fe-mini-btn[aria-pressed='true'],
 .fe-mini-btn[aria-pressed='true']:hover:not(:disabled) {
   color: var(--accent);
+}
+
+/* ── Node action menu (kebab → dropdown) ── */
+.fe-action-menu {
+  flex: 0 0 auto;
+  display: inline-flex;
+}
+
+.fe-action-menu__drop {
+  min-width: 220px;
+  padding: var(--sp-2);
+  border: 1px solid var(--border-subtle);
+}
+
+.fe-action-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  padding: var(--sp-2) var(--sp-3);
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  color: var(--text-mid);
+  cursor: pointer;
+  text-align: left;
+}
+
+.fe-action-menu__item:hover:not(:disabled) {
+  background: var(--surface-well);
+  color: var(--text-strong);
+}
+
+.fe-action-menu__item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.fe-action-menu__icon {
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+}
+
+.fe-action-menu__item:hover:not(:disabled) .fe-action-menu__icon {
+  color: inherit;
+}
+
+.fe-action-menu__label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.fe-action-menu__check {
+  flex: 0 0 auto;
+  font-size: 13px;
+  color: var(--text-disabled);
+}
+
+.fe-action-menu__check.is-on {
+  color: var(--accent);
+}
+
+.fe-action-menu__item--danger {
+  color: var(--status-alert);
+}
+
+.fe-action-menu__item--danger .fe-action-menu__icon {
+  color: var(--status-alert);
+}
+
+.fe-action-menu__item--danger:hover:not(:disabled),
+.fe-action-menu__item--danger:hover:not(:disabled) .fe-action-menu__icon {
+  background: var(--mi-alert-soft, rgba(224, 86, 65, 0.1));
+  color: var(--status-alert);
 }
 
 .fe-rename {

@@ -158,6 +158,8 @@ export function SpaceEditorPanel() {
           <div className="space-editor__aside-scroll" ref={asideScrollRef}>
             <SpaceSidebar
               folders={fp.folders}
+              agentsById={agentsById}
+              queuesById={queuesById}
               activeFolderId={fp.data.activeFolderId}
               activeSpaceId={fp.data.activeSpaceId}
               onSelectFolder={fp.selectFolder}
@@ -213,6 +215,7 @@ export function SpaceEditorPanel() {
                     queuesById={queuesById}
                     showAvatars
                     animations={false}
+                    showTooltip={false}
                     onSelectAgent={noop}
                   />
                 </Suspense>

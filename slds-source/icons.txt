@@ -13,6 +13,7 @@ standard#case
 standard#custom_notification
 standard#customers
 standard#email
+standard#folder
 standard#home
 standard#messaging_session
 standard#metrics
