@@ -6,7 +6,7 @@ import { colorFromRecordId } from '../../utils/color-from-string'
 import { channelLabel, formatSeconds } from '../../utils/format'
 import { resolveWorkItemIcon } from '../../utils/salesforce-object-icon'
 import { Badge, FadeValue, SfIcon } from '../ds'
-import { DetailRow, DrawerSection, EmptyHint, MiniAgentRow, Stat, StatGrid } from './parts'
+import { DetailRow, DrawerActions, DrawerSection, EmptyHint, MiniAgentRow, Stat, StatGrid } from './parts'
 
 export function QueueDetail({ queue }: { queue: Queue }) {
   const agents = useAgents()
@@ -30,6 +30,13 @@ export function QueueDetail({ queue }: { queue: Queue }) {
           </Badge>
         </div>
       </header>
+
+      <DrawerActions
+        actions={[
+          { label: 'Reassigna agents', icon: 'arrow-right', primary: true },
+          { label: 'Prioritza', icon: 'sliders' },
+        ]}
+      />
 
       <DrawerSection title="Salut de la cua">
         <StatGrid>

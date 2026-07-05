@@ -1,10 +1,43 @@
 import type { ReactNode } from 'react'
 import type { Agent } from '../../api/types'
+import { devLog } from '../../dev/dev-log'
 import { AgentAvatar } from '../AgentRow'
+import { AppIcon } from '../ds/AppIcon'
+import type { AppIconName } from '../ds/app-icon-names.generated'
+import { Button } from '../ds/Button'
 import { FadeValue } from '../ds/FadeValue'
 import { StatusBadge } from '../StatusBadge'
 
 type StatTone = 'ok' | 'watch' | 'alert'
+
+export interface DrawerAction {
+  label: string
+  icon: AppIconName
+  primary?: boolean
+  onClick?: () => void
+}
+
+/** Action row under the drawer hero: the operations a supervisor can start on
+    the object being inspected (one primary + secondaries). Actions without a
+    handler yet log a dev action so the click is at least observable. */
+export function DrawerActions({ actions }: { actions: DrawerAction[] }) {
+  if (actions.length === 0) return null
+  return (
+    <div className="dd-actions">
+      {actions.map((action) => (
+        <Button
+          key={action.label}
+          variant={action.primary ? 'primary' : 'subtle'}
+          size="sm"
+          icon={<AppIcon name={action.icon} size={15} />}
+          onClick={action.onClick ?? (() => devLog.action(`drawer:${action.label} (pendent d'implementar)`))}
+        >
+          {action.label}
+        </Button>
+      ))}
+    </div>
+  )
+}
 
 export function DrawerSection({ title, children }: { title: ReactNode; children: ReactNode }) {
   return (

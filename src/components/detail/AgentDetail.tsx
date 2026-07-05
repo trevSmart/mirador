@@ -7,7 +7,7 @@ import { agentInitials, channelLabel, formatMinutes } from '../../utils/format'
 import { resolveWorkItemIcon } from '../../utils/salesforce-object-icon'
 import { AppIcon, CapacityBar, FadeValue, Ring, SfIcon } from '../ds'
 import { StatusBadge } from '../StatusBadge'
-import { DetailRow, DrawerSection, EmptyHint, Stat, StatGrid } from './parts'
+import { DetailRow, DrawerActions, DrawerSection, EmptyHint, Stat, StatGrid } from './parts'
 
 const STATUS_COLOR: Record<PresenceStatus, string> = {
   online: 'var(--status-ok)',
@@ -20,7 +20,7 @@ const CHANNELS: ChannelKey[] = ['veu', 'chat', 'email', 'wa', 'cas']
 
 export function AgentDetail({ agent }: { agent: Agent }) {
   const queues = useQueues()
-  const { openQueue } = useDetailDrawer()
+  const { openQueue, openWork } = useDetailDrawer()
   const photo = useSalesforcePhoto(agent.photo)
   const color = STATUS_COLOR[agent.status]
   const queueIds = [...new Set(agent.queueIds)]
@@ -45,6 +45,14 @@ export function AgentDetail({ agent }: { agent: Agent }) {
           <StatusBadge status={agent.status} />
         </div>
       </header>
+
+      <DrawerActions
+        actions={[
+          { label: 'Assigna treball', icon: 'add', primary: true },
+          { label: 'Missatge', icon: 'notification' },
+          { label: 'Registre', icon: 'clock' },
+        ]}
+      />
 
       {agent.recordUrl ? (
         <div className="dd-actions">
@@ -136,6 +144,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
                   leading={<SfIcon sprite={icon.sprite} symbol={icon.symbol} size={28} bg={colorFromRecordId(item.id)} />}
                   title={item.subject || item.label}
                   meta={meta}
+                  onClick={() => openWork(item.id)}
                 />
               )
             })}
