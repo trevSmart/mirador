@@ -10,7 +10,7 @@ import { Badge, Button, SfIcon, useToast } from '../ds'
 import { DetailRow, DrawerActions, DrawerSection, EmptyHint, MiniAgentRow, Stat, StatGrid } from './parts'
 
 function hasSkill(agent: Agent, skill: Skill): boolean {
-  return agent.skills.some((s) => s.skillId === skill.id || s.name === skill.name)
+  return agent.skills.some((s) => s.skillId === skill.id)
 }
 
 export function SkillDetail({ skill }: { skill: Skill }) {

@@ -110,43 +110,41 @@ export function AgentDetail({ agent }: { agent: Agent }) {
           <EmptyHint>Sense skills assignades.</EmptyHint>
         ) : (
           <div className="dd-list">
-            {agent.skills.map((skill) => (
-              <DetailRow
-                key={skill.id}
-                leading={<SfIcon name="skill" size={28} bg={colorFromRecordId(skill.id)} />}
-                title={skill.name}
-                meta={[skill.type, skill.level != null ? `Nivell ${skill.level}` : null]
-                  .filter(Boolean)
-                  .join(' · ')}
-                trailing={
-                  canEdit && skill.skillId != null ? (
-                    <span className="dd-skill-row__actions">
-                      <SkillLevelInput
-                        initialLevel={skill.level}
-                        disabled={mutation.isPending}
-                        onCommit={(level) =>
-                          runChange(
-                            [{ skillId: skill.skillId, level }],
-                            `S'ha actualitzat el nivell de «${skill.name}»`,
-                          )
-                        }
-                      />
-                      <button
-                        type="button"
-                        className="dd-skill-row__remove"
-                        title="Treu la skill"
-                        disabled={mutation.isPending}
-                        onClick={() =>
-                          runChange([{ skillId: skill.skillId, remove: true }], `S'ha tret «${skill.name}»`)
-                        }
-                      >
-                        <AppIcon name="close" size={14} />
-                      </button>
-                    </span>
-                  ) : undefined
-                }
-              />
-            ))}
+            {agent.skills.map((skill) => {
+              const skillId = skill.skillId
+              return (
+                <DetailRow
+                  key={skill.id}
+                  leading={<SfIcon name="skill" size={28} bg={colorFromRecordId(skill.id)} />}
+                  title={skill.name}
+                  meta={[skill.type, skill.level != null ? `Nivell ${skill.level}` : null]
+                    .filter(Boolean)
+                    .join(' · ')}
+                  trailing={
+                    canEdit && skillId != null ? (
+                      <span className="dd-skill-row__actions">
+                        <SkillLevelInput
+                          initialLevel={skill.level}
+                          disabled={mutation.isPending}
+                          onCommit={(level) =>
+                            runChange([{ skillId, level }], `S'ha actualitzat el nivell de «${skill.name}»`)
+                          }
+                        />
+                        <button
+                          type="button"
+                          className="dd-skill-row__remove"
+                          title="Treu la skill"
+                          disabled={mutation.isPending}
+                          onClick={() => runChange([{ skillId, remove: true }], `S'ha tret «${skill.name}»`)}
+                        >
+                          <AppIcon name="close" size={14} />
+                        </button>
+                      </span>
+                    ) : undefined
+                  }
+                />
+              )
+            })}
           </div>
         )}
         {canEdit ? (

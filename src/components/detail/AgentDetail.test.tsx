@@ -135,6 +135,22 @@ describe('AgentDetail — secció Skills', () => {
     expect(toastError).toHaveBeenCalledWith('boom')
   })
 
+  it('amb skillId null, la fila és read-only encara que canChangeSkills sigui true', () => {
+    useCapabilitiesMock.mockReturnValue({ canChangeSkills: true } as Capabilities)
+    render(
+      <AgentDetail
+        agent={makeAgent({
+          skills: [
+            { id: 'as1', skillId: null, name: 'Facturació', type: 'Vendes', level: 2, startDate: null, lastModifiedDate: null, lastModifiedBy: null },
+          ],
+        })}
+      />,
+    )
+    expect(screen.getByText('Facturació')).toBeInTheDocument()
+    expect(screen.queryByTitle(/treu/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Nivell')).not.toBeInTheDocument()
+  })
+
   it('assignar des de la palette crida mutate amb la nova skill', () => {
     useCapabilitiesMock.mockReturnValue({ canChangeSkills: true } as Capabilities)
     render(<AgentDetail agent={makeAgent()} />)
