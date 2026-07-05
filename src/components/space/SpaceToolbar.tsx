@@ -1,23 +1,35 @@
 import type { Space, SpaceTool } from '../../space/types'
 import { Button } from '../ds'
 import { AppIcon } from '../ds/AppIcon'
+import type { AppIconName } from '../ds/app-icon-names.generated'
 import { ButtonIcon } from '../ds/ButtonIcon'
+import { useAltKey } from './SpaceGrid'
 
 interface ToolDef {
   tool: SpaceTool
   label: string
-  glyph: string
+  icon: AppIconName
   hint: string
 }
 
-const TOOLS: ToolDef[] = [
-  { tool: 'cell', label: 'Àrea', glyph: '▦', hint: 'Pinta cel·les de terra (arrossega)' },
-  { tool: 'seat', label: 'Agent', glyph: '◍', hint: 'Col·loca un seient i assigna-hi un agent' },
-  { tool: 'door', label: 'Porta', glyph: '▯', hint: 'Porta a una vora exterior' },
-  { tool: 'window', label: 'Finestra', glyph: '▭', hint: 'Finestra a una vora exterior' },
-  { tool: 'divider', label: 'Separador', glyph: '┊', hint: 'Mur interior entre dues cel·les' },
-  { tool: 'erase', label: 'Esborra', glyph: '⌫', hint: 'Treu cel·les, seients o obertures' },
+/* Palette in two groups split by a hairline: first the tools that act on what
+   already exists (Mou · Esborra), then the ones that add. Shortcut digits
+   follow palette order. */
+const ACT_TOOLS: ToolDef[] = [
+  { tool: 'move', label: 'Mou', icon: 'move', hint: 'Mou un element existent (arrossega)' },
+  { tool: 'erase', label: 'Esborra', icon: 'eraser', hint: 'Treu cel·les, seients o obertures' },
 ]
+
+const BUILD_TOOLS: ToolDef[] = [
+  { tool: 'cell', label: 'Àrea', icon: 'area', hint: 'Pinta cel·les de terra (arrossega)' },
+  { tool: 'seat', label: 'Agent', icon: 'seat', hint: 'Col·loca un seient i assigna-hi un agent' },
+  { tool: 'door', label: 'Porta', icon: 'door', hint: 'Porta a una vora exterior' },
+  { tool: 'window', label: 'Finestra', icon: 'window', hint: 'Finestra a una vora exterior' },
+  { tool: 'divider', label: 'Separador', icon: 'divider', hint: 'Mur interior entre dues cel·les' },
+]
+
+/** Palette order — digit shortcuts (1–7) map onto this. */
+export const TOOL_ORDER: SpaceTool[] = [...ACT_TOOLS, ...BUILD_TOOLS].map((t) => t.tool)
 
 interface SpaceToolbarProps {
   tool: SpaceTool
@@ -46,24 +58,35 @@ export function SpaceToolbar({
   onSave,
   onReset,
 }: SpaceToolbarProps) {
+  const alt = useAltKey()
+
+  const toolButton = (def: ToolDef) => (
+    <button
+      key={def.tool}
+      type="button"
+      className={`fe-tool${tool === def.tool ? ' fe-tool--on' : ''}${def.tool === 'erase' && tool === 'erase' ? ' is-erase' : ''}`}
+      onClick={() => onSelectTool(def.tool)}
+      title={def.hint}
+      aria-pressed={tool === def.tool}
+    >
+      <span className="fe-tool__key" aria-hidden="true">
+        {TOOL_ORDER.indexOf(def.tool) + 1}
+      </span>
+      <span className="fe-tool__glyph" aria-hidden="true">
+        <AppIcon name={def.icon} size={17} />
+      </span>
+      <span className="fe-tool__label">{def.label}</span>
+    </button>
+  )
+
   return (
     <div className="fe-toolbar">
       <div className="fe-toolbar__tools" role="toolbar" aria-label="Eines">
-        {TOOLS.map((def) => (
-          <button
-            key={def.tool}
-            type="button"
-            className={`fe-tool${tool === def.tool ? ' fe-tool--on' : ''}`}
-            onClick={() => onSelectTool(def.tool)}
-            title={def.hint}
-            aria-pressed={tool === def.tool}
-          >
-            <span className="fe-tool__glyph" aria-hidden="true">
-              {def.glyph}
-            </span>
-            <span className="fe-tool__label">{def.label}</span>
-          </button>
-        ))}
+        {ACT_TOOLS.map(toolButton)}
+        <span className="fe-toolbar__sep" aria-hidden="true" />
+        {BUILD_TOOLS.map(toolButton)}
+        {/* Amb l'eina Esborra activa la pista seria redundant. */}
+        {alt && tool !== 'erase' ? <span className="fe-toolbar__hint">⌫ Alt · esborrant</span> : null}
       </div>
 
       <div className="fe-toolbar__spacer" />
@@ -84,7 +107,7 @@ export function SpaceToolbar({
           aria-label="Gira a l'esquerra"
           onClick={() => onRotate(-1)}
           disabled={!space}
-          icon="rotate-y"
+          icon="rotate-ccw"
         />
         <ButtonIcon
           className="fe-icon-btn"
@@ -92,29 +115,24 @@ export function SpaceToolbar({
           aria-label="Gira a la dreta"
           onClick={() => onRotate(1)}
           disabled={!space}
-        >
-          <AppIcon name="rotate-y" size={18} style={{ transform: 'scaleX(-1)' }} />
-        </ButtonIcon>
-        <button
-          type="button"
+          icon="rotate-cw"
+        />
+        <ButtonIcon
           className="fe-icon-btn"
-          onClick={onUndo}
-          disabled={!canUndo}
           title="Desfés"
           aria-label="Desfés"
-        >
-          ↶
-        </button>
-        <button
-          type="button"
+          onClick={onUndo}
+          disabled={!canUndo}
+          icon="undo"
+        />
+        <ButtonIcon
           className="fe-icon-btn"
-          onClick={onRedo}
-          disabled={!canRedo}
           title="Refés"
           aria-label="Refés"
-        >
-          ↷
-        </button>
+          onClick={onRedo}
+          disabled={!canRedo}
+          icon="redo"
+        />
         <Button variant="ghost" size="sm" onClick={onReset} disabled={!dirty}>
           Restableix
         </Button>

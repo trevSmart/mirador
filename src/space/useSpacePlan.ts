@@ -19,17 +19,26 @@ import {
   assignAgentToSeat,
   cloneSpace,
   defaultSpacePlan,
+  canDropMoved,
+  elementAt,
   eraseCell,
+  eraseCellRect,
   eraseEdge,
+  moveDivider,
+  moveOpening,
+  moveSeat,
   spacePlanSignature,
   prepareImportedFolders,
+  placeDivider,
+  placeOpening,
+  rectBlocked,
+  resolveEdit,
   seedFolder,
   seedSpace,
-  toggleDivider,
-  toggleOpening,
   toggleSeat,
   uniqueName,
 } from './space-plan-model'
+import type { MovableRef, ResolvedEdit } from './space-plan-model'
 import {
   findFolder,
   insertFolder,
@@ -90,6 +99,16 @@ export function useSpacePlan() {
       setSelectedSeat(null)
       syncHistoryFlags()
       setLoaded(true)
+      // Default tool: Mou when the plan already holds elements beyond the
+      // area itself (seats, openings, dividers) — you're likely rearranging.
+      // A bare (or empty) floor opens with Àrea so there's something to draw.
+      const spaces = next.folders.flatMap(function collect(f): Space[] {
+        return [...f.spaces, ...f.folders.flatMap(collect)]
+      })
+      const hasElements = spaces.some(
+        (s) => s.seats.length > 0 || s.openings.length > 0 || s.dividers.length > 0,
+      )
+      setToolState(hasElements ? 'move' : 'cell')
     })
     return () => {
       cancelled = true
@@ -171,25 +190,93 @@ export function useSpacePlan() {
     [updateActiveSpace],
   )
 
-  /** Edge tap dispatched by the current tool (door/window/divider/erase). */
+  /** Edge tap for the build tools (door/window/divider) — always additive. */
   const applyEdge = useCallback(
     (c: number, r: number, edge: Edge) => {
       const t = toolRef.current
       updateActiveSpace((f) => {
         switch (t) {
           case 'door':
-            return toggleOpening(f, c, r, edge, 'door')
+            return placeOpening(f, c, r, edge, 'door')
           case 'window':
-            return toggleOpening(f, c, r, edge, 'window')
+            return placeOpening(f, c, r, edge, 'window')
           case 'divider':
-            return toggleDivider(f, c, r, edge)
-          case 'erase':
-            return eraseEdge(f, c, r, edge)
+            return placeDivider(f, c, r, edge)
           default:
             return f
         }
       })
     },
+    [updateActiveSpace],
+  )
+
+  /** Deliberate edge erase (erase tool or Alt). */
+  const eraseEdgeAt = useCallback(
+    (c: number, r: number, edge: Edge) => updateActiveSpace((f) => eraseEdge(f, c, r, edge)),
+    [updateActiveSpace],
+  )
+
+  /** Shared resolver so the grid's ghost and its click use identical logic. */
+  const resolveAt = useCallback(
+    (c: number, r: number, edge: Edge | null, erasing: boolean): ResolvedEdit => {
+      const space = activeSpaceRef.current
+      if (!space) return { intent: 'noop', target: 'cell', c, r, edge: null }
+      return resolveEdit(space, toolRef.current, c, r, edge, erasing)
+    },
+    [],
+  )
+
+  /** Area erase by rectangle drag — symmetric to paintCellRect. */
+  const eraseCellRectAt = useCallback(
+    (start: Cell, end: Cell) => {
+      updateActiveSpace((f) => eraseCellRect(f, start, end))
+      setSelectedSeat((cur) => {
+        if (!cur) return cur
+        const inRect =
+          cur.c >= Math.min(start[0], end[0]) && cur.c <= Math.max(start[0], end[0]) &&
+          cur.r >= Math.min(start[1], end[1]) && cur.r <= Math.max(start[1], end[1])
+        return inRect ? null : cur
+      })
+    },
+    [updateActiveSpace],
+  )
+
+  /** Live blocked check for the drag-rectangle preview (paint or erase). */
+  const rectBlockedAt = useCallback(
+    (start: Cell, end: Cell, erasing: boolean): boolean => {
+      const s = activeSpaceRef.current
+      return s ? rectBlocked(s, start, end, erasing) : false
+    },
+    [],
+  )
+
+  /** Move tool hit-test: what grabbable element sits under the pointer? */
+  const elementAtRef = useCallback(
+    (c: number, r: number, edge: Edge | null): MovableRef | null => {
+      const s = activeSpaceRef.current
+      return s ? elementAt(s, c, r, edge) : null
+    },
+    [],
+  )
+
+  /** Move tool drop validity, for the drag ghost. */
+  const canDropAt = useCallback(
+    (ref: MovableRef, c: number, r: number, edge: Edge | null): boolean => {
+      const s = activeSpaceRef.current
+      return s ? canDropMoved(s, ref, c, r, edge) : false
+    },
+    [],
+  )
+
+  /** Drop a lifted element (seat / opening / divider) on its new location. */
+  const applyMove = useCallback(
+    (ref: MovableRef, to: Cell, toEdge: Edge | null) =>
+      updateActiveSpace((f) => {
+        if (ref.kind === 'seat') return moveSeat(f, [ref.c, ref.r], to)
+        if (!toEdge) return f
+        if (ref.kind === 'opening') return moveOpening(f, [ref.c, ref.r], ref.edge, to, toEdge)
+        return moveDivider(f, [ref.c, ref.r], ref.edge, to, toEdge)
+      }),
     [updateActiveSpace],
   )
 
@@ -498,8 +585,15 @@ export function useSpacePlan() {
     // tools
     paintCellRect,
     eraseCellAt,
+    eraseCellRectAt,
     seatAt,
     applyEdge,
+    eraseEdgeAt,
+    resolveAt,
+    rectBlockedAt,
+    elementAtRef,
+    canDropAt,
+    applyMove,
     rotateSpace,
     // agents
     assignAgent,

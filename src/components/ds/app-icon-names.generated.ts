@@ -5,6 +5,7 @@
 export type AppIconName =
   | 'add'
   | 'apex'
+  | 'area'
   | 'brush'
   | 'builder'
   | 'chevrondown'
@@ -18,7 +19,10 @@ export type AppIconName =
   | 'dash'
   | 'database'
   | 'delete'
+  | 'divider'
+  | 'door'
   | 'down'
+  | 'eraser'
   | 'expand_alt'
   | 'filterList'
   | 'image'
@@ -27,13 +31,17 @@ export type AppIconName =
   | 'lock'
   | 'logout'
   | 'metrics'
+  | 'move'
   | 'new_window'
   | 'notification'
   | 'open_folder'
+  | 'redo'
   | 'refresh'
-  | 'rotate-y'
+  | 'rotate-ccw'
+  | 'rotate-cw'
   | 'salesforce1'
   | 'search'
+  | 'seat'
   | 'settings'
   | 'setup'
   | 'space'
@@ -41,10 +49,13 @@ export type AppIconName =
   | 'status-empty'
   | 'status-error'
   | 'threedots_vertical'
+  | 'undo'
+  | 'window'
 
 export const APP_ICON_NAMES: readonly AppIconName[] = [
   'add',
   'apex',
+  'area',
   'brush',
   'builder',
   'chevrondown',
@@ -58,7 +69,10 @@ export const APP_ICON_NAMES: readonly AppIconName[] = [
   'dash',
   'database',
   'delete',
+  'divider',
+  'door',
   'down',
+  'eraser',
   'expand_alt',
   'filterList',
   'image',
@@ -67,13 +81,17 @@ export const APP_ICON_NAMES: readonly AppIconName[] = [
   'lock',
   'logout',
   'metrics',
+  'move',
   'new_window',
   'notification',
   'open_folder',
+  'redo',
   'refresh',
-  'rotate-y',
+  'rotate-ccw',
+  'rotate-cw',
   'salesforce1',
   'search',
+  'seat',
   'settings',
   'setup',
   'space',
@@ -81,4 +99,6 @@ export const APP_ICON_NAMES: readonly AppIconName[] = [
   'status-empty',
   'status-error',
   'threedots_vertical',
+  'undo',
+  'window',
 ]

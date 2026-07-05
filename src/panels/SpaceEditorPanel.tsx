@@ -1,9 +1,9 @@
-import { lazy, Suspense, useCallback, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAgents, useQueues } from '../api/data-hooks'
 import { AgentAssignPalette } from '../components/space/AgentAssignPalette'
 import { SpaceGrid } from '../components/space/SpaceGrid'
 import { SpaceSidebar } from '../components/space/SpaceSidebar'
-import { SpaceToolbar } from '../components/space/SpaceToolbar'
+import { SpaceToolbar, TOOL_ORDER } from '../components/space/SpaceToolbar'
 import { PanelSuspenseFallback } from '../components/PanelSuspenseFallback'
 import { PanelShell } from '../components/PanelState'
 
@@ -48,6 +48,31 @@ export function SpaceEditorPanel() {
   const importInputRef = useRef<HTMLInputElement>(null)
   const [split, setSplit] = useState<number>(loadSplit)
   const [logoError, setLogoError] = useState<string | null>(null)
+
+  // Keyboard shortcuts while the editor is mounted: 1–7 pick a tool (palette
+  // order), ⌘/Ctrl+Z undoes, ⇧⌘/Ctrl+Z redoes. Ignored while typing.
+  const { setTool, undo, redo } = fp
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') {
+        event.preventDefault()
+        if (event.shiftKey) redo()
+        else undo()
+        return
+      }
+      if (event.metaKey || event.ctrlKey || event.altKey) return
+      const digit = Number.parseInt(event.key, 10)
+      if (digit >= 1 && digit <= TOOL_ORDER.length) {
+        setTool(TOOL_ORDER[digit - 1])
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [setTool, undo, redo])
 
   const openImportDialog = useCallback(() => {
     fp.clearImportError()
@@ -236,39 +261,48 @@ export function SpaceEditorPanel() {
         </div>
 
         <div className="space-editor__main">
-          <SpaceToolbar
-            tool={fp.tool}
-            space={fp.activeSpace}
-            dirty={fp.dirty}
-            canUndo={fp.canUndo}
-            canRedo={fp.canRedo}
-            onSelectTool={fp.setTool}
-            onRotate={fp.rotateSpace}
-            onUndo={fp.undo}
-            onRedo={fp.redo}
-            onSave={fp.save}
-            onReset={fp.reset}
-          />
-          {fp.saveError ? (
-            <div className="space-editor__save-error" role="alert">
-              No s'ha pogut desar: {fp.saveError}
+          <div className="fe-editor">
+            <SpaceToolbar
+              tool={fp.tool}
+              space={fp.activeSpace}
+              dirty={fp.dirty}
+              canUndo={fp.canUndo}
+              canRedo={fp.canRedo}
+              onSelectTool={fp.setTool}
+              onRotate={fp.rotateSpace}
+              onUndo={fp.undo}
+              onRedo={fp.redo}
+              onSave={fp.save}
+              onReset={fp.reset}
+            />
+            {fp.saveError ? (
+              <div className="space-editor__save-error" role="alert">
+                No s'ha pogut desar: {fp.saveError}
+              </div>
+            ) : null}
+            <div className="space-editor__canvas" ref={canvasScrollRef}>
+              {fp.activeSpace ? (
+                <SpaceGrid
+                  space={fp.activeSpace}
+                  tool={fp.tool}
+                  selectedSeat={fp.selectedSeat}
+                  agentsById={agentsById}
+                  onPaintCells={fp.paintCellRect}
+                  onEraseCell={fp.eraseCellAt}
+                  onEraseCellRect={fp.eraseCellRectAt}
+                  onSeatTap={fp.seatAt}
+                  onEdgeTap={fp.applyEdge}
+                  onEraseEdge={fp.eraseEdgeAt}
+                  resolveAt={fp.resolveAt}
+                  rectBlockedAt={fp.rectBlockedAt}
+                  elementAtRef={fp.elementAtRef}
+                  canDropAt={fp.canDropAt}
+                  onMove={fp.applyMove}
+                />
+              ) : (
+                <p className="panel-state panel-state--muted">Aquesta planta no té cap cel·la.</p>
+              )}
             </div>
-          ) : null}
-          <div className="space-editor__canvas" ref={canvasScrollRef}>
-            {fp.activeSpace ? (
-              <SpaceGrid
-                space={fp.activeSpace}
-                tool={fp.tool}
-                selectedSeat={fp.selectedSeat}
-                agentsById={agentsById}
-                onPaintCells={fp.paintCellRect}
-                onEraseCell={fp.eraseCellAt}
-                onSeatTap={fp.seatAt}
-                onEdgeTap={fp.applyEdge}
-              />
-            ) : (
-              <p className="panel-state panel-state--muted">Aquesta planta no té cap cel·la.</p>
-            )}
           </div>
         </div>
       </div>
