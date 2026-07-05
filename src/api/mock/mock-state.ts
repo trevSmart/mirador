@@ -671,7 +671,7 @@ export function applyMockSkillChanges(
 
     const catalogSkill = catalog.find((skill) => skill.id === change.skillId)
     current.push({
-      id: `mock-srs-${agentId}-${change.skillId}`,
+      id: `0C6mock${String((Number.parseInt(agentId.slice(7, 15), 10) || 0) * 100 + current.length + 1).padStart(8, '0')}AAA`,
       skillId: change.skillId,
       name: catalogSkill?.name ?? change.skillId,
       type: catalogSkill?.type ?? null,
