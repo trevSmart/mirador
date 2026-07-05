@@ -1,5 +1,7 @@
 import type {
   Agent,
+  AgentSkill,
+  AgentSkillChange,
   AgentWorkItem,
   ChannelKey,
   Queue,
@@ -68,6 +70,13 @@ const EVOLVE_COOLDOWN_MS = 2_500
 
 let state: MockLiveState | null = null
 let lastEvolveMs = 0
+
+/**
+ * Overrides d'skills per agent aplicats en mode mock (per `updateAgentSkills`).
+ * Viu fora de `MockLiveState` a propòsit: no s'ha de resetejar amb `evolveState`,
+ * ha de sobreviure mentre duri la sessió del navegador.
+ */
+const agentSkillOverrides = new Map<string, AgentSkill[]>()
 
 function mulberry32(seed: number) {
   let s = seed | 0
@@ -597,7 +606,7 @@ export function getMockAgents(): Agent[] {
   const live = prepareState()
   return live.agents.map((agent) => ({
     ...agent,
-    skills: getAgentSkills(agent.id),
+    skills: getMockAgentSkills(agent.id),
   }))
 }
 
@@ -606,7 +615,13 @@ export function getMockQueues(): Queue[] {
 }
 
 export function getMockSkills(): Skill[] {
-  return prepareState().skills.slice()
+  const live = prepareState()
+  return live.skills.map((skill) => ({
+    ...skill,
+    agents: live.agents.filter((agent) =>
+      getMockAgentSkills(agent.id).some((s) => s.skillId === skill.id),
+    ).length,
+  }))
 }
 
 export function getMockWork(): WorkItem[] {
@@ -619,6 +634,53 @@ export function getMockSkillAgents(skillId: string): Agent[] {
   if (!skill) return []
   return skillAgentSlice(skill, live.agents).map((agent) => ({
     ...agent,
-    skills: getAgentSkills(agent.id),
+    skills: getMockAgentSkills(agent.id),
   }))
+}
+
+/** Skills d'un agent: l'override si n'hi ha, si no la llavor estàtica. */
+export function getMockAgentSkills(agentId: string): AgentSkill[] {
+  return agentSkillOverrides.get(agentId) ?? getAgentSkills(agentId)
+}
+
+/** Aplica canvis d'skills (assignar, actualitzar nivell o treure) a un agent en mode mock. */
+export function applyMockSkillChanges(
+  agentId: string,
+  changes: AgentSkillChange[],
+): void {
+  const current = getMockAgentSkills(agentId).map((skill) => ({ ...skill }))
+  const catalog = getMockSkills()
+  const now = new Date().toISOString()
+
+  for (const change of changes) {
+    const index = current.findIndex((skill) => skill.skillId === change.skillId)
+
+    if (change.remove) {
+      if (index >= 0) current.splice(index, 1)
+      continue
+    }
+
+    if (index >= 0) {
+      current[index] = {
+        ...current[index],
+        level: change.level ?? current[index].level,
+        lastModifiedDate: now,
+      }
+      continue
+    }
+
+    const catalogSkill = catalog.find((skill) => skill.id === change.skillId)
+    current.push({
+      id: `mock-srs-${agentId}-${change.skillId}`,
+      skillId: change.skillId,
+      name: catalogSkill?.name ?? change.skillId,
+      type: catalogSkill?.type ?? null,
+      level: change.level ?? null,
+      startDate: now,
+      lastModifiedDate: now,
+      lastModifiedBy: 'Tu (mock)',
+    })
+  }
+
+  agentSkillOverrides.set(agentId, current)
 }

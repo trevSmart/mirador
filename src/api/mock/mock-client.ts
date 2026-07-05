@@ -13,6 +13,7 @@ import { parseStoredSpacePlan, toWireSpacePlan } from '../../space/space-plan-mo
 import { MOCK_CAPABILITIES } from './capabilities'
 import { getAgentSkills, getMockPresenceStatuses } from './mock-seed'
 import {
+  applyMockSkillChanges,
   getMockAgents,
   getMockQueues,
   getMockSkillAgents,
@@ -71,10 +72,11 @@ export function createMockMiradorClient(): MiradorClient {
       withApiLog('GET', `/agents/${userId}/skills`, () => ({
         skills: getAgentSkills(userId),
       })),
-    updateAgentSkills: (userId) =>
-      withApiLog('PUT', `/agents/${userId}/skills`, () => ({
-        ok: true,
-      })),
+    updateAgentSkills: (userId, body) =>
+      withApiLog('PUT', `/agents/${userId}/skills`, () => {
+        applyMockSkillChanges(userId, body?.changes ?? [])
+        return { ok: true }
+      }),
     getSkillAgents: (skillId) =>
       withApiLog('GET', `/skills/${skillId}/agents`, () => ({
         agents: getMockSkillAgents(skillId),
