@@ -11,7 +11,8 @@ import { usePreferences } from '../../settings/preferences-context'
 import { PREFERENCES_DEFAULTS, type Preferences } from '../../settings/preferences'
 import { useSettingsModal, type SettingsSectionId } from '../../settings/settings-modal-context'
 import { Button } from '../ds/Button'
-import { SfIcon } from '../ds/SfIcon'
+import { AppIcon } from '../ds/AppIcon'
+import type { AppIconName } from '../ds/app-icon-names.generated'
 import {
   AparencaSection,
   ConnexioSection,
@@ -24,7 +25,7 @@ import {
 interface NavItem {
   id: SettingsSectionId
   label: string
-  symbol: string
+  symbol: AppIconName
   devOnly?: boolean
 }
 
@@ -146,7 +147,7 @@ export function SettingsModal() {
             onClick={requestClose}
             aria-label="Tanca la configuració"
           >
-            <SfIcon sprite="utility" symbol="close" size={15} />
+            <AppIcon name="close" size={15} />
           </button>
         </header>
 
@@ -159,7 +160,7 @@ export function SettingsModal() {
                 className={`settings-nav__item${activeSection === item.id ? ' is-active' : ''}`}
                 onClick={() => setSection(item.id)}
               >
-                <SfIcon sprite="utility" symbol={item.symbol} size={15} />
+                <AppIcon name={item.symbol} size={15} />
                 {item.label}
               </button>
             ))}

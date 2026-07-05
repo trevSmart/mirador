@@ -1,4 +1,5 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { AppIcon } from '../components/ds/AppIcon'
 import { useDevConsole } from './useDevConsole'
 import { useDeveloperMode } from '../hooks/useDeveloperMode'
 import type { LogEntry, LogLevel } from './dev-log'
@@ -107,16 +108,7 @@ function LogLine({ entry, minimized }: { entry: LogEntry; minimized: boolean }) 
           title={expanded ? 'Col·lapsa el missatge' : 'Expandeix el missatge'}
           aria-label={expanded ? 'Col·lapsa el missatge' : 'Expandeix el missatge'}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-          </svg>
+          <AppIcon name="chevrondown" size={12} />
         </button>
       )}
     </div>
@@ -321,20 +313,7 @@ export function DevConsole() {
                 aria-pressed={scrollLocked}
                 aria-label={scrollLocked ? 'Desbloqueja el scroll automàtic' : 'Bloqueja el scroll automàtic'}
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
-                  />
-                </svg>
+                <AppIcon name="lock" size={14} />
               </button>
               <button
                 className="dev-console__action-btn dev-console__action-btn--icon"
@@ -342,40 +321,14 @@ export function DevConsole() {
                 title="Copia els logs al portapapers"
                 aria-label="Copia els logs al portapapers"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z"
-                  />
-                </svg>
+                <AppIcon name="copy_to_clipboard" size={14} />
               </button>
               <button
                 className="dev-console__action-btn dev-console__action-btn--text-icon"
                 onClick={clear}
                 title="Esborra els logs"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 9.75 14.25 12m0 0 2.25 2.25M14.25 12l2.25-2.25M14.25 12 12 14.25m-2.58 4.92-6.374-6.375a1.125 1.125 0 0 1 0-1.59L9.42 4.83c.21-.211.497-.33.795-.33H19.5a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25h-9.284c-.298 0-.585-.119-.795-.33Z"
-                  />
-                </svg>
+                <AppIcon name="delete" size={13} />
                 Clear
               </button>
               <button
@@ -384,16 +337,7 @@ export function DevConsole() {
                 title="Tanca la consola"
                 aria-label="Tanca"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                </svg>
+                <AppIcon name="close" size={14} />
               </button>
             </div>
             </div>

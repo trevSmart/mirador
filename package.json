@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "stop": "node scripts/stop-server.js",
-    "slds:sprites": "node scripts/build-slds-sprites.mjs --from slds-source/icons.txt",
+    "slds:build": "node scripts/build-slds-assets.mjs",
+    "icons:app": "node scripts/build-app-icon-types.mjs",
     "knip": "knip --strict",
     "precommit": "npm run lint"
   },
@@ -32,6 +33,7 @@
     "@babel/core": "^8.0.1",
     "@eslint/js": "^10.0.1",
     "@rolldown/plugin-babel": "^0.2.3",
+    "@salesforce-ux/design-system": "2.30.7",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/babel__core": "^7.20.5",

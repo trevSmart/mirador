@@ -9,6 +9,8 @@ export interface SearchItemRef {
 }
 
 export interface SearchWorkHit {
+  /** Id del work item (per obrir-lo i per tintar-lo per registre). */
+  workId: string
   agentId: string
   agentName: string
   title: string
@@ -37,6 +39,7 @@ function collectWorkItems(agents: Agent[]): SearchWorkHit[] {
     if (!Array.isArray(agent.work)) continue
     for (const work of agent.work) {
       items.push({
+        workId: work.id,
         agentId: agent.id,
         agentName: agent.name,
         title: work.label || 'Work item',

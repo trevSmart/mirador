@@ -1,73 +1,27 @@
 import type { CSSProperties } from 'react'
 import type { ChannelKey } from '../../api/types'
+import {
+  CHANNEL,
+  NAMED,
+  sfIconColorClass,
+  type SfIconName,
+  type SfIconSize,
+  type SfSprite,
+} from './sf-icon-model'
 
-/* Salesforce Lightning Design System icons, rendered from the SLDS sprites
-   shipped in `public/slds/`. Emet markup amb les classes SLDS oficials:
-   slds-icon_container, slds-icon-{sprite}-{symbol}, slds-icon, slds-icon_{size}
+export type { SfIconName, SfIconSize, SfSprite }
 
-   Two visual families:
-   - utility  → monochrome glyphs, slds-current-color (fills with currentColor)
-   - standard / action / custom / doctype → white artwork on a colored tile */
+/* SfIcon — icona d'OBJECTE Salesforce (tile de color), renderitzada des dels
+   sprites SLDS COMPLETS empaquetats a `public/slds/` (standard.svg, custom.svg).
+   Qualsevol símbol d'SObject d'una org resol — inclosos objectes custom.
 
-export type SfSprite = 'utility' | 'standard' | 'action' | 'custom' | 'doctype'
+   Color del tile:
+   - per defecte, el color OFICIAL SLDS de la icona (classe slds-icon-{sprite}-{símbol}
+     del icons.css generat);
+   - per a icones que representen un REGISTRE (queue, skill, work item…), el
+     caller el tinta amb `bg={colorFromRecordId(id)}`.
 
-/** Mides nominals SLDS. */
-export type SfIconSize = 'xx-small' | 'x-small' | 'small' | 'medium' | 'large'
-
-const TILED_SPRITES: ReadonlySet<SfSprite> = new Set([
-  'standard',
-  'action',
-  'custom',
-  'doctype',
-])
-
-/* ── Named shortcuts ──────────────────────────────────────────────────── */
-
-export type SfIconName =
-  | 'home'
-  | 'insights'
-  | 'voice'
-  | 'chat'
-  | 'email'
-  | 'whatsapp'
-  | 'case'
-  | 'queue'
-  | 'skill'
-  | 'user'
-  | 'work'
-  | 'agent'
-  | 'space'
-  | 'spaceEditor'
-
-interface NamedIcon {
-  sprite: SfSprite
-  symbol: string
-}
-
-const NAMED: Record<SfIconName, NamedIcon> = {
-  home:        { sprite: 'standard', symbol: 'home' },
-  insights:    { sprite: 'utility',  symbol: 'metrics' },
-  voice:       { sprite: 'standard', symbol: 'voice_call' },
-  chat:        { sprite: 'standard', symbol: 'messaging_session' },
-  email:       { sprite: 'standard', symbol: 'email' },
-  whatsapp:    { sprite: 'standard', symbol: 'messaging_session' },
-  case:        { sprite: 'standard', symbol: 'case' },
-  queue:       { sprite: 'standard', symbol: 'queue' },
-  skill:       { sprite: 'standard', symbol: 'skill' },
-  user:        { sprite: 'standard', symbol: 'user' },
-  work:        { sprite: 'standard', symbol: 'work_order_item' },
-  agent:       { sprite: 'custom',   symbol: 'custom103' },
-  space:       { sprite: 'standard', symbol: 'business_unit' },
-  spaceEditor: { sprite: 'custom',   symbol: 'custom83' },
-}
-
-const CHANNEL: Record<ChannelKey, SfIconName> = {
-  veu:  'voice',
-  chat: 'chat',
-  email:'email',
-  wa:   'whatsapp',
-  cas:  'case',
-}
+   Per a glyphs monocroms de chrome useu AppIcon. Convenció completa: docs/icons.md */
 
 /** Mides SLDS nominals → píxels (per compatibilitat amb prop `size` numèric). */
 const SIZE_PX: Record<SfIconSize, number> = {
@@ -85,7 +39,7 @@ interface SfIconProps {
   channel?: ChannelKey
   /** Sprite set — use with `symbol` to reach any icon directly. */
   sprite?: SfSprite
-  /** Symbol id inside the sprite (e.g. 'account', 'refresh', 'edit'). */
+  /** Symbol id inside the sprite (e.g. 'account', 'custom47'). */
   symbol?: string
   /**
    * Mida SLDS nominal: 'xx-small' | 'x-small' | 'small' | 'medium' | 'large'.
@@ -94,18 +48,16 @@ interface SfIconProps {
    */
   sldsSize?: SfIconSize
   /**
-   * Mida en píxels. Té prioritat sobre `sldsSize`.
-   * Per compatibilitat amb codi existent; no emet classes SLDS de mida.
+   * Mida en píxels del tile. Té prioritat sobre `sldsSize`.
+   * No emet classes SLDS de mida.
    */
   size?: number
   radius?: number
   /**
-   * Override del color de fons (icones tiled) o del glyph (utility).
-   * Quan s'indica, s'aplica inline i anul·la el color SLDS de la classe.
+   * Tint per REGISTRE (normalment colorFromRecordId). Quan s'indica, s'aplica
+   * inline i anul·la el color oficial SLDS de la classe.
    */
   bg?: string
-  /** Force tile on/off. Per defecte: tiled per a standard/action/custom/doctype. */
-  tile?: boolean
   style?: CSSProperties
   className?: string
 }
@@ -121,25 +73,13 @@ function resolve({ name, channel, sprite, symbol }: SfIconProps): Resolved {
   return NAMED[key]
 }
 
-/** symbol 'voice_call' → 'voice-call' (classe SLDS usa guions) */
-function symbolToClass(symbol: string): string {
-  return symbol.replace(/_/g, '-')
-}
-
 /**
- * SfIcon — Salesforce Lightning icon renderitzat amb classes SLDS oficials.
+ * SfIcon — Salesforce Lightning object icon renderitzat amb classes SLDS oficials.
  *
- * HTML emès (icona tiled):
+ * HTML emès:
  *   <span class="slds-icon_container slds-icon-standard-case">
  *     <svg class="slds-icon slds-icon_small" aria-hidden="true">
  *       <use href="/slds/standard.svg#case" />
- *     </svg>
- *   </span>
- *
- * HTML emès (utility):
- *   <span class="slds-icon_container slds-current-color">
- *     <svg class="slds-icon slds-icon_small" aria-hidden="true">
- *       <use href="/slds/utility.svg#metrics" />
  *     </svg>
  *   </span>
  */
@@ -152,12 +92,10 @@ export function SfIcon({
   size,
   radius,
   bg,
-  tile,
   style = {},
   className,
 }: SfIconProps) {
   const ic = resolve({ name, channel, sprite, symbol })
-  const tiled = tile ?? TILED_SPRITES.has(ic.sprite)
 
   const href = `/slds/${ic.sprite}.svg#${ic.symbol}`
 
@@ -169,34 +107,32 @@ export function SfIcon({
   // Mida inline quan s'usa el prop `size` numèric (compatibilitat)
   const px = size ?? (sldsSize ? SIZE_PX[sldsSize] : SIZE_PX.medium)
 
-  // Classes del container
-  const spriteColorClass = tiled
-    ? `slds-icon-${ic.sprite}-${symbolToClass(ic.symbol)}`
-    : 'slds-current-color'
-
   const containerClasses = [
     'slds-icon_container',
-    spriteColorClass,
+    sfIconColorClass(ic.sprite, ic.symbol),
     className,
   ].filter(Boolean).join(' ')
 
   // Estils inline: només els que el CSS SLDS no cobreix
   const containerStyle: CSSProperties = {}
   if (bg) {
-    // Override explícit del color
-    containerStyle[tiled ? 'backgroundColor' : 'color'] = bg
+    // Tint per registre: anul·la el color oficial de la classe
+    containerStyle.backgroundColor = bg
   }
   if (size != null) {
-    // Mida numèrica: el container s'adapta a l'SVG que fem inline
+    // Mida numèrica: el tile fa exactament `size` i el glyph hi queda centrat
+    containerStyle.width = px
+    containerStyle.height = px
   }
   if (radius != null) {
     containerStyle.borderRadius = radius
   }
 
-  // SVG: classes SLDS si usem sldsSize; dimensions inline si usem `size` numèric
+  // SVG: classes SLDS si usem sldsSize; dimensions inline si usem `size` numèric.
+  // El glyph omple el tile: l'artwork SLDS ja porta el marge dibuixat al viewBox.
   const svgClasses = ['slds-icon', sizeClass].filter(Boolean).join(' ')
   const svgStyle: CSSProperties = size != null
-    ? { display: 'block', width: tiled ? px * 0.6 : px, height: tiled ? px * 0.6 : px }
+    ? { display: 'block', width: px, height: px }
     : { display: 'block' }
 
   return (

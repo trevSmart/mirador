@@ -26,7 +26,7 @@ function SpaceZoomSlider({ zoom, onChange, minZoom, maxZoom }: SpaceZoomSliderPr
       <ButtonIcon
         className="fv-icon-btn"
         aria-label="Redueix el zoom"
-        icon="utility:dash"
+        icon="dash"
         size={14}
         disabled={zoom <= minZoom}
         onClick={() => onChange(clamp(Number((zoom - SPACE_ZOOM_STEP).toFixed(3))))}
@@ -48,7 +48,7 @@ function SpaceZoomSlider({ zoom, onChange, minZoom, maxZoom }: SpaceZoomSliderPr
       <ButtonIcon
         className="fv-icon-btn"
         aria-label="Augmenta el zoom"
-        icon="utility:add"
+        icon="add"
         size={14}
         disabled={zoom >= maxZoom}
         onClick={() => onChange(clamp(Number((zoom + SPACE_ZOOM_STEP).toFixed(3))))}
@@ -60,7 +60,7 @@ function SpaceZoomSlider({ zoom, onChange, minZoom, maxZoom }: SpaceZoomSliderPr
         className="fv-icon-btn"
         aria-label="Restableix el zoom a 1x"
         title="1x"
-        icon="utility:refresh"
+        icon="refresh"
         size={14}
         disabled={pct === 100}
         onClick={() => onChange(SPACE_ZOOM_DEFAULT)}

@@ -1,7 +1,7 @@
 import type { Space, SpaceTool } from '../../space/types'
 import { Button } from '../ds'
+import { AppIcon } from '../ds/AppIcon'
 import { ButtonIcon } from '../ds/ButtonIcon'
-import { ROTATE_ICON_PATH } from './rotate-icon-path'
 
 interface ToolDef {
   tool: SpaceTool
@@ -84,11 +84,8 @@ export function SpaceToolbar({
           aria-label="Gira a l'esquerra"
           onClick={() => onRotate(-1)}
           disabled={!space}
-        >
-          <svg width={18} height={18} viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
-            <path d={ROTATE_ICON_PATH} />
-          </svg>
-        </ButtonIcon>
+          icon="rotate-y"
+        />
         <ButtonIcon
           className="fe-icon-btn"
           title="Gira a la dreta"
@@ -96,11 +93,7 @@ export function SpaceToolbar({
           onClick={() => onRotate(1)}
           disabled={!space}
         >
-          <svg width={18} height={18} viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
-            <g transform="translate(24 0) scale(-1 1)">
-              <path d={ROTATE_ICON_PATH} />
-            </g>
-          </svg>
+          <AppIcon name="rotate-y" size={18} style={{ transform: 'scaleX(-1)' }} />
         </ButtonIcon>
         <button
           type="button"

@@ -4,7 +4,7 @@ import { useDeveloperMode } from '../hooks/useDeveloperMode'
 import { useSettingsModal } from '../settings/settings-modal-context'
 import { syncDropdownPanel } from '../utils/sync-dropdown-panel'
 import { AgentAvatar } from './AgentRow'
-import { SfIcon } from './ds/SfIcon'
+import { AppIcon } from './ds/AppIcon'
 
 export function UserMenu() {
   const { userInfo, session, logout } = useAuth()
@@ -80,7 +80,7 @@ export function UserMenu() {
             settings.open()
           }}
         >
-          <SfIcon sprite="utility" symbol="settings" size={16} />
+          <AppIcon name="settings" size={16} />
           Configuració
         </button>
 
@@ -93,7 +93,7 @@ export function UserMenu() {
               className="user-menu__item"
               onClick={() => openExternal(instanceUrl)}
             >
-              <SfIcon sprite="utility" symbol="salesforce1" size={16} />
+              <AppIcon name="salesforce1" size={16} />
               Obre Salesforce
             </button>
             <button
@@ -102,7 +102,7 @@ export function UserMenu() {
               className="user-menu__item"
               onClick={() => openExternal(`${instanceUrl}/lightning/setup/SetupOneHome/home`)}
             >
-              <SfIcon sprite="utility" symbol="setup" size={16} />
+              <AppIcon name="setup" size={16} />
               Obre Salesforce Setup
             </button>
           </>
@@ -116,7 +116,7 @@ export function UserMenu() {
           className="user-menu__item"
           onClick={() => dev.toggle()}
         >
-          <SfIcon sprite="utility" symbol="apex" size={16} />
+          <AppIcon name="apex" size={16} />
           Mode desenvolupador
           <span
             className={`user-menu__switch${dev.enabled ? ' user-menu__switch--on' : ''}`}
@@ -134,7 +134,7 @@ export function UserMenu() {
             logout()
           }}
         >
-          <SfIcon sprite="utility" symbol="logout" size={16} />
+          <AppIcon name="logout" size={16} />
           Logout
         </button>
       </div>

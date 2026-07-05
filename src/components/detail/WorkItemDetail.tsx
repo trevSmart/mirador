@@ -38,9 +38,9 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
   return (
     <>
       <header className="dd-head">
-        <SfIcon sprite={icon.sprite} symbol={icon.symbol} size={56} bg={icon.tint} />
+        <SfIcon sprite={icon.sprite} symbol={icon.symbol} size={56} bg={colorFromRecordId(item.id)} />
         <div className="dd-head__id">
-          <h2 className="dd-head__name" style={{ color: icon.tint }}>
+          <h2 className="dd-head__name" style={{ color: colorFromRecordId(item.id) }}>
             {item.subject}
           </h2>
           <span className="dd-head__sub">{objectLabel(item)}</span>

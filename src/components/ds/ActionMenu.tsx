@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { syncDropdownPanel } from '../../utils/sync-dropdown-panel'
+import { AppIcon } from './AppIcon'
 
 export interface ActionMenuItem {
   key: string
@@ -27,13 +28,7 @@ interface ActionMenuProps {
     panel is measured — good enough to keep the menu on-screen. */
 const ITEM_H = 34
 
-const Kebab = () => (
-  <svg width={16} height={16} viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">
-    <circle cx={8} cy={3} r={1.5} />
-    <circle cx={8} cy={8} r={1.5} />
-    <circle cx={8} cy={13} r={1.5} />
-  </svg>
-)
+const Kebab = () => <AppIcon name="threedots_vertical" size={16} />
 
 /** A kebab trigger that opens a dropdown of actions. The panel is portalled to
     <body> and fixed-positioned from the trigger's rect, so it escapes the tree's

@@ -5,7 +5,7 @@ import { useSalesforcePhoto } from '../../hooks/useSalesforcePhoto'
 import { colorFromRecordId, textColorFromRecordId } from '../../utils/color-from-string'
 import { agentInitials, channelLabel, formatMinutes } from '../../utils/format'
 import { resolveWorkItemIcon } from '../../utils/salesforce-object-icon'
-import { CapacityBar, FadeValue, Ring, SfIcon } from '../ds'
+import { AppIcon, CapacityBar, FadeValue, Ring, SfIcon } from '../ds'
 import { StatusBadge } from '../StatusBadge'
 import { DetailRow, DrawerSection, EmptyHint, Stat, StatGrid } from './parts'
 
@@ -49,7 +49,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
       {agent.recordUrl ? (
         <div className="dd-actions">
           <a className="dd-action" href={agent.recordUrl} target="_blank" rel="noreferrer">
-            <SfIcon sprite="utility" symbol="new_window" size={15} />
+            <AppIcon name="new_window" size={15} />
             Obre a Salesforce
           </a>
         </div>
@@ -133,7 +133,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
               return (
                 <DetailRow
                   key={item.id}
-                  leading={<SfIcon sprite={icon.sprite} symbol={icon.symbol} size={28} bg={icon.tint} />}
+                  leading={<SfIcon sprite={icon.sprite} symbol={icon.symbol} size={28} bg={colorFromRecordId(item.id)} />}
                   title={item.subject || item.label}
                   meta={meta}
                 />

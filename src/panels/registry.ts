@@ -1,5 +1,6 @@
 import { createElement, lazy, Suspense, type FunctionComponent, type LazyExoticComponent } from 'react'
 import type { IDockviewPanelProps } from 'dockview-react'
+import type { AppIconName } from '../components/ds/app-icon-names.generated'
 import type { SfIconName, SfSprite } from '../components/ds/SfIcon'
 import { ErrorBoundary } from '../components/error/ErrorBoundary'
 import { PanelErrorFallback } from '../components/error/PanelErrorFallback'
@@ -19,6 +20,7 @@ export type PanelType =
 type PanelIcon =
   | { name: SfIconName }
   | { sprite: SfSprite; symbol: string }
+  | { app: AppIconName }
 
 export interface PanelDefinition {
   type: PanelType
@@ -36,7 +38,7 @@ export const PANEL_DEFINITIONS: PanelDefinition[] = [
   { type: 'work',       title: 'Work',         icon: { name: 'work' },                                    component: lazy(() => import('./WorkPanel').then(m => ({ default: m.WorkPanel }))) },
   { type: 'space',      title: 'Space',        icon: { sprite: 'standard', symbol: 'business_unit' },      component: lazy(() => import('./SpacePanel').then(m => ({ default: m.SpacePanel }))) },
   { type: 'spaceEditor', title: 'Space editor', icon: { sprite: 'custom', symbol: 'custom83' },              component: lazy(() => import('./SpaceEditorPanel').then(m => ({ default: m.SpaceEditorPanel }))) },
-  { type: 'colorPlayground', title: 'Color playground', icon: { sprite: 'utility', symbol: 'color_swatch' }, component: lazy(() => import('./ColorPlaygroundPanel').then(m => ({ default: m.ColorPlaygroundPanel }))) },
+  { type: 'colorPlayground', title: 'Color playground', icon: { app: 'color_swatch' }, component: lazy(() => import('./ColorPlaygroundPanel').then(m => ({ default: m.ColorPlaygroundPanel }))) },
 ]
 
 function withPanelErrorBoundary(

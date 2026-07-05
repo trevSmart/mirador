@@ -1,3 +1,4 @@
+export { AppIcon } from './AppIcon'
 export { Badge } from './Badge'
 export { Button } from './Button'
 export { CapacityBar } from './CapacityBar'

@@ -2,13 +2,11 @@ import { useCallback, useRef, useState } from 'react'
 import type { Agent, Queue } from '../../api/types'
 import type { Folder } from '../../space/types'
 import { ActionMenu, type ActionMenuItem } from '../ds/ActionMenu'
+import { AppIcon } from '../ds/AppIcon'
+import type { AppIconName } from '../ds/app-icon-names.generated'
 import { SfIcon } from '../ds/SfIcon'
 import { SpacePlanThumb } from './SpacePlanThumb'
 import { fileToLogoDataUrl } from '../../space/site-logo'
-
-// Font Awesome "clone" (regular), viewBox 0 0 640 640.
-const CLONE_ICON_PATH =
-  'M352 528L128 528C119.2 528 112 520.8 112 512L112 288C112 279.2 119.2 272 128 272L176 272L176 224L128 224C92.7 224 64 252.7 64 288L64 512C64 547.3 92.7 576 128 576L352 576C387.3 576 416 547.3 416 512L416 464L368 464L368 512C368 520.8 360.8 528 352 528zM288 368C279.2 368 272 360.8 272 352L272 128C272 119.2 279.2 112 288 112L512 112C520.8 112 528 119.2 528 128L528 352C528 360.8 520.8 368 512 368L288 368zM224 352C224 387.3 252.7 416 288 416L512 416C547.3 416 576 387.3 576 352L576 128C576 92.7 547.3 64 512 64L288 64C252.7 64 224 92.7 224 128L224 352z'
 
 interface EditableLabelProps {
   value: string
@@ -67,18 +65,7 @@ function EditableLabel({ value, className, onCommit }: EditableLabelProps) {
   )
 }
 
-const Chevron = () => (
-  <svg width={12} height={12} viewBox="0 0 12 12" aria-hidden="true">
-    <path
-      d="M4 2l4 4-4 4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-)
+const Chevron = () => <AppIcon name="chevronright" size={12} />
 
 /** Drag payload: either a space within a folder, or a whole folder subtree. */
 type DragState =
@@ -122,8 +109,8 @@ interface TreeCtx {
 }
 
 /** Small monochrome glyph for a menu item. */
-function menuIcon(sprite: 'utility' | 'standard', symbol: string) {
-  return <SfIcon sprite={sprite} symbol={symbol} size={16} tile={false} />
+function menuIcon(name: AppIconName) {
+  return <AppIcon name={name} size={16} />
 }
 
 function FolderNode({ folder, depth, ancestorInactive = false, ctx }: { folder: Folder; depth: number; ancestorInactive?: boolean; ctx: TreeCtx }) {
@@ -138,33 +125,33 @@ function FolderNode({ folder, depth, ancestorInactive = false, ctx }: { folder: 
     {
       key: 'image',
       label: 'Carrega una imatge',
-      icon: menuIcon('utility', 'image'),
+      icon: menuIcon('image'),
       onSelect: () => ctx.pickImage(folder.id),
     },
     ...(folder.image
       ? [{
           key: 'clear-image',
           label: 'Treu la imatge',
-          icon: menuIcon('utility', 'clear'),
+          icon: menuIcon('clear'),
           onSelect: () => ctx.onSetFolderImage(folder.id, null),
         } satisfies ActionMenuItem]
       : []),
     {
       key: 'add-folder',
       label: 'Afegeix una subcarpeta',
-      icon: menuIcon('utility', 'open_folder'),
+      icon: menuIcon('open_folder'),
       onSelect: () => { ctx.expandFolder(folder.id); ctx.onAddFolder(folder.id) },
     },
     {
       key: 'add-space',
       label: 'Afegeix una planta',
-      icon: menuIcon('standard', 'business_unit'),
+      icon: menuIcon('space'),
       onSelect: () => { ctx.expandFolder(folder.id); ctx.onAddSpace(folder.id) },
     },
     {
       key: 'delete',
       label: 'Elimina la carpeta',
-      icon: menuIcon('utility', 'delete'),
+      icon: menuIcon('delete'),
       danger: true,
       disabled: depth === 1 && ctx.rootCount <= 1,
       onSelect: () => {
@@ -341,17 +328,13 @@ function FolderNode({ folder, depth, ancestorInactive = false, ctx }: { folder: 
                     {
                       key: 'duplicate',
                       label: 'Clona la planta',
-                      icon: (
-                        <svg width={16} height={16} viewBox="0 0 640 640" aria-hidden="true" fill="currentColor">
-                          <path d={CLONE_ICON_PATH} />
-                        </svg>
-                      ),
+                      icon: menuIcon('clone'),
                       onSelect: () => ctx.onDuplicateSpace(folder.id, space.id),
                     },
                     {
                       key: 'delete',
                       label: 'Elimina la planta',
-                      icon: menuIcon('utility', 'delete'),
+                      icon: menuIcon('delete'),
                       danger: true,
                       onSelect: () => {
                         if (window.confirm(`Vols eliminar la planta "${space.name}"?`)) {
