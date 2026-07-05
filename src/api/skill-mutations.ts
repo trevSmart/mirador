@@ -19,7 +19,7 @@ export function useUpdateAgentSkills() {
     mutationFn: ({ agentId, changes }) => {
       if (client === null) {
         throw new Error(
-          "No es pot actualitzar els skills: no hi ha sessió activa",
+          'No es pot actualitzar els skills: no hi ha sessió activa',
         )
       }
       return client.updateAgentSkills(agentId, { changes })
