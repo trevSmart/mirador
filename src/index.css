@@ -6648,6 +6648,75 @@ textarea,
   text-decoration: line-through;
 }
 
+/* Toasts — feedback flotant d'èxit/error, apilat a la cantonada inferior
+   dreta. Renderitzat via portal a document.body per <ToastProvider>. */
+.toast-stack {
+  position: fixed;
+  right: var(--sp-4, 14px);
+  bottom: var(--sp-4, 14px);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--sp-2);
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 220px;
+  max-width: 360px;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--status-ok);
+  border-radius: var(--r-md);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-lift);
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  color: var(--text-strong);
+  pointer-events: auto;
+  animation: toast-in var(--dur-fast) var(--ease);
+}
+
+.toast--error {
+  border-left-color: var(--status-alert);
+}
+
+.toast__message {
+  flex: 1;
+  color: var(--text-body);
+}
+
+.toast__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-body);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: var(--r-md);
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.toast__close:hover {
+  color: var(--text-strong);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .fe-tree__site.is-inactive [aria-pressed],
 .fe-tree__place.is-inactive [aria-pressed],
 .fe-space.is-inactive [aria-pressed] {
