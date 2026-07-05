@@ -22,7 +22,12 @@ export function SkillAssignPalette({ skills, disabled = false, onAssign, onCance
     return skills.filter((skill) => !needle || skill.name.toLowerCase().includes(needle)).slice(0, 50)
   }, [skills, query])
 
-  const parsedLevel = level.trim() === '' ? null : Number(level)
+  const parsedLevel = (() => {
+    const trimmed = level.trim()
+    if (trimmed === '') return null
+    const n = Number(trimmed)
+    return Number.isFinite(n) ? n : null
+  })()
 
   return (
     <section className="dd-skill-palette">
