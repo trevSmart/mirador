@@ -18,6 +18,7 @@ import { DevConsoleProvider } from './dev/DevConsoleContext'
 import { DevConsole } from './dev/DevConsole'
 import { ModalRegistryProvider } from './modals/ModalRegistryProvider'
 import { GlobalShortcutsProvider } from './shortcuts/GlobalShortcutsProvider'
+import { ToastProvider } from './components/ds/Toast/ToastProvider'
 
 function AppContent() {
   return (
@@ -49,25 +50,27 @@ function App({ initialAuthError = null }: { initialAuthError?: string | null }) 
                     <SettingsModalProvider>
                       <DevConsoleProvider>
                         <GlobalShortcutsProvider>
-                          <ErrorBoundary
-                            fallback={(error, reset) => (
-                              <StatusScreen
-                                tone="error"
-                                title="Alguna cosa ha fallat"
-                                message="S'ha produït un error inesperat i no s'ha pogut mostrar aquesta vista."
-                                detail={error.message}
-                                detailLabel="Detalls de l'error"
-                                actions={[
-                                  { label: 'Torna-ho a provar', onClick: reset, variant: 'primary' },
-                                  { label: 'Recarrega la pàgina', onClick: () => window.location.reload() },
-                                ]}
-                              />
-                            )}
-                          >
-                            <AppGate>
-                              <AppContent />
-                            </AppGate>
-                          </ErrorBoundary>
+                          <ToastProvider>
+                            <ErrorBoundary
+                              fallback={(error, reset) => (
+                                <StatusScreen
+                                  tone="error"
+                                  title="Alguna cosa ha fallat"
+                                  message="S'ha produït un error inesperat i no s'ha pogut mostrar aquesta vista."
+                                  detail={error.message}
+                                  detailLabel="Detalls de l'error"
+                                  actions={[
+                                    { label: 'Torna-ho a provar', onClick: reset, variant: 'primary' },
+                                    { label: 'Recarrega la pàgina', onClick: () => window.location.reload() },
+                                  ]}
+                                />
+                              )}
+                            >
+                              <AppGate>
+                                <AppContent />
+                              </AppGate>
+                            </ErrorBoundary>
+                          </ToastProvider>
                         </GlobalShortcutsProvider>
                       </DevConsoleProvider>
                     </SettingsModalProvider>
