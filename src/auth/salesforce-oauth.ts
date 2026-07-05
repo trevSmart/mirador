@@ -264,11 +264,20 @@ export async function fetchUserInfo(session: OAuthSession): Promise<SalesforceUs
   return (await response.json()) as SalesforceUserInfo
 }
 
-export function logout(): void {
+export function logout(session: OAuthSession | null): void {
+  const { instanceUrl } = session ?? {}
   clearOAuthSession()
   localStorage.removeItem(PKCE_STATE_KEY)
   localStorage.removeItem(PKCE_VERIFIER_KEY)
-  window.location.assign('/')
+
+  if (instanceUrl) {
+    // Also end the Salesforce browser session, otherwise the next auto-login
+    // silently re-authenticates via the still-active SF SSO cookie.
+    const retUrl = encodeURIComponent(`${window.location.origin}/`)
+    window.location.assign(`${instanceUrl.replace(/\/$/, '')}/secur/logout.jsp?retUrl=${retUrl}`)
+  } else {
+    window.location.assign('/')
+  }
 }
 
 export function buildPhotoProxyUrlFromAbsoluteUrl(photoUrl: string): string {
