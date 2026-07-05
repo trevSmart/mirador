@@ -4360,6 +4360,131 @@ textarea,
   margin: var(--sp-1) 0;
 }
 
+/* Edició de skills d'un agent (drawer) */
+.dd-skill-row__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.dd-skill-row__level {
+  width: 44px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  padding: 2px var(--sp-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  background: var(--surface-card);
+  color: var(--text-strong);
+}
+
+.dd-skill-row__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.dd-skill-row__remove:hover {
+  background: var(--surface-well);
+  color: var(--text-strong);
+}
+
+.dd-skill-palette {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  background: var(--surface-card);
+}
+
+.dd-skill-palette__search {
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  background: var(--surface-well);
+  color: var(--text-strong);
+}
+
+.dd-skill-palette__level {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.dd-skill-palette__level input {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  padding: var(--sp-1) var(--sp-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  background: var(--surface-well);
+  color: var(--text-strong);
+  width: 80px;
+}
+
+.dd-skill-palette__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.dd-skill-palette__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2);
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.dd-skill-palette__item:hover {
+  background: var(--surface-well);
+}
+
+.dd-skill-palette__item-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dd-skill-palette__item-name {
+  font-size: var(--fs-sm);
+  color: var(--text-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dd-skill-palette__item-meta {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.dd-skill-palette__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 /* Clickable entity rows in panels */
 .agent-row--clickable,
 .queue-row--clickable,

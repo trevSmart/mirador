@@ -1,13 +1,16 @@
-import { useQueues } from '../../api/data-hooks'
-import type { Agent, ChannelKey, PresenceStatus } from '../../api/types'
+import { useState } from 'react'
+import { useCapabilities, useQueues, useSkills } from '../../api/data-hooks'
+import { useUpdateAgentSkills } from '../../api/skill-mutations'
+import type { Agent, AgentSkillChange, ChannelKey, PresenceStatus } from '../../api/types'
 import { useDetailDrawer } from '../../detail/detail-drawer-context'
 import { useSalesforcePhoto } from '../../hooks/useSalesforcePhoto'
 import { colorFromRecordId, textColorFromRecordId } from '../../utils/color-from-string'
 import { agentInitials, channelLabel, formatMinutes } from '../../utils/format'
 import { resolveWorkItemIcon } from '../../utils/salesforce-object-icon'
-import { AppIcon, CapacityBar, FadeValue, Ring, SfIcon } from '../ds'
+import { AppIcon, Button, CapacityBar, FadeValue, Ring, SfIcon, useToast } from '../ds'
 import { StatusBadge } from '../StatusBadge'
 import { DetailRow, DrawerActions, DrawerSection, EmptyHint, Stat, StatGrid } from './parts'
+import { SkillAssignPalette } from './SkillAssignPalette'
 
 const STATUS_COLOR: Record<PresenceStatus, string> = {
   online: 'var(--status-ok)',
@@ -20,10 +23,29 @@ const CHANNELS: ChannelKey[] = ['veu', 'chat', 'email', 'wa', 'cas']
 
 export function AgentDetail({ agent }: { agent: Agent }) {
   const queues = useQueues()
+  const catalog = useSkills()
+  const caps = useCapabilities()
+  const mutation = useUpdateAgentSkills()
+  const toast = useToast()
   const { openQueue, openWork } = useDetailDrawer()
   const photo = useSalesforcePhoto(agent.photo)
   const color = STATUS_COLOR[agent.status]
   const queueIds = [...new Set(agent.queueIds)]
+  const canEdit = caps?.canChangeSkills === true
+  const [adding, setAdding] = useState(false)
+
+  function runChange(changes: AgentSkillChange[], successMsg: string) {
+    mutation.mutate(
+      { agentId: agent.id, changes },
+      {
+        onSuccess: () => toast.success(successMsg),
+        onError: (e) => toast.error(e instanceof Error ? e.message : 'No s\'ha pogut desar el canvi'),
+      },
+    )
+  }
+
+  const assignedSkillIds = new Set(agent.skills.map((s) => s.skillId))
+  const assignable = catalog.filter((s) => !assignedSkillIds.has(s.id))
 
   return (
     <>
@@ -91,15 +113,63 @@ export function AgentDetail({ agent }: { agent: Agent }) {
             {agent.skills.map((skill) => (
               <DetailRow
                 key={skill.id}
-                leading={<SfIcon name="skill" size={28} />}
+                leading={<SfIcon name="skill" size={28} bg={colorFromRecordId(skill.id)} />}
                 title={skill.name}
                 meta={[skill.type, skill.level != null ? `Nivell ${skill.level}` : null]
                   .filter(Boolean)
                   .join(' · ')}
+                trailing={
+                  canEdit ? (
+                    <span className="dd-skill-row__actions">
+                      <SkillLevelInput
+                        initialLevel={skill.level}
+                        disabled={mutation.isPending}
+                        onCommit={(level) =>
+                          runChange(
+                            [{ skillId: skill.skillId!, level }],
+                            `S'ha actualitzat el nivell de «${skill.name}»`,
+                          )
+                        }
+                      />
+                      <button
+                        type="button"
+                        className="dd-skill-row__remove"
+                        title="Treu la skill"
+                        disabled={mutation.isPending}
+                        onClick={() =>
+                          runChange([{ skillId: skill.skillId!, remove: true }], `S'ha tret «${skill.name}»`)
+                        }
+                      >
+                        <AppIcon name="close" size={14} />
+                      </button>
+                    </span>
+                  ) : undefined
+                }
               />
             ))}
           </div>
         )}
+        {canEdit ? (
+          adding ? (
+            <SkillAssignPalette
+              skills={assignable}
+              disabled={mutation.isPending}
+              onAssign={(skillId, level) => {
+                const skillName = catalog.find((s) => s.id === skillId)?.name ?? skillId
+                runChange(
+                  [{ skillId, ...(level != null ? { level } : {}) }],
+                  `S'ha assignat «${skillName}»`,
+                )
+                setAdding(false)
+              }}
+              onCancel={() => setAdding(false)}
+            />
+          ) : (
+            <Button size="sm" icon={<AppIcon name="add" size={15} />} onClick={() => setAdding(true)}>
+              Afegeix skill
+            </Button>
+          )
+        ) : null}
       </DrawerSection>
 
       <DrawerSection title="Cues assignades">
@@ -152,5 +222,42 @@ export function AgentDetail({ agent }: { agent: Agent }) {
         )}
       </DrawerSection>
     </>
+  )
+}
+
+/** Input de nivell d'una skill assignada: comita només quan el valor canvia
+    (blur o Enter), no a cada tecla, per no disparar una mutació per lletra. */
+function SkillLevelInput({
+  initialLevel,
+  disabled,
+  onCommit,
+}: {
+  initialLevel: number | null
+  disabled: boolean
+  onCommit: (level: number) => void
+}) {
+  const [value, setValue] = useState(initialLevel != null ? String(initialLevel) : '')
+
+  function commit() {
+    const trimmed = value.trim()
+    if (trimmed === '') return
+    const level = Number(trimmed)
+    if (Number.isNaN(level) || level === initialLevel) return
+    onCommit(level)
+  }
+
+  return (
+    <input
+      type="number"
+      className="dd-skill-row__level"
+      aria-label="Nivell"
+      value={value}
+      disabled={disabled}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') commit()
+      }}
+    />
   )
 }
