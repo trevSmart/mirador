@@ -8,10 +8,10 @@ import {
   type PreferencesContextValue,
 } from '../settings/preferences-context'
 import { entityKey, makeQueryClient } from './data-service'
-import { useAgents, useDataStatus, useQueues } from './data-hooks'
+import { useAgents, useCapabilities, useDataStatus, useQueues } from './data-hooks'
 import { MiradorApiContext } from './mirador-api-context'
 import type { MiradorClient } from './mirador-client'
-import type { SnapshotResponse } from './types'
+import type { Capabilities, SnapshotResponse } from './types'
 
 function snapshot(): SnapshotResponse {
   return {
@@ -96,6 +96,51 @@ describe('snapshot data hooks', () => {
     expect(
       queryClient.getQueryData(entityKey('salesforce', 'agent', 'a1')),
     ).toEqual({ id: 'a1' })
+  })
+})
+
+describe('useCapabilities', () => {
+  function capabilities(): Capabilities {
+    return {
+      canChangePresence: true,
+      canReassignWork: true,
+      canChangeQueues: false,
+      canChangeSkills: true,
+      canFlagAgent: false,
+      liveUpdates: true,
+    }
+  }
+
+  function makeCapabilitiesClient(caps: Capabilities) {
+    const getCapabilities = vi.fn(async () => caps)
+    const client = { getCapabilities } as unknown as MiradorClient
+    return { client, getCapabilities }
+  }
+
+  it('retorna les capabilities del client un cop carregades', async () => {
+    const { client, getCapabilities } = makeCapabilitiesClient(capabilities())
+    const { Wrapper } = makeWrapper(client)
+
+    const { result } = renderHook(() => useCapabilities(), {
+      wrapper: Wrapper,
+    })
+
+    expect(result.current).toBeNull()
+    await waitFor(() => expect(result.current).not.toBeNull())
+    expect(result.current?.canChangeSkills).toBe(true)
+    expect(getCapabilities).toHaveBeenCalledTimes(1)
+  })
+
+  it('retorna null quan no està autenticat', () => {
+    const { client, getCapabilities } = makeCapabilitiesClient(capabilities())
+    const { Wrapper } = makeWrapper(client, { isAuthenticated: false })
+
+    const { result } = renderHook(() => useCapabilities(), {
+      wrapper: Wrapper,
+    })
+
+    expect(result.current).toBeNull()
+    expect(getCapabilities).not.toHaveBeenCalled()
   })
 })
 

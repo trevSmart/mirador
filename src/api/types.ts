@@ -102,7 +102,7 @@ export interface Capabilities {
   liveUpdates: boolean
 }
 
-interface AgentSkillChange {
+export interface AgentSkillChange {
   skillId: string
   level?: number
   remove?: boolean

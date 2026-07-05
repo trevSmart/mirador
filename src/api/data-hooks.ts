@@ -13,6 +13,7 @@ import { MiradorApiError } from './mirador-client'
 import type {
   Agent,
   AgentScope,
+  Capabilities,
   PresenceStatusOption,
   Queue,
   Skill,
@@ -95,6 +96,25 @@ export function usePresenceStatuses(): PresenceStatusOption[] {
     useQuery({ ...config, select: selectPresenceStatuses }).data ??
     EMPTY_PRESENCE_STATUSES
   )
+}
+
+/**
+ * Capabilities de l'usuari actual (permisos per canviar presència, cues,
+ * skills, etc.). Query pròpia, fora del snapshot: gairebé no canvien, així
+ * que fem servir un `staleTime` llarg i sense polling.
+ */
+export function useCapabilities(): Capabilities | null {
+  const { isAuthenticated } = useAuth()
+  const client = useSourceClient('salesforce')
+  const enabled = isAuthenticated && client !== null
+
+  const query = useQuery({
+    queryKey: ['salesforce', 'capabilities'] as const,
+    queryFn: enabled && client ? () => client.getCapabilities() : skipToken,
+    staleTime: 5 * 60_000,
+  })
+
+  return query.data ?? null
 }
 
 const GENERIC_ERROR = 'No s\'han pogut carregar les dades de Salesforce'
