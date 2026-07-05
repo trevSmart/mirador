@@ -730,6 +730,9 @@ private class MiradorAgentServiceTest {
 
         System.assertEquals(1, diff.toInsert.size(), 'one new skill');
         System.assertEquals(skillAdd, diff.toInsert[0].SkillId);
+        System.assertEquals(
+            Date.today(), diff.toInsert[0].EffectiveStartDate,
+            'EffectiveStartDate is required on insert and must default to today');
         System.assertEquals(1, diff.toUpdate.size(), 'one level change');
         System.assertEquals(5, diff.toUpdate[0].SkillLevel);
         System.assertEquals(1, diff.toDelete.size(), 'one removal');

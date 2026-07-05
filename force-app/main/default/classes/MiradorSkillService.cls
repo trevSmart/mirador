@@ -153,8 +153,12 @@ public with sharing class MiradorSkillService {
                 continue;
             }
             if (existing == null) {
+                // EffectiveStartDate és obligatori a ServiceResourceSkill: si no
+                // el fixem, l'insert falla amb REQUIRED_FIELD_MISSING. Assignem la
+                // skill amb efecte des d'avui.
                 diff.toInsert.add(new ServiceResourceSkill(
-                    ServiceResourceId = resourceId, SkillId = ch.skillId, SkillLevel = ch.level));
+                    ServiceResourceId = resourceId, SkillId = ch.skillId, SkillLevel = ch.level,
+                    EffectiveStartDate = Date.today()));
             } else if (ch.level != null && ch.level != existing.SkillLevel) {
                 existing.SkillLevel = ch.level;
                 diff.toUpdate.add(existing);
