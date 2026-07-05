@@ -119,14 +119,14 @@ export function AgentDetail({ agent }: { agent: Agent }) {
                   .filter(Boolean)
                   .join(' · ')}
                 trailing={
-                  canEdit ? (
+                  canEdit && skill.skillId != null ? (
                     <span className="dd-skill-row__actions">
                       <SkillLevelInput
                         initialLevel={skill.level}
                         disabled={mutation.isPending}
                         onCommit={(level) =>
                           runChange(
-                            [{ skillId: skill.skillId!, level }],
+                            [{ skillId: skill.skillId, level }],
                             `S'ha actualitzat el nivell de «${skill.name}»`,
                           )
                         }
@@ -137,7 +137,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
                         title="Treu la skill"
                         disabled={mutation.isPending}
                         onClick={() =>
-                          runChange([{ skillId: skill.skillId!, remove: true }], `S'ha tret «${skill.name}»`)
+                          runChange([{ skillId: skill.skillId, remove: true }], `S'ha tret «${skill.name}»`)
                         }
                       >
                         <AppIcon name="close" size={14} />
