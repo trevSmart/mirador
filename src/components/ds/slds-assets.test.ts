@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import type { ChannelKey } from '../../api/types'
 import { PANEL_DEFINITIONS } from '../../panels/registry'
@@ -11,8 +12,8 @@ import { NAMED, sfIconColorClass, type SfSprite } from './sf-icon-model'
    estàticament al codi ha d'existir al sprite de la seva família i tenir la
    classe de color oficial a icons.css. Si falla: npm run slds:build */
 
-const SLDS_DIR = join(__dirname, '..', '..', '..', 'public', 'slds')
-
+const HERE = dirname(fileURLToPath(import.meta.url))
+const SLDS_DIR = join(HERE, '..', '..', '..', 'public', 'slds')
 const sprites: Record<SfSprite, string> = {
   standard: readFileSync(join(SLDS_DIR, 'standard.svg'), 'utf8'),
   custom: readFileSync(join(SLDS_DIR, 'custom.svg'), 'utf8'),
