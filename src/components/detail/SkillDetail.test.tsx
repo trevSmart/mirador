@@ -127,6 +127,25 @@ describe('SkillDetail — assignar agents', () => {
     expect(screen.getAllByText('Núria').length).toBeGreaterThanOrEqual(1)
   })
 
+  it('no confon skills amb el mateix nom però id diferent', () => {
+    useCapabilitiesMock.mockReturnValue({ canChangeSkills: true } as Capabilities)
+    useAgentsMock.mockReturnValue([
+      makeAgent({
+        id: 'a2',
+        name: 'Pere',
+        // Té una skill amb el mateix nom «Facturació» però un id diferent (sk-altre).
+        skills: [{ id: 'as9', skillId: 'sk-altre', name: 'Facturació', type: 'Vendes', level: 1, startDate: null, lastModifiedDate: null, lastModifiedBy: null }],
+      }),
+    ])
+    render(<SkillDetail skill={makeSkill({ id: 'sk1' })} />)
+    // No hauria de sortir com a "qualificat" per aquesta skill (sk1), ja que la seva és sk-altre.
+    expect(screen.queryByText('Pere')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /assigna agents/i }))
+    // A la llista d'assignació hauria d'aparèixer com a "Assigna", no com a "Treu".
+    expect(screen.getByRole('button', { name: /^assigna$/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^treu$/i })).not.toBeInTheDocument()
+  })
+
   it('assignar un agent sense la skill crida mutate amb la skill actual', () => {
     useCapabilitiesMock.mockReturnValue({ canChangeSkills: true } as Capabilities)
     useAgentsMock.mockReturnValue([makeAgent({ id: 'a2', name: 'Pere', skills: [] })])
