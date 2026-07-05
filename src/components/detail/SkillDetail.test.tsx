@@ -1,0 +1,181 @@
+import { fireEvent, render, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Agent, Capabilities, Skill } from '../../api/types'
+
+const useAgentsMock = vi.fn<() => Agent[]>(() => [])
+const useCapabilitiesMock = vi.fn<() => Capabilities | null>(() => null)
+vi.mock('../../api/data-hooks', () => ({
+  useAgents: () => useAgentsMock(),
+  useCapabilities: () => useCapabilitiesMock(),
+}))
+
+const mutateMock = vi.fn()
+const useUpdateAgentSkillsMock = vi.fn(() => ({ mutate: mutateMock, isPending: false }))
+vi.mock('../../api/skill-mutations', () => ({
+  useUpdateAgentSkills: () => useUpdateAgentSkillsMock(),
+}))
+
+const toastSuccess = vi.fn()
+const toastError = vi.fn()
+vi.mock('../ds', async () => {
+  const actual = await vi.importActual<typeof import('../ds')>('../ds')
+  return {
+    ...actual,
+    useToast: () => ({ success: toastSuccess, error: toastError }),
+  }
+})
+
+const openAgentMock = vi.fn()
+vi.mock('../../detail/detail-drawer-context', () => ({
+  useDetailDrawer: () => ({ openAgent: openAgentMock }),
+}))
+
+vi.mock('../../hooks/useSalesforcePhoto', () => ({
+  useSalesforcePhoto: () => null,
+}))
+
+import { SkillDetail } from './SkillDetail'
+
+// JSDOM no implementa matchMedia; alguns subcomponents del drawer el consulten.
+if (typeof window.matchMedia !== 'function') {
+  window.matchMedia = ((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  })) as unknown as typeof window.matchMedia
+}
+
+function makeSkill(overrides: Partial<Skill> = {}): Skill {
+  return {
+    id: 'sk1',
+    name: 'Facturació',
+    type: 'Vendes',
+    typeId: 't1',
+    agents: 1,
+    backlog: 2,
+    ...overrides,
+  }
+}
+
+function makeAgent(overrides: Partial<Agent> = {}): Agent {
+  return {
+    id: 'a1',
+    name: 'Marta',
+    role: 'Agent',
+    recordUrl: null,
+    status: 'online',
+    presenceStatusId: null,
+    presenceStatusLabel: null,
+    max: 3,
+    used: 1,
+    queueIds: [],
+    loginMin: 0,
+    photo: null,
+    chans: {},
+    work: [],
+    skills: [],
+    ...overrides,
+  } as Agent
+}
+
+describe('SkillDetail — assignar agents', () => {
+  beforeEach(() => {
+    useAgentsMock.mockReturnValue([])
+    useCapabilitiesMock.mockReturnValue(null)
+    useUpdateAgentSkillsMock.mockReturnValue({ mutate: mutateMock, isPending: false })
+    mutateMock.mockReset()
+    toastSuccess.mockReset()
+    toastError.mockReset()
+    openAgentMock.mockReset()
+  })
+
+  it('read-only quan canChangeSkills és false: clicar "Assigna agents" no obre la llista', () => {
+    useCapabilitiesMock.mockReturnValue({ canChangeSkills: false } as Capabilities)
+    useAgentsMock.mockReturnValue([makeAgent({ id: 'a2', name: 'Pere' })])
+    render(<SkillDetail skill={makeSkill()} />)
+    fireEvent.click(screen.getByRole('button', { name: /assigna agents/i }))
+    expect(screen.queryByPlaceholderText(/cerca un agent/i)).not.toBeInTheDocument()
+  })
+
+  it('read-only quan capabilities és null', () => {
+    useCapabilitiesMock.mockReturnValue(null)
+    render(<SkillDetail skill={makeSkill()} />)
+    fireEvent.click(screen.getByRole('button', { name: /assigna agents/i }))
+    expect(screen.queryByPlaceholderText(/cerca un agent/i)).not.toBeInTheDocument()
+  })
+
+  it('amb canChangeSkills true, clicar "Assigna agents" mostra la llista d\'agents', () => {
+    useCapabilitiesMock.mockReturnValue({ canChangeSkills: true } as Capabilities)
+    useAgentsMock.mockReturnValue([
+      makeAgent({ id: 'a2', name: 'Pere', skills: [] }),
+      makeAgent({
+        id: 'a3',
+        name: 'Núria',
+        skills: [{ id: 'as1', skillId: 'sk1', name: 'Facturació', type: 'Vendes', level: 1, startDate: null, lastModifiedDate: null, lastModifiedBy: null }],
+      }),
+    ])
+    render(<SkillDetail skill={makeSkill()} />)
+    fireEvent.click(screen.getByRole('button', { name: /assigna agents/i }))
+    expect(screen.getByPlaceholderText(/cerca un agent/i)).toBeInTheDocument()
+    expect(screen.getByText('Pere')).toBeInTheDocument()
+    // Núria ja és qualificada, per tant surt tant a "Agents qualificats" com a la llista d'assignació.
+    expect(screen.getAllByText('Núria').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('assignar un agent sense la skill crida mutate amb la skill actual', () => {
+    useCapabilitiesMock.mockReturnValue({ canChangeSkills: true } as Capabilities)
+    useAgentsMock.mockReturnValue([makeAgent({ id: 'a2', name: 'Pere', skills: [] })])
+    render(<SkillDetail skill={makeSkill()} />)
+    fireEvent.click(screen.getByRole('button', { name: /assigna agents/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^assigna$/i }))
+    expect(mutateMock).toHaveBeenCalledWith(
+      { agentId: 'a2', changes: [{ skillId: 'sk1' }] },
+      expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) }),
+    )
+  })
+
+  it('treure la skill d\'un agent qualificat crida mutate amb remove:true', () => {
+    useCapabilitiesMock.mockReturnValue({ canChangeSkills: true } as Capabilities)
+    useAgentsMock.mockReturnValue([
+      makeAgent({
+        id: 'a3',
+        name: 'Núria',
+        skills: [{ id: 'as1', skillId: 'sk1', name: 'Facturació', type: 'Vendes', level: 1, startDate: null, lastModifiedDate: null, lastModifiedBy: null }],
+      }),
+    ])
+    render(<SkillDetail skill={makeSkill()} />)
+    fireEvent.click(screen.getByRole('button', { name: /assigna agents/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^treu$/i }))
+    expect(mutateMock).toHaveBeenCalledWith(
+      { agentId: 'a3', changes: [{ skillId: 'sk1', remove: true }] },
+      expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) }),
+    )
+  })
+
+  it('en èxit del canvi es crida toast.success', () => {
+    useCapabilitiesMock.mockReturnValue({ canChangeSkills: true } as Capabilities)
+    useAgentsMock.mockReturnValue([makeAgent({ id: 'a2', name: 'Pere', skills: [] })])
+    render(<SkillDetail skill={makeSkill()} />)
+    fireEvent.click(screen.getByRole('button', { name: /assigna agents/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^assigna$/i }))
+    const call = mutateMock.mock.calls[0][1]
+    call.onSuccess()
+    expect(toastSuccess).toHaveBeenCalled()
+  })
+
+  it('en error del canvi es crida toast.error', () => {
+    useCapabilitiesMock.mockReturnValue({ canChangeSkills: true } as Capabilities)
+    useAgentsMock.mockReturnValue([makeAgent({ id: 'a2', name: 'Pere', skills: [] })])
+    render(<SkillDetail skill={makeSkill()} />)
+    fireEvent.click(screen.getByRole('button', { name: /assigna agents/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^assigna$/i }))
+    const call = mutateMock.mock.calls[0][1]
+    call.onError(new Error('boom'))
+    expect(toastError).toHaveBeenCalledWith('boom')
+  })
+})
