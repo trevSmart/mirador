@@ -3983,36 +3983,40 @@ textarea,
 
 .dd-head {
   display: flex;
-  align-items: flex-start;
-  gap: calc(var(--sp-4) - 1px);
-  padding-right: 40px;
+  align-items: center;
+  gap: var(--sp-4);
   margin-bottom: var(--sp-5);
+}
+
+.dd-head > .slds-icon_container {
+  flex-shrink: 0;
 }
 
 .dd-head__id {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  align-items: flex-start;
+  gap: var(--sp-1);
   min-width: 0;
 }
 
 .dd-head__name {
   margin: 0;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-family: var(--font-display);
   font-size: var(--fs-h3);
   font-weight: var(--fw-semibold);
+  line-height: 1.2;
   color: var(--text-strong);
 }
 
 .dd-head__sub {
   font-size: calc(var(--fs-sm) + 0.1px);
+  line-height: 1.2;
   color: color-mix(in oklab, var(--text-muted) 88%, var(--text-body));
-}
-
-.dd-head__id .status-pill,
-.dd-head__id > span:last-child {
-  align-self: flex-start;
-  margin-top: 2px;
 }
 
 .dd-actions {

@@ -147,8 +147,8 @@ export function AuthProvider({
 
   const logout = useCallback(() => {
     devLog.action('auth:logout')
-    oauthLogout()
-  }, [])
+    oauthLogout(session)
+  }, [session])
 
   const value = useMemo<AuthContextValue>(
     () => ({
