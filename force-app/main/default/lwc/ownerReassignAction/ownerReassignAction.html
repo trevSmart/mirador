@@ -1,0 +1,65 @@
+<template>
+    <div class="slds-p-around_medium">
+        <div class="slds-form-element slds-m-bottom_small">
+            <lightning-input
+                             type="search"
+                             label="Cerca usuari o cua"
+                             value={searchTerm}
+                             onchange={handleSearchChange}
+                             is-loading={loading}
+                             autocomplete="off"></lightning-input>
+        </div>
+
+        <template lwc:if={errorMessage}>
+            <div class="slds-text-color_error slds-m-bottom_x-small" role="alert">
+                {errorMessage}
+            </div>
+        </template>
+
+        <template lwc:if={hasResults}>
+            <ul class="slds-listbox slds-listbox_vertical owner-list" role="listbox">
+                <template for:each={results} for:item="row">
+                    <li
+                        key={row.id}
+                        class={row.selectedClass}
+                        role="option"
+                        data-id={row.id}
+                        onclick={handleSelect}>
+                        <div class="slds-media slds-media_center slds-p-around_x-small">
+                            <div class="slds-media__figure">
+                                <lightning-icon
+                                                icon-name={row.iconName}
+                                                size="small"></lightning-icon>
+                            </div>
+                            <div class="slds-media__body">
+                                <span class="slds-truncate slds-text-body_regular">{row.label}</span>
+                                <br />
+                                <span class="slds-truncate slds-text-body_small slds-text-color_weak">
+                                    {row.sublabel}
+                                </span>
+                            </div>
+                        </div>
+                    </li>
+                </template>
+            </ul>
+        </template>
+
+        <template lwc:if={showEmpty}>
+            <div class="slds-text-color_weak slds-p-vertical_small slds-align_absolute-center">
+                Cap resultat
+            </div>
+        </template>
+    </div>
+
+    <div class="slds-p-around_medium slds-border_top slds-grid slds-grid_align-end">
+        <lightning-button
+                          label="Cancel·lar"
+                          onclick={handleCancel}></lightning-button>
+        <lightning-button
+                          class="slds-m-left_x-small"
+                          variant="brand"
+                          label="Assignar"
+                          disabled={confirmDisabled}
+                          onclick={handleConfirm}></lightning-button>
+    </div>
+</template>

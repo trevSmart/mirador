@@ -1035,6 +1035,25 @@ textarea,
   border-bottom: 1px solid var(--border-subtle);
 }
 
+/* The tab strip sits in a flex row alongside a flex-grow void container that
+   otherwise steals the free space, squeezing .dv-scrollable below its tabs'
+   preferred size so they truncate even when the bar has room. Pin the strip to
+   shrink only down to its own min-content and let the void take whatever is
+   left: tabs stay at their 130px basis when there's space, and shrink toward
+   80px (their min-width) only once the strip itself runs out of room. */
+.app-chrome .dockview-container .dv-groupview > .dv-tabs-and-actions-container > .dv-scrollable {
+  /* Give the strip all the free width so its tabs sit at their 130px basis;
+     they shrink toward 80px only when the strip itself overflows. Dockview's
+     void container defaults to flex-grow:1 and would otherwise split the free
+     space with the strip, starving it and truncating tabs prematurely. */
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.app-chrome .dockview-container .dv-groupview > .dv-tabs-and-actions-container > .dv-void-container {
+  flex-grow: 0;
+}
+
 .app-chrome .dockview-container .dv-groupview > .dv-tabs-and-actions-container.dv-groupview-header-vertical {
   padding: var(--sp-4) 0;
   border-bottom: none;
@@ -1105,10 +1124,24 @@ textarea,
   /* 1px tighter than the shared --dv-tab-border-radius (--r-sm = 10px), without
      affecting the add-panel "+" button that reuses that variable. */
   border-radius: 9px;
-  /* Every tab is the same fixed width regardless of its title length; longer
-     titles truncate with an ellipsis (see .mirador-tab__label). */
-  width: var(--dv-tab-width, 130px);
+  /* Each chip sizes to its own label (width: max-content), floored at 80px so
+     short titles keep a comfortable minimum and capped at 220px so a very long
+     title truncates rather than dominating the bar. So a long title ("Space
+     editor") grows its chip to fit instead of truncating, while short ones stay
+     compact — no forced uniform width.
+     When horizontal space runs low, flex-shrink:1 (overriding Dockview's
+     built-in `.dv-tab { flex-shrink: 0 }`) lets every chip shrink toward its
+     80px floor — more tabs fit before the "···" overflow menu — after which
+     labels truncate with an ellipsis (see .mirador-tab__label). */
+  width: max-content;
+  flex-grow: 0;
+  flex-shrink: 1;
+  flex-basis: auto;
+  min-width: 80px;
+  max-width: 220px;
   box-sizing: border-box;
+  /* Anchor the ::before divider (see below). */
+  position: relative;
 }
 
 /* The default-tab wrapper must fill the fixed-width tab and let its label
@@ -1118,14 +1151,31 @@ textarea,
   min-width: 0;
 }
 
-.dockview-container .dv-tab.dv-active-tab .mirador-tab__icon {
-  color: inherit;
+/* Thin vertical divider between adjacent tabs (ported from the panorama POC):
+   a 16px hairline on the left edge of every tab except the first. */
+.dockview-container .dv-tabs-container > .dv-tab + .dv-tab::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 16px;
+  background: var(--border-subtle);
+  pointer-events: none;
 }
 
-/* Inactive tab icons render colourless; only the visible (active) tab keeps its
-   tile/avatar colour. grayscale(1) strips the SLDS tile hue and avatar tint. */
-.dockview-container .dv-tab.dv-inactive-tab .mirador-tab__icon {
-  filter: grayscale(1) opacity(0.65);
+/* Hide the divider where it would collide with a pill background: neither the
+   active/hovered tab nor the one immediately after it should show its left rule. */
+.dockview-container .dv-tabs-container > .dv-tab.dv-active-tab::before,
+.dockview-container .dv-tabs-container > .dv-tab:hover::before,
+.dockview-container .dv-tabs-container > .dv-tab.dv-active-tab + .dv-tab::before,
+.dockview-container .dv-tabs-container > .dv-tab:hover + .dv-tab::before {
+  opacity: 0;
+}
+
+.dockview-container .dv-tab.dv-active-tab .mirador-tab__icon {
+  color: inherit;
 }
 
 /* Inactive tabs read one weight step lighter than the active tab (600). */
