@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { useAuth } from '../auth/auth-context'
 import { useSmoothScroll } from '../hooks/useSmoothScroll'
+import { AppIcon } from './ds/AppIcon'
 import { PanelIcon } from '../panels/PanelIcon'
 import type { PanelType } from '../panels/registry'
 
@@ -139,37 +140,5 @@ function Spinner() {
 }
 
 function StatusGlyph({ kind }: { kind: 'error' | 'empty' | 'config' }) {
-  const paths: Record<typeof kind, ReactNode> = {
-    error: (
-      <>
-        <circle cx="12" cy="12" r="9" />
-        <line x1="12" y1="8" x2="12" y2="13" />
-        <line x1="12" y1="16" x2="12" y2="16" />
-      </>
-    ),
-    empty: (
-      <>
-        <rect x="4" y="5" width="16" height="14" rx="2" />
-        <line x1="4" y1="10" x2="20" y2="10" />
-      </>
-    ),
-    config: (
-      <>
-        <circle cx="12" cy="12" r="3" />
-        <path d="M12 3v3M12 18v3M4.2 7l2.6 1.5M17.2 15.5l2.6 1.5M4.2 17l2.6-1.5M17.2 8.5l2.6-1.5" />
-      </>
-    ),
-  }
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      {paths[kind]}
-    </svg>
-  )
+  return <AppIcon name={`status-${kind}`} size={26} />
 }

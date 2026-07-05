@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { AppIcon } from '../ds/AppIcon'
 import { SfIcon, type SfSprite } from '../ds/SfIcon'
 
 /* SLDS-faithful chassis for a single wallboard tile: a colored icon tile,
@@ -10,9 +11,8 @@ type WallboardPeriod = 'Current' | 'Last Hour'
 interface WallboardCardProps {
   title: string
   period: WallboardPeriod
+  /** Object icon left of the title; the tile takes its official SLDS color. */
   icon: { sprite: SfSprite; symbol: string }
-  /** Tile background for the icon (the colored square left of the title). */
-  iconBg: string
   /** Sub-line under the title. Defaults to "No filter applied". */
   filterText?: string
   /** Optional trailing control in the header (e.g. a chart-type toggle). */
@@ -26,7 +26,6 @@ export function WallboardCard({
   title,
   period,
   icon,
-  iconBg,
   filterText = 'No filter applied',
   headerAction,
   comingSoon = false,
@@ -35,9 +34,7 @@ export function WallboardCard({
   return (
     <article className="wb-card">
       <header className="wb-card__header">
-        <span className="wb-card__icon" style={{ background: iconBg }}>
-          <SfIcon sprite={icon.sprite} symbol={icon.symbol} bg={icon.sprite === 'utility' ? '#fff' : iconBg} sldsSize="x-small" />
-        </span>
+        <SfIcon sprite={icon.sprite} symbol={icon.symbol} size={28} radius={5} className="wb-card__icon" />
         <div className="wb-card__titles">
           <div className="wb-card__title-row">
             <h3 className="wb-card__title">{title}</h3>
@@ -51,7 +48,7 @@ export function WallboardCard({
         <div className="wb-card__action">
           {headerAction}
           <button type="button" className="wb-card__menu" aria-label="Card options">
-            <SfIcon sprite="utility" symbol="threedots_vertical" bg="#747474" sldsSize="xx-small" />
+            <AppIcon name="threedots_vertical" size={14} style={{ color: '#747474' }} />
           </button>
         </div>
       </header>

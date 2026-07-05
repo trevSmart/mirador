@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import { useDataStatus } from '../api/data-hooks'
 import { formatRelativeTime } from '../utils/relative-time'
 import { useAuth } from '../auth/auth-context'
-import miradorLogo from '../assets/mirador/logo/mirador-logo.png'
+import miradorLogo from '../assets/logo/mirador-logo.png'
 import { useDevConsole } from '../dev/useDevConsole'
 import { useDeveloperMode } from '../hooks/useDeveloperMode'
-import { SfIcon } from './ds/SfIcon'
+import { AppIcon } from './ds/AppIcon'
 import { GlobalSearch } from './GlobalSearch'
 import { UserMenu } from './UserMenu'
 
@@ -94,7 +94,7 @@ export function AppHeader() {
           disabled={!isAuthenticated || isRefreshing}
           aria-label={refreshTitle}
         >
-          <SfIcon sprite="utility" symbol="refresh" size={12} />
+          <AppIcon name="refresh" size={12} />
           {lastRefreshLabel ? (
             <span className="app-header__button-label">{lastRefreshLabel}</span>
           ) : null}

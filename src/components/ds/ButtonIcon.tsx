@@ -1,35 +1,27 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
-import { SfIcon, type SfSprite } from './SfIcon'
+import { AppIcon } from './AppIcon'
+import type { AppIconName } from './app-icon-names.generated'
 
 /* ButtonIcon — an icon-only button. The glyph can come from three sources,
    in priority order:
-     1. `icon`     → a Salesforce SLDS id, "sprite:symbol" (e.g. "utility:add",
-                     "standard:case"). Rendered via SfIcon.
+     1. `icon`     → an app icon name (a file in src/assets/icons/,
+                     e.g. "refresh", "close"). Rendered via AppIcon.
      2. `src`      → a normal image URL (png/svg). Rendered as <img>.
-     3. `children` → any node (e.g. an inline custom <svg>), for glyphs that are
-                     neither SLDS nor a standalone image.
+     3. `children` → any node, for glyphs that are neither an app icon nor a
+                     standalone image.
 
    It is a real <button>: it forwards onClick, disabled, title, etc. An
    accessible name is required via `aria-label` (or `title`). */
 
 interface ButtonIconProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  /** Salesforce SLDS id as "sprite:symbol", e.g. "utility:refresh". */
-  icon?: string
-  /** Image URL (png/svg) used instead of an SLDS icon. */
+  /** App icon name (file in src/assets/icons/), e.g. "refresh". */
+  icon?: AppIconName
+  /** Image URL (png/svg) used instead of an app icon. */
   src?: string
-  /** Custom glyph node (inline svg, etc.) when not SLDS nor an image. */
+  /** Custom glyph node when not an app icon nor an image. */
   children?: ReactNode
   /** Pixel size of the glyph (not the button box). */
   size?: number
-  /** Force the SLDS tile on/off (only for `icon`). Standard/custom sprites tile
-      by default; pass `false` to render them monochrome with currentColor. */
-  tile?: boolean
-}
-
-function parseSldsId(id: string): { sprite: SfSprite; symbol: string } | null {
-  const [sprite, symbol] = id.split(':')
-  if (!sprite || !symbol) return null
-  return { sprite: sprite as SfSprite, symbol }
 }
 
 export function ButtonIcon({
@@ -37,17 +29,14 @@ export function ButtonIcon({
   src,
   children,
   size = 18,
-  tile,
   type = 'button',
   className,
   ...rest
 }: ButtonIconProps) {
-  const slds = icon ? parseSldsId(icon) : null
-
   return (
     <button type={type} className={className} {...rest}>
-      {slds ? (
-        <SfIcon sprite={slds.sprite} symbol={slds.symbol} size={size} tile={tile} />
+      {icon ? (
+        <AppIcon name={icon} size={size} />
       ) : src ? (
         <img src={src} alt="" width={size} height={size} aria-hidden="true" />
       ) : (

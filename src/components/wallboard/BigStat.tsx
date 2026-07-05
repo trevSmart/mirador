@@ -2,7 +2,7 @@
    and "Work Performance". Each stat has a label with a small info icon and a
    large value; a null value renders the SLDS em-dash placeholder ("—"). */
 
-import { SfIcon } from '../ds/SfIcon'
+import { AppIcon } from '../ds/AppIcon'
 
 interface StatItem {
   label: string
@@ -24,7 +24,7 @@ export function BigStat({ items, variant = 'stack' }: BigStatProps) {
         <div key={item.label} className="wb-stat">
           <div className="wb-stat__label">
             <span>{item.label}</span>
-            <SfIcon sprite="utility" symbol="info" bg="#b0b0b0" sldsSize="xx-small" />
+            <AppIcon name="info" size={14} style={{ color: '#b0b0b0' }} />
           </div>
           <div className="wb-stat__value">{item.value ?? '—'}</div>
         </div>

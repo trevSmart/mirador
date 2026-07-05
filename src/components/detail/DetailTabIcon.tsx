@@ -28,7 +28,7 @@ export function DetailTabIcon({ target }: { target: DetailTarget }) {
     const item = work.find((entry) => entry.id === target.id)
     if (item) {
       const icon = resolveWorkItemIcon(item)
-      return <SfIcon sprite={icon.sprite} symbol={icon.symbol} sldsSize="x-small" bg={icon.tint} />
+      return <SfIcon sprite={icon.sprite} symbol={icon.symbol} sldsSize="x-small" bg={colorFromRecordId(item.id)} />
     }
     return <SfIcon name="work" sldsSize="x-small" />
   }

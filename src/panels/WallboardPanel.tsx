@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useAgents, useDataStatus, useQueues, useWork } from '../api/data-hooks'
 import { useAuth } from '../auth/auth-context'
 import { PanelState } from '../components/PanelState'
-import { SfIcon } from '../components/ds/SfIcon'
+import { AppIcon } from '../components/ds/AppIcon'
 import { BigStat } from '../components/wallboard/BigStat'
 import { DonutChart } from '../components/wallboard/DonutChart'
 import { HBarChart } from '../components/wallboard/HBarChart'
@@ -65,14 +65,14 @@ export function WallboardPanel() {
         <header className="wb__topbar">
           <div className="wb__controls">
             <button type="button" className="wb__control" aria-label="Time range">
-              <SfIcon sprite="utility" symbol="clock" bg="#747474" sldsSize="x-small" />
-              <SfIcon sprite="utility" symbol="down" bg="#747474" sldsSize="xx-small" />
+              <AppIcon name="clock" size={16} style={{ color: '#747474' }} />
+              <AppIcon name="down" size={14} style={{ color: '#747474' }} />
             </button>
             <button type="button" className="wb__control" aria-label="Filter">
-              <SfIcon sprite="utility" symbol="filterList" bg="#747474" sldsSize="x-small" />
+              <AppIcon name="filterList" size={16} style={{ color: '#747474' }} />
             </button>
             <button type="button" className="wb__control" aria-label="Settings">
-              <SfIcon sprite="utility" symbol="settings" bg="#747474" sldsSize="x-small" />
+              <AppIcon name="settings" size={16} style={{ color: '#747474' }} />
             </button>
           </div>
         </header>
@@ -83,7 +83,6 @@ export function WallboardPanel() {
             title="Work Item Status"
             period="Current"
             icon={{ sprite: 'standard', symbol: 'record_create' }}
-            iconBg="#f96cad"
           >
             <VBarChart data={m.workItem} />
           </WallboardCard>
@@ -93,7 +92,6 @@ export function WallboardPanel() {
             title="Agent Primary Capacity Status"
             period="Current"
             icon={{ sprite: 'standard', symbol: 'capacity_plan' }}
-            iconBg="#3ba755"
           >
             <VBarChart data={m.capacity} />
           </WallboardCard>
@@ -103,7 +101,6 @@ export function WallboardPanel() {
             title="Wait Time"
             period="Current"
             icon={{ sprite: 'standard', symbol: 'waits' }}
-            iconBg="#e8912a"
           >
             <BigStat
               variant="stack"
@@ -119,7 +116,6 @@ export function WallboardPanel() {
             title="Agent Primary Capacity"
             period="Current"
             icon={{ sprite: 'standard', symbol: 'work_capacity_limit' }}
-            iconBg="#0d9dda"
           >
             <DonutChart ratio={m.usedCap.ratio} />
           </WallboardCard>
@@ -129,7 +125,6 @@ export function WallboardPanel() {
             title="Agent Presence Statuses"
             period="Current"
             icon={{ sprite: 'standard', symbol: 'agent_session' }}
-            iconBg="#3ba755"
           >
             <HBarChart data={m.presence} />
           </WallboardCard>
@@ -139,7 +134,6 @@ export function WallboardPanel() {
             title="Raised Flags"
             period="Current"
             icon={{ sprite: 'standard', symbol: 'custom_notification' }}
-            iconBg="#e8627c"
             comingSoon
           >
             <BigStat variant="single" items={[{ label: 'Raised Flags', value: String(m.flags) }]} />
@@ -150,7 +144,6 @@ export function WallboardPanel() {
             title="Agent Work Status"
             period="Last Hour"
             icon={{ sprite: 'standard', symbol: 'work_capacity_limit' }}
-            iconBg="#e8912a"
             comingSoon
           >
             <HBarChart data={m.workStatus} />
@@ -161,7 +154,6 @@ export function WallboardPanel() {
             title="Work Performance"
             period="Last Hour"
             icon={{ sprite: 'standard', symbol: 'capacity_plan' }}
-            iconBg="#0d9dda"
             comingSoon
           >
             <BigStat

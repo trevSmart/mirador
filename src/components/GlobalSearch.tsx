@@ -28,7 +28,8 @@ import {
 import { presenceLabel, agentInitials } from '../utils/format'
 import { syncDropdownPanel } from '../utils/sync-dropdown-panel'
 import { useSalesforcePhoto } from '../hooks/useSalesforcePhoto'
-import { SfIconTile } from './ds/SfIconTile'
+import { AppIcon } from './ds/AppIcon'
+import { SfIcon } from './ds/SfIcon'
 
 const CONTENT_TRANSITION_MS = 220
 
@@ -40,12 +41,7 @@ const PRESENCE_COLOR: Record<PresenceStatus, string> = {
 }
 
 function SearchIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="11" cy="11" r="7" />
-      <path d="m21 21-4-4" />
-    </svg>
-  )
+  return <AppIcon name="search" size={14} />
 }
 
 interface SearchAgentItemProps {
@@ -124,7 +120,7 @@ function SearchQueueItem({ queue, active, onSelect }: SearchQueueItemProps) {
       aria-selected={active}
       onClick={onSelect}
     >
-      <SfIconTile name="queue" size={30} bg={colorFromRecordId(queue.id)} />
+      <SfIcon name="queue" size={30} radius={8} bg={colorFromRecordId(queue.id)} />
       <span className="si-main">
         <div className="si-title">{queue.name}</div>
         <div className="si-meta">
@@ -151,7 +147,7 @@ function SearchSkillItem({ skill, active, onSelect }: SearchSkillItemProps) {
       aria-selected={active}
       onClick={onSelect}
     >
-      <SfIconTile name="skill" size={30} bg={colorFromRecordId(skill.id)} />
+      <SfIcon name="skill" size={30} radius={8} bg={colorFromRecordId(skill.id)} />
       <span className="si-main">
         <div className="si-title">{skill.name}</div>
         <div className="si-meta">{skill.agents} qualified agents</div>
@@ -178,11 +174,12 @@ function SearchWorkItemRow({ work, active, onSelect }: SearchWorkItemProps) {
       aria-selected={active}
       onClick={onSelect}
     >
-      <SfIconTile
+      <SfIcon
         sprite={icon.sprite}
         symbol={icon.symbol}
         size={30}
-        bg={icon.tint}
+        radius={8}
+        bg={colorFromRecordId(work.workId)}
       />
       <span className="si-main">
         <div className="si-title">{work.title}</div>
@@ -261,6 +258,10 @@ export function GlobalSearch() {
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const heightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const justOpenedRef = useRef(false)
+  // Alçada del cos al final de l'últim sync. L'efecte no pot mesurar el
+  // "abans" amb offsetHeight (el DOM ja porta el contingut nou quan corre),
+  // així que l'alçada prèvia es recorda aquí entre renders.
+  const lastBodyHeightRef = useRef(0)
 
   const normalizedQuery = query.trim().toLowerCase()
   // Deferred: search runs at lower priority so keystrokes never block the input.
@@ -348,6 +349,7 @@ export function GlobalSearch() {
       clearTimeout(heightTimerRef.current ?? undefined)
       const cap = maxBodyHeight()
       const nextHeight = Math.min(contentRef.current.scrollHeight, cap)
+      lastBodyHeightRef.current = nextHeight
       const canAnimate =
         open &&
         dropRef.current?.classList.contains('is-open') &&
@@ -380,7 +382,7 @@ export function GlobalSearch() {
 
   useEffect(() => {
     if (!open) return
-    const prevHeight = bodyRef.current?.offsetHeight ?? 0
+    const prevHeight = justOpenedRef.current ? 0 : lastBodyHeightRef.current
     syncContentHeight(prevHeight)
     // Reset scroll to the top only on the open transition, after syncContentHeight
     // has re-applied `has-scroll` (setting scrollTop while overflow is hidden is a
@@ -399,6 +401,7 @@ export function GlobalSearch() {
       bodyRef.current.style.transition = ''
       bodyRef.current.classList.remove('has-scroll')
     }
+    lastBodyHeightRef.current = 0
     setOpen(false)
     setActiveIdx(-1)
     inputRef.current?.setAttribute('aria-expanded', 'false')

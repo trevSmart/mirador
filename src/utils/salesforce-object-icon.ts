@@ -2,50 +2,40 @@ import type { ChannelKey } from '../api/types'
 import type { SfSprite } from '../components/ds/SfIcon'
 import { channelLabel } from './format'
 
+/* Resolució de la icona d'OBJECTE d'un work item. Els sprites standard i
+   custom s'empaqueten COMPLETS (public/slds/), així que qualsevol SObject
+   d'una org resol — inclosos objectes custom.
+
+   El color NO es resol aquí: la icona d'un tipus d'objecte porta el color
+   oficial SLDS (classe generada a icons.css); la icona d'un REGISTRE la tinta
+   el caller amb colorFromRecordId(id). Convenció completa: docs/icons.md */
+
 export interface ResolvedObjectIcon {
   sprite: SfSprite
   symbol: string
-  tint: string
-}
-
-const OBJECT_TINTS: Record<string, string> = {
-  case: 'var(--mi-ic-case)',
-  call: 'var(--mi-ic-voice)',
-  messaging: 'var(--mi-ic-whatsapp)',
-  live_chat: 'var(--mi-ic-chat)',
-  messaging_session: 'var(--mi-ic-whatsapp)',
-  voice_call: 'var(--mi-ic-voice)',
-  email: 'var(--mi-ic-email)',
-  lead: 'var(--mi-ic-work)',
-  social: 'var(--mi-ic-chat)',
-  task: 'var(--mi-ic-work)',
-  orders: 'var(--mi-ic-work)',
 }
 
 const CHANNEL_ICON: Record<ChannelKey, ResolvedObjectIcon> = {
-  veu: { sprite: 'standard', symbol: 'call', tint: 'var(--mi-ic-voice)' },
-  chat: { sprite: 'standard', symbol: 'messaging_session', tint: 'var(--mi-ic-chat)' },
-  email: { sprite: 'standard', symbol: 'email', tint: 'var(--mi-ic-email)' },
-  wa: { sprite: 'standard', symbol: 'messaging_session', tint: 'var(--mi-ic-whatsapp)' },
-  cas: { sprite: 'standard', symbol: 'case', tint: 'var(--mi-ic-case)' },
+  veu: { sprite: 'standard', symbol: 'voice_call' },
+  chat: { sprite: 'standard', symbol: 'messaging_session' },
+  email: { sprite: 'standard', symbol: 'email' },
+  wa: { sprite: 'standard', symbol: 'messaging_session' },
+  cas: { sprite: 'standard', symbol: 'case' },
 }
 
 const DEFAULT_ICON: ResolvedObjectIcon = {
   sprite: 'standard',
   symbol: 'case',
-  tint: 'var(--mi-ic-case)',
-}
-
-function tintForSymbol(symbol: string): string {
-  return OBJECT_TINTS[symbol] ?? 'var(--mi-ic-work)'
 }
 
 function isSfSprite(value: string | null | undefined): value is SfSprite {
-  return value === 'standard' || value === 'custom' || value === 'action' || value === 'doctype' || value === 'utility'
+  // Només standard/custom: el themeInfo d'un SObject no emet altres famílies,
+  // i són els únics sprites empaquetats. Qualsevol altra cosa cau al fallback.
+  return value === 'standard' || value === 'custom'
 }
 
 /** Parse a Lightning icon name (standard:case, custom:custom78). */
-function parseIconName(iconName: string): { sprite: SfSprite; symbol: string } | null {
+function parseIconName(iconName: string): ResolvedObjectIcon | null {
   const colon = iconName.indexOf(':')
   if (colon <= 0) return null
   const sprite = iconName.slice(0, colon)
@@ -62,21 +52,15 @@ export interface WorkItemIconInput {
   iconSymbol?: string | null
 }
 
-/** Resolve the SLDS icon for a work item record. */
+/** Resolve the SLDS object icon for a work item record. */
 export function resolveWorkItemIcon(item: WorkItemIconInput): ResolvedObjectIcon {
   if (item.iconName) {
     const parsed = parseIconName(item.iconName)
-    if (parsed) {
-      return { ...parsed, tint: tintForSymbol(parsed.symbol) }
-    }
+    if (parsed) return parsed
   }
 
   if (item.iconSprite && item.iconSymbol && isSfSprite(item.iconSprite)) {
-    return {
-      sprite: item.iconSprite,
-      symbol: item.iconSymbol,
-      tint: tintForSymbol(item.iconSymbol),
-    }
+    return { sprite: item.iconSprite, symbol: item.iconSymbol }
   }
 
   return CHANNEL_ICON[item.channelKey] ?? DEFAULT_ICON

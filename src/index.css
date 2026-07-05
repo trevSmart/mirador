@@ -90,17 +90,6 @@
   --mi-av-fg-on-dark: #ffffff;
   --mi-av-fg-on-light: #2A2730;
 
-  /* ── SLDS object icon tints ─────────────────────────── */
-  --mi-ic-queue: #5867E8;
-  --mi-ic-skill: #F88962;
-  --mi-ic-user: #34BECD;
-  --mi-ic-case: #FF538A;
-  --mi-ic-voice: #9050E9;
-  --mi-ic-chat: #FF538A;
-  --mi-ic-email: #95AEC5;
-  --mi-ic-whatsapp: #1FA076;
-  --mi-ic-work: #6CA1E9;
-
   /* ── Canvas wash — fixed radial behind the app ──────── */
   --mi-wash: radial-gradient(1100px 600px at 75% -15%, rgba(0, 128, 190, .05), transparent 60%);
   --fv-canvas-wash:
@@ -685,7 +674,7 @@ textarea,
   box-shadow: var(--ring-focus);
 }
 
-.qsearch > svg {
+.qsearch > .app-icon {
   position: absolute;
   left: 10px;
   top: 50%;
@@ -832,26 +821,18 @@ textarea,
   object-fit: cover;
 }
 
-.qsearch-item .sf-icon-tile {
-  border-radius: 8px;
-}
+/* ── AppIcon — icones pròpies de la app (src/assets/icons/) ─────── */
 
-.sf-icon-tile {
+.app-icon {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  flex-shrink: 0;
-  line-height: 0;
-  padding: 0;
-  overflow: hidden;
+  flex: none;
+  color: inherit;
 }
 
-.sf-icon-tile .sf-icon {
-  display: block;
+.app-icon > svg {
   width: 100%;
   height: 100%;
-  fill: #fff;
+  display: block;
 }
 
 .qsearch-item .si-badge {
@@ -1042,16 +1023,15 @@ textarea,
    left: tabs stay at their 130px basis when there's space, and shrink toward
    80px (their min-width) only once the strip itself runs out of room. */
 .app-chrome .dockview-container .dv-groupview > .dv-tabs-and-actions-container > .dv-scrollable {
-  /* Give the strip all the free width so its tabs sit at their 130px basis;
-     they shrink toward 80px only when the strip itself overflows. Dockview's
-     void container defaults to flex-grow:1 and would otherwise split the free
-     space with the strip, starving it and truncating tabs prematurely. */
-  flex: 1 1 auto;
+  /* Size the strip to its tabs' own content instead of Dockview's default of
+     splitting free space 50/50 with the void container (which starved the
+     strip and truncated tabs prematurely). Leaving flex-grow at 0 keeps the
+     strip immediately after the last tab — the void container (which sits
+     after the "+" button in the DOM) then absorbs all the leftover width, so
+     the "+" button stays right after the last tab instead of being pushed to
+     the far right edge of the bar. */
+  flex: 0 1 auto;
   min-width: 0;
-}
-
-.app-chrome .dockview-container .dv-groupview > .dv-tabs-and-actions-container > .dv-void-container {
-  flex-grow: 0;
 }
 
 .app-chrome .dockview-container .dv-groupview > .dv-tabs-and-actions-container.dv-groupview-header-vertical {
@@ -5268,10 +5248,6 @@ textarea,
   width: 28px;
   height: 28px;
   border-radius: 5px;
-}
-
-.wb-card__icon .slds-icon_container {
-  background: transparent !important;
 }
 
 .wb-card__titles {

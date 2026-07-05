@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useAgents, useQueues, useSkills, useWork } from '../../api/data-hooks'
 import { useDetailDrawer, type DetailTarget } from '../../detail/detail-drawer-context'
-import { SfIcon } from '../ds'
+import { AppIcon } from '../ds'
 import { AgentDetail } from './AgentDetail'
 import { QueueDetail } from './QueueDetail'
 import { SkillDetail } from './SkillDetail'
@@ -79,10 +79,10 @@ export function DetailDrawer() {
             aria-label="Obre com a pestanya"
             title="Obre com a pestanya"
           >
-            <SfIcon sprite="utility" symbol="expand_alt" size={16} />
+            <AppIcon name="expand_alt" size={16} />
           </button>
           <button type="button" className="detail-drawer__icon-btn" onClick={close} aria-label="Tanca el detall">
-            <SfIcon sprite="utility" symbol="close" size={16} />
+            <AppIcon name="close" size={16} />
           </button>
         </div>
         <div className="detail-drawer__scroll">
