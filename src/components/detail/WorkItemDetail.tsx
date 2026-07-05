@@ -2,12 +2,13 @@ import { recordDetailResource, useEntity } from '../../api/data-service'
 import { MiradorApiError } from '../../api/mirador-client'
 import { useAgents, useQueues } from '../../api/data-hooks'
 import type { WorkItem } from '../../api/types'
+import { useAuth } from '../../auth/auth-context'
 import { useDetailDrawer } from '../../detail/detail-drawer-context'
 import { colorFromRecordId } from '../../utils/color-from-string'
 import { channelLabel, formatDateTime, formatSeconds, workStatusLabel } from '../../utils/format'
 import { objectLabel, resolveWorkItemIcon } from '../../utils/salesforce-object-icon'
-import { Badge, FadeValue, SfIcon } from '../ds'
-import { DetailRow, DrawerSection, EmptyHint, MiniAgentRow, Stat, StatGrid } from './parts'
+import { AppIcon, Badge, FadeValue, SfIcon } from '../ds'
+import { DetailRow, DrawerActions, DrawerSection, EmptyHint, MiniAgentRow, Stat, StatGrid } from './parts'
 
 /* Generic work-item detail. Shows what the global /work snapshot already gives
    us (subject, channel, status, age, backing SObject, related agent/queue).
@@ -17,6 +18,14 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
   const agents = useAgents()
   const queues = useQueues()
   const { openAgent, openQueue } = useDetailDrawer()
+  const { session } = useAuth()
+
+  // Link to the backing record in Salesforce, same shape the server uses for
+  // agents (org URL + record id redirect). Absent in mock mode (no session).
+  const recordUrl =
+    session?.instanceUrl && item.workItemId
+      ? `${session.instanceUrl.replace(/\/$/, '')}/${item.workItemId}`
+      : null
 
   const icon = resolveWorkItemIcon(item)
   const agent = item.agentId ? agents.find((a) => a.id === item.agentId) : undefined
@@ -47,6 +56,22 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
           <Badge tone="neutral">{workStatusLabel(item.status)}</Badge>
         </div>
       </header>
+
+      <DrawerActions
+        actions={[
+          { label: 'Encamina', icon: 'arrow-right', primary: true },
+          { label: 'Escala', icon: 'notification' },
+        ]}
+      />
+
+      {recordUrl ? (
+        <div className="dd-actions">
+          <a className="dd-action" href={recordUrl} target="_blank" rel="noreferrer">
+            <AppIcon name="new_window" size={15} />
+            Obre a Salesforce
+          </a>
+        </div>
+      ) : null}
 
       <DrawerSection title="Resum">
         <StatGrid>

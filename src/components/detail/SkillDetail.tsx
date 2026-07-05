@@ -4,7 +4,7 @@ import { useDetailDrawer } from '../../detail/detail-drawer-context'
 import { sortAgentsByPresence } from '../../utils/agent-stats'
 import { colorFromRecordId } from '../../utils/color-from-string'
 import { SfIcon, Badge } from '../ds'
-import { DrawerSection, EmptyHint, MiniAgentRow, Stat, StatGrid } from './parts'
+import { DrawerActions, DrawerSection, EmptyHint, MiniAgentRow, Stat, StatGrid } from './parts'
 
 export function SkillDetail({ skill }: { skill: Skill }) {
   const agents = useAgents()
@@ -26,6 +26,13 @@ export function SkillDetail({ skill }: { skill: Skill }) {
           <Badge tone={skill.backlog > 4 ? 'alert' : 'neutral'}>{skill.backlog} backlog</Badge>
         </div>
       </header>
+
+      <DrawerActions
+        actions={[
+          { label: 'Assigna agents', icon: 'add', primary: true },
+          { label: 'Encaminament', icon: 'sliders' },
+        ]}
+      />
 
       <DrawerSection title="Resum">
         <StatGrid>

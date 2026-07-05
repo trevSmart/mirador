@@ -6,6 +6,7 @@ export type AppIconName =
   | 'add'
   | 'apex'
   | 'area'
+  | 'arrow-right'
   | 'brush'
   | 'builder'
   | 'chevrondown'
@@ -44,6 +45,7 @@ export type AppIconName =
   | 'seat'
   | 'settings'
   | 'setup'
+  | 'sliders'
   | 'space'
   | 'status-config'
   | 'status-empty'
@@ -56,6 +58,7 @@ export const APP_ICON_NAMES: readonly AppIconName[] = [
   'add',
   'apex',
   'area',
+  'arrow-right',
   'brush',
   'builder',
   'chevrondown',
@@ -94,6 +97,7 @@ export const APP_ICON_NAMES: readonly AppIconName[] = [
   'seat',
   'settings',
   'setup',
+  'sliders',
   'space',
   'status-config',
   'status-empty',
