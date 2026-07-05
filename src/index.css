@@ -2178,9 +2178,20 @@ textarea,
   /* Without min-height:0 a column flex item refuses to shrink below its
      content, so the canvas grows instead of scrolling. */
   min-height: 0;
-  /* Toolbar and canvas are two stacked cards; the gap mirrors the resizer's
-     width, so their separation matches the one between the two columns. */
-  gap: var(--sp-6);
+}
+
+/* Una sola card d'editor: la toolbar n'és la franja superior i el canvas el
+   cos, en lloc de dues cards apilades. */
+.fe-editor {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--surface-card);
+  box-shadow: var(--shadow);
+  overflow: hidden;
 }
 
 .space-editor__save-error {
@@ -2223,12 +2234,11 @@ textarea,
   flex: 1 1 auto;
   overflow: auto;
   padding: var(--sp-6);
-  background: var(--surface-canvas);
-  /* Card shell shared with the aside, so the canvas floats as its own container
-     below the toolbar card. */
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
-  box-shadow: var(--shadow);
+  /* Cos de la card de l'editor (la vora i l'ombra són de .fe-editor), amb el
+     lleu rentat radial de l'stage de l'exploració. */
+  background:
+    radial-gradient(700px 380px at 50% 0%, rgba(0, 128, 190, 0.03), transparent 62%),
+    var(--surface-card);
 }
 
 .space-editor__aside {
@@ -2307,25 +2317,21 @@ textarea,
   }
 }
 
-/* Toolbar */
+/* Toolbar — capçalera de la card de l'editor (.fe-editor), no una card pròpia */
 .fe-toolbar {
   display: flex;
   align-items: center;
   gap: var(--sp-4);
   flex-wrap: wrap;
-  /* Its own card, stacked above the canvas card (see .space-editor__main). */
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
-  background: var(--surface-card);
-  box-shadow: var(--shadow);
+  flex: none;
+  padding: var(--sp-3) var(--sp-6);
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .fe-toolbar__tools {
   display: flex;
   gap: var(--sp-1);
-  background: var(--surface-well);
-  border-radius: var(--r-md);
-  padding: 3px;
 }
 
 .fe-toolbar__spacer {
@@ -2347,6 +2353,7 @@ textarea,
 }
 
 .fe-tool {
+  position: relative;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
@@ -2524,6 +2531,183 @@ textarea,
   background: var(--accent-soft, rgba(0, 128, 190, 0.1));
   border: 1.5px dashed var(--accent);
   border-radius: 2px;
+}
+
+/* Separador entre el grup que actua (Mou · Esborra) i el que afegeix */
+.fe-toolbar__sep {
+  align-self: stretch;
+  width: 1px;
+  margin: 4px 2px;
+  background: var(--border-subtle);
+  flex: none;
+}
+
+/* Drecera numèrica de cada eina — apareix en fer hover sobre la toolbar */
+.fe-tool__key {
+  position: absolute;
+  top: 2px;
+  right: 5px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.fe-toolbar:hover .fe-tool__key {
+  opacity: 1;
+}
+
+/* Cursor per eina: creueta per construir, cel·la per esborrar (o Alt) */
+.fe-grid[data-tool='seat'],
+.fe-grid[data-tool='door'],
+.fe-grid[data-tool='window'],
+.fe-grid[data-tool='divider'] {
+  cursor: crosshair;
+}
+
+.fe-grid[data-tool='move'] {
+  cursor: default;
+}
+
+/* L'esborrat (eina o Alt) mana sobre el cursor de l'eina activa */
+.fe-grid[data-erasing='true'] {
+  cursor: cell;
+}
+
+/* Rectangle d'esborrat (vermell, simètric al de creació) */
+.fe-rect-preview--erasing {
+  background: color-mix(in srgb, var(--status-alert) 12%, transparent);
+  border-color: var(--status-alert);
+}
+
+/* Ghost sota el cursor — avança la intenció del clic */
+.fe-ghost {
+  position: absolute;
+  pointer-events: none;
+  z-index: 5;
+  border-radius: 2px;
+  transition: opacity 0.08s ease;
+}
+
+/* CREAR (blau) */
+.fe-ghost--build.fe-ghost--cell,
+.fe-ghost--replace.fe-ghost--edge {
+  background: var(--accent-soft);
+  border: 1.5px dashed var(--accent);
+}
+
+.fe-ghost--build.fe-ghost--edge {
+  background: var(--accent);
+  opacity: 0.55;
+}
+
+.fe-ghost--build.fe-ghost--seat {
+  width: 32px;
+  height: 32px;
+  margin: 5px;
+  border-radius: var(--r-full);
+  border: 2px dashed var(--accent);
+  background: var(--accent-soft);
+  display: grid;
+  place-items: center;
+}
+
+.fe-ghost--build.fe-ghost--seat::after {
+  content: '+';
+  font: 600 15px/1 var(--font-body, sans-serif);
+  color: var(--accent);
+}
+
+/* SELECCIONAR seient existent (halo neutre) */
+.fe-ghost--select.fe-ghost--seat {
+  border-radius: var(--r-full);
+  box-shadow: inset 0 0 0 2px var(--accent-soft);
+}
+
+/* ESBORRAR (vermell) sobre l'element real */
+.fe-ghost--erase {
+  outline: 2px solid var(--status-alert);
+  outline-offset: -1px;
+  background: color-mix(in srgb, var(--status-alert) 12%, transparent);
+}
+
+.fe-ghost--erase.fe-ghost--seat {
+  border-radius: var(--r-full);
+}
+
+.fe-ghost--erase.fe-ghost--edge {
+  outline: none;
+  background: var(--status-alert);
+  opacity: 0.7;
+}
+
+/* BLOQUEJAT — el gest trencaria la contigüitat de la sala */
+.fe-ghost--block {
+  outline: 1.5px dashed var(--status-alert);
+  outline-offset: -1px;
+  background: repeating-linear-gradient(45deg, transparent 0 6px, color-mix(in srgb, var(--status-alert) 16%, transparent) 6px 12px);
+  cursor: not-allowed;
+}
+
+/* SENSE EFECTE — el clic no farà res (traç gris) */
+.fe-ghost--noop {
+  border: 1.5px dashed var(--text-disabled);
+  border-radius: 3px;
+  background: rgba(183, 179, 192, 0.1);
+}
+
+.fe-ghost--noop.fe-ghost--edge {
+  border-radius: 2px;
+}
+
+/* AGAFABLE — element sota el cursor amb l'eina Mou */
+.fe-ghost--grab {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  background: var(--accent-soft);
+  border-radius: 7px;
+}
+
+.fe-ghost--grab-seat {
+  border-radius: var(--r-full);
+}
+
+/* EN TRÀNSIT — el seient que "portes a la mà" amb el Mou, sobre destí vàlid */
+.fe-ghost--move-seat {
+  border: 2px dashed var(--text-disabled);
+  border-radius: var(--r-full);
+  background: transparent;
+  opacity: 0.85;
+}
+
+/* Pista d'Alt a la toolbar + eina Esborra activa en vermell.
+   Superposada (absolute) perquè aparèixer no reflueixi la toolbar
+   ni desplaci el canvas sota el cursor mentre es manté Alt. */
+.fe-toolbar {
+  position: relative;
+}
+
+.fe-toolbar__hint {
+  position: absolute;
+  top: calc(100% + var(--sp-2));
+  left: var(--sp-4);
+  z-index: 6;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  background: var(--surface-card);
+  box-shadow: var(--shadow);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--status-alert);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.fe-tool.is-erase,
+.fe-tool.is-erase .fe-tool__glyph {
+  color: var(--status-alert);
 }
 
 /* Sidebar */

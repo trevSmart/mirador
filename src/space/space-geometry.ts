@@ -6,7 +6,7 @@
 import type { Edge } from './types'
 
 /** Default cell side in px for the editor grid. */
-export const CELL_SIZE = 36
+export const CELL_SIZE = 46
 /** Thickness of an opening/divider bar in px. */
 const EDGE_THICKNESS = 6
 

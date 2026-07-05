@@ -2,7 +2,7 @@
    No React, no DOM: every function takes state and returns new immutable state,
    so the rules stay testable in isolation and the hook stays thin. */
 
-import type { Cell, Dir, Divider, Edge, Space, SpacePlanData, OpeningKind, Seat, Folder } from './types'
+import type { Cell, Dir, Divider, Edge, Space, SpacePlanData, SpaceTool, OpeningKind, Seat, Folder } from './types'
 
 export const GRID_C = 40
 export const GRID_R = 40
@@ -231,6 +231,22 @@ export function eraseCell(space: Space, c: number, r: number): Space {
   return sanitizeSpace({ ...space, cells })
 }
 
+/** Erase every cell inside the rectangle spanned by start/end (with their seats).
+    Rejected wholesale if the remaining area would split into islands — same
+    connectivity guarantee as eraseCell. */
+export function eraseCellRect(space: Space, start: Cell, end: Cell): Space {
+  const c0 = clamp(Math.min(start[0], end[0]), 0, GRID_C - 1)
+  const c1 = clamp(Math.max(start[0], end[0]), 0, GRID_C - 1)
+  const r0 = clamp(Math.min(start[1], end[1]), 0, GRID_R - 1)
+  const r1 = clamp(Math.max(start[1], end[1]), 0, GRID_R - 1)
+  const inRect = (c: number, r: number) => c >= c0 && c <= c1 && r >= r0 && r <= r1
+  const cells = space.cells.filter(([c, r]) => !inRect(c, r))
+  if (cells.length === space.cells.length) return space
+  if (!isConnected(cells)) return space
+  const seats = space.seats.filter((s) => !inRect(s.c, s.r))
+  return sanitizeSpace({ ...space, cells, seats })
+}
+
 /** Toggle an empty seat on an existing cell. */
 export function toggleSeat(space: Space, c: number, r: number): Space {
   if (!hasCell(space, c, r)) return space
@@ -258,27 +274,25 @@ export function assignAgentToSeat(space: Space, c: number, r: number, agentId: s
   return { ...space, seats }
 }
 
-/** Toggle a door/window on an exterior edge (replacing the other kind if present). */
-export function toggleOpening(space: Space, c: number, r: number, edge: Edge, kind: OpeningKind): Space {
+/** Place a door/window on an exterior edge, replacing any other opening there.
+    Purely additive: repeating the same kind is a no-op — erasing is a separate
+    deliberate action (erase tool / Alt), never a side-effect of a second click. */
+export function placeOpening(space: Space, c: number, r: number, edge: Edge, kind: OpeningKind): Space {
   const cellSet = makeCellSet(space.cells)
   if (!isExteriorEdge(cellSet, c, r, edge)) return space
   const existing = space.openings.find((o) => o.c === c && o.r === r && o.edge === edge)
-  if (existing && existing.kind === kind) {
-    return { ...space, openings: space.openings.filter((o) => o !== existing) }
-  }
+  if (existing && existing.kind === kind) return space
   const without = space.openings.filter((o) => !(o.c === c && o.r === r && o.edge === edge))
   return { ...space, openings: [...without, { c, r, edge, kind }] }
 }
 
-/** Toggle an interior divider (stored canonically). */
-export function toggleDivider(space: Space, c: number, r: number, edge: Edge): Space {
+/** Place an interior divider (idempotent — a second click never removes it). */
+export function placeDivider(space: Space, c: number, r: number, edge: Edge): Space {
   const cellSet = makeCellSet(space.cells)
   if (!isInteriorEdge(cellSet, c, r, edge)) return space
   const div = canonicalDivider(c, r, edge)
-  const existing = space.dividers.find((d) => d.c === div.c && d.r === div.r && d.edge === div.edge)
-  if (existing) {
-    return { ...space, dividers: space.dividers.filter((d) => d !== existing) }
-  }
+  const exists = space.dividers.some((d) => d.c === div.c && d.r === div.r && d.edge === div.edge)
+  if (exists) return space
   return { ...space, dividers: [...space.dividers, div] }
 }
 
@@ -291,6 +305,178 @@ export function eraseEdge(space: Space, c: number, r: number, edge: Edge): Space
     return space
   }
   return { ...space, openings, dividers }
+}
+
+/* ── Interaction resolver ─────────────────────────────────────────────── */
+
+export type EditIntent = 'build' | 'replace' | 'select' | 'erase' | 'block' | 'noop'
+
+export interface ResolvedEdit {
+  intent: EditIntent
+  target: 'cell' | 'seat' | 'edge'
+  c: number
+  r: number
+  edge: Edge | null
+}
+
+function dividerOnEdge(space: Space, c: number, r: number, edge: Edge): boolean {
+  const div = canonicalDivider(c, r, edge)
+  return space.dividers.some((d) => d.c === div.c && d.r === div.r && d.edge === div.edge)
+}
+
+/** Would this set of cells still be one contiguous block after removing `drop`? */
+function removalKeepsConnected(space: Space, drop: (c: number, r: number) => boolean): boolean {
+  return isConnected(space.cells.filter(([c, r]) => !drop(c, r)))
+}
+
+/** Is (c,r) adjacent to (or inside) the existing area? Empty area accepts anything. */
+function cellAdjacent(cellSet: Set<string>, c: number, r: number): boolean {
+  if (cellSet.size === 0) return true
+  return (
+    cellSet.has(cellKey(c, r)) ||
+    cellSet.has(cellKey(c + 1, r)) ||
+    cellSet.has(cellKey(c - 1, r)) ||
+    cellSet.has(cellKey(c, r + 1)) ||
+    cellSet.has(cellKey(c, r - 1))
+  )
+}
+
+/** Single source of truth for "what will a click at (c,r,edge) do?".
+    Drives both the hover ghost and the actual commit, so they can never
+    disagree. `erasing` = erase tool active OR Alt held. */
+export function resolveEdit(
+  space: Space,
+  tool: SpaceTool,
+  c: number,
+  r: number,
+  edge: Edge | null,
+  erasing: boolean,
+): ResolvedEdit {
+  const cellSet = makeCellSet(space.cells)
+  const here = cellSet.has(cellKey(c, r))
+  const seat = space.seats.some((s) => s.c === c && s.r === r)
+  const openingHere = edge
+    ? space.openings.find((o) => o.c === c && o.r === r && o.edge === edge) ?? null
+    : null
+  const dividerHere = edge ? dividerOnEdge(space, c, r, edge) : false
+
+  if (erasing) {
+    if (edge && (openingHere || dividerHere)) return { intent: 'erase', target: 'edge', c, r, edge }
+    if (seat) return { intent: 'erase', target: 'seat', c, r, edge: null }
+    if (here) {
+      // a bare-cell erase that would split the room into islands is blocked
+      const ok = removalKeepsConnected(space, (cc, rr) => cc === c && rr === r)
+      return { intent: ok ? 'erase' : 'block', target: 'cell', c, r, edge: null }
+    }
+    return { intent: 'noop', target: 'cell', c, r, edge: null }
+  }
+
+  switch (tool) {
+    case 'cell':
+      if (here) return { intent: 'noop', target: 'cell', c, r, edge: null }
+      // a new tile must touch the existing area (no free-floating second room)
+      return { intent: cellAdjacent(cellSet, c, r) ? 'build' : 'block', target: 'cell', c, r, edge: null }
+    case 'seat':
+      if (!here) return { intent: 'noop', target: 'cell', c, r, edge: null }
+      return { intent: seat ? 'select' : 'build', target: 'seat', c, r, edge: null }
+    case 'door':
+    case 'window':
+      if (!edge || !isExteriorEdge(cellSet, c, r, edge)) return { intent: 'noop', target: 'edge', c, r, edge }
+      if (openingHere && openingHere.kind === tool) return { intent: 'noop', target: 'edge', c, r, edge }
+      return { intent: openingHere ? 'replace' : 'build', target: 'edge', c, r, edge }
+    case 'divider':
+      if (!edge || !isInteriorEdge(cellSet, c, r, edge)) return { intent: 'noop', target: 'edge', c, r, edge }
+      return { intent: dividerHere ? 'noop' : 'build', target: 'edge', c, r, edge }
+    default:
+      return { intent: 'noop', target: 'cell', c, r, edge: null }
+  }
+}
+
+/** Live "blocked" check for the drag-rectangle preview: true when releasing
+    the gesture now would be rejected — an erase that splits the room, or a
+    paint that touches nothing. The commit functions re-verify; this only
+    anticipates it visually. */
+export function rectBlocked(space: Space, start: Cell, end: Cell, erasing: boolean): boolean {
+  const c0 = clamp(Math.min(start[0], end[0]), 0, GRID_C - 1)
+  const c1 = clamp(Math.max(start[0], end[0]), 0, GRID_C - 1)
+  const r0 = clamp(Math.min(start[1], end[1]), 0, GRID_R - 1)
+  const r1 = clamp(Math.max(start[1], end[1]), 0, GRID_R - 1)
+  const inRect = (c: number, r: number) => c >= c0 && c <= c1 && r >= r0 && r <= r1
+  if (erasing) {
+    const remaining = space.cells.filter(([c, r]) => !inRect(c, r))
+    if (remaining.length === space.cells.length) return false // nothing to erase → noop, not blocked
+    return !isConnected(remaining)
+  }
+  if (space.cells.length === 0) return false
+  return !rectTouchesArea(space, c0, c1, r0, r1)
+}
+
+/* ── Move tool (relocate without erase+recreate) ──────────────────────── */
+
+/** What grabbable element sits at (c,r) / near an edge? For the Move tool's hit-test. */
+export type MovableRef =
+  | { kind: 'seat'; c: number; r: number }
+  | { kind: 'opening'; c: number; r: number; edge: Edge }
+  | { kind: 'divider'; c: number; r: number; edge: Edge }
+
+export function elementAt(space: Space, c: number, r: number, edge: Edge | null): MovableRef | null {
+  if (edge) {
+    if (space.openings.some((o) => o.c === c && o.r === r && o.edge === edge)) return { kind: 'opening', c, r, edge }
+    if (dividerOnEdge(space, c, r, edge)) {
+      // Return the canonical form (edge E/S) so it matches the stored divider.
+      const div = canonicalDivider(c, r, edge)
+      return { kind: 'divider', c: div.c, r: div.r, edge: div.edge }
+    }
+  }
+  if (space.seats.some((s) => s.c === c && s.r === r)) return { kind: 'seat', c, r }
+  return null
+}
+
+/** Can `ref` legally land at (c,r,edge)? Anticipates the move functions below,
+    so the drag ghost never promises a drop the model would reject. */
+export function canDropMoved(space: Space, ref: MovableRef, c: number, r: number, edge: Edge | null): boolean {
+  const cellSet = makeCellSet(space.cells)
+  if (ref.kind === 'seat') {
+    return cellSet.has(cellKey(c, r)) && !space.seats.some((s) => s.c === c && s.r === r)
+  }
+  if (!edge) return false
+  if (ref.kind === 'opening') return isExteriorEdge(cellSet, c, r, edge)
+  return isInteriorEdge(cellSet, c, r, edge)
+}
+
+/** Move a seat (keeps its agent) to an empty floor cell. */
+export function moveSeat(space: Space, from: Cell, to: Cell): Space {
+  const seat = space.seats.find((s) => s.c === from[0] && s.r === from[1])
+  if (!seat) return space
+  const cellSet = makeCellSet(space.cells)
+  if (!cellSet.has(cellKey(to[0], to[1]))) return space
+  if (space.seats.some((s) => s.c === to[0] && s.r === to[1])) return space
+  return { ...space, seats: space.seats.map((s) => (s === seat ? { ...s, c: to[0], r: to[1] } : s)) }
+}
+
+/** Move a door/window to another exterior edge (replacing any opening there). */
+export function moveOpening(space: Space, from: Cell, fromEdge: Edge, to: Cell, toEdge: Edge): Space {
+  const op = space.openings.find((o) => o.c === from[0] && o.r === from[1] && o.edge === fromEdge)
+  if (!op) return space
+  const cellSet = makeCellSet(space.cells)
+  if (!isExteriorEdge(cellSet, to[0], to[1], toEdge)) return space
+  const openings = space.openings
+    .filter((o) => o !== op)
+    .filter((o) => !(o.c === to[0] && o.r === to[1] && o.edge === toEdge))
+  return { ...space, openings: [...openings, { c: to[0], r: to[1], edge: toEdge, kind: op.kind }] }
+}
+
+/** Move an interior divider to another interior edge. */
+export function moveDivider(space: Space, from: Cell, fromEdge: Edge, to: Cell, toEdge: Edge): Space {
+  const d0 = canonicalDivider(from[0], from[1], fromEdge)
+  if (!space.dividers.some((d) => d.c === d0.c && d.r === d0.r && d.edge === d0.edge)) return space
+  const cellSet = makeCellSet(space.cells)
+  if (!isInteriorEdge(cellSet, to[0], to[1], toEdge)) return space
+  const d1 = canonicalDivider(to[0], to[1], toEdge)
+  const dividers = space.dividers
+    .filter((d) => !(d.c === d0.c && d.r === d0.r && d.edge === d0.edge))
+    .filter((d) => !(d.c === d1.c && d.r === d1.r && d.edge === d1.edge))
+  return { ...space, dividers: [...dividers, d1] }
 }
 
 /* ── Sanitisation ─────────────────────────────────────────────────────── */

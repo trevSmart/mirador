@@ -11,8 +11,18 @@ import {
   visibleSpaceFolders,
   seedFolder,
   MAX_FOLDER_DEPTH,
+  placeOpening,
+  placeDivider,
+  eraseCellRect,
+  resolveEdit,
+  elementAt,
+  canDropMoved,
+  moveSeat,
+  moveOpening,
+  moveDivider,
+  rectBlocked,
 } from './space-plan-model'
-import type { SpacePlanData, Folder } from './types'
+import type { Cell, SpacePlanData, Folder, Space } from './types'
 
 describe('uniqueName', () => {
   it('returns the base name when there is no collision', () => {
@@ -214,5 +224,193 @@ describe('visibleSpaces / visibleSpaceFolders', () => {
   it('hides a folder whose only space is inactive', () => {
     const root = { id: 'r', name: 'Root', image: null, active: true, folders: [], spaces: [space('s1', false)] }
     expect(visibleSpaceFolders(plan([root]))).toHaveLength(0)
+  })
+})
+
+describe('editing tools (additive model)', () => {
+  const room = (over: Partial<Space> = {}): Space => ({
+    id: 's',
+    name: 'P',
+    // 2×2 room at origin
+    cells: [[0, 0], [1, 0], [0, 1], [1, 1]],
+    seats: [],
+    openings: [],
+    dividers: [],
+    dir: 0,
+    active: true,
+    ...over,
+  })
+
+  describe('placeOpening', () => {
+    it('places a door on an exterior edge', () => {
+      const out = placeOpening(room(), 0, 0, 'N', 'door')
+      expect(out.openings).toEqual([{ c: 0, r: 0, edge: 'N', kind: 'door' }])
+    })
+
+    it('is a no-op when repeating the same kind (never toggles off)', () => {
+      const one = placeOpening(room(), 0, 0, 'N', 'door')
+      expect(placeOpening(one, 0, 0, 'N', 'door')).toBe(one)
+    })
+
+    it('replaces a different kind on the same edge', () => {
+      const door = placeOpening(room(), 0, 0, 'N', 'door')
+      const out = placeOpening(door, 0, 0, 'N', 'window')
+      expect(out.openings).toEqual([{ c: 0, r: 0, edge: 'N', kind: 'window' }])
+    })
+
+    it('rejects an interior edge', () => {
+      const s = room()
+      expect(placeOpening(s, 0, 0, 'E', 'door')).toBe(s)
+    })
+  })
+
+  describe('placeDivider', () => {
+    it('places a divider on an interior edge, canonically', () => {
+      const out = placeDivider(room(), 1, 0, 'O')
+      expect(out.dividers).toEqual([{ c: 0, r: 0, edge: 'E' }])
+    })
+
+    it('is idempotent (second click never removes)', () => {
+      const one = placeDivider(room(), 0, 0, 'E')
+      expect(placeDivider(one, 1, 0, 'O')).toBe(one)
+    })
+
+    it('rejects an exterior edge', () => {
+      const s = room()
+      expect(placeDivider(s, 0, 0, 'N')).toBe(s)
+    })
+  })
+
+  describe('eraseCellRect', () => {
+    it('erases the rectangle with its seats', () => {
+      const s = room({ cells: [[0, 0], [1, 0], [2, 0]], seats: [{ c: 2, r: 0, agentId: 'a1' }] })
+      const out = eraseCellRect(s, [1, 0], [2, 0])
+      expect(out.cells).toEqual([[0, 0]])
+      expect(out.seats).toEqual([])
+    })
+
+    it('rejects an erase that would split the room into islands', () => {
+      const s = room({ cells: [[0, 0], [1, 0], [2, 0]] })
+      expect(eraseCellRect(s, [1, 0], [1, 0])).toBe(s)
+    })
+
+    it('is a no-op when the rectangle misses the area', () => {
+      const s = room()
+      expect(eraseCellRect(s, [5, 5], [6, 6])).toBe(s)
+    })
+  })
+
+  describe('resolveEdit', () => {
+    it('build on an empty adjacent cell, block on a detached one', () => {
+      expect(resolveEdit(room(), 'cell', 2, 0, null, false).intent).toBe('build')
+      expect(resolveEdit(room(), 'cell', 5, 5, null, false).intent).toBe('block')
+      expect(resolveEdit(room(), 'cell', 0, 0, null, false).intent).toBe('noop')
+    })
+
+    it('seat tool: build on bare floor, select on an existing seat', () => {
+      const s = room({ seats: [{ c: 0, r: 0, agentId: null }] })
+      expect(resolveEdit(s, 'seat', 0, 0, null, false).intent).toBe('select')
+      expect(resolveEdit(s, 'seat', 1, 0, null, false).intent).toBe('build')
+      expect(resolveEdit(s, 'seat', 5, 5, null, false).intent).toBe('noop')
+    })
+
+    it('door: build on a bare exterior edge, replace over a window, noop over itself', () => {
+      const s = placeOpening(room(), 0, 0, 'N', 'window')
+      expect(resolveEdit(s, 'door', 0, 0, 'N', false).intent).toBe('replace')
+      expect(resolveEdit(s, 'door', 1, 0, 'N', false).intent).toBe('build')
+      expect(resolveEdit(s, 'window', 0, 0, 'N', false).intent).toBe('noop')
+      expect(resolveEdit(s, 'door', 0, 0, 'E', false).intent).toBe('noop')
+    })
+
+    it('erasing wins over the active tool and blocks island-splitting erases', () => {
+      const bar = room({ cells: [[0, 0], [1, 0], [2, 0]], seats: [{ c: 0, r: 0, agentId: null }] })
+      expect(resolveEdit(bar, 'cell', 0, 0, null, true)).toMatchObject({ intent: 'erase', target: 'seat' })
+      expect(resolveEdit(bar, 'cell', 2, 0, null, true)).toMatchObject({ intent: 'erase', target: 'cell' })
+      expect(resolveEdit(bar, 'cell', 1, 0, null, true).intent).toBe('block')
+      expect(resolveEdit(bar, 'cell', 5, 5, null, true).intent).toBe('noop')
+    })
+
+    it('erasing an edge element resolves to an edge erase', () => {
+      const s = placeOpening(room(), 0, 0, 'N', 'door')
+      expect(resolveEdit(s, 'erase', 0, 0, 'N', true)).toMatchObject({ intent: 'erase', target: 'edge' })
+    })
+  })
+
+  describe('move (elementAt / canDropMoved / moveSeat / moveOpening / moveDivider)', () => {
+    const furnished = () => {
+      let s = room({ seats: [{ c: 0, r: 0, agentId: 'a1' }] })
+      s = placeOpening(s, 0, 0, 'N', 'door')
+      s = placeDivider(s, 0, 0, 'E')
+      return s
+    }
+
+    it('elementAt finds openings/dividers by edge and seats by cell', () => {
+      const s = furnished()
+      expect(elementAt(s, 0, 0, 'N')).toEqual({ kind: 'opening', c: 0, r: 0, edge: 'N' })
+      // Divider refs come back canonicalized (edge E/S) to match the stored form.
+      expect(elementAt(s, 1, 0, 'O')).toEqual({ kind: 'divider', c: 0, r: 0, edge: 'E' })
+      expect(elementAt(s, 0, 0, null)).toEqual({ kind: 'seat', c: 0, r: 0 })
+      expect(elementAt(s, 1, 1, null)).toBeNull()
+    })
+
+    it('moveSeat relocates keeping the agent, rejects occupied or off-floor targets', () => {
+      const s = furnished()
+      const out = moveSeat(s, [0, 0], [1, 1])
+      expect(out.seats).toEqual([{ c: 1, r: 1, agentId: 'a1' }])
+      expect(moveSeat(s, [0, 0], [5, 5])).toBe(s)
+      const two = { ...s, seats: [...s.seats, { c: 1, r: 1, agentId: null }] }
+      expect(moveSeat(two, [0, 0], [1, 1])).toBe(two)
+    })
+
+    it('moveOpening relocates to another exterior edge and replaces what sits there', () => {
+      let s = furnished()
+      s = placeOpening(s, 1, 0, 'N', 'window')
+      const out = moveOpening(s, [0, 0], 'N', [1, 0], 'N')
+      expect(out.openings).toEqual([{ c: 1, r: 0, edge: 'N', kind: 'door' }])
+      expect(moveOpening(s, [0, 0], 'N', [0, 0], 'E')).toBe(s)
+    })
+
+    it('moveDivider relocates between interior edges, canonically', () => {
+      const s = furnished()
+      const out = moveDivider(s, [1, 0], 'O', [0, 1], 'E')
+      expect(out.dividers).toEqual([{ c: 0, r: 1, edge: 'E' }])
+      expect(moveDivider(s, [0, 0], 'E', [0, 0], 'N')).toBe(s)
+    })
+
+    it('canDropMoved anticipates the model rules for each kind', () => {
+      const s = furnished()
+      expect(canDropMoved(s, { kind: 'seat', c: 0, r: 0 }, 1, 1, null)).toBe(true)
+      expect(canDropMoved(s, { kind: 'seat', c: 0, r: 0 }, 5, 5, null)).toBe(false)
+      expect(canDropMoved(s, { kind: 'opening', c: 0, r: 0, edge: 'N' }, 1, 0, 'N')).toBe(true)
+      expect(canDropMoved(s, { kind: 'opening', c: 0, r: 0, edge: 'N' }, 0, 0, 'E')).toBe(false)
+      expect(canDropMoved(s, { kind: 'divider', c: 0, r: 0, edge: 'E' }, 0, 1, 'E')).toBe(true)
+      expect(canDropMoved(s, { kind: 'divider', c: 0, r: 0, edge: 'E' }, 0, 0, 'N')).toBe(false)
+    })
+  })
+})
+
+describe('rectBlocked (live drag preview)', () => {
+  const bar: Space = {
+    id: 's', name: 'P', cells: [[0, 0], [1, 0], [2, 0]],
+    seats: [], openings: [], dividers: [], dir: 0, active: true,
+  }
+
+  it('flags an erase that would split the room', () => {
+    expect(rectBlocked(bar, [1, 0], [1, 0], true)).toBe(true)
+    expect(rectBlocked(bar, [2, 0], [2, 0], true)).toBe(false)
+  })
+
+  it('an erase rect over empty ground is a noop, not blocked', () => {
+    expect(rectBlocked(bar, [5, 5], [6, 6], true)).toBe(false)
+  })
+
+  it('flags a paint rect that does not touch the existing area', () => {
+    expect(rectBlocked(bar, [5, 5], [6, 6], false)).toBe(true)
+    expect(rectBlocked(bar, [3, 0], [4, 0], false)).toBe(false)
+  })
+
+  it('never blocks the first rect on an empty space', () => {
+    const empty = { ...bar, cells: [] as Cell[] }
+    expect(rectBlocked(empty, [5, 5], [6, 6], false)).toBe(false)
   })
 })

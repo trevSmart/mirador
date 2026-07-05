@@ -3,7 +3,7 @@
    can be persisted as-is and, later, round-tripped through a Salesforce-backed
    repository without conversion. */
 
-export type SpaceTool = 'cell' | 'seat' | 'door' | 'window' | 'divider' | 'erase'
+export type SpaceTool = 'cell' | 'seat' | 'move' | 'door' | 'window' | 'divider' | 'erase'
 
 /** Cell edge. O = Oest (west). */
 export type Edge = 'N' | 'S' | 'E' | 'O'
