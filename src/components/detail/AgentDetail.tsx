@@ -5,6 +5,7 @@ import type { Agent, AgentSkillChange, ChannelKey, PresenceStatus } from '../../
 import { useDetailDrawer } from '../../detail/detail-drawer-context'
 import { useSalesforcePhoto } from '../../hooks/useSalesforcePhoto'
 import { colorFromRecordId, textColorFromRecordId } from '../../utils/color-from-string'
+import { capacityColor } from '../../utils/agent-stats'
 import { agentInitials, channelLabel, formatMinutes } from '../../utils/format'
 import { resolveWorkItemIcon } from '../../utils/salesforce-object-icon'
 import { AppIcon, Button, CapacityBar, FadeValue, Ring, SfIcon, useToast } from '../ds'
@@ -86,7 +87,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
       ) : null}
 
       <DrawerSection title="Resum">
-        <CapacityBar used={agent.used} max={agent.max} color={color} />
+        <CapacityBar used={agent.used} max={agent.max} color={capacityColor(agent)} />
         <StatGrid>
           <Stat label="Temps en estat" value={agent.loginMin > 0 ? formatMinutes(agent.loginMin) : '—'} />
           <Stat label="Feina activa" value={agent.work.length} />

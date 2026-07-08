@@ -72,10 +72,12 @@ const SKILL_DEFS: Skill[] = (Object.keys(MOCK_SKILL) as MockSkillKey[]).map((key
   return { ...row, ...SKILL_BACKLOG[key] }
 })
 
-/* The org's full presence-status catalog (as Setup → Presence Statuses would
-   define it), independent of which agents currently hold them. The Home builds
-   one filter chip per entry here. Just id + label — Salesforce doesn't expose a
-   busy/available flag, so the catalog carries no category. */
+/* The org's presence-status catalog (as Setup → Presence Statuses would define
+   it), independent of which agents currently hold them. The panels build one
+   filter chip per entry here. Just id + label — Salesforce doesn't expose a
+   busy/available flag, so the catalog carries no category. Only real *presence*
+   statuses belong here: "offline" is the absence of a presence, never a status
+   a connected agent holds, so it's deliberately not listed. */
 const MOCK_PRESENCE_CATALOG: PresenceStatusOption[] = [
   { id: MOCK_PRESENCE.available, label: 'Disponible' },
   { id: MOCK_PRESENCE.availableVoice, label: 'Disponible per a veu' },
@@ -83,7 +85,6 @@ const MOCK_PRESENCE_CATALOG: PresenceStatusOption[] = [
   { id: MOCK_PRESENCE.away, label: 'En pausa' },
   { id: MOCK_PRESENCE.lunch, label: 'Dinar' },
   { id: MOCK_PRESENCE.meeting, label: 'Reunió' },
-  { id: MOCK_PRESENCE.offline, label: 'Desconnectat' },
 ]
 
 /* Which catalog status each seeded agent gets, keyed by the agent's own
@@ -101,6 +102,55 @@ const MOCK_PRESENCE_BY_CATEGORY: Record<
 
 export function getMockPresenceStatuses(): PresenceStatusOption[] {
   return MOCK_PRESENCE_CATALOG.map((s) => ({ ...s }))
+}
+
+/* Fine-grained presence statuses reachable from each coarse category, with
+   relative weights. The coarse `Agent.status` (4 buckets) drives badge colors
+   and the simulation; the real presenceStatusId is a richer sub-state derived
+   from it — so "Dinar"/"Reunió"/"Disponible per a veu" populate naturally as
+   agents move between buckets, rather than sitting permanently at 0. */
+const PRESENCE_WEIGHTS: Record<
+  'online' | 'busy' | 'away' | 'offline',
+  { option: PresenceStatusOption | null; weight: number }[]
+> = {
+  online: [
+    { option: MOCK_PRESENCE_CATALOG[0], weight: 4 }, // Disponible
+    { option: MOCK_PRESENCE_CATALOG[1], weight: 1 }, // Disponible per a veu
+  ],
+  busy: [{ option: MOCK_PRESENCE_CATALOG[2], weight: 1 }], // En trucada
+  away: [
+    { option: MOCK_PRESENCE_CATALOG[3], weight: 5 }, // En pausa
+    { option: MOCK_PRESENCE_CATALOG[4], weight: 2 }, // Dinar
+    { option: MOCK_PRESENCE_CATALOG[5], weight: 1 }, // Reunió
+  ],
+  offline: [{ option: null, weight: 1 }],
+}
+
+/**
+ * Pick the real presence status for an agent given its coarse category. Sticky:
+ * if the agent already holds a status valid for this category it keeps it (no
+ * flicker while it stays put); it only re-rolls when it crosses categories.
+ */
+export function resolvePresenceStatus(
+  category: 'online' | 'busy' | 'away' | 'offline',
+  currentId: string | null,
+  rand: () => number,
+): PresenceStatusOption | null {
+  const choices = PRESENCE_WEIGHTS[category]
+  const kept = choices.find((choice) => (choice.option?.id ?? null) === currentId)
+  if (kept) {
+    return kept.option ? { ...kept.option } : null
+  }
+  const total = choices.reduce((sum, choice) => sum + choice.weight, 0)
+  let roll = rand() * total
+  for (const choice of choices) {
+    roll -= choice.weight
+    if (roll <= 0) {
+      return choice.option ? { ...choice.option } : null
+    }
+  }
+  const last = choices[choices.length - 1]
+  return last.option ? { ...last.option } : null
 }
 
 type AgentSpec = {

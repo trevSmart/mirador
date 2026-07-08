@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Agent, ChannelKey, PresenceStatus } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { useSalesforcePhoto } from '../hooks/useSalesforcePhoto'
+import { capacityColor } from '../utils/agent-stats'
 import { colorFromRecordId, textColorFromRecordId } from '../utils/color-from-string'
 import { agentInitials, formatMinutes } from '../utils/format'
 import { CapacityBar, FadeValue, MetricPill, Ring, SfIcon } from './ds'
@@ -119,7 +120,7 @@ export function AgentRow({ agent, showSkills = false }: AgentRowProps) {
         </div>
       </div>
 
-      <CapacityBar used={agent.used} max={agent.max} color={color} />
+      <CapacityBar used={agent.used} max={agent.max} color={capacityColor(agent)} />
 
       <div className="agent-row__channels">
         {CHANNELS.map((channel) => {
