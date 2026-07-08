@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import type { IDockviewPanelProps } from 'dockview-react'
 import { useAgents, useDataStatus, usePresenceStatuses, useQueues } from '../api/data-hooks'
 import { AgentRow } from '../components/AgentRow'
 import { SfIcon, Chip } from '../components/ds'
@@ -8,7 +7,7 @@ import { InsightsBanner } from '../components/InsightsBanner'
 import { PanelState } from '../components/PanelState'
 import { QueueRow } from '../components/QueueRow'
 import { SpacePanel } from './SpacePanel'
-import { addPanelByType } from './panel-actions'
+import { appNavigator } from '../navigation/app-navigator'
 import type { PanelType } from './registry'
 import { computeHealthInsights } from '../utils/health-insights'
 import {
@@ -83,7 +82,7 @@ function loadSort<T extends string>(storageKey: string, allowed: readonly T[], f
   return fallback
 }
 
-export function HomePanel({ containerApi }: IDockviewPanelProps) {
+export function HomePanel() {
   const agents = useAgents()
   const queues = useQueues()
   const presenceStatuses = usePresenceStatuses()
@@ -145,7 +144,7 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
   const health = useMemo(() => computeHealthInsights(agents, queues), [agents, queues])
 
   const handleOpenPanel = (panel: PanelType, params?: Record<string, unknown>) => {
-    addPanelByType(containerApi, panel, params)
+    appNavigator.openPanel(panel, params)
   }
 
   const layoutRef = useRef<HTMLDivElement>(null)
