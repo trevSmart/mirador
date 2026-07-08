@@ -19,6 +19,7 @@ import {
   agents as seedAgents,
   getAgentSkills,
   queues as seedQueues,
+  resolvePresenceStatus,
   skillAgentSlice,
   skills as seedSkills,
   work as seedWork,
@@ -583,6 +584,11 @@ function evolveState(stateRef: MockLiveState): void {
   for (const agent of stateRef.agents) {
     syncAgentChannels(agent)
     reconcileAgentStatus(agent)
+    // Keep the real presence status in sync with the (now settled) coarse
+    // category, so the Home's per-status chip counts track the simulation.
+    const presence = resolvePresenceStatus(agent.status, agent.presenceStatusId, rand)
+    agent.presenceStatusId = presence?.id ?? null
+    agent.presenceStatusLabel = presence?.label ?? null
   }
 }
 

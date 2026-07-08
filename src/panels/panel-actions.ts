@@ -32,13 +32,21 @@ export function ensureHomePanel(api: DockviewApi): void {
   }
 }
 
-export function addPanelByType(api: DockviewApi, type: PanelType): void {
+export function addPanelByType(
+  api: DockviewApi,
+  type: PanelType,
+  params?: Record<string, unknown>,
+): void {
   // If a panel of this type is already open, reveal it instead of opening a
-  // duplicate (or doing nothing).
+  // duplicate (or doing nothing). When params are supplied (e.g. a presence
+  // filter propagated from Home), push them into the already-open panel too.
   const existing = api.panels.find(
     (panel) => getPanelTypeFromComponent(panel.view.contentComponent) === type,
   )
   if (existing) {
+    if (params) {
+      existing.api.updateParameters(params)
+    }
     existing.api.setActive()
     return
   }
@@ -49,5 +57,6 @@ export function addPanelByType(api: DockviewApi, type: PanelType): void {
     id: `${type}-${panelCounter}`,
     component: type,
     title: definition.title,
+    params,
   })
 }

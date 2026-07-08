@@ -17,6 +17,26 @@ export function countAgentsByStatus(agents: Agent[]): AgentStatusCounts {
   )
 }
 
+/**
+ * Colour token for an agent's capacity bar, driven by how close the agent is to
+ * their capacity ceiling (free slots), not by presence: green with room to
+ * spare, amber with a single slot left, red when full — so a glance shows who
+ * is maxed out. Offline agents stay muted since they aren't taking work.
+ */
+export function capacityColor(agent: Agent): string {
+  if (agent.status === 'offline') {
+    return 'var(--text-disabled)'
+  }
+  const free = agent.max - agent.used
+  if (free <= 0) {
+    return 'var(--status-alert)'
+  }
+  if (free === 1) {
+    return 'var(--status-watch)'
+  }
+  return 'var(--status-ok)'
+}
+
 export function totalQueueBacklog(queues: Queue[]): number {
   return queues.reduce((total, queue) => total + queue.backlog, 0)
 }

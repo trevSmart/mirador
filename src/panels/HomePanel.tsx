@@ -11,6 +11,13 @@ import { SpacePanel } from './SpacePanel'
 import { addPanelByType } from './panel-actions'
 import type { PanelType } from './registry'
 import { computeHealthInsights } from '../utils/health-insights'
+import {
+  CONNECTED_FILTER,
+  buildPresenceFilters,
+  countForFilter,
+  filterConnected,
+  getConnectedAgents,
+} from '../utils/agent-presence-filter'
 import { useGridAutoAnimate } from '../utils/home-grid-reorder'
 import { useSmoothScroll } from '../hooks/useSmoothScroll'
 
@@ -64,8 +71,6 @@ type QueueFilter = 'all' | 'backlog' | 'idle'
  * are never shown on Home — use the Agents panel for the full roster.
  */
 type AgentFilter = string
-
-const CONNECTED_FILTER = 'connected'
 
 /** Read a persisted sort key, falling back when missing or unknown. */
 function loadSort<T extends string>(storageKey: string, allowed: readonly T[], fallback: T): T {
@@ -139,8 +144,8 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
 
   const health = useMemo(() => computeHealthInsights(agents, queues), [agents, queues])
 
-  const handleOpenPanel = (panel: PanelType) => {
-    addPanelByType(containerApi, panel)
+  const handleOpenPanel = (panel: PanelType, params?: Record<string, unknown>) => {
+    addPanelByType(containerApi, panel, params)
   }
 
   const layoutRef = useRef<HTMLDivElement>(null)
@@ -156,38 +161,28 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
   // presence (a presence status id), no matter what that status is named. Agents
   // with no presence at all live in the Agents panel. We deliberately do NOT
   // judge connection by the status name/category (no keyword heuristics).
-  const connectedAgents = useMemo(
-    () => agents.filter((agent) => agent.presenceStatusId !== null),
-    [agents],
-  )
+  const connectedAgents = useMemo(() => getConnectedAgents(agents), [agents])
 
   // One filter chip per presence status configured in the org (the full
   // catalog, every status, unfiltered), with a live count computed over the
   // connected agents. Chips stay visible even at count 0.
-  const presenceFilters = useMemo(() => {
-    const countById = new Map<string, number>()
-    for (const agent of connectedAgents) {
-      const id = agent.presenceStatusId
-      if (id) countById.set(id, (countById.get(id) ?? 0) + 1)
-    }
-    return presenceStatuses.map((status) => ({
-      id: status.id,
-      label: status.label,
-      count: countById.get(status.id) ?? 0,
-    }))
-  }, [presenceStatuses, connectedAgents])
+  const presenceFilters = useMemo(
+    () => buildPresenceFilters(connectedAgents, presenceStatuses),
+    [presenceStatuses, connectedAgents],
+  )
 
   // "connected" always exists; a selected status id is always a real chip from
   // the catalog, so no fallback is needed here.
   const effectiveFilter = agentFilter
 
-  const activeAgents = useMemo(() => {
-    const filtered =
-      effectiveFilter === CONNECTED_FILTER
-        ? connectedAgents
-        : connectedAgents.filter((agent) => agent.presenceStatusId === effectiveFilter)
-    return sortAgents(filtered, agentSort).slice(0, 5)
-  }, [connectedAgents, effectiveFilter, agentSort])
+  const activeAgents = useMemo(
+    () => sortAgents(filterConnected(connectedAgents, effectiveFilter), agentSort).slice(0, 5),
+    [connectedAgents, effectiveFilter, agentSort],
+  )
+
+  // The "Veure tots" link mirrors whatever chip is active, so its count matches
+  // the roster the Agents panel opens onto.
+  const activeFilterCount = countForFilter(connectedAgents, presenceFilters, effectiveFilter)
 
   const startResize = useCallback((event: React.PointerEvent) => {
     event.preventDefault()
@@ -340,6 +335,13 @@ export function HomePanel({ containerApi }: IDockviewPanelProps) {
                 />
                 <h3 className="panel-section__title">Agents</h3>
               </div>
+              <button
+                type="button"
+                className="panel-section__link"
+                onClick={() => handleOpenPanel('agents', { presenceFilter: effectiveFilter })}
+              >
+                Veure tots ({activeFilterCount})
+              </button>
             </header>
             <div className="panel-section__filters" role="group" aria-label="Filtra els agents">
               <Chip
