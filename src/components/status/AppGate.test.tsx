@@ -19,6 +19,7 @@ function authState(overrides: Record<string, unknown> = {}) {
     isAuthenticated: true,
     isSalesforceEnabled: true,
     login: vi.fn(),
+    logout: vi.fn(),
     ...overrides,
   }
 }
@@ -64,6 +65,34 @@ describe('AppGate', () => {
     )
     screen.getByText('Reintenta').click()
     expect(login).toHaveBeenCalledTimes(1)
+  })
+
+  it('offers an escape hatch that logs in with a different account/org', () => {
+    const login = vi.fn()
+    useAuthMock.mockReturnValue(
+      authState({ authError: 'boom', isAuthenticated: false, login }),
+    )
+    render(
+      <AppGate>
+        <div>APP CONTENT</div>
+      </AppGate>,
+    )
+    screen.getByText('Inicia sessió amb un altre compte').click()
+    expect(login).toHaveBeenCalledWith({ forceAccountSelection: true })
+  })
+
+  it('offers a Salesforce logout escape hatch', () => {
+    const logout = vi.fn()
+    useAuthMock.mockReturnValue(
+      authState({ authError: 'boom', isAuthenticated: false, logout }),
+    )
+    render(
+      <AppGate>
+        <div>APP CONTENT</div>
+      </AppGate>,
+    )
+    screen.getByText('Tanca la sessió de Salesforce').click()
+    expect(logout).toHaveBeenCalledTimes(1)
   })
 
   it('shows a busy redirect screen when login is in progress', () => {

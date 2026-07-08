@@ -33,6 +33,40 @@ function resolveRedirectUri(config: PublicOAuthConfig): string {
   return `${window.location.origin}/oauth/callback`
 }
 
+export function buildAuthorizeUrl(
+  config: PublicOAuthConfig,
+  options: { challenge: string; state: string; forceAccountSelection?: boolean },
+): string {
+  const params = new URLSearchParams({
+    response_type: 'code',
+    client_id: config.sfClientId,
+    redirect_uri: resolveRedirectUri(config),
+    scope: 'api refresh_token offline_access',
+    state: options.state,
+    code_challenge: options.challenge,
+    code_challenge_method: 'S256',
+  })
+  // prompt=login forces Salesforce to show the login/org picker even when the
+  // browser already has an active session. This is the escape hatch out of the
+  // "wrong org" loop: without it, Salesforce silently reuses the existing
+  // session and keeps landing on an org where the ECA may not be installed.
+  if (options.forceAccountSelection) {
+    params.set('prompt', 'login')
+  }
+  return `${config.sfLoginUrl.replace(/\/$/, '')}/services/oauth2/authorize?${params}`
+}
+
+export function buildLogoutUrl(config: PublicOAuthConfig): string {
+  // /secur/logout.jsp (not /services/oauth2/logout, which 404s unless an org
+  // explicitly enables OIDC single logout) is the classic endpoint that
+  // universally ends the browser's Salesforce session. Without retURL it
+  // redirects to the salesforce.com marketing site; retURL=/ sends the user
+  // back to the login form on the same host instead, so they land somewhere
+  // useful to pick the right org/account.
+  const params = new URLSearchParams({ retURL: '/' })
+  return `${config.sfLoginUrl.replace(/\/$/, '')}/secur/logout.jsp?${params}`
+}
+
 function sessionFromTokenResponse(data: TokenResponse, previous?: OAuthSession): OAuthSession {
   const issuedAt = data.issued_at ? Number(data.issued_at) : Date.now()
   const expiresIn = data.expires_in ?? 7_200
@@ -155,7 +189,10 @@ export async function recoverAccessSession(): Promise<OAuthSession | null> {
   }
 }
 
-export async function startLogin(config?: PublicOAuthConfig): Promise<void> {
+export async function startLogin(
+  config?: PublicOAuthConfig,
+  options: { forceAccountSelection?: boolean } = {},
+): Promise<void> {
   const oauthConfig = config ?? (await fetchPublicConfig())
   if (!isSalesforceConfigured(oauthConfig)) {
     throw new OAuthError('SF_CLIENT_ID is not configured')
@@ -168,18 +205,11 @@ export async function startLogin(config?: PublicOAuthConfig): Promise<void> {
   localStorage.setItem(PKCE_VERIFIER_KEY, verifier)
   localStorage.setItem(PKCE_STATE_KEY, state)
 
-  const redirectUri = resolveRedirectUri(oauthConfig)
-  const params = new URLSearchParams({
-    response_type: 'code',
-    client_id: oauthConfig.sfClientId,
-    redirect_uri: redirectUri,
-    scope: 'api refresh_token offline_access',
+  const loginUrl = buildAuthorizeUrl(oauthConfig, {
+    challenge,
     state,
-    code_challenge: challenge,
-    code_challenge_method: 'S256',
+    forceAccountSelection: options.forceAccountSelection,
   })
-
-  const loginUrl = `${oauthConfig.sfLoginUrl.replace(/\/$/, '')}/services/oauth2/authorize?${params}`
   window.location.assign(loginUrl)
 }
 
@@ -264,10 +294,18 @@ export async function fetchUserInfo(session: OAuthSession): Promise<SalesforceUs
   return (await response.json()) as SalesforceUserInfo
 }
 
-export function logout(): void {
+export function logout(config?: PublicOAuthConfig): void {
   clearOAuthSession()
   localStorage.removeItem(PKCE_STATE_KEY)
   localStorage.removeItem(PKCE_VERIFIER_KEY)
+  // A local-only logout leaves the Salesforce browser session intact, so the
+  // next login silently reuses it and can loop back onto the wrong org. When we
+  // know the login host, bounce through Salesforce's logout endpoint to drop
+  // that session too; otherwise fall back to a plain in-app reset.
+  if (config && isSalesforceConfigured(config)) {
+    window.location.assign(buildLogoutUrl(config))
+    return
+  }
   window.location.assign('/')
 }
 

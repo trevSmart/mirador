@@ -16,7 +16,7 @@ export interface AuthContextValue {
   isSalesforceEnabled: boolean
   isLoading: boolean
   authError: string | null
-  login: () => Promise<void>
+  login: (options?: { forceAccountSelection?: boolean }) => Promise<void>
   logout: () => void
   refreshSession: () => Promise<OAuthSession | null>
 }
