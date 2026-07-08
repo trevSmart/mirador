@@ -113,14 +113,14 @@ export function AuthProvider({
     }
   }, [isMockMode, session])
 
-  const login = useCallback(async () => {
+  const login = useCallback(async (options?: { forceAccountSelection?: boolean }) => {
     if (isMockMode) {
       return
     }
     setAuthError(null)
     devLog.action('auth:login', 'redirecting to Salesforce')
     try {
-      await startLogin(config ?? undefined)
+      await startLogin(config ?? undefined, options)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Login failed'
       console.error('[auth:login] failed:', message)
@@ -147,8 +147,8 @@ export function AuthProvider({
 
   const logout = useCallback(() => {
     devLog.action('auth:logout')
-    oauthLogout()
-  }, [])
+    oauthLogout(config ?? undefined)
+  }, [config])
 
   const value = useMemo<AuthContextValue>(
     () => ({

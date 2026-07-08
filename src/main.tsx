@@ -5,6 +5,9 @@ import './index.css'
 import App from './App.tsx'
 import { bootstrapAuth, preloadPublicConfig } from './auth/bootstrap-auth'
 import { dismissAppSplash } from './bootstrap/dismiss-splash'
+import { installBfcacheReload } from './bootstrap/reload-on-bfcache-restore'
+
+installBfcacheReload()
 
 const rootElement = document.getElementById('root')
 if (!rootElement) {
