@@ -27,8 +27,11 @@ export interface AppNavigator {
   /** Connecta el navegador a la instància de dockview (des d'onReady).
       Retorna un disposable; cal disposar l'anterior abans de re-attachar. */
   attach(api: DockviewApi): { dispose(): void }
-  openPanel(type: PanelType, params?: Record<string, unknown>): void
-  openDetail(target: DetailTarget, title?: string): void
+  /** Obre/revela un panell. Retorna false si encara no hi ha dockview
+      connectat (l'operació ha estat un no-op i el caller no hauria de donar
+      per fet que el panell s'ha obert). */
+  openPanel(type: PanelType, params?: Record<string, unknown>): boolean
+  openDetail(target: DetailTarget, title?: string): boolean
 }
 
 interface NavEntryState {
@@ -47,13 +50,15 @@ export function createAppNavigator(deps: AppNavigatorDeps): AppNavigator {
     params?: Record<string, unknown>
   }
 
-  function applyReveal(dest: NavDestination, options?: RevealOptions): void {
-    if (!api) return
+  /** Retorna true si s'ha pogut revelar (hi ha dockview connectat). */
+  function applyReveal(dest: NavDestination, options?: RevealOptions): boolean {
+    if (!api) return false
     if (dest.kind === 'panel') {
       addPanelByType(api, dest.panel, options?.params)
     } else {
       openDetailTab(api, dest.target, options?.titleHint ?? FALLBACK_TITLE[dest.target.kind])
     }
+    return true
   }
 
   /* Tot canvi de pestanya programàtic (open de l'app, deep-link, traverse)
@@ -61,8 +66,8 @@ export function createAppNavigator(deps: AppNavigatorDeps): AppNavigator {
      amb document.startViewTransition. Compte: el clic directe sobre un tab el
      gestiona dockview abans que aquest codi; per animar-lo caldrà interceptar
      l'activació a MiradorTab. */
-  function reveal(dest: NavDestination, options?: RevealOptions): void {
-    applyReveal(dest, options)
+  function reveal(dest: NavDestination, options?: RevealOptions): boolean {
+    return applyReveal(dest, options)
   }
 
   function currentHash(nav: Navigation): string {
@@ -163,14 +168,14 @@ export function createAppNavigator(deps: AppNavigatorDeps): AppNavigator {
     }
   }
 
-  function openPanel(type: PanelType, params?: Record<string, unknown>): void {
+  function openPanel(type: PanelType, params?: Record<string, unknown>): boolean {
     devLog.action('nav:open', type)
-    reveal({ kind: 'panel', panel: type }, { params })
+    return reveal({ kind: 'panel', panel: type }, { params })
   }
 
-  function openDetail(target: DetailTarget, title?: string): void {
+  function openDetail(target: DetailTarget, title?: string): boolean {
     devLog.action('nav:open', `detail ${target.kind} ${target.id}`)
-    reveal({ kind: 'detail', target }, { titleHint: title })
+    return reveal({ kind: 'detail', target }, { titleHint: title })
   }
 
   return { attach, openPanel, openDetail }

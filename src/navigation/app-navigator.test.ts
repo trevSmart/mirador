@@ -154,9 +154,20 @@ function createNavigator(options?: { navigation?: Navigation; hash?: string }) {
 }
 
 describe('createAppNavigator', () => {
-  it('does nothing when opening a panel before attach', () => {
+  it('does nothing and returns false when opening a panel before attach', () => {
     const navigator = createNavigator()
-    expect(() => navigator.openPanel('agents')).not.toThrow()
+    expect(navigator.openPanel('agents')).toBe(false)
+    expect(navigator.openDetail({ kind: 'agent', id: 'a1' })).toBe(false)
+  })
+
+  it('returns true from openPanel/openDetail once attached', () => {
+    const fakeNav = createFakeNavigation()
+    const dock = createFakeDockviewApi()
+    const navigator = createNavigator({ navigation: fakeNav.navigation })
+    navigator.attach(dock.api)
+
+    expect(navigator.openPanel('agents')).toBe(true)
+    expect(navigator.openDetail({ kind: 'queue', id: 'q1' }, 'Cua')).toBe(true)
   })
 
   it('pushes one entry with the panel title when a panel opens', () => {

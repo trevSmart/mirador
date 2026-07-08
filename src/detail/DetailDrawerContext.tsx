@@ -42,8 +42,12 @@ export function DetailDrawerProvider({ children }: { children: ReactNode }) {
       const title = resolveDetailTitle(target, { agents, queues, skills, work })
       devLog.action('detail:open-as-tab', `${target.kind} · ${title}`)
       recordDetailOpen({ kind: target.kind, id: target.id, name: title })
-      appNavigator.openDetail(target, title)
-      setDetail(null)
+      // Només tanca el drawer si la pestanya s'ha obert de debò: si el
+      // navegador encara no té dockview connectat, openDetail és un no-op i
+      // mantenim el drawer perquè l'usuari no perdi el context.
+      if (appNavigator.openDetail(target, title)) {
+        setDetail(null)
+      }
     },
     [agents, queues, skills, work],
   )
