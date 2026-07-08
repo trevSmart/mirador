@@ -8,7 +8,7 @@ export interface MiradorEntityData {
   work: WorkItem[]
 }
 
-const FALLBACK_TITLE: Record<DetailTarget['kind'], string> = {
+export const FALLBACK_TITLE: Record<DetailTarget['kind'], string> = {
   agent: 'Agent',
   queue: 'Cua',
   skill: 'Skill',

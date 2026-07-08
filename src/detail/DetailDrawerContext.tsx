@@ -10,8 +10,7 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { devLog } from '../dev/dev-log'
 import { useAgents, useQueues, useSkills, useWork } from '../api/data-hooks'
-import { useDockviewHost } from '../dockview/dockview-host-context'
-import { openDetailTab } from '../panels/detail-tab-actions'
+import { appNavigator } from '../navigation/app-navigator'
 import { recordDetailOpen } from '../utils/detail-recent-store'
 import { resolveDetailTitle } from './resolve-detail-meta'
 import {
@@ -31,7 +30,6 @@ export function DetailDrawerProvider({ children }: { children: ReactNode }) {
   const queues = useQueues()
   const skills = useSkills()
   const work = useWork()
-  const { getApi } = useDockviewHost()
 
   const open = useCallback((kind: DetailKind, id: string) => {
     devLog.action('detail:open', `${kind} ${id}`)
@@ -41,17 +39,13 @@ export function DetailDrawerProvider({ children }: { children: ReactNode }) {
 
   const openAsTab = useCallback(
     (target: DetailTarget) => {
-      const api = getApi()
-      if (!api) {
-        return
-      }
       const title = resolveDetailTitle(target, { agents, queues, skills, work })
       devLog.action('detail:open-as-tab', `${target.kind} · ${title}`)
       recordDetailOpen({ kind: target.kind, id: target.id, name: title })
-      openDetailTab(api, target, title)
+      appNavigator.openDetail(target, title)
       setDetail(null)
     },
-    [agents, getApi, queues, skills, work],
+    [agents, queues, skills, work],
   )
 
   const value = useMemo<DetailDrawerContextValue>(

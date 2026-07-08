@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { IDockviewHeaderActionsProps } from 'dockview-react'
-import { addPanelByType } from '../panels/panel-actions'
+import { appNavigator } from '../navigation/app-navigator'
 import { PanelIcon } from '../panels/PanelIcon'
 import { PANEL_DEFINITIONS, type PanelType } from '../panels/registry'
 import { syncDropdownPanel } from '../utils/sync-dropdown-panel'
@@ -44,7 +44,7 @@ export function AddPanelHeaderActions(props: IDockviewHeaderActionsProps) {
   }
 
   const handleAddPanel = (type: PanelType) => {
-    addPanelByType(props.containerApi, type)
+    appNavigator.openPanel(type)
     setIsOpen(false)
   }
 

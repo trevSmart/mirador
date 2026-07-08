@@ -14,15 +14,12 @@ import {
 } from '../dockview/context-menus'
 import { loadDockviewLayout, saveDockviewLayout } from '../dockview/layout-storage'
 import { useDockviewHost } from '../dockview/dockview-host-context'
+import { appNavigator } from '../navigation/app-navigator'
 import { devLog } from '../dev/dev-log'
 import { miradorDockviewTheme } from '../dockview/theme'
 import { DetailPanel } from '../panels/DetailPanel'
 import { PANEL_COMPONENTS, getPanelDefinition, type PanelType } from '../panels/registry'
-import {
-  addPanelByType,
-  ensureHomePanel,
-  getOpenPanelTypes,
-} from '../panels/panel-actions'
+import { ensureHomePanel, getOpenPanelTypes } from '../panels/panel-actions'
 
 interface DockviewShellHandle {
   addPanel: (type: PanelType) => void
@@ -52,6 +49,7 @@ function createDefaultLayout(api: DockviewApi): void {
 export function DockviewShell({ ref }: DockviewShellProps) {
   const apiRef = useRef<DockviewApi | null>(null)
   const layoutDisposableRef = useRef<{ dispose: () => void } | null>(null)
+  const navigatorDisposableRef = useRef<{ dispose: () => void } | null>(null)
   const panelDisposablesRef = useRef<{ dispose: () => void }[]>([])
   const [openTypes, setOpenTypes] = useState<PanelType[]>(['home'])
   const { registerApi } = useDockviewHost()
@@ -63,6 +61,7 @@ export function DockviewShell({ ref }: DockviewShellProps) {
   useEffect(() => {
     return () => {
       layoutDisposableRef.current?.dispose()
+      navigatorDisposableRef.current?.dispose()
       panelDisposablesRef.current.forEach((d) => d.dispose())
       panelDisposablesRef.current = []
     }
@@ -73,9 +72,7 @@ export function DockviewShell({ ref }: DockviewShellProps) {
     if (!ref) return
     const handle: DockviewShellHandle = {
       addPanel(type: PanelType) {
-        const api = apiRef.current
-        if (!api) return
-        addPanelByType(api, type)
+        appNavigator.openPanel(type)
       },
       getOpenPanelTypes() {
         const api = apiRef.current
@@ -124,6 +121,11 @@ export function DockviewShell({ ref }: DockviewShellProps) {
       }),
     ]
     syncOpenTypes(event.api)
+
+    /* Pont amb window.navigation: cada activació de tab esdevé una entrada
+       d'historial i enrere/endavant reactiven el tab corresponent. */
+    navigatorDisposableRef.current?.dispose()
+    navigatorDisposableRef.current = appNavigator.attach(event.api)
 
     layoutDisposableRef.current?.dispose()
     layoutDisposableRef.current = event.api.onDidLayoutChange(() => {
