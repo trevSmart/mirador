@@ -21,6 +21,30 @@ private class MiradorRecordDetailsServiceTest {
     }
 
     @IsTest
+    static void getRecordDetailsCaseStatus() {
+        Case open = new Case(Subject = 'Obert', Status = 'New');
+        insert open;
+        Case closed = new Case(Subject = 'Tancat', Status = 'Closed');
+        insert closed;
+
+        Test.startTest();
+        MiradorRecordDetailsService.RecordDetailsResponse response =
+            MiradorRecordDetailsService.getRecordDetails(new List<Id>{ open.Id, closed.Id });
+        Test.stopTest();
+
+        Map<Id, MiradorRecordDetailsService.RecordDetailDto> byId =
+            new Map<Id, MiradorRecordDetailsService.RecordDetailDto>();
+        for (MiradorRecordDetailsService.RecordDetailDto dto : response.records) {
+            byId.put((Id) dto.id, dto);
+        }
+
+        System.assertEquals('New', byId.get(open.Id).recordStatus, 'open status');
+        System.assertEquals(false, byId.get(open.Id).recordClosed, 'open not closed');
+        System.assertEquals('Closed', byId.get(closed.Id).recordStatus, 'closed status');
+        System.assertEquals(true, byId.get(closed.Id).recordClosed, 'closed is closed');
+    }
+
+    @IsTest
     static void getRecordDetailsEmptyList() {
         Test.startTest();
         MiradorRecordDetailsService.RecordDetailsResponse empty =
@@ -50,6 +74,8 @@ private class MiradorRecordDetailsServiceTest {
         System.assertNotEquals(null, dto.createdDate, 'createdDate populated');
         System.assertNotEquals(null, dto.lastModifiedDate, 'lastModifiedDate populated');
         System.assertEquals(null, dto.caseNumber, 'no caseNumber for Account');
+        System.assertEquals(null, dto.recordStatus, 'no recordStatus for Account');
+        System.assertEquals(null, dto.recordClosed, 'no recordClosed for Account');
     }
 
     @IsTest
