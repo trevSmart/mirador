@@ -1,8 +1,8 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { useAgents, useDataStatus, useQueues, useWork } from '../api/data-hooks'
 import { AgentAvatar } from '../components/AgentRow'
+import { CollapsibleGroup } from '../components/CollapsibleGroup'
 import { FadeValue, SfIcon } from '../components/ds'
-import { AppIcon } from '../components/ds/AppIcon'
 import { Select, type SelectOption } from '../components/ds/Select'
 import { PanelState } from '../components/PanelState'
 import { WorkRow } from '../components/WorkRow'
@@ -98,44 +98,14 @@ export function WorkPanel() {
   const work = useWork()
   const { isLoading, error, refresh } = useDataStatus()
   const [groupBy, setGroupBy] = useState<WorkGroupBy>(loadGroupBy)
-  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set())
-  // Groups mid-transition: their content keeps overflow hidden so it clips while
-  // the grid grows/shrinks; once settled, expanded groups get overflow visible
-  // again so card shadows and hover-lift aren't clipped (apex-log-viewer pattern).
-  const [animating, setAnimating] = useState<Set<string>>(() => new Set())
 
   const handleGroupBy = (value: WorkGroupBy) => {
     setGroupBy(value)
-    // Group keys differ across criteria, so start each criterion fully expanded.
-    setCollapsed(new Set())
-    setAnimating(new Set())
     try {
       localStorage.setItem(GROUP_BY_STORAGE, value)
     } catch {
       /* ignore */
     }
-  }
-
-  const toggleCollapsed = (key: string) => {
-    setCollapsed((prev) => {
-      const next = new Set(prev)
-      if (next.has(key)) {
-        next.delete(key)
-      } else {
-        next.add(key)
-      }
-      return next
-    })
-    setAnimating((prev) => new Set(prev).add(key))
-  }
-
-  const endAnimating = (key: string) => {
-    setAnimating((prev) => {
-      if (!prev.has(key)) return prev
-      const next = new Set(prev)
-      next.delete(key)
-      return next
-    })
   }
 
   const groups = useMemo(() => groupWork(work, groupBy), [work, groupBy])
@@ -177,52 +147,31 @@ export function WorkPanel() {
       {groups.map((group) => {
         const header = resolveGroupHeader(group, groupBy, names)
         const groupKey = group.key ?? UNGROUPED_KEY
-        const isCollapsed = collapsed.has(groupKey)
-        const overflowVisible = !isCollapsed && !animating.has(groupKey)
         return (
-          <section key={groupKey} className="panel-section work-group">
-            <button
-              type="button"
-              className="panel-section__header work-group__toggle"
-              aria-expanded={!isCollapsed}
-              onClick={() => toggleCollapsed(groupKey)}
-            >
-              <div className="panel-section__heading">
-                <AppIcon
-                  name="chevronright"
-                  size={12}
-                  className={`work-group__chevron${isCollapsed ? '' : ' work-group__chevron--open'}`}
-                />
-                {header.icon}
-                <h3 className="panel-section__title">{header.label}</h3>
-              </div>
+          // groupBy in the key remounts each group when the criterion changes,
+          // so switching criteria always starts fully expanded.
+          <CollapsibleGroup
+            key={`${groupBy}:${groupKey}`}
+            className="work-group"
+            icon={header.icon}
+            title={<h3 className="panel-section__title">{header.label}</h3>}
+            meta={
               <span className="work-group__count">
                 <FadeValue value={group.items.length} /> treballs · més antic{' '}
                 <FadeValue value={formatSeconds(group.oldestAgeSec)} />
               </span>
-            </button>
-
-            <div
-              className={`work-group__expand${isCollapsed ? '' : ' is-open'}`}
-              onTransitionEnd={(event) => {
-                if (event.propertyName === 'grid-template-rows') endAnimating(groupKey)
-              }}
-            >
-              <div
-                className={`work-group__expand-inner${overflowVisible ? ' is-visible' : ''}`}
-              >
-                <div className="work-grid">
-                  {group.items.map((item) => (
-                    <WorkRow
-                      key={item.id}
-                      item={item}
-                      agentName={item.agentId ? agentsById.get(item.agentId)?.name : null}
-                    />
-                  ))}
-                </div>
-              </div>
+            }
+          >
+            <div className="work-grid">
+              {group.items.map((item) => (
+                <WorkRow
+                  key={item.id}
+                  item={item}
+                  agentName={item.agentId ? agentsById.get(item.agentId)?.name : null}
+                />
+              ))}
             </div>
-          </section>
+          </CollapsibleGroup>
         )
       })}
     </PanelState>

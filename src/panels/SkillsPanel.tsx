@@ -1,4 +1,5 @@
 import { useDataStatus, useSkills } from '../api/data-hooks'
+import { CollapsibleGroup } from '../components/CollapsibleGroup'
 import { FadeValue, SfIcon } from '../components/ds'
 import { PanelState } from '../components/PanelState'
 import { SkillRow } from '../components/SkillRow'
@@ -23,29 +24,31 @@ export function SkillsPanel() {
       </p>
 
       {groups.map((group) => (
-        <section key={group.typeId ?? group.type} className="panel-section skill-group">
-          <header className="panel-section__header">
-            <div className="panel-section__heading">
-              <SfIcon
-                className="panel-section__icon"
-                sprite="standard"
-                symbol="skill_entity"
-                sldsSize="x-small"
-                bg={group.typeId ? colorFromRecordId(group.typeId) : undefined}
-              />
-              <h3 className="panel-section__title">{group.type}</h3>
-            </div>
+        <CollapsibleGroup
+          key={group.typeId ?? group.type}
+          className="skill-group"
+          icon={
+            <SfIcon
+              className="panel-section__icon"
+              sprite="standard"
+              symbol="skill_entity"
+              sldsSize="x-small"
+              bg={group.typeId ? colorFromRecordId(group.typeId) : undefined}
+            />
+          }
+          title={<h3 className="panel-section__title">{group.type}</h3>}
+          meta={
             <span className="skill-group__count">
               <FadeValue value={group.skills.length} /> skills · <FadeValue value={group.backlog} /> en cua
             </span>
-          </header>
-
+          }
+        >
           <div className="entity-list entity-list--grid">
             {group.skills.map((skill) => (
               <SkillRow key={skill.id} skill={skill} />
             ))}
           </div>
-        </section>
+        </CollapsibleGroup>
       ))}
     </PanelState>
   )

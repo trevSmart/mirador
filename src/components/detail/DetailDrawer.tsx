@@ -71,7 +71,10 @@ export function DetailDrawer() {
         className={`detail-drawer${open ? ' is-open' : ''}`}
         role="dialog"
         aria-modal="true"
-        aria-hidden={!open}
+        // When closed the drawer stays mounted (it slides off-screen), so use
+        // `inert` rather than `aria-hidden`: inert also pulls focus out, which
+        // avoids leaving the focused close button inside an aria-hidden subtree.
+        inert={!open}
       >
         <div className="detail-drawer__toolbar">
           <button

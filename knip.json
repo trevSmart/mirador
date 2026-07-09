@@ -3,6 +3,13 @@
   "tags": [
     "-lintignore"
   ],
+  "entry": [
+    "vite.config.ts",
+    "vitest.setup.ts",
+    "scripts/*.{js,mjs}",
+    "src/main.tsx",
+    "src/**/*.test.{ts,tsx}"
+  ],
   "ignore": [
     "dist/**",
     "docs/**",

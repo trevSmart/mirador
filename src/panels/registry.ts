@@ -25,20 +25,32 @@ type PanelIcon =
 export interface PanelDefinition {
   type: PanelType
   title: string
+  description: string
   icon: PanelIcon
   component: LazyExoticComponent<FunctionComponent<IDockviewPanelProps>>
 }
 
 export const PANEL_DEFINITIONS: PanelDefinition[] = [
-  { type: 'home',        title: 'Home',         icon: { sprite: 'standard', symbol: 'home' },               component: lazy(() => import('./HomePanel').then(m => ({ default: m.HomePanel }))) },
-  { type: 'wallboard',  title: 'Wallboard',    icon: { sprite: 'standard', symbol: 'metrics' },            component: lazy(() => import('./WallboardPanel').then(m => ({ default: m.WallboardPanel }))) },
-  { type: 'agents',     title: 'Agents',       icon: { sprite: 'standard', symbol: 'customers' },         component: lazy(() => import('./AgentsPanel').then(m => ({ default: m.AgentsPanel }))) },
-  { type: 'queues',     title: 'Queues',       icon: { name: 'queue' },                                   component: lazy(() => import('./QueuesPanel').then(m => ({ default: m.QueuesPanel }))) },
-  { type: 'skills',     title: 'Skills',       icon: { name: 'skill' },                                   component: lazy(() => import('./SkillsPanel').then(m => ({ default: m.SkillsPanel }))) },
-  { type: 'work',       title: 'Work',         icon: { name: 'work' },                                    component: lazy(() => import('./WorkPanel').then(m => ({ default: m.WorkPanel }))) },
-  { type: 'space',      title: 'Space',        icon: { sprite: 'standard', symbol: 'business_unit' },      component: lazy(() => import('./SpacePanel').then(m => ({ default: m.SpacePanel }))) },
-  { type: 'spaceEditor', title: 'Space editor', icon: { sprite: 'custom', symbol: 'custom83' },              component: lazy(() => import('./SpaceEditorPanel').then(m => ({ default: m.SpaceEditorPanel }))) },
-  { type: 'colorPlayground', title: 'Color playground', icon: { app: 'color_swatch' }, component: lazy(() => import('./ColorPlaygroundPanel').then(m => ({ default: m.ColorPlaygroundPanel }))) },
+  { type: 'home',        title: 'Home',         description: 'Vista general del teu centre',      icon: { sprite: 'standard', symbol: 'home' },               component: lazy(() => import('./HomePanel').then(m => ({ default: m.HomePanel }))) },
+  { type: 'wallboard',  title: 'Wallboard',    description: 'Mètriques del servei en directe',   icon: { sprite: 'standard', symbol: 'metrics' },            component: lazy(() => import('./WallboardPanel').then(m => ({ default: m.WallboardPanel }))) },
+  { type: 'agents',     title: 'Agents',       description: 'Estat i activitat dels agents',     icon: { sprite: 'standard', symbol: 'customers' },         component: lazy(() => import('./AgentsPanel').then(m => ({ default: m.AgentsPanel }))) },
+  { type: 'queues',     title: 'Queues',       description: 'Cues i temps d’espera',         icon: { name: 'queue' },                                   component: lazy(() => import('./QueuesPanel').then(m => ({ default: m.QueuesPanel }))) },
+  { type: 'skills',     title: 'Skills',       description: 'Competències i assignacions',       icon: { name: 'skill' },                                   component: lazy(() => import('./SkillsPanel').then(m => ({ default: m.SkillsPanel }))) },
+  { type: 'work',       title: 'Work',         description: 'Work items en curs',                icon: { name: 'work' },                                    component: lazy(() => import('./WorkPanel').then(m => ({ default: m.WorkPanel }))) },
+  { type: 'space',      title: 'Space',        description: 'El teu espai de treball',           icon: { sprite: 'standard', symbol: 'business_unit' },      component: lazy(() => import('./SpacePanel').then(m => ({ default: m.SpacePanel }))) },
+  { type: 'spaceEditor', title: 'Space editor', description: 'Dissenya i organitza l’espai', icon: { sprite: 'custom', symbol: 'custom83' },              component: lazy(() => import('./SpaceEditorPanel').then(m => ({ default: m.SpaceEditorPanel }))) },
+  { type: 'colorPlayground', title: 'Color playground', description: 'Prova temes i colors', icon: { app: 'color_swatch' }, component: lazy(() => import('./ColorPlaygroundPanel').then(m => ({ default: m.ColorPlaygroundPanel }))) },
+]
+
+export interface PanelMenuGroup {
+  label: string
+  types: PanelType[]
+}
+
+export const PANEL_MENU_GROUPS: PanelMenuGroup[] = [
+  { label: 'Supervise', types: ['home', 'wallboard', 'space'] },
+  { label: 'Track',     types: ['agents', 'queues', 'skills', 'work'] },
+  { label: 'Customize', types: ['spaceEditor', 'colorPlayground'] },
 ]
 
 function withPanelErrorBoundary(

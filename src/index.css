@@ -885,38 +885,95 @@ textarea,
 }
 
 .add-panel-control__dropdown {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  z-index: 20;
-  min-width: 180px;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  right: auto;
+  z-index: calc(var(--z-scrim) + 1);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  max-width: calc(100vw - var(--sp-4));
   border: 1px solid var(--border-subtle);
-  padding: var(--sp-1);
+  padding: var(--sp-6);
+  transform: translate(-50%, calc(-50% - var(--dropdown-offset)));
+}
+
+.add-panel-control__dropdown.is-open {
+  transform: translate(-50%, -50%);
+}
+
+.add-panel-control__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 200px;
+}
+
+.add-panel-control__group-label {
+  padding: var(--sp-1) var(--sp-3) var(--sp-2);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-strong);
 }
 
 .add-panel-control__item {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: var(--sp-3);
   width: 100%;
-  border: 0;
-  border-radius: var(--r-xs);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
   background: transparent;
   padding: var(--sp-2) var(--sp-3);
   text-align: left;
   font: inherit;
-  font-size: var(--fs-sm);
   color: var(--text-strong);
   cursor: pointer;
+  transition: background var(--dropdown-dur) var(--dropdown-ease),
+    border-color var(--dropdown-dur) var(--dropdown-ease);
 }
 
-.add-panel-control__item:hover:not(:disabled) {
+.add-panel-control__item:hover:not(:disabled),
+.add-panel-control__item:focus-visible {
   background: var(--accent-tint);
+  border-color: var(--accent-border, var(--accent));
+  outline: none;
 }
 
 .add-panel-control__item:disabled {
   color: var(--text-disabled);
   cursor: not-allowed;
+}
+
+.add-panel-control__item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.add-panel-control__item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.add-panel-control__item-title {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.add-panel-control__item-desc {
+  font-size: var(--fs-xs);
+  line-height: 1.35;
+  min-height: calc(1.35em * 2);
+  color: var(--text-muted);
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1724,8 +1781,9 @@ textarea,
 
 /* The group header doubles as a full-width collapse toggle — strip the native
    button chrome and keep the existing header layout. */
-.work-group__toggle {
+.collapsible-group__toggle {
   width: 100%;
+  margin-bottom: 0;
   border: none;
   background: none;
   font: inherit;
@@ -1734,43 +1792,39 @@ textarea,
   cursor: pointer;
 }
 
-.work-group__toggle:focus-visible {
+.collapsible-group__toggle:focus-visible {
   outline: none;
   box-shadow: var(--ring-focus);
   border-radius: 8px;
 }
 
-.work-group__chevron {
+.collapsible-group__chevron {
   flex-shrink: 0;
   color: var(--text-muted);
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.work-group__chevron--open {
+.collapsible-group__chevron--open {
   transform: rotate(90deg);
 }
 
-/* Collapse/expand the card grid — the apex-log-viewer accordion pattern: an
-   outer grid animating grid-template-rows 0fr↔1fr, plus an inner layer that
-   fades opacity and grows its padding. The inner clips overflow while growing
-   or shrinking; once fully open (`is-visible`, set after the grid transition
+/* Collapse/expand the body — the apex-log-viewer accordion pattern: an outer
+   grid animating grid-template-rows 0fr↔1fr, plus an inner layer that fades
+   opacity and grows its padding. The inner clips overflow while growing or
+   shrinking; once fully open (`is-visible`, set after the grid transition
    ends) overflow returns to visible so card shadows and hover-lift aren't cut. */
-.work-group__toggle {
-  margin-bottom: 0;
-}
-
-.work-group__expand {
+.collapsible-group__expand {
   display: grid;
   grid-template-rows: 0fr;
   min-width: 0;
   transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.work-group__expand.is-open {
+.collapsible-group__expand.is-open {
   grid-template-rows: 1fr;
 }
 
-.work-group__expand-inner {
+.collapsible-group__expand-inner {
   min-height: 0;
   min-width: 0;
   overflow: hidden;
@@ -1780,19 +1834,19 @@ textarea,
     padding-top 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.work-group__expand.is-open > .work-group__expand-inner {
+.collapsible-group__expand.is-open > .collapsible-group__expand-inner {
   opacity: 1;
   padding-top: var(--sp-4);
 }
 
-.work-group__expand-inner.is-visible {
+.collapsible-group__expand-inner.is-visible {
   overflow: visible;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .work-group__expand,
-  .work-group__expand-inner,
-  .work-group__chevron {
+  .collapsible-group__expand,
+  .collapsible-group__expand-inner,
+  .collapsible-group__chevron {
     transition-duration: 0.01ms;
   }
 }
@@ -1811,7 +1865,7 @@ textarea,
 }
 
 /* Indent the grid so each group's skills sit beneath, and to the right of, its title. */
-.skill-group > .entity-list {
+.skill-group .entity-list {
   padding-left: var(--sp-6);
 }
 
