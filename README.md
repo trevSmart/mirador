@@ -46,6 +46,8 @@ npm run build        # tsc -b && vite build
 npm run preview      # serve the production build on :3000
 npm run lint         # eslint .
 npm run lint:fix     # eslint . --fix
+npm run test         # Vitest unit tests (run once)
+npm run test:watch   # Vitest in watch mode
 npm run knip         # report unused files/exports/deps
 npm run precommit    # lint (run by the Husky pre-commit hook)
 npm run stop         # kill the dev server
@@ -59,8 +61,10 @@ The app is a tree of React context providers (see `src/App.tsx`):
 preferences → auth → API client → data → dockview host → drawers/modals → UI.
 
 - **`src/api/`** — typed REST client (`mirador-client.ts`), domain contracts
-  (`types.ts`), the mock backend (`mock/`), and `MiradorDataProvider` which loads a
-  snapshot, polls in the background, and coalesces/rate-limits refreshes.
+  (`types.ts`), the mock backend (`mock/`), and the **Data Service layer**
+  (`data-service/` + `data-hooks.ts`): a TanStack Query cache that loads a
+  snapshot, polls in the background, dedups requests, and serves the UI through
+  hooks like `useAgents` / `useDataStatus`.
 - **`src/auth/`** — OAuth 2.0 Authorization Code + PKCE against a Salesforce
   External Client App (public SPA flow, no client secret in the browser).
 - **`src/server/`** — Vite dev-server middleware serving `/api/config`,
@@ -99,12 +103,13 @@ sf org open                      # open the org in a browser
 
 ## Tech stack
 
-React 19 (with the React Compiler), Vite 8, TypeScript, `dockview-react`, ESLint 10,
-Prettier, Knip. Backend: Salesforce Apex (API version 66.0).
+React 19 (with the React Compiler), Vite 8, TypeScript, `dockview-react`,
+TanStack Query v5, ESLint 10, Prettier, Knip, Vitest. Backend: Salesforce Apex
+(API version 66.0).
 
 ## Third-party licenses
 
-Salesforce Lightning Design System (SLDS) — v2.30.4.
+Salesforce Lightning Design System (SLDS) — v2.30.7.
 
 - **Source** (CSS, SCSS, design tokens): Copyright (c) 2015, Salesforce.com, Inc.
   Licensed under the [BSD 3-Clause License](https://git.io/sfdc-license).

@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import type { Agent, PresenceStatus } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
+import { capacityColor } from '../utils/agent-stats'
 import { colorFromRecordId, textColorFromRecordId } from '../utils/color-from-string'
 import { agentInitials } from '../utils/format'
 import { useSalesforcePhoto } from '../hooks/useSalesforcePhoto'
+import { CapacityBar } from './ds'
 import { StatusBadge } from './StatusBadge'
 
 const STATUS_COLOR: Record<PresenceStatus, string> = {
@@ -63,6 +65,13 @@ export function AgentCard({ agent }: { agent: Agent }) {
       <div className="agent-card__body">
         <p className="agent-card__name">{agent.name}</p>
         <p className="agent-card__role">{agent.role}</p>
+        <CapacityBar
+          used={agent.used}
+          max={agent.max}
+          color={capacityColor(agent)}
+          showHead={false}
+          style={{ marginTop: 4 }}
+        />
       </div>
 
       <StatusBadge status={agent.status} soft />

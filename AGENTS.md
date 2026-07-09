@@ -24,8 +24,9 @@ The repository is a **dual project**:
 - **`force-app/`** — the Salesforce DX metadata: Apex classes that implement the
   REST API, External Client App (ECA) OAuth definitions, skill types.
 
-> Note: `README.md` is still the stock Salesforce DX template and does **not**
-> describe the SPA. Trust this file and the code, not `README.md`, for the app.
+> `README.md` gives a shorter, human-oriented overview of the same project. This
+> file is the authoritative map for agents; when they disagree, trust this file
+> and the code.
 
 ## Tech stack
 
