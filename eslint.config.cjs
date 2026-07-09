@@ -13,6 +13,9 @@ module.exports = defineConfig([
         'coverage/**',
         'node_modules/**',
         '.sfdx/**',
+        // Salesforce LWC/Apex metadata: own toolchain (@salesforce/eslint-config-lwc),
+        // not part of the Vite/React/TS app this config lints.
+        'force-app/**',
         'public/**',
         'docs/**'
     ]),

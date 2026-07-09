@@ -26,8 +26,11 @@ export function useUpdateAgentSkills() {
     },
     onSuccess: () => {
       // Invalidem totes les scopes del snapshot (match per prefix), ja que
-      // un canvi de skills afecta tant agents com skills.
-      queryClient.invalidateQueries({ queryKey: ['salesforce', 'snapshot'] })
+      // un canvi de skills afecta tant agents com skills. Retornem la promesa
+      // perquè react-query esperi la invalidació abans de resoldre la mutació.
+      return queryClient.invalidateQueries({
+        queryKey: ['salesforce', 'snapshot'],
+      })
     },
   })
 }

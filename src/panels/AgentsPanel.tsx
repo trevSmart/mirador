@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { IDockviewPanelProps } from 'dockview-react'
 import { useAgents, useDataStatus, usePresenceStatuses } from '../api/data-hooks'
 import { AgentCard } from '../components/AgentCard'
@@ -26,12 +26,13 @@ export function AgentsPanel({ params }: IDockviewPanelProps) {
   const [filter, setFilter] = useState<AgentPresenceFilter>(incomingFilter ?? ALL_FILTER)
 
   // Re-clicking the Home link on a different chip calls updateParameters, which
-  // re-renders us with a new params value — adopt it.
-  useEffect(() => {
-    if (incomingFilter) {
-      setFilter(incomingFilter)
-    }
-  }, [incomingFilter])
+  // re-renders us with a new params value — adopt it durant el render (patró
+  // convergent) en comptes d'un efecte, comparant amb el valor anterior.
+  const [prevIncomingFilter, setPrevIncomingFilter] = useState(incomingFilter)
+  if (incomingFilter && incomingFilter !== prevIncomingFilter) {
+    setPrevIncomingFilter(incomingFilter)
+    setFilter(incomingFilter)
+  }
 
   const connectedAgents = useMemo(() => getConnectedAgents(agents), [agents])
   const presenceFilters = useMemo(

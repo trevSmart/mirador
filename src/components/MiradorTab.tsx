@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useSyncExternalStore } from 'react'
 import type { IDockviewDefaultTabProps } from 'dockview-react'
 import { getPanelTypeFromComponent, isPanelClosable } from '../panels/panel-actions'
 import { parseDetailPanelParams, isDetailPanelComponent } from '../detail/detail-panel'
@@ -27,14 +27,20 @@ export function MiradorTab({
   void _tabLocation
   void _params
 
-  const [title, setTitle] = useState(api.title)
-  // Keep the title synced with the panel during render (convergent); the effect
-  // only subscribes to future title changes.
-  const [trackedTitle, setTrackedTitle] = useState(api.title)
-  if (trackedTitle !== api.title) {
-    setTrackedTitle(api.title)
-    setTitle(api.title)
-  }
+  // El títol del panell és un store extern (dockview): la subscripció i
+  // l'snapshot van juntes via useSyncExternalStore, que reconcilia l'snapshot
+  // just després de subscriure's i evita perdre un canvi emès entre el render
+  // i la subscripció.
+  const title = useSyncExternalStore(
+    useCallback(
+      (onStoreChange: () => void) => {
+        const disposable = api.onDidTitleChange(() => onStoreChange())
+        return () => disposable.dispose()
+      },
+      [api],
+    ),
+    () => api.title,
+  )
   const isMiddleMouseButton = useRef(false)
   // Whether this tab's panel was already the active one when the press started.
   // Captured on pointerdown (before dockview processes the activation) so the
@@ -47,19 +53,6 @@ export function MiradorTab({
   const detailParams = isDetailPanelComponent(panel?.view.contentComponent)
     ? parseDetailPanelParams(panel?.params)
     : null
-
-  useEffect(() => {
-    // Resincronitza abans de subscriure: un setTitle emès entre el render i
-    // aquest efecte (p. ex. l'efecte del DetailPanel en muntar) es perdria.
-    setTitle(api.title)
-    const disposable = api.onDidTitleChange((event) => {
-      setTitle(event.title)
-    })
-
-    return () => {
-      disposable.dispose()
-    }
-  }, [api])
 
   const onClose = useCallback(
     (event: React.MouseEvent) => {

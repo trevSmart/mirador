@@ -3,10 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Agent, AgentTimeline as AgentTimelineData } from '../../api/types'
 
 // The Data Service hook is the only external dependency — stub it per-test.
-const useEntityMock = vi.fn()
+const useEntityMock =
+  vi.fn<() => { data: AgentTimelineData | undefined; isLoading: boolean }>()
 vi.mock('../../api/data-service', () => ({
   agentTimelineResource: { source: 'salesforce', entity: 'agentTimeline' },
-  useEntity: (...args: unknown[]) => useEntityMock(...args),
+  useEntity: () => useEntityMock(),
 }))
 
 const openWorkMock = vi.fn()

@@ -1,6 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Agent, Capabilities, Skill } from '../../api/types'
+import type { UpdateAgentSkillsVars } from '../../api/skill-mutations'
+
+type SkillMutateOptions = {
+  onSuccess: () => void
+  onError: (error: Error) => void
+}
 
 const useAgentsMock = vi.fn<() => Agent[]>(() => [])
 const useCapabilitiesMock = vi.fn<() => Capabilities | null>(() => null)
@@ -9,7 +15,8 @@ vi.mock('../../api/data-hooks', () => ({
   useCapabilities: () => useCapabilitiesMock(),
 }))
 
-const mutateMock = vi.fn()
+const mutateMock =
+  vi.fn<(vars: UpdateAgentSkillsVars, opts: SkillMutateOptions) => void>()
 const useUpdateAgentSkillsMock = vi.fn(() => ({ mutate: mutateMock, isPending: false }))
 vi.mock('../../api/skill-mutations', () => ({
   useUpdateAgentSkills: () => useUpdateAgentSkillsMock(),
@@ -38,7 +45,7 @@ import { SkillDetail } from './SkillDetail'
 
 // JSDOM no implementa matchMedia; alguns subcomponents del drawer el consulten.
 if (typeof window.matchMedia !== 'function') {
-  window.matchMedia = ((query: string) => ({
+  window.matchMedia = (query: string) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -47,7 +54,7 @@ if (typeof window.matchMedia !== 'function') {
     addEventListener: () => {},
     removeEventListener: () => {},
     dispatchEvent: () => false,
-  })) as unknown as typeof window.matchMedia
+  })
 }
 
 function makeSkill(overrides: Partial<Skill> = {}): Skill {
@@ -152,10 +159,10 @@ describe('SkillDetail — assignar agents', () => {
     render(<SkillDetail skill={makeSkill()} />)
     fireEvent.click(screen.getByRole('button', { name: /assigna agents/i }))
     fireEvent.click(screen.getByRole('button', { name: /^assigna$/i }))
-    expect(mutateMock).toHaveBeenCalledWith(
-      { agentId: 'a2', changes: [{ skillId: 'sk1' }] },
-      expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) }),
-    )
+    const [vars, opts] = mutateMock.mock.calls[0]
+    expect(vars).toEqual({ agentId: 'a2', changes: [{ skillId: 'sk1' }] })
+    expect(typeof opts.onSuccess).toBe('function')
+    expect(typeof opts.onError).toBe('function')
   })
 
   it('treure la skill d\'un agent qualificat crida mutate amb remove:true', () => {
@@ -170,10 +177,10 @@ describe('SkillDetail — assignar agents', () => {
     render(<SkillDetail skill={makeSkill()} />)
     fireEvent.click(screen.getByRole('button', { name: /assigna agents/i }))
     fireEvent.click(screen.getByRole('button', { name: /^treu$/i }))
-    expect(mutateMock).toHaveBeenCalledWith(
-      { agentId: 'a3', changes: [{ skillId: 'sk1', remove: true }] },
-      expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) }),
-    )
+    const [vars, opts] = mutateMock.mock.calls[0]
+    expect(vars).toEqual({ agentId: 'a3', changes: [{ skillId: 'sk1', remove: true }] })
+    expect(typeof opts.onSuccess).toBe('function')
+    expect(typeof opts.onError).toBe('function')
   })
 
   it('en èxit del canvi es crida toast.success', () => {

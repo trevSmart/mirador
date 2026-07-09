@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
+import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import type { Agent, PresenceStatus } from '../../api/types'
 import { CELL_SIZE, edgeStyle } from '../../space/space-geometry'
 import { GRID_C, GRID_R, cellKey } from '../../space/space-plan-model'
@@ -7,6 +7,7 @@ import type { Cell, Edge, Space, SpaceTool } from '../../space/types'
 import type { SeatRef } from '../../space/useSpacePlan'
 import { colorFromRecordId } from '../../utils/color-from-string'
 import { AgentAvatar } from '../AgentRow'
+import { useAltKey } from './useAltKey'
 
 /** How close (fraction of a cell) to a border counts as an edge hit. The wide
     band applies to the edge tools and while erasing/moving, where hitting a
@@ -80,24 +81,6 @@ function nearestEdge(fx: number, fy: number, margin = EDGE_MARGIN): Edge | null 
 
 /** Track the Alt key globally: held with any tool it turns the gesture into a
     momentary erase, so quick corrections never require switching tools. */
-export function useAltKey(): boolean {
-  const [alt, setAlt] = useState(false)
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => { if (e.key === 'Alt') setAlt(true) }
-    const up = (e: KeyboardEvent) => { if (e.key === 'Alt') setAlt(false) }
-    const blur = () => setAlt(false)
-    window.addEventListener('keydown', down)
-    window.addEventListener('keyup', up)
-    window.addEventListener('blur', blur)
-    return () => {
-      window.removeEventListener('keydown', down)
-      window.removeEventListener('keyup', up)
-      window.removeEventListener('blur', blur)
-    }
-  }, [])
-  return alt
-}
-
 interface SeatMarkerProps {
   agent: Agent | null
   selected: boolean
