@@ -88,7 +88,9 @@ export function mockServiceResourceSkillId(agentSeq: number, assignmentIndex: nu
  * messaging (chat/wa) → 0Mw…; voice has no status-bearing record here → null.
  * Deterministic in `seq` so the same work item always maps to the same record.
  */
-export function mockRecordIdForChannel(channelKey: string, seq: number): string | null {
+import type { ChannelKey } from '../types'
+
+export function mockRecordIdForChannel(channelKey: ChannelKey, seq: number): string | null {
   if (channelKey === 'cas' || channelKey === 'email') return mockSfId('500', seq)
   if (channelKey === 'chat' || channelKey === 'wa') return mockSfId('0Mw', seq)
   return null
