@@ -243,15 +243,22 @@
 }
 
 /* ── Shared status pulses ─────────────────────────────── */
+/* Els polsos van sobre un pseudo-element dedicat i animen només transform i
+   opacity: una animació infinita de box-shadow no es pot compositar, així que
+   invalida el paint del document a cada frame (120 Hz en pantalles ProMotion)
+   i satura la GPU quan s'hi suma el scroll. transform/opacity corren al
+   compositor sense repintar res. */
 @keyframes pa-calm {
 
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(21, 160, 106, .35);
+    transform: scale(1);
+    opacity: .35;
   }
 
   50% {
-    box-shadow: 0 0 0 8px rgba(21, 160, 106, 0);
+    transform: scale(2.15);
+    opacity: 0;
   }
 }
 
@@ -259,11 +266,13 @@
 
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(224, 86, 65, .5);
+    transform: scale(1);
+    opacity: .5;
   }
 
   50% {
-    box-shadow: 0 0 0 9px rgba(224, 86, 65, 0);
+    transform: scale(2.3);
+    opacity: 0;
   }
 }
 
@@ -271,11 +280,13 @@
 
   0%,
   100% {
-    box-shadow: 0 0 0 0 var(--st, var(--mi-alert));
+    transform: scale(.96);
+    opacity: 0;
   }
 
   50% {
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--st, var(--mi-alert)) 22%, transparent);
+    transform: scale(1);
+    opacity: .22;
   }
 }
 
@@ -1408,6 +1419,16 @@ textarea,
   }
 }
 
+/* Mentre Lenis mou el contingut (classe que ell mateix posa i treu), un cursor
+   quiet sobre la graella aniria disparant :hover targeta a targeta a cada
+   frame, i cada transició (transform/box-shadow/border-color) repinta i
+   re-rasteritza tiles a la GPU — prou per perdre frames a 120 Hz. Es
+   desactiven els pointer events del contingut, no del contenidor, que és qui
+   ha de continuar rebent el wheel. */
+.lenis-scrolling > * {
+  pointer-events: none;
+}
+
 .panel-shell__header {
   display: flex;
   align-items: center;
@@ -1983,6 +2004,73 @@ textarea,
   /* color: color-mix(in oklab, var(--text-muted) 88%, var(--text-body)); */
 }
 
+.agent-row__status-hover {
+  display: inline-flex;
+  position: relative;
+}
+
+.agent-row__status-hover[data-tooltip]::before,
+.agent-row__status-hover[data-tooltip]::after {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease),
+    visibility 0s linear var(--dur-fast);
+}
+
+.agent-row__status-hover[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 9px);
+  left: 50%;
+  z-index: 20;
+  transform: translateX(-50%) translateY(4px);
+  white-space: nowrap;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: var(--fw-medium);
+  line-height: 1.4;
+  color: var(--text-strong);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px) saturate(1.15);
+  -webkit-backdrop-filter: blur(12px) saturate(1.15);
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  box-shadow: var(--shadow-tip);
+  border-radius: var(--r-sm);
+  padding: 6px 10px;
+}
+
+.agent-row__status-hover[data-tooltip]::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 5px);
+  left: 50%;
+  z-index: 21;
+  transform: translateX(-50%) translateY(4px) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  border-right: 1px solid rgba(255, 255, 255, 0.78);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.78);
+  border-radius: 0 0 2px;
+}
+
+.agent-row__status-hover[data-tooltip]:hover::before,
+.agent-row__status-hover[data-tooltip]:hover::after,
+.agent-row__status-hover[data-tooltip]:focus-within::before,
+.agent-row__status-hover[data-tooltip]:focus-within::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+  transition: opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease),
+    visibility 0s linear 0s;
+}
+
+.agent-row__status-hover[data-tooltip]:hover::before,
+.agent-row__status-hover[data-tooltip]:focus-within::before {
+  transform: translateX(-50%) translateY(0) rotate(45deg);
+}
+
 .agent-row__metrics,
 .queue-row__metrics,
 .skill-row__metrics {
@@ -2022,6 +2110,21 @@ textarea,
 
 .ring__face {
   border: 1px solid var(--accent-30);
+}
+
+/* Pols "breathe" del Ring: anell fi que respira al voltant de la cara, en un
+   ::after del contenidor (la cara té overflow:hidden i el retallaria) animant
+   només transform/opacity (vegeu les keyframes pa-*). Ocupa la franja entre la
+   cara (inset 6) i l'arc, com feia l'antic box-shadow de 3px. */
+.ring--breathe::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  border: 3px solid var(--st, var(--mi-alert));
+  pointer-events: none;
+  opacity: 0;
+  animation: pa-breathe 3.4s var(--ease) infinite;
 }
 
 /* ── Agent channel strip (SfIcon tiles + mono counts) ── */
@@ -2204,6 +2307,7 @@ textarea,
 }
 
 .insights-banner__dot {
+  position: relative;
   width: 14px;
   height: 14px;
   border-radius: var(--r-full);
@@ -2211,8 +2315,21 @@ textarea,
   flex-shrink: 0;
 }
 
+/* Halo del pols en un ::after propi (vegeu les keyframes pa-*). */
+.insights-banner__dot--ok::after,
+.insights-banner__dot--alert::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+}
+
 .insights-banner__dot--ok {
   background: var(--status-ok);
+}
+
+.insights-banner__dot--ok::after {
   animation: pa-calm 3.2s var(--ease) infinite;
 }
 
@@ -2222,6 +2339,9 @@ textarea,
 
 .insights-banner__dot--alert {
   background: var(--status-alert);
+}
+
+.insights-banner__dot--alert::after {
   animation: pa-throb 1.4s infinite;
 }
 
@@ -4112,8 +4232,12 @@ textarea,
   stroke-linejoin: round;
 }
 
+/* El beacon és un <circle> SVG: cap animació de pols aquí. L'antic pa-throb
+   (box-shadow) no es pinta mai en elements SVG, però igualment invalidava el
+   paint del document a cada frame. Si mai cal un pols visible, ha de ser amb
+   una tècnica compositable, no amb box-shadow. */
 .fv3d-beacon {
-  animation: pa-throb 1.6s infinite;
+  animation: none;
 }
 
 /* ── Header user menu ──────────────────────────────────────────────────── */
@@ -5030,93 +5154,28 @@ textarea,
 
 .agent-card {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: var(--sp-3);
   width: 100%;
-  padding: 12px 14px;
+  padding: var(--sp-4);
   border: 1px solid var(--border-subtle);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   background: var(--surface-card);
   box-shadow: var(--shadow);
   cursor: pointer;
   text-align: left;
-  transition: transform 0.22s var(--ease), box-shadow 0.22s var(--ease), border-color 0.22s var(--ease);
+  transition: box-shadow var(--dur-base) var(--ease), border-color var(--dur-base) var(--ease);
 }
 
 .agent-card:hover {
   border-color: var(--border-strong);
-  box-shadow: var(--shadow-lift);
-  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
 }
 
 .agent-card:focus-visible {
   outline: none;
   box-shadow: var(--ring-focus);
   border-color: var(--accent);
-}
-
-.agent-card__avatar-wrap {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.agent-card__avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--r-full);
-  border: 1px solid var(--accent-30);
-  background: var(--mi-av-bg);
-  color: var(--mi-av-fg);
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
-}
-
-.agent-card__avatar--photo {
-  object-fit: cover;
-}
-
-.agent-card__status-dot {
-  position: absolute;
-  bottom: 1px;
-  right: 1px;
-  width: 10px;
-  height: 10px;
-  border-radius: var(--r-full);
-  border: 2px solid var(--surface-card);
-}
-
-.agent-card__body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.agent-card__name {
-  margin: 0;
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
-  color: var(--text-strong);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
-}
-
-.agent-card__role {
-  margin: 0;
-  font-size: var(--fs-2xs);
-  color: var(--text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
 }
 
 /* ── Settings modal ────────────────────────────────────────────────────── */

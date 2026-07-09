@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from 'react'
 import type { IDockviewPanelProps } from 'dockview-react'
 import { useAgents, useQueues, useSkills, useWork } from '../api/data-hooks'
+import { PanelShell } from '../components/PanelState'
 import { AgentDetail } from '../components/detail/AgentDetail'
 import { QueueDetail } from '../components/detail/QueueDetail'
 import { SkillDetail } from '../components/detail/SkillDetail'
@@ -38,8 +39,8 @@ export function DetailPanel({ api, params }: IDockviewPanelProps<DetailPanelPara
   }
 
   return (
-    <div className="panel-shell panel-shell--detail">
+    <PanelShell hideHeader className="panel-shell--detail">
       <div className="detail-panel__body">{content}</div>
-    </div>
+    </PanelShell>
   )
 }

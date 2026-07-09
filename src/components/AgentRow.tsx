@@ -56,7 +56,7 @@ interface AgentRingProps {
 }
 
 /** Capacity ring with the agent's resolved photo (or initials) inside. */
-function AgentRing({ agent, color }: AgentRingProps) {
+export function AgentRing({ agent, color }: AgentRingProps) {
   const photoSrc = useSalesforcePhoto(agent.photo)
   return (
     <Ring
@@ -100,23 +100,18 @@ export function AgentRow({ agent, showSkills = false }: AgentRowProps) {
         <div className="agent-row__info">
           <div className="agent-row__title">
             <span className="agent-row__name">{agent.name}</span>
-            <StatusBadge
-              status={agent.status}
-              label={agent.presenceStatusLabel}
-              compact
-            />
+            <span
+              className="agent-row__status-hover"
+              data-tooltip={agent.loginMin > 0 ? `${formatMinutes(agent.loginMin)} en estat actual` : undefined}
+            >
+              <StatusBadge
+                status={agent.status}
+                label={agent.presenceStatusLabel}
+                compact
+              />
+            </span>
           </div>
-          <p className="agent-row__meta">
-            {agent.role}
-            {agent.loginMin > 0 ? (
-              <>
-                {' · '}
-                <FadeValue value={formatMinutes(agent.loginMin)} /> en estat actual
-              </>
-            ) : (
-              ''
-            )}
-          </p>
+          <p className="agent-row__meta">{agent.role}</p>
         </div>
       </div>
 

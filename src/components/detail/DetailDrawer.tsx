@@ -1,7 +1,8 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useAgents, useQueues, useSkills, useWork } from '../../api/data-hooks'
 import { useDetailDrawer, type DetailTarget } from '../../detail/detail-drawer-context'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
+import { resetScrollTop, useSmoothScroll } from '../../hooks/useSmoothScroll'
 import { AppIcon } from '../ds'
 import { AgentDetail } from './AgentDetail'
 import { QueueDetail } from './QueueDetail'
@@ -27,12 +28,31 @@ export function DetailDrawer() {
   // it, so the panel never shows an empty gap mid-transition. `leaving` holds
   // the previous target during that overlap; it's cleared when the slide ends.
   const [leaving, setLeaving] = useState<DetailTarget | null>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  // Same Lenis smooth scroll as the panels — without it the drawer is the one
+  // surface in the app with raw native wheel scrolling, which reads as jerky
+  // next to everything else. Merged with scrollRef because both need the node.
+  const attachSmoothScroll = useSmoothScroll<HTMLDivElement>()
+  const setScrollEl = useCallback(
+    (element: HTMLDivElement | null) => {
+      scrollRef.current = element
+      attachSmoothScroll(element)
+    },
+    [attachSmoothScroll],
+  )
   if (detail !== prevDetail) {
     const isNav = detail != null && prevDetail != null && shown != null
     setLeaving(isNav ? shown : null)
     setPrevDetail(detail)
     if (detail) setShown(detail)
   }
+
+  // Reset scroll to the top whenever the drawer opens or navigates to a
+  // different record, so stale scroll position from the previous view never
+  // carries over.
+  useEffect(() => {
+    if (detail) resetScrollTop(scrollRef.current)
+  }, [detail])
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -91,7 +111,7 @@ export function DetailDrawer() {
             <AppIcon name="close" size={16} />
           </button>
         </div>
-        <div className="detail-drawer__scroll">
+        <div className="detail-drawer__scroll" ref={setScrollEl}>
           {leaving && (
             <div key={`${leaving.kind}:${leaving.id}`} className="detail-drawer__content--leaving" aria-hidden="true">
               {renderContent(leaving)}
