@@ -647,17 +647,18 @@ function buildAgent(spec: AgentSpec): Agent {
   const workItems: AgentWorkItem[] = spec.work.map((w, wi) => {
     const seq = agentSeqWorkBase(spec.id) + wi
     return {
-    id: mockWorkItemId(seq),
-    recordId: mockRecordIdForChannel(w.channelKey, seq),
-    label: w.subject,
-    subject: w.subject,
-    channel: null,
-    channelKey: w.channelKey,
-    status: 'assigned',
-    queue: queueNameById.get(MOCK_QUEUE[w.queueId]) ?? null,
-    queueId: MOCK_QUEUE[w.queueId],
-    ageMin: Math.max(1, Math.floor(w.ageSec / 60)),
-  }))
+      id: mockWorkItemId(seq),
+      recordId: mockRecordIdForChannel(w.channelKey, seq),
+      label: w.subject,
+      subject: w.subject,
+      channel: null,
+      channelKey: w.channelKey,
+      status: 'assigned',
+      queue: queueNameById.get(MOCK_QUEUE[w.queueId]) ?? null,
+      queueId: MOCK_QUEUE[w.queueId],
+      ageMin: Math.max(1, Math.floor(w.ageSec / 60)),
+    }
+  })
 
   const presence = MOCK_PRESENCE_BY_CATEGORY[spec.status]
 
