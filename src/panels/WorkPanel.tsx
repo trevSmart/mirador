@@ -78,8 +78,10 @@ function resolveGroupHeader(group: WorkGroup, groupBy: WorkGroupBy, names: NameL
     case 'channel':
       return {
         label: key ? channelLabel(key as ChannelKey) : 'Sense canal',
-        icon: (
+        icon: key ? (
           <SfIcon className="panel-section__icon" channel={key as ChannelKey} sldsSize="x-small" />
+        ) : (
+          <SfIcon className="panel-section__icon" name="work" sldsSize="x-small" />
         ),
       }
     default:
