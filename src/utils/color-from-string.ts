@@ -249,7 +249,7 @@ function foldWithReverse(s: string): string {
 const SF_RECORD_ID = /^[a-zA-Z0-9]{15}([a-zA-Z0-9]{3})?$/
 
 /** Clau de hash per a un ID de registre immutable (Salesforce o mock). */
-export function recordIdColorKey(id: string): string {
+function recordIdColorKey(id: string): string {
   const s = String(id ?? '').trim()
   if (!s) return s
   if (SF_RECORD_ID.test(s)) return foldWithReverse(s)

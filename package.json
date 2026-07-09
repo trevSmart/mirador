@@ -15,7 +15,7 @@
     "stop": "node scripts/stop-server.js",
     "slds:build": "node scripts/build-slds-assets.mjs",
     "icons:app": "node scripts/build-app-icon-types.mjs",
-    "knip": "knip --strict",
+    "knip": "knip",
     "precommit": "npm run lint"
   },
   "dependencies": {

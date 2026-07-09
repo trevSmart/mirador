@@ -181,7 +181,7 @@ export interface RecordDetailsResponse {
 
 /** One time span on the agent timeline. `end === null` means still ongoing
     (the band/bar extends to "now"). Timestamps are ISO 8601, matching Apex. */
-export interface TimelineSegment {
+interface TimelineSegment {
   id: string
   start: string
   end: string | null

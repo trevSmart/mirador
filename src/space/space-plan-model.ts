@@ -36,7 +36,7 @@ function activeFlag(value: unknown): boolean {
 
 let idCounter = 0
 
-export function makeId(prefix: string): string {
+function makeId(prefix: string): string {
   idCounter += 1
   return `${prefix}_${Date.now().toString(36)}_${idCounter.toString(36)}`
 }
@@ -309,7 +309,7 @@ export function eraseEdge(space: Space, c: number, r: number, edge: Edge): Space
 
 /* ── Interaction resolver ─────────────────────────────────────────────── */
 
-export type EditIntent = 'build' | 'replace' | 'select' | 'erase' | 'block' | 'noop'
+type EditIntent = 'build' | 'replace' | 'select' | 'erase' | 'block' | 'noop'
 
 export interface ResolvedEdit {
   intent: EditIntent
@@ -565,7 +565,7 @@ function sanitizeSpace(raw: unknown): Space {
 
 /** Validate and clean a folder subtree from untrusted input. Empty folders are
     kept (intentional organisation); recursion is bounded by MAX_FOLDER_DEPTH. */
-export function sanitizeFolder(raw: unknown, depth: number): Folder | null {
+function sanitizeFolder(raw: unknown, depth: number): Folder | null {
   const src = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
   const spaces = asArray(src.spaces)
     .map((space) => sanitizeSpace(space))

@@ -7,7 +7,7 @@ export interface ServerEnv {
 }
 
 /** OAuth token exchange always uses the global auth host, not My Domain. */
-export function resolveSfTokenUrl(loginUrl: string): string {
+function resolveSfTokenUrl(loginUrl: string): string {
   if (process.env.SF_TOKEN_URL) {
     return process.env.SF_TOKEN_URL.replace(/\/$/, '')
   }
