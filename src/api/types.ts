@@ -167,6 +167,8 @@ export interface RecordDetail {
   lastModifiedDate: string | null
   caseNumber?: string | null
   subject?: string | null
+  recordStatus?: string | null
+  recordClosed?: boolean | null
 }
 
 export interface RecordDetailsRequest {

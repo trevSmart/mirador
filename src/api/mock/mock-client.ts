@@ -51,6 +51,8 @@ function mockRecordDetail(id: string): RecordDetail {
     lastModifiedDate: modified,
     caseNumber: isCase ? `0${id.slice(-7)}` : null,
     subject: isMessaging ? 'Sessió de missatgeria (mock)' : null,
+    recordStatus: isCase ? (id.includes('CLOSE') ? 'Closed' : 'New') : null,
+    recordClosed: isCase ? id.includes('CLOSE') : null,
   }
 }
 
