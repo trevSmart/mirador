@@ -24,9 +24,10 @@ The repository is a **dual project**:
 - **`force-app/`** — the Salesforce DX metadata: Apex classes that implement the
   REST API, External Client App (ECA) OAuth definitions, skill types.
 
-> `README.md` gives a shorter, human-oriented overview of the same project. This
-> file is the authoritative map for agents; when they disagree, trust this file
-> and the code.
+> `README.md` is an **end-user / product-facing** pitch for supervisors — it
+> deliberately carries no architecture, stack, or dev detail. This file (and the
+> code) is the authoritative map for agents; don't look to `README.md` for
+> technical facts, and don't add internal detail to it.
 
 ## Tech stack
 
