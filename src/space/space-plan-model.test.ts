@@ -106,7 +106,7 @@ describe('sanitizeSpacePlan (v4 folder tree)', () => {
   })
 
   it('caps recursion at MAX_FOLDER_DEPTH', () => {
-    let node: any = { id: 'leaf', name: 'x', image: null, active: true, spaces: [space('sx')], folders: [] }
+    let node: Folder = { id: 'leaf', name: 'x', image: null, active: true, spaces: [space('sx')], folders: [] }
     for (let i = 0; i < MAX_FOLDER_DEPTH + 5; i += 1) {
       node = { id: `f${i}`, name: 'x', image: null, active: true, spaces: [], folders: [node] }
     }

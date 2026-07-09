@@ -33,7 +33,7 @@ function makeWork(overrides: Partial<WorkItem> = {}): WorkItem {
     status: 'queued',
     ageSec: 60,
     ...overrides,
-  } as WorkItem
+  }
 }
 
 describe('groupWork', () => {

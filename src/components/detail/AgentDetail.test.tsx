@@ -1,6 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Agent, Capabilities, Skill } from '../../api/types'
+import type { UpdateAgentSkillsVars } from '../../api/skill-mutations'
+
+type SkillMutateOptions = {
+  onSuccess: () => void
+  onError: (error: Error) => void
+}
 
 const useQueuesMock = vi.fn(() => [])
 const useCapabilitiesMock = vi.fn<() => Capabilities | null>(() => null)
@@ -11,7 +17,8 @@ vi.mock('../../api/data-hooks', () => ({
   useSkills: () => useSkillsMock(),
 }))
 
-const mutateMock = vi.fn()
+const mutateMock =
+  vi.fn<(vars: UpdateAgentSkillsVars, opts: SkillMutateOptions) => void>()
 const useUpdateAgentSkillsMock = vi.fn(() => ({ mutate: mutateMock, isPending: false }))
 vi.mock('../../api/skill-mutations', () => ({
   useUpdateAgentSkills: () => useUpdateAgentSkillsMock(),
@@ -44,7 +51,7 @@ import { AgentDetail } from './AgentDetail'
 
 // JSDOM no implementa matchMedia; CapacityBar el consulta per reduced-motion.
 if (typeof window.matchMedia !== 'function') {
-  window.matchMedia = ((query: string) => ({
+  window.matchMedia = (query: string) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -53,7 +60,7 @@ if (typeof window.matchMedia !== 'function') {
     addEventListener: () => {},
     removeEventListener: () => {},
     dispatchEvent: () => false,
-  })) as unknown as typeof window.matchMedia
+  })
 }
 
 function makeAgent(overrides: Partial<Agent> = {}): Agent {
@@ -116,10 +123,10 @@ describe('AgentDetail — secció Skills', () => {
     render(<AgentDetail agent={makeAgent()} />)
     const removeBtn = screen.getByTitle(/treu/i)
     fireEvent.click(removeBtn)
-    expect(mutateMock).toHaveBeenCalledWith(
-      { agentId: 'a1', changes: [{ skillId: 'sk1', remove: true }] },
-      expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) }),
-    )
+    const [vars, opts] = mutateMock.mock.calls[0]
+    expect(vars).toEqual({ agentId: 'a1', changes: [{ skillId: 'sk1', remove: true }] })
+    expect(typeof opts.onSuccess).toBe('function')
+    expect(typeof opts.onError).toBe('function')
   })
 
   it('en èxit del canvi es crida toast.success', () => {
@@ -172,9 +179,9 @@ describe('AgentDetail — secció Skills', () => {
     render(<AgentDetail agent={makeAgent()} />)
     fireEvent.click(screen.getByRole('button', { name: /afegeix skill/i }))
     fireEvent.click(screen.getByText('Suport tècnic'))
-    expect(mutateMock).toHaveBeenCalledWith(
-      { agentId: 'a1', changes: [{ skillId: 'sk2' }] },
-      expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) }),
-    )
+    const [vars, opts] = mutateMock.mock.calls[0]
+    expect(vars).toEqual({ agentId: 'a1', changes: [{ skillId: 'sk2' }] })
+    expect(typeof opts.onSuccess).toBe('function')
+    expect(typeof opts.onError).toBe('function')
   })
 })

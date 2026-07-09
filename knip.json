@@ -8,7 +8,9 @@
   ],
   "ignore": [
     "dist/**",
-    "docs/**"
+    "docs/**",
+    "tmp/**",
+    "force-app/**"
   ],
   "ignoreDependencies": [
     "@fontsource/inter",

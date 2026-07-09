@@ -639,12 +639,14 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
   // only re-synced to `bounds` when NOT dragging: during a drag it stays frozen
   // (the SVG viewBox still rotates inside the fixed-size box), and it snaps to
   // the final shape once the drag settles.
-  const [outerAspectN, setOuterAspectN] = useState(() => bounds.width / bounds.height)
-  useEffect(() => {
-    if (dragging) return
-    const next = bounds.width / bounds.height
-    setOuterAspectN((prev) => (prev === next ? prev : next))
-  }, [dragging, bounds.width, bounds.height])
+  const liveAspectN = bounds.width / bounds.height
+  const [outerAspectN, setOuterAspectN] = useState(liveAspectN)
+  // Resincronitza durant el render (convergent) només quan NO s'arrossega: així
+  // no cal un efecte amb setState. Durant un drag es manté congelat i s'ajusta
+  // al render següent, quan `dragging` torna a false.
+  if (!dragging && outerAspectN !== liveAspectN) {
+    setOuterAspectN(liveAspectN)
+  }
 
   const brVis = useMemo(() => backRightTrue(has, plan.cells, 0, GRID_MAX, GRID_MAX), [has, plan])
   const blVis = useMemo(() => backLeftTrue(has, plan.cells, 0, GRID_MAX, GRID_MAX), [has, plan])
