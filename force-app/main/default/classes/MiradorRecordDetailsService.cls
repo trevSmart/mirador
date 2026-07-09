@@ -3,7 +3,7 @@
  * ids (e.g. the workItemId behind a work item), returns the common audit fields
  * (CreatedDate, LastModifiedDate) for every record, plus a few type-specific
  * fields when the record's type supports them:
- *   - Case            → CaseNumber, Subject
+ *   - Case            → CaseNumber, Subject, Status, IsClosed
  *   - MessagingSession → Subject
  *
  * The lookup is generic: ids are grouped by SObjectType and queried one SOQL per
@@ -22,6 +22,8 @@ public with sharing class MiradorRecordDetailsService {
         public Datetime lastModifiedDate;
         public String caseNumber; // només Case
         public String subject; // Case / MessagingSession
+        public String recordStatus; // Case.Status (i altres tipus amb Status, futur)
+        public Boolean recordClosed; // Case.IsClosed
     }
 
     public class RecordDetailsResponse {
@@ -80,6 +82,8 @@ public with sharing class MiradorRecordDetailsService {
         Map<String, Schema.SObjectField> fields = describe.fields.getMap();
         Boolean hasCaseNumber = fields.containsKey('casenumber');
         Boolean hasSubject = fields.containsKey('subject');
+        Boolean hasStatus = fields.containsKey('status');
+        Boolean hasIsClosed = fields.containsKey('isclosed');
 
         List<String> selectFields = new List<String>{ 'Id', 'CreatedDate', 'LastModifiedDate' };
         if (hasCaseNumber) {
@@ -87,6 +91,12 @@ public with sharing class MiradorRecordDetailsService {
         }
         if (hasSubject) {
             selectFields.add('Subject');
+        }
+        if (hasStatus) {
+            selectFields.add('Status');
+        }
+        if (hasIsClosed) {
+            selectFields.add('IsClosed');
         }
 
         String soql =
@@ -107,6 +117,12 @@ public with sharing class MiradorRecordDetailsService {
             }
             if (hasSubject) {
                 dto.subject = (String) record.get('Subject');
+            }
+            if (hasStatus) {
+                dto.recordStatus = (String) record.get('Status');
+            }
+            if (hasIsClosed) {
+                dto.recordClosed = (Boolean) record.get('IsClosed');
             }
             result.add(dto);
         }
