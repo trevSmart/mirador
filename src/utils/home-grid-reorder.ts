@@ -94,7 +94,9 @@ let ghostLayer: HTMLDivElement | null = null
 function getGhostLayer(): HTMLDivElement {
   if (!ghostLayer || !ghostLayer.isConnected) {
     ghostLayer = document.createElement('div')
-    ghostLayer.setAttribute('aria-hidden', 'true')
+    // inert (i no només aria-hidden): els ghosts són nodes reals amb
+    // tabIndex, i cal treure'ls també del tab order mentre s'esvaeixen.
+    ghostLayer.inert = true
     ghostLayer.style.cssText = 'position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:100;'
     document.body.appendChild(ghostLayer)
   }

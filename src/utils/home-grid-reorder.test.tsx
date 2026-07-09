@@ -111,7 +111,7 @@ describe('useGridFlipReorder', () => {
     // fixed ghost layer under <body>, which React never manages.
     expect(childTexts(container)).toEqual(['A'])
     expect(cardB.parentElement).not.toBeNull()
-    expect(cardB.parentElement!.getAttribute('aria-hidden')).toBe('true')
+    expect((cardB.parentElement as HTMLElement).inert).toBe(true)
     expect(cardB.parentElement!.parentElement).toBe(document.body)
 
     const exit = animations.find((a) => a.el === cardB)!
