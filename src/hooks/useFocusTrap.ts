@@ -45,6 +45,7 @@ export function useFocusTrap<T extends HTMLElement>(active: boolean) {
     if (focusables.length === 0) {
       // Sense res on anar, mantenim el focus al contenidor.
       event.preventDefault()
+      if (!container.hasAttribute('tabindex')) container.tabIndex = -1
       container.focus()
       return
     }
