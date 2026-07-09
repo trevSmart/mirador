@@ -15,6 +15,7 @@ export type PanelType =
   | 'work'
   | 'space'
   | 'spaceEditor'
+  | 'devLab'
   | 'colorPlayground'
 
 type PanelIcon =
@@ -39,6 +40,7 @@ export const PANEL_DEFINITIONS: PanelDefinition[] = [
   { type: 'work',       title: 'Work',         description: 'Work items en curs',                icon: { name: 'work' },                                    component: lazy(() => import('./WorkPanel').then(m => ({ default: m.WorkPanel }))) },
   { type: 'space',      title: 'Space',        description: 'El teu espai de treball',           icon: { sprite: 'standard', symbol: 'business_unit' },      component: lazy(() => import('./SpacePanel').then(m => ({ default: m.SpacePanel }))) },
   { type: 'spaceEditor', title: 'Space editor', description: 'Dissenya i organitza l’espai', icon: { sprite: 'custom', symbol: 'custom83' },              component: lazy(() => import('./SpaceEditorPanel').then(m => ({ default: m.SpaceEditorPanel }))) },
+  { type: 'devLab',     title: 'Dev Lab',      description: 'Experiments de desenvolupament',    icon: { sprite: 'standard', symbol: 'code_playground' },    component: lazy(() => import('./DevLabPanel').then(m => ({ default: m.DevLabPanel }))) },
   { type: 'colorPlayground', title: 'Color playground', description: 'Prova temes i colors', icon: { app: 'color_swatch' }, component: lazy(() => import('./ColorPlaygroundPanel').then(m => ({ default: m.ColorPlaygroundPanel }))) },
 ]
 
@@ -50,7 +52,7 @@ export interface PanelMenuGroup {
 export const PANEL_MENU_GROUPS: PanelMenuGroup[] = [
   { label: 'Supervise', types: ['home', 'wallboard', 'space'] },
   { label: 'Track',     types: ['agents', 'queues', 'skills', 'work'] },
-  { label: 'Customize', types: ['spaceEditor', 'colorPlayground'] },
+  { label: 'Customize', types: ['spaceEditor', 'devLab', 'colorPlayground'] },
 ]
 
 function withPanelErrorBoundary(

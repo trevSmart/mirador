@@ -12,7 +12,7 @@ import {
   removePanelFromTabGroup,
 } from './tab-groups'
 import { getPanelTypeFromComponent, isPanelClosable } from '../panels/panel-actions'
-import type { IDockviewPanel } from 'dockview-react'
+import type { DockviewGroupPanel, IDockviewPanel } from 'dockview-react'
 
 function isClosablePanel(panel: IDockviewPanel): boolean {
   const type = getPanelTypeFromComponent(panel.view.contentComponent)
@@ -21,6 +21,19 @@ function isClosablePanel(panel: IDockviewPanel): boolean {
 
 function closeClosablePanels(panels: readonly IDockviewPanel[]): void {
   panels.filter(isClosablePanel).forEach((entry) => entry.api.close())
+}
+
+function mergeAllPanelsIntoGroup(
+  groups: readonly DockviewGroupPanel[],
+  target: DockviewGroupPanel,
+  activePanel: IDockviewPanel,
+): void {
+  for (const other of groups.filter((entry) => entry !== target)) {
+    for (const entry of [...other.panels]) {
+      entry.api.moveTo({ group: target })
+    }
+  }
+  activePanel.api.setActive()
 }
 
 type MiradorTabContextMenuItem = BuiltInContextMenuItem | ReactContextMenuItemConfig
@@ -66,6 +79,18 @@ export function getMiradorTabContextMenuItems(
       label: 'Tancar totes',
       action: () => {
         closeClosablePanels(group.panels)
+      },
+    })
+  }
+
+  if (api.groups.length > 1) {
+    if (items.length > 0) {
+      items.push('separator')
+    }
+    items.push({
+      label: 'Unir tots els panells',
+      action: () => {
+        mergeAllPanelsIntoGroup(api.groups, group, panel)
       },
     })
   }
