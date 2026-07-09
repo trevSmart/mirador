@@ -49,6 +49,9 @@ export function MiradorTab({
     : null
 
   useEffect(() => {
+    // Resincronitza abans de subscriure: un setTitle emès entre el render i
+    // aquest efecte (p. ex. l'efecte del DetailPanel en muntar) es perdria.
+    setTitle(api.title)
     const disposable = api.onDidTitleChange((event) => {
       setTitle(event.title)
     })

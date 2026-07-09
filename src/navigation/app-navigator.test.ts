@@ -261,6 +261,32 @@ describe('createAppNavigator', () => {
     expect(active?.title).toBe('Alice')
   })
 
+  it('deep link on attach keeps the restored title of an existing detail tab', () => {
+    /* En recarregar, el layout restaurat ja porta el títol real del registre;
+       el deep-link no ha de degradar-lo al fallback genèric del tipus. */
+    const dock = createFakeDockviewApi()
+    dock.api.addPanel({
+      id: 'detail-work-w1',
+      component: 'detail',
+      title: 'Email incidència crítica',
+      params: { kind: 'work', id: 'w1' },
+    })
+    const navigator = createNavigator({ hash: '#detail/work/w1' })
+    navigator.attach(dock.api)
+
+    expect(dock.getActivePanel()?.title).toBe('Email incidència crítica')
+  })
+
+  it('uses the fallback title when a deep link creates a detail tab from scratch', () => {
+    const dock = createFakeDockviewApi()
+    const navigator = createNavigator({ hash: '#detail/work/w1' })
+    navigator.attach(dock.api)
+
+    const active = dock.getActivePanel()
+    expect(active?.view.contentComponent).toBe('detail')
+    expect(active?.title).toBe('Treball')
+  })
+
   it('ignores foreign hashes it cannot parse', () => {
     const fakeNav = createFakeNavigation()
     const dock = createFakeDockviewApi()

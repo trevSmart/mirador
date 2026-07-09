@@ -9,10 +9,9 @@ import { FadeValue, SfIcon } from './ds'
 interface WorkRowProps {
   item: WorkItem
   agentName?: string | null
-  queueName?: string | null
 }
 
-export function WorkRow({ item, agentName, queueName }: WorkRowProps) {
+export function WorkRow({ item, agentName }: WorkRowProps) {
   const icon = resolveWorkItemIcon(item)
   const tint = colorFromRecordId(item.id)
   const { openWork } = useDetailDrawer()
@@ -32,19 +31,20 @@ export function WorkRow({ item, agentName, queueName }: WorkRowProps) {
       }}
     >
       <div className="work-row__main">
-        <SfIcon sprite={icon.sprite} symbol={icon.symbol} size={32} bg={tint} />
+        <SfIcon sprite={icon.sprite} symbol={icon.symbol} size={28} bg={tint} />
         <div className="work-row__body">
           <h3 className="work-row__subject" title={item.subject ?? undefined} style={{ color: tint }}>
             {item.subject}
           </h3>
           <p className="work-row__meta">
-            {channelLabel(item.channelKey)} · {workStatusLabel(item.status)} ·{' '}
-            <FadeValue value={formatSeconds(item.ageSec)} />
+            {channelLabel(item.channelKey)} · <FadeValue value={formatSeconds(item.ageSec)} />
             {item.status === 'assigned' && agentName ? ` · ${agentName}` : ''}
-            {queueName ? ` · ${queueName}` : ''}
           </p>
         </div>
-        <span className={`work-row__status work-row__status--${item.status}`}>
+        <span
+          className={`work-row__status work-row__status--${item.status}`}
+          title={workStatusLabel(item.status)}
+        >
           {workStatusLabel(item.status)}
         </span>
       </div>

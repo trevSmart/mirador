@@ -10,7 +10,6 @@
 
 import type { DockviewApi, IDockviewPanel } from 'dockview-react'
 import type { DetailTarget } from '../detail/detail-drawer-context'
-import { FALLBACK_TITLE } from '../detail/resolve-detail-meta'
 import { devLog } from '../dev/dev-log'
 import { openDetailTab } from '../panels/detail-tab-actions'
 import { addPanelByType } from '../panels/panel-actions'
@@ -56,7 +55,7 @@ export function createAppNavigator(deps: AppNavigatorDeps): AppNavigator {
     if (dest.kind === 'panel') {
       addPanelByType(api, dest.panel, options?.params)
     } else {
-      openDetailTab(api, dest.target, options?.titleHint ?? FALLBACK_TITLE[dest.target.kind])
+      openDetailTab(api, dest.target, options?.titleHint)
     }
     return true
   }
