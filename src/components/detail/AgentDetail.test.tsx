@@ -162,7 +162,7 @@ describe('AgentDetail — secció Skills', () => {
     expect(screen.getByText('Canals')).toBeInTheDocument()
     expect(screen.queryByTestId('agent-timeline-stub')).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('tab', { name: /cronologia/i }))
+    fireEvent.click(screen.getByRole('button', { name: /cronologia/i }))
     expect(screen.getByTestId('agent-timeline-stub')).toBeInTheDocument()
     expect(screen.queryByText('Canals')).not.toBeInTheDocument()
   })

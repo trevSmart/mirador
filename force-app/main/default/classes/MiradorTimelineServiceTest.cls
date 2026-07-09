@@ -14,29 +14,54 @@ private class MiradorTimelineServiceTest {
         Map<String, Object> timeline = (Map<String, Object>) res.get('timeline');
         System.assertNotEquals(null, timeline, 'timeline present');
         System.assertEquals(String.valueOf(userId), timeline.get('agentId'), 'agentId echoed');
-        System.assertEquals('2026-07-09', timeline.get('day'), 'day echoed');
+        System.assertEquals('2026-07-09', timeline.get('day'), 'valid day round-trips');
         System.assert(timeline.get('presence') instanceof List<Object>, 'presence is a list');
         System.assert(timeline.get('work') instanceof List<Object>, 'work is a list');
     }
 
     @IsTest
-    static void getTimelineBlankDayFallsBackToToday() {
+    static void getTimelineBlankDayReportsResolvedToday() {
         Id userId = UserInfo.getUserId();
+        String todayIso = Datetime.newInstanceGmt(
+            System.today().year(), System.today().month(), System.today().day(), 0, 0, 0
+        ).formatGmt('yyyy-MM-dd');
+
         Test.startTest();
         Map<String, Object> res = MiradorTimelineService.getTimeline(userId, null);
         Test.stopTest();
 
         Map<String, Object> timeline = (Map<String, Object>) res.get('timeline');
-        System.assertEquals(null, timeline.get('day'), 'blank day echoed as-is');
+        System.assertEquals(todayIso, timeline.get('day'), 'blank day reported as resolved today');
         System.assert(timeline.containsKey('presence'), 'presence key present');
     }
 
     @IsTest
-    static void getTimelineInvalidDayDoesNotThrow() {
+    static void getTimelineInvalidDayReportsResolvedToday() {
+        String todayIso = Datetime.newInstanceGmt(
+            System.today().year(), System.today().month(), System.today().day(), 0, 0, 0
+        ).formatGmt('yyyy-MM-dd');
+
         Test.startTest();
         Map<String, Object> res = MiradorTimelineService.getTimeline(UserInfo.getUserId(), 'not-a-date');
         Test.stopTest();
-        System.assertNotEquals(null, res.get('timeline'), 'invalid day handled gracefully');
+
+        Map<String, Object> timeline = (Map<String, Object>) res.get('timeline');
+        System.assertEquals(todayIso, timeline.get('day'), 'invalid day resolves to today');
+    }
+
+    @IsTest
+    static void invalidAgentIdReturns400() {
+        RestRequest req = new RestRequest();
+        req.requestURI = '/services/apexrest/mirador/v1/agents/not-an-id/timeline';
+        req.httpMethod = 'GET';
+        RestContext.request = req;
+        RestContext.response = new RestResponse();
+
+        Test.startTest();
+        MiradorApi.handleGet();
+        Test.stopTest();
+
+        System.assertEquals(400, RestContext.response.statusCode, 'malformed id rejected');
     }
 
     @IsTest
