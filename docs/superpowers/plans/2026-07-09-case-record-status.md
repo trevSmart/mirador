@@ -12,7 +12,7 @@
 
 - Typecheck: `npx tsc -b` (mai `tsc --noEmit` — no comprova res en aquest repo).
 - Tests TS: `npm run test` (vitest).
-- Abast d'aquesta feina: només `Case` per als camps d'estat. Altres objectes retornen `recordStatus = null` i el drawer no mostra el badge d'estat del registre per a ells.
+- Abast d'aquesta feina: el drawer mostra l'estat del registre quan el backend retorna `recordStatus`/`recordClosed` (p.ex. `Case.Status`/`Case.IsClosed`). Si un tipus no exposa aquests camps, el drawer no mostra el badge d'estat del registre.
 - Icones i colors: no s'afegeix cap color hardcodejat; el badge fa servir els tons existents de `Badge` (`neutral`|`accent`|`ok`|`watch`|`alert`).
 - Català amb ortografia correcta a tot el text d'UI.
 
