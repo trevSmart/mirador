@@ -109,6 +109,9 @@ export function AgentRow({ agent, showSkills = false }: AgentRowProps) {
                 label={agent.presenceStatusLabel}
                 compact
               />
+              {agent.loginMin > 0 && (
+                <span className="visually-hidden">{`${formatMinutes(agent.loginMin)} en estat actual`}</span>
+              )}
             </span>
           </div>
           <p className="agent-row__meta">{agent.role}</p>

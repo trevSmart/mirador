@@ -40,6 +40,9 @@ export function AgentCard({ agent }: { agent: Agent }) {
               data-tooltip={agent.loginMin > 0 ? `${formatMinutes(agent.loginMin)} en estat actual` : undefined}
             >
               <StatusBadge status={agent.status} label={agent.presenceStatusLabel} compact />
+              {agent.loginMin > 0 && (
+                <span className="visually-hidden">{`${formatMinutes(agent.loginMin)} en estat actual`}</span>
+              )}
             </span>
           </div>
           <p className="agent-row__meta">{agent.role}</p>
