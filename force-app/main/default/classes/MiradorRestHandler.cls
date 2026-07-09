@@ -11,6 +11,10 @@ public with sharing class MiradorRestHandler {
             } else if (path.startsWith('/agents/') && path.endsWith('/skills')) {
                 String userId = path.substring('/agents/'.length(), path.length() - '/skills'.length());
                 writeJson(res, 200, MiradorAgentService.getSkillsByAgent(userId));
+            } else if (path.startsWith('/agents/') && path.endsWith('/timeline')) {
+                String userId = path.substring('/agents/'.length(), path.length() - '/timeline'.length());
+                String day = req.params.get('day');
+                writeJson(res, 200, MiradorTimelineService.getTimeline(userId, day));
             } else if (path == '/queues') {
                 writeJson(res, 200, MiradorQueueService.getQueues());
             } else if (path == '/skills') {
