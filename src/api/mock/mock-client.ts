@@ -53,15 +53,25 @@ function mockRecordDetail(id: string): RecordDetail {
     caseNumber: isCase ? `0${id.slice(-7)}` : null,
     subject: isMessaging ? 'Sessió de missatgeria (mock)' : null,
     recordStatus: mockRecordStatus(id, isCase, isMessaging),
-    recordClosed: isCase || isMessaging ? id.includes('CLOSE') : null,
+    recordClosed: isCase || isMessaging ? isMockRecordClosed(id) : null,
   }
 }
 
+/* Whether a mock record reads as closed. Tests pin the state with a "CLOSE" /
+   "OPEN" marker in the id; seed-generated ids (all digits) instead alternate by
+   the parity of their numeric block, so a demo shows both open and closed. */
+function isMockRecordClosed(id: string): boolean {
+  if (id.includes('CLOSE')) return true
+  if (id.includes('OPEN')) return false
+  const digits = id.replace(/\D/g, '')
+  return digits.length > 0 && Number(digits[digits.length - 1]) % 2 === 0
+}
+
 /* Both Case and MessagingSession carry a real record status in the org, so the
-   mock mirrors that: the "CLOSE" marker in an id yields the type's terminal
-   state, otherwise its live state. Types without a Status field stay null. */
+   mock mirrors that: a closed record yields the type's terminal state, an open
+   one its live state. Types without a Status field stay null. */
 function mockRecordStatus(id: string, isCase: boolean, isMessaging: boolean): string | null {
-  const closed = id.includes('CLOSE')
+  const closed = isMockRecordClosed(id)
   if (isCase) return closed ? 'Closed' : 'New'
   if (isMessaging) return closed ? 'Ended' : 'Active'
   return null
