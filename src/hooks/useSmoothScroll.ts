@@ -114,7 +114,7 @@ export function useSmoothScroll<T extends HTMLElement>() {
     // When pointed at a custom wrapper/content (as here), Lenis does NOT watch
     // the content for size changes — it caches the scroll limit at attach time.
     // Home's columns grow/shrink after mount as queues stream in, filters toggle
-    // and the auto-animated grids reflow, so without this the scroll limit stays
+    // and the FLIP-animated grids reflow, so without this the scroll limit stays
     // frozen and the list stops scrolling partway. Observing only `element`
     // misses this: with overflow scroll its own box stays fixed while the inner
     // `scrollHeight` changes, so we watch each child's content box instead and

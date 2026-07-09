@@ -17,7 +17,7 @@ import {
   filterConnected,
   getConnectedAgents,
 } from '../utils/agent-presence-filter'
-import { useGridAutoAnimate } from '../utils/home-grid-reorder'
+import { useGridFlipReorder } from '../utils/home-grid-reorder'
 import { useSmoothScroll } from '../hooks/useSmoothScroll'
 
 const SPLIT_KEY = 'mirador.home.split'
@@ -149,8 +149,8 @@ export function HomePanel() {
 
   const layoutRef = useRef<HTMLDivElement>(null)
   const [split, setSplit] = useState<number>(loadSplit)
-  const attachQueueGrid = useGridAutoAnimate<HTMLDivElement>()
-  const attachAgentGrid = useGridAutoAnimate<HTMLDivElement>()
+  const attachQueueGrid = useGridFlipReorder<HTMLDivElement>()
+  const attachAgentGrid = useGridFlipReorder<HTMLDivElement>()
   // The right column is the only scroll container on Home (the shell is
   // overflow:hidden), so it needs Lenis to match the smooth scroll the rest of
   // the app gets via PanelShell.
