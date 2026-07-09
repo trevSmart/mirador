@@ -83,7 +83,7 @@ describe('defaultSpacePlan (v4 folders)', () => {
 })
 
 describe('sanitizeSpacePlan (v4 folder tree)', () => {
-  const space = (id: string) => ({ id, name: 'P', cells: [[0, 0]], seats: [], openings: [], dividers: [], dir: 0, active: true })
+  const space = (id: string) => ({ id, name: 'P', cells: [[0, 0]] as [number, number][], seats: [], openings: [], dividers: [], dir: 0 as const, active: true })
 
   it('keeps nested folders, images and empty folders', () => {
     const raw = {
