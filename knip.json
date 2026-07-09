@@ -3,9 +3,6 @@
   "tags": [
     "-lintignore"
   ],
-  "entry": [
-    "src/api/data-service/index.ts"
-  ],
   "ignore": [
     "dist/**",
     "docs/**",
