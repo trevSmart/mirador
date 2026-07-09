@@ -25,11 +25,21 @@ public with sharing class MiradorTimelineService {
 
         Map<String, Object> timeline = new Map<String, Object>{
             'agentId' => String.valueOf(userId),
-            'day' => dayISO,
+            // Report the day actually queried (parseDay may resolve blank/invalid
+            // input to today), so the payload is self-consistent and honours the
+            // frontend's non-null AgentTimeline.day contract.
+            'day' => formatDay(day),
             'presence' => presence,
             'work' => work
         };
         return new Map<String, Object>{ 'timeline' => timeline };
+    }
+
+    /** Date → 'YYYY-MM-DD' (zero-padded), independent of locale. */
+    @TestVisible
+    private static String formatDay(Date d) {
+        return Datetime.newInstanceGmt(d.year(), d.month(), d.day(), 0, 0, 0)
+            .formatGmt('yyyy-MM-dd');
     }
 
     private static Date parseDay(String dayISO) {

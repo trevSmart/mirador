@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { agentTimelineResource, useEntity } from '../../api/data-service'
 import type { Agent, PresenceSegment, PresenceStatus, WorkSegment } from '../../api/types'
 import { colorFromRecordId, textColorFromRecordId } from '../../utils/color-from-string'
@@ -118,7 +118,13 @@ function TrackGrid({
 }
 
 export function AgentTimeline({ agent }: { agent: Agent }) {
-  const nowMs = useMemo(() => Date.now(), [])
+  // A ticking clock so the "now" marker and open-ended segments advance while
+  // the timeline stays open, instead of freezing at mount time.
+  const [nowMs, setNowMs] = useState(() => Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setNowMs(Date.now()), 60_000)
+    return () => clearInterval(id)
+  }, [])
   const day = todayISO(nowMs)
   const query = useEntity(agentTimelineResource, { agentId: agent.id, day })
   const timeline = query.data

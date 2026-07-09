@@ -10,7 +10,9 @@ export interface AgentTimelineParams {
 /**
  * Reference resource: one agent's activity for a given day (presence bands +
  * work bars). Cached per (agentId, day) so reopening the same day is instant.
- * Short freshness so the ongoing band/active work stay live under polling.
+ * Short freshness (15s) so a remount or manual refresh re-fetches recent
+ * changes; the "now" marker advances via a local clock in the component, not a
+ * refetch interval here.
  */
 export const agentTimelineResource = defineResource<
   'salesforce',

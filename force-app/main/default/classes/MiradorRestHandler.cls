@@ -12,7 +12,14 @@ public with sharing class MiradorRestHandler {
                 String userId = path.substring('/agents/'.length(), path.length() - '/skills'.length());
                 writeJson(res, 200, MiradorAgentService.getSkillsByAgent(userId));
             } else if (path.startsWith('/agents/') && path.endsWith('/timeline')) {
-                String userId = path.substring('/agents/'.length(), path.length() - '/timeline'.length());
+                String userIdRaw = path.substring('/agents/'.length(), path.length() - '/timeline'.length());
+                Id userId;
+                try {
+                    userId = (Id) userIdRaw;
+                } catch (System.StringException ex) {
+                    writeJson(res, 400, new Map<String, Object>{ 'error' => 'Invalid agent id' });
+                    return;
+                }
                 String day = req.params.get('day');
                 writeJson(res, 200, MiradorTimelineService.getTimeline(userId, day));
             } else if (path == '/queues') {

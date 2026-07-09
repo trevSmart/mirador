@@ -4405,7 +4405,7 @@ textarea,
   color: var(--text-strong);
 }
 
-.dd-tab[aria-selected='true'] {
+.dd-tab[aria-pressed='true'] {
   background: var(--surface-card);
   color: var(--text-strong);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);

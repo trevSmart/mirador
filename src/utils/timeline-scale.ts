@@ -10,10 +10,14 @@ export interface HourTick {
   label: string
 }
 
-/** Position of `ms` within [startMs, endMs] as a 0–100 percentage, clamped. */
+/** Position of `ms` within [startMs, endMs] as a 0–100 percentage, clamped.
+    Any NaN input (e.g. a malformed timestamp through Date.parse) yields 0 so we
+    never emit `left: 'NaN%'` into inline styles. */
 export function msToPercent(ms: number, startMs: number, endMs: number): number {
   const span = endMs - startMs
-  if (span <= 0) return 0
+  if (span <= 0 || Number.isNaN(ms) || Number.isNaN(startMs) || Number.isNaN(endMs)) {
+    return 0
+  }
   const pct = ((ms - startMs) / span) * 100
   return Math.max(0, Math.min(100, pct))
 }
