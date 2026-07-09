@@ -17,14 +17,17 @@
  *     encara que sigui l'últim caràcter — es propaga a tot el hash i separa els
  *     colors. Clau quan els noms són paraules de diccionari amb arrels repetides.
  *
- *  2. El color es genera en OKLCH, no en HSL. HSL no és perceptualment uniforme:
- *     un repartiment uniforme del hue en graus fa que verds i vermells/liles
- *     ocupin franges perceptives enormes (s'hi acumulen molts noms) mentre que
- *     taronja, groc, cian i blau viuen en franges estretes. OKLCH SÍ és
- *     perceptualment uniforme, així que un hue uniforme 0–360° es percep
- *     uniforme — sense necessitat de corregir res manualment. A més manté la
- *     lluminositat constant de debò, així tots els colors tenen el mateix pes
- *     visual i el mateix contrast amb el blanc.
+ *  2. El color es genera en OKLCH, no en HSL. HSL no és perceptualment uniforme
+ *     en DISTÀNCIA (un pas de hue no equival al mateix salt visual pertot); OKLCH
+ *     sí. Però ni tan sols en OKLCH els NOMS de color reparteixen l'espai per
+ *     igual: a la nostra L (~0.72) la franja que l'ull anomena "verd" (llima→
+ *     verd→cian) cobreix ~95° mentre que "groc" o "vermell" en cobreixen ~30°.
+ *     Un hue uniforme EN GRAUS fa, doncs, que ~1 de cada 4 registres surti verdós
+ *     i pocs taronges/rosats (molt visible en llistes curtes). Per això afegim un
+ *     REMAP PERCEPTUAL (perceptualRemap) que reponderà la fracció perquè cada
+ *     FAMÍLIA de color sigui equiprobable, no cada grau. OKLCH manté a més la
+ *     lluminositat constant de debò, així tots els colors tenen pes visual i
+ *     contrast amb el blanc coherents.
  *
  *  Lluminositat variable per hue. La L base és 0.72 (pes visual i contrast amb
  *  el blanc uniformes), però el GROC és intrínsecament un color clar: a L=0.72 el
@@ -67,10 +70,85 @@ export const EXCLUDED_HUE_RANGE: readonly [number, number] = [HUE_GAP_START, HUE
 
 /** Mapeja una fracció uniforme [0,1) a un hue sobre el cercle MENYS la franja
     exclosa: rang efectiu 360 − HUE_GAP_SIZE graus; els hues a partir de
-    HUE_GAP_START es desplacen per saltar el forat. Repartiment uniforme. */
+    HUE_GAP_START es desplacen per saltar el forat. Repartiment uniforme EN GRAUS
+    (no per família de color: per això hi ha perceptualRemap abans). */
 function fractionToHue(frac: number): number {
   const hue = frac * (360 - HUE_GAP_SIZE)
   return hue < HUE_GAP_START ? hue : hue + HUE_GAP_SIZE
+}
+
+/* ── Remap perceptual per FAMÍLIA de color ───────────────────────────────────
+   OKLCH és uniforme en DISTÀNCIA perceptual, però els NOMS de color no reparteixen
+   l'espai per igual: a L≈0.72 la franja que l'ull llegeix com "verd" (llima→verd→
+   cian, ~115–210°) cobreix ~95°, mentre que "groc" o "vermell" en cobreixen ~30°.
+   Un hue uniforme en graus fa, doncs, que ~1 de cada 4 registres surti verdós i
+   pocs surtin taronges/rosats — visible sobretot en llistes curtes (4 cues → 3
+   verds). fractionToHue reparteix uniforme en graus; aquí redistribuïm la fracció
+   ABANS perquè cada BLOC PERCEBUT sigui equiprobable, no cada grau.
+
+   Mecanisme: CDF inversa lineal-per-trams. Cada bloc ocupa en l'espai d'entrada
+   [0,1) un tram proporcional al seu WEIGHT (quota de probabilitat desitjada) i,
+   dins el bloc, es mapeja linealment al seu rang de graus real. Monòton i continu
+   → colors estables, ordre de hue preservat, cap col·lapse. La franja exclosa
+   queda coberta per fractionToHue després, intacta. */
+
+/** Blocs de hue percebuts: [hueStart°, hueEnd°, weight]. El pes és la quota de
+    probabilitat relativa; el bloc "verds" ajunta llima+verd+cian (que l'ull no
+    distingeix a aquesta L) en UNA sola quota, així deixa de dominar. Els graus
+    sumen tot el cercle usable; els pesos es normalitzen a 1. Ajusta un weight per
+    fer un bloc més/menys freqüent sense tocar cap altra cosa. */
+const HUE_BLOCKS: ReadonlyArray<readonly [number, number, number]> = [
+  [0, 25, 0.575], //   vermell baix (meitat de la quota del vermell)
+  [25, 70, 1.15], //   taronja
+  [70, 100, 1.1], //   groc (fins a la vora del forat)
+  [115, 210, 1.15], //  verds (llima+verd+cian): 95° reals, quota d'un sol bloc
+  [210, 275, 1.0], //  blau
+  [275, 315, 1.0], //  lila/violeta
+  [315, 355, 1.0], //  rosa/magenta
+  [355, 360, 0.575], // vermell alt (l'altra meitat; no creua el 0)
+]
+
+/** Fracció d'entrada de fractionToHue que produeix exactament `hueDeg`. Inverteix
+    el salt de la franja exclosa perquè els límits dels blocs (en graus finals)
+    es puguin situar a l'espai [0,1). */
+function hueToFraction(hueDeg: number): number {
+  // 360 és el límit superior del cercle (fracció 1), no un àlies de 0: no fem mòdul
+  // perquè el bloc vermell alt [355,360] no col·lapsi cap enrere sobre el 0.
+  const h = Math.max(0, Math.min(360, hueDeg))
+  const collapsed = h >= HUE_GAP_END ? h - HUE_GAP_SIZE : h
+  return collapsed / (360 - HUE_GAP_SIZE)
+}
+
+/** Taula acumulada [inWeightStart, inFracStart, inFracEnd, hueStart, hueEnd] que
+    mapeja [0,1) uniforme → [0,1) reponderat per família. Precomputada un cop. */
+const REMAP_TABLE = (() => {
+  const totalWeight = HUE_BLOCKS.reduce((s, b) => s + b[2], 0)
+  let acc = 0
+  return HUE_BLOCKS.map(([hueStart, hueEnd, weight]) => {
+    const inStart = acc
+    acc += weight / totalWeight
+    return {
+      inStart,
+      inEnd: acc,
+      fracStart: hueToFraction(hueStart),
+      fracEnd: hueToFraction(hueEnd),
+    }
+  })
+})()
+
+/** Redistribueix una fracció uniforme [0,1) perquè cada bloc de HUE_BLOCKS rebi la
+    seva quota de probabilitat. Lineal-per-trams i monòton → determinista i estable. */
+function perceptualRemap(frac: number): number {
+  for (const seg of REMAP_TABLE) {
+    if (frac < seg.inEnd || seg === REMAP_TABLE[REMAP_TABLE.length - 1]) {
+      const span = seg.inEnd - seg.inStart
+      const t = span > 0 ? (frac - seg.inStart) / span : 0
+      // Cap bloc creua el 0 (el vermell està partit en dos), així la interpolació
+      // és sempre monòtona dins [fracStart, fracEnd] i no cal wrap.
+      return seg.fracStart + t * (seg.fracEnd - seg.fracStart)
+    }
+  }
+  return frac
 }
 
 /** Distància angular mínima entre dos hues (0–180°). */
@@ -180,8 +258,8 @@ export function recordIdColorKey(id: string): string {
 }
 
 export function colorFromString(str: string): string {
-  // Hue uniforme sobre el cercle perceptual OKLCH, saltant la franja exclosa.
-  return oklchForHue(fractionToHue(fractionFromString(str)))
+  // Hash → fracció uniforme → reponderació per família percebuda → hue → OKLCH.
+  return oklchForHue(fractionToHue(perceptualRemap(fractionFromString(str))))
 }
 
 /** Color estable per a un registre identificat per ID immutable (agent, cua, skill…). */
@@ -213,7 +291,7 @@ const WHITE_TEXT_L_THRESHOLD = 0.78
  * No fem servir contrast WCAG estricte a propòsit — vegeu la nota del llindar.
  */
 export function textColorFromString(str: string): string {
-  const hue = fractionToHue(fractionFromString(str))
+  const hue = fractionToHue(perceptualRemap(fractionFromString(str)))
   const L = lightnessForHue(hue)
   return L <= WHITE_TEXT_L_THRESHOLD ? FG_LIGHT : FG_DARK
 }

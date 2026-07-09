@@ -5,6 +5,7 @@ import { colorFromRecordId, textColorFromRecordId } from '../../utils/color-from
 import { formatMinutes } from '../../utils/format'
 import { resolveWorkItemIcon } from '../../utils/salesforce-object-icon'
 import { hourTicks, hourWindow, msToPercent, segmentBox } from '../../utils/timeline-scale'
+import { useDetailDrawer } from '../../detail/detail-drawer-context'
 import { SfIcon } from '../ds'
 import { EmptyHint } from './parts'
 
@@ -66,7 +67,10 @@ function dedupeWork(work: WorkSegment[]): WorkSegment[] {
     } else {
       end = Date.parse(w.end) > Date.parse(existing.end) ? w.end : existing.end
     }
-    byKey.set(key, { ...existing, start, end })
+    // Prefer keeping the id of a still-open row: it's the one present in the
+    // live snapshot's active work, so opening the detail resolves reliably.
+    const id = existing.end !== null && w.end === null ? w.id : existing.id
+    byKey.set(key, { ...existing, id, start, end })
   }
   return [...byKey.values()]
 }
@@ -126,6 +130,7 @@ export function AgentTimeline({ agent }: { agent: Agent }) {
     return () => clearInterval(id)
   }, [])
   const day = todayISO(nowMs)
+  const { openWork } = useDetailDrawer()
   const query = useEntity(agentTimelineResource, { agentId: agent.id, day })
   const timeline = query.data
 
@@ -224,7 +229,14 @@ export function AgentTimeline({ agent }: { agent: Agent }) {
             <div className="dd-tl__track">
               <TrackGrid ticks={ticks} windowStart={windowStart} windowEnd={windowEnd} nowPct={nowPct} />
               {laneItems.map((seg) => (
-                <WorkBar key={seg.id} seg={seg} windowStart={windowStart} windowEnd={windowEnd} nowMs={nowMs} />
+                <WorkBar
+                  key={seg.id}
+                  seg={seg}
+                  windowStart={windowStart}
+                  windowEnd={windowEnd}
+                  nowMs={nowMs}
+                  onOpen={() => openWork(seg.id)}
+                />
               ))}
             </div>
           </div>
@@ -246,14 +258,16 @@ export function AgentTimeline({ agent }: { agent: Agent }) {
             {carryoverItems.map((seg) => {
               const icon = resolveWorkItemIcon({ channelKey: seg.channelKey })
               return (
-                <span
+                <button
+                  type="button"
                   className="dd-tl__carry-item"
                   key={seg.id}
                   title={seg.queue ? `${seg.label} · ${seg.queue}` : seg.label}
+                  onClick={() => openWork(seg.id)}
                 >
                   <SfIcon sprite={icon.sprite} symbol={icon.symbol} size={16} />
                   <span className="dd-tl__carry-label">{seg.label}</span>
-                </span>
+                </button>
               )
             })}
           </div>
@@ -298,11 +312,13 @@ function WorkBar({
   windowStart,
   windowEnd,
   nowMs,
+  onOpen,
 }: {
   seg: WorkSegment
   windowStart: number
   windowEnd: number
   nowMs: number
+  onOpen: () => void
 }) {
   const { left, width } = segmentBox(seg.start, seg.end, windowStart, windowEnd, nowMs)
   if (width <= 0) return null
@@ -310,14 +326,16 @@ function WorkBar({
   const tint = colorFromRecordId(seg.recordId ?? seg.id)
   const fg = textColorFromRecordId(seg.recordId ?? seg.id)
   return (
-    <div
+    <button
+      type="button"
       className="dd-tl__bar"
       style={{ left: `${left}%`, width: `${width}%`, background: tint, color: fg }}
       data-ongoing={seg.end === null ? 'true' : 'false'}
       title={`${seg.label}${seg.queue ? ` · ${seg.queue}` : ''} · ${rangeTitle(seg.start, seg.end, nowMs)}`}
+      onClick={onOpen}
     >
       <SfIcon sprite={icon.sprite} symbol={icon.symbol} size={16} />
       <span className="dd-tl__bar-label">{seg.label}</span>
-    </div>
+    </button>
   )
 }

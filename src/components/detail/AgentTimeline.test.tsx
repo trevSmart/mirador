@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Agent, AgentTimeline as AgentTimelineData } from '../../api/types'
 
@@ -7,6 +7,11 @@ const useEntityMock = vi.fn()
 vi.mock('../../api/data-service', () => ({
   agentTimelineResource: { source: 'salesforce', entity: 'agentTimeline' },
   useEntity: (...args: unknown[]) => useEntityMock(...args),
+}))
+
+const openWorkMock = vi.fn()
+vi.mock('../../detail/detail-drawer-context', () => ({
+  useDetailDrawer: () => ({ openWork: openWorkMock }),
 }))
 
 import { AgentTimeline } from './AgentTimeline'
@@ -59,6 +64,7 @@ describe('AgentTimeline', () => {
     vi.useFakeTimers()
     vi.setSystemTime(NOW)
     useEntityMock.mockReset()
+    openWorkMock.mockReset()
   })
   afterEach(() => {
     vi.useRealTimers()
@@ -124,6 +130,30 @@ describe('AgentTimeline', () => {
     useEntityMock.mockReturnValue({ data, isLoading: false })
     const { container } = render(<AgentTimeline agent={agent} />)
     expect(container.querySelectorAll('.dd-tl__bar')).toHaveLength(1)
+  })
+
+  it('opens the work detail when a work bar is clicked', () => {
+    useEntityMock.mockReturnValue({ data: fixture(), isLoading: false })
+    const { container } = render(<AgentTimeline agent={agent} />)
+    fireEvent.click(container.querySelector('.dd-tl__bar') as Element)
+    expect(openWorkMock).toHaveBeenCalledWith('w1')
+  })
+
+  it('opens the work detail when a carry-over item is clicked', () => {
+    const data = fixture()
+    data.work.push({
+      id: 'w-old',
+      start: iso(day - 20 * HOUR),
+      end: null,
+      label: 'Cas antic',
+      channelKey: 'cas',
+      recordId: null,
+      queue: null,
+    })
+    useEntityMock.mockReturnValue({ data, isLoading: false })
+    render(<AgentTimeline agent={agent} />)
+    fireEvent.click(screen.getByRole('button', { name: /cas antic/i }))
+    expect(openWorkMock).toHaveBeenCalledWith('w-old')
   })
 
   it('shows an empty hint when there is no activity', () => {
