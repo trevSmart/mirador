@@ -46,6 +46,24 @@ export function scrollPanelToTop(element: HTMLElement | null): void {
 }
 
 /**
+ * Resets an element's scroll to the top instantly (no easing). When the element
+ * has a Lenis instance, the reset must go through it: writing `scrollTop`
+ * directly would leave Lenis's internal target where it was, and the next wheel
+ * tick would lerp the content right back to the stale position.
+ */
+export function resetScrollTop(element: HTMLElement | null): void {
+  if (!element) {
+    return
+  }
+  const lenis = lenisByElement.get(element)
+  if (lenis) {
+    lenis.scrollTo(0, { immediate: true })
+  } else {
+    element.scrollTo({ top: 0 })
+  }
+}
+
+/**
  * Attaches a Lenis smooth-scroll instance to a scrollable element (e.g. a panel
  * shell). Mirador scrolls inside each Dockview panel, not the window, so Lenis
  * is pointed at the element via `wrapper`/`content` rather than the default

@@ -52,7 +52,17 @@ export function Ring({
   }, [f])
 
   return (
-    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0, ...style }}>
+    <div
+      className={breathe ? 'ring ring--breathe' : 'ring'}
+      style={{
+        position: 'relative',
+        width: size,
+        height: size,
+        flexShrink: 0,
+        ['--st' as string]: color,
+        ...style,
+      }}
+    >
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--surface-well)" strokeWidth="3.5" />
         <circle
@@ -82,8 +92,6 @@ export function Ring({
           color: faceFg,
           overflow: 'hidden',
           background: faceBg,
-          animation: breathe ? 'pa-breathe 3.4s var(--ease) infinite' : 'none',
-          ['--st' as string]: color,
         }}
       >
         <span>{initials}</span>

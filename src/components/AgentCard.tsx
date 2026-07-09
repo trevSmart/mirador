@@ -1,10 +1,8 @@
-import { useState } from 'react'
 import type { Agent, PresenceStatus } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { capacityColor } from '../utils/agent-stats'
-import { colorFromRecordId, textColorFromRecordId } from '../utils/color-from-string'
-import { agentInitials } from '../utils/format'
-import { useSalesforcePhoto } from '../hooks/useSalesforcePhoto'
+import { formatMinutes } from '../utils/format'
+import { AgentRing } from './AgentRow'
 import { CapacityBar } from './ds'
 import { StatusBadge } from './StatusBadge'
 
@@ -13,34 +11,6 @@ const STATUS_COLOR: Record<PresenceStatus, string> = {
   busy: 'var(--status-alert)',
   away: 'var(--status-watch)',
   offline: 'var(--text-disabled)',
-}
-
-function AgentCardAvatar({ id, name, photo, color }: { id: string; name: string; photo: string | null; color: string }) {
-  const photoSrc = useSalesforcePhoto(photo)
-  const [failedSrc, setFailedSrc] = useState<string | null>(null)
-
-  return (
-    <div className="agent-card__avatar-wrap">
-      {photoSrc && photoSrc !== failedSrc ? (
-        <img
-          className="agent-card__avatar agent-card__avatar--photo"
-          src={photoSrc}
-          alt=""
-          aria-hidden="true"
-          onError={() => setFailedSrc(photoSrc)}
-        />
-      ) : (
-        <span
-          className="agent-card__avatar"
-          style={{ background: colorFromRecordId(id), color: textColorFromRecordId(id) }}
-          aria-hidden="true"
-        >
-          {agentInitials(name)}
-        </span>
-      )}
-      <span className="agent-card__status-dot" style={{ background: color }} />
-    </div>
-  )
 }
 
 export function AgentCard({ agent }: { agent: Agent }) {
@@ -60,21 +30,23 @@ export function AgentCard({ agent }: { agent: Agent }) {
         }
       }}
     >
-      <AgentCardAvatar id={agent.id} name={agent.name} photo={agent.photo} color={color} />
-
-      <div className="agent-card__body">
-        <p className="agent-card__name">{agent.name}</p>
-        <p className="agent-card__role">{agent.role}</p>
-        <CapacityBar
-          used={agent.used}
-          max={agent.max}
-          color={capacityColor(agent)}
-          showHead={false}
-          style={{ marginTop: 4 }}
-        />
+      <div className="agent-row__main">
+        <AgentRing agent={agent} color={color} />
+        <div className="agent-row__info">
+          <div className="agent-row__title">
+            <span className="agent-row__name">{agent.name}</span>
+            <span
+              className="agent-row__status-hover"
+              data-tooltip={agent.loginMin > 0 ? `${formatMinutes(agent.loginMin)} en estat actual` : undefined}
+            >
+              <StatusBadge status={agent.status} label={agent.presenceStatusLabel} compact />
+            </span>
+          </div>
+          <p className="agent-row__meta">{agent.role}</p>
+        </div>
       </div>
 
-      <StatusBadge status={agent.status} soft />
+      <CapacityBar used={agent.used} max={agent.max} color={capacityColor(agent)} />
     </article>
   )
 }
