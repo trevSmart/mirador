@@ -38,7 +38,8 @@ async function withApiLog<T>(
 
 /** Deterministic mock record detail derived from the id, so the drawer can be
     exercised in mock mode. Cases (ids starting with 500) get a CaseNumber;
-    messaging sessions (0Mw) get a Subject. */
+    messaging sessions (0Mw) get a Subject. Both carry a record status; an id
+    containing "CLOSE" renders the type's terminal (closed) state. */
 function mockRecordDetail(id: string): RecordDetail {
   const created = new Date(MOCK_RECORD_EPOCH).toISOString()
   const modified = new Date(MOCK_RECORD_EPOCH + 3_600_000).toISOString()
@@ -51,9 +52,19 @@ function mockRecordDetail(id: string): RecordDetail {
     lastModifiedDate: modified,
     caseNumber: isCase ? `0${id.slice(-7)}` : null,
     subject: isMessaging ? 'Sessió de missatgeria (mock)' : null,
-    recordStatus: isCase ? (id.includes('CLOSE') ? 'Closed' : 'New') : null,
-    recordClosed: isCase ? id.includes('CLOSE') : null,
+    recordStatus: mockRecordStatus(id, isCase, isMessaging),
+    recordClosed: isCase || isMessaging ? id.includes('CLOSE') : null,
   }
+}
+
+/* Both Case and MessagingSession carry a real record status in the org, so the
+   mock mirrors that: the "CLOSE" marker in an id yields the type's terminal
+   state, otherwise its live state. Types without a Status field stay null. */
+function mockRecordStatus(id: string, isCase: boolean, isMessaging: boolean): string | null {
+  const closed = id.includes('CLOSE')
+  if (isCase) return closed ? 'Closed' : 'New'
+  if (isMessaging) return closed ? 'Ended' : 'Active'
+  return null
 }
 
 const MOCK_RECORD_EPOCH = Date.UTC(2026, 0, 15, 9, 30)
