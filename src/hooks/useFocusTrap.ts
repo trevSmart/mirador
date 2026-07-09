@@ -25,9 +25,11 @@ const FOCUSABLE_SELECTOR = [
 ].join(',')
 
 function focusableWithin(container: HTMLElement): HTMLElement[] {
-  return Array.from(
-    container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
-  ).filter((el) => !el.closest('[hidden],[aria-hidden="true"]'))
+  return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter((el) => {
+    if (el.tabIndex < 0) return false
+    if (el.closest('[hidden],[aria-hidden="true"]')) return false
+    return !('disabled' in el && (el as { disabled?: boolean }).disabled)
+  })
 }
 
 export function useFocusTrap<T extends HTMLElement>(active: boolean) {
