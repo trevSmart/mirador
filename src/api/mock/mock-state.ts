@@ -12,6 +12,7 @@ import { workItemIconFields } from '../../utils/salesforce-object-icon'
 import {
   MOCK_QUEUE,
   MOCK_QUEUE_KEYS,
+  mockRecordIdForChannel,
   mockWorkItemId,
   type MockQueueKey,
 } from './mock-ids'
@@ -318,6 +319,7 @@ function pushQueuedWork(
   rand: () => number,
 ): void {
   const icon = workItemIconFields(channelKey)
+  const seq = stateRef.workIdSeq
   stateRef.queued.push({
     id: nextWorkId(stateRef),
     subject: subjectForChannel(stateRef, channelKey, rand),
@@ -326,7 +328,7 @@ function pushQueuedWork(
     agentId: null,
     status: 'queued',
     ageSec: 10 + Math.floor(rand() * 90),
-    workItemId: null,
+    workItemId: mockRecordIdForChannel(channelKey, seq),
     objectApiName: icon.objectApiName,
     iconName: icon.iconName,
     iconSprite: icon.iconSprite,
@@ -446,7 +448,7 @@ function assignQueuedWork(stateRef: MockLiveState, rand: () => number): void {
 
       agent.work.push({
         id: nextWorkId(stateRef),
-        recordId: null,
+        recordId: queuedItem.workItemId ?? null,
         label: queuedItem.subject,
         subject: queuedItem.subject,
         channel: null,

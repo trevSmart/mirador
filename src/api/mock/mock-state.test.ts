@@ -4,6 +4,7 @@ import {
   getMockAgentSkills,
   getMockAgents,
   getMockSkills,
+  getMockWork,
 } from './mock-state'
 
 /** Tria un skill que l'agent donat NO tingui, per provar assignacions netes. */
@@ -59,5 +60,22 @@ describe('mock-state — overrides de skills', () => {
 
     const after = getMockSkills().find((s) => s.id === skillId)?.agents ?? 0
     expect(after).toBe(before + 1)
+  })
+})
+
+describe('mock-state — work items porten recordId per resoldre el detall', () => {
+  it('un work item de canal cas té un workItemId de Case (500…)', () => {
+    const work = getMockWork()
+    const caseItem = work.find((w) => w.channelKey === 'cas' && w.status === 'assigned')
+    expect(caseItem, 'hi ha d\'haver almenys un cas assignat al mock').toBeDefined()
+    expect(caseItem?.workItemId).toBeTruthy()
+    expect(caseItem?.workItemId?.startsWith('500')).toBe(true)
+  })
+
+  it('un work item de xat té un workItemId de MessagingSession (0Mw…)', () => {
+    const work = getMockWork()
+    const chatItem = work.find((w) => w.channelKey === 'chat' && w.status === 'assigned')
+    expect(chatItem, 'hi ha d\'haver almenys un xat assignat al mock').toBeDefined()
+    expect(chatItem?.workItemId?.startsWith('0Mw')).toBe(true)
   })
 })
