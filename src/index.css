@@ -1746,14 +1746,25 @@ textarea,
   z-index: 0;
 }
 
-.agent-row,
-.queue-row,
-.skill-row,
 /* Work cards pack into a grid so many fit at once, mirroring the agent grid. */
 .work-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: var(--sp-3);
+}
+
+.agent-row,
+.queue-row,
+.skill-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--surface-card);
+  padding: var(--sp-4);
+  box-shadow: var(--shadow);
+  transition: box-shadow var(--dur-base) var(--ease), border-color var(--dur-base) var(--ease);
 }
 
 .work-row {
