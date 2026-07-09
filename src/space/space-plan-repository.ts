@@ -73,16 +73,6 @@ class MockSpacePlanRepository {
     notify()
     return Promise.resolve()
   }
-
-  reset(): void {
-    this.cache = createMockSpacePlan()
-    try {
-      localStorage.removeItem(MOCK_STORAGE_KEY)
-    } catch {
-      /* ignore */
-    }
-    notify()
-  }
 }
 
 const mockRepository = new MockSpacePlanRepository()
@@ -94,10 +84,6 @@ export function loadMockSpacePlan(): Promise<SpacePlanData | null> {
 
 export function saveMockSpacePlan(data: SpacePlanData): Promise<void> {
   return mockRepository.save(data)
-}
-
-export function resetMockSpacePlan(): void {
-  mockRepository.reset()
 }
 
 /* ---------------------------------------------------------- salesforce ---- */

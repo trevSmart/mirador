@@ -18,7 +18,7 @@ import { DevConsoleProvider } from './dev/DevConsoleContext'
 import { DevConsole } from './dev/DevConsole'
 import { ModalRegistryProvider } from './modals/ModalRegistryProvider'
 import { GlobalShortcutsProvider } from './shortcuts/GlobalShortcutsProvider'
-import { ToastProvider } from './components/ds/Toast/ToastProvider'
+import { ToastProvider } from './components/ds'
 
 function AppContent() {
   return (

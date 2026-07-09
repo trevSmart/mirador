@@ -6,8 +6,6 @@
 
 import { LOGO_MAX_CHARS } from './space-plan-model'
 
-export const LOGO_MAX_PX = 256
-
 // Ordered from best quality to most aggressive. The first candidate whose
 // encoded data-URL fits under LOGO_MAX_CHARS wins.
 const RASTER_ATTEMPTS: ReadonlyArray<{ px: number; type: 'image/png' | 'image/jpeg'; quality?: number }> = [

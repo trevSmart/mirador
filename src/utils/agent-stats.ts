@@ -114,7 +114,7 @@ export function totalSkillBacklog(skills: Skill[]): number {
   return skills.reduce((total, skill) => total + skill.backlog, 0)
 }
 
-export function sortSkillsByBacklog(skills: Skill[]): Skill[] {
+function sortSkillsByBacklog(skills: Skill[]): Skill[] {
   return [...skills].sort((left, right) => {
     const backlogDiff = right.backlog - left.backlog
     if (backlogDiff !== 0) {
@@ -125,7 +125,7 @@ export function sortSkillsByBacklog(skills: Skill[]): Skill[] {
 }
 
 /** Label used for skills without a SkillType. */
-export const SKILL_TYPE_FALLBACK = 'Sense tipus'
+const SKILL_TYPE_FALLBACK = 'Sense tipus'
 
 const UNTYPED_GROUP_KEY = '__untyped__'
 

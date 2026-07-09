@@ -1,6 +1,6 @@
-export type StatusScreenTone = 'error' | 'info' | 'neutral'
+type StatusScreenTone = 'error' | 'info' | 'neutral'
 
-export interface StatusScreenAction {
+interface StatusScreenAction {
   label: string
   onClick: () => void
   variant?: 'primary' | 'secondary'
