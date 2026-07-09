@@ -69,6 +69,9 @@ public with sharing class MiradorTimelineService {
             LIMIT :MAX_PRESENCE
         ]) {
             String label = usp.ServicePresenceStatus?.MasterLabel;
+            if (String.isBlank(label)) {
+                label = 'Unknown';
+            }
             String status = MiradorAgentService.mapPresenceStatus(
                 usp.ServicePresenceStatus?.DeveloperName, label
             );
