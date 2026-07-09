@@ -196,7 +196,7 @@
   /* avatars, dots, rings */
 
   --h-topbar: 58px;
-  --h-tabbar: 34px;
+  --h-tabbar: 36px;
 
   /* ════════════════════════════════════════════════════
      MIRADOR · EFFECTS — shadow, motion, blur
@@ -1074,6 +1074,11 @@ textarea,
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+  /* Fill the remaining row width so the label's right edge always lands at the
+     chip edge (where the absolute close button sits). This keeps the hover
+     mask-fade aligned to the button zone, and leaves short labels' trailing
+     empty space — not their text — under the fade. */
+  flex: 1;
 }
 
 .mirador-tab__icon {
@@ -1090,9 +1095,9 @@ textarea,
 
 .mirador-tab__icon--detail .agent-avatar,
 .mirador-tab__icon--detail .agent-avatar--photo {
-  width: 16px;
-  height: 16px;
-  font-size: 7px;
+  width: 19px;
+  height: 19px;
+  font-size: 8px;
 }
 
 .dockview-container .dv-tab {
@@ -1111,13 +1116,13 @@ textarea,
      compact — no forced uniform width.
      When horizontal space runs low, flex-shrink:1 (overriding Dockview's
      built-in `.dv-tab { flex-shrink: 0 }`) lets every chip shrink toward its
-     80px floor — more tabs fit before the "···" overflow menu — after which
+     120px floor — more tabs fit before the "···" overflow menu — after which
      labels truncate with an ellipsis (see .mirador-tab__label). */
   width: max-content;
   flex-grow: 0;
   flex-shrink: 1;
   flex-basis: auto;
-  min-width: 80px;
+  min-width: 120px;
   max-width: 220px;
   box-sizing: border-box;
   /* Anchor the ::before divider (see below). */
@@ -1145,13 +1150,30 @@ textarea,
   pointer-events: none;
 }
 
-/* Hide the divider where it would collide with a pill background: neither the
-   active/hovered tab nor the one immediately after it should show its left rule. */
-.dockview-container .dv-tabs-container > .dv-tab.dv-active-tab::before,
+/* Hide the divider where it would collide with a hovered pill background: the
+   hovered tab and the one immediately after it shouldn't show their left rule. */
 .dockview-container .dv-tabs-container > .dv-tab:hover::before,
-.dockview-container .dv-tabs-container > .dv-tab.dv-active-tab + .dv-tab::before,
 .dockview-container .dv-tabs-container > .dv-tab:hover + .dv-tab::before {
   opacity: 0;
+}
+
+/* The active tab's own pill still owns its left edge, so its own rule stays
+   hidden — but it should show a matching rule on its right edge, and the
+   tab right after it keeps its rule instead of being swallowed by the pill. */
+.dockview-container .dv-tabs-container > .dv-tab.dv-active-tab::before {
+  opacity: 0;
+}
+
+.dockview-container .dv-tabs-container > .dv-tab.dv-active-tab::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 16px;
+  background: var(--border-subtle);
+  pointer-events: none;
 }
 
 .dockview-container .dv-tab.dv-active-tab .mirador-tab__icon {
@@ -1172,8 +1194,74 @@ textarea,
 /* Dockview sets tab backgrounds with 6-class selectors; match that depth so hover wins. */
 .app-chrome .dockview-container .dv-groupview .dv-tabs-container > .dv-tab.dv-inactive-tab:hover,
 .app-chrome .dockview-container .dv-tabs-overflow-container .dv-tab.dv-inactive-tab:hover {
-  background-color: var(--tab-hover-bg);
+  /* Subtle accent-tinted hover wash (no grey base). */
+  background-color: color-mix(in srgb, var(--accent) 6%, transparent);
   color: var(--text-strong);
+}
+
+/* Close button overlays the chip's right edge instead of reserving flex space,
+   so the label can use the full chip width. It surfaces only on hover (active
+   or inactive alike). Rather than masking the label with a background patch
+   (the chip bg is near-transparent, so text bleeds through), we fade the label
+   itself to transparent under the button via mask-image — see the hover rule
+   on .mirador-tab__label below. */
+.dockview-container .dv-tab .dv-default-tab .dv-default-tab-content {
+  /* Drop the default 4px gutter so the label runs to the chip edge. */
+  margin-right: 0;
+}
+
+/* .app-chrome prefix lifts specificity above Dockview's own visibility rules
+   (which force the active tab's action visible and reserve its layout space). */
+.app-chrome .dockview-container .dv-tab .dv-default-tab .dv-default-tab-action {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  /* Negative right pulls the button toward the chip's outer edge (the chip has
+     10px side padding), so it hugs the border and covers as little label as
+     possible while shown. */
+  right: -6px;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.08s var(--ease),
+    visibility 0s linear 0.08s;
+}
+.app-chrome .dockview-container .dv-tab:hover .dv-default-tab .dv-default-tab-action {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 0.08s var(--ease),
+    visibility 0s linear 0s;
+}
+
+/* When the button is showing, fade the label's tail to transparent so the text
+   never sits under the close icon. --tab-label-fade is the clear width at the
+   right edge; it animates 0 → its hover value because it's a registered
+   @property (a plain custom prop in mask-image wouldn't interpolate). At 0 the
+   two stops collapse to 100%, leaving the label fully opaque at rest. */
+@property --tab-label-fade {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+.mirador-tab__label {
+  --tab-label-fade: 0px;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 calc(100% - var(--tab-label-fade) * 2),
+    transparent calc(100% - var(--tab-label-fade))
+  );
+  mask-image: linear-gradient(
+    to right,
+    #000 calc(100% - var(--tab-label-fade) * 2),
+    transparent calc(100% - var(--tab-label-fade))
+  );
+  transition: --tab-label-fade 0.08s var(--ease);
+}
+/* Only fade when a close button is actually present (non-closable tabs like
+   Home don't render .dv-default-tab-action, so their label stays intact). */
+.dockview-container .dv-tab:hover .dv-default-tab:has(.dv-default-tab-action) .mirador-tab__label {
+  --tab-label-fade: 14px;
 }
 
 .dockview-container .dv-tab .dv-default-tab .dv-default-tab-action:hover {

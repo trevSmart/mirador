@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { ErrorPayload } from 'vite/types/hmrPayload.js'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { formatViteError, type FormattedViteError } from './format-vite-error'
 
 export function DevErrorOverlay() {
   const [error, setError] = useState<FormattedViteError | null>(null)
+  const trapRef = useFocusTrap<HTMLDivElement>(error !== null)
 
   const dismiss = useCallback(() => {
     setError(null)
@@ -47,6 +49,7 @@ export function DevErrorOverlay() {
 
   return (
     <div
+      ref={trapRef}
       className="dev-error-overlay"
       role="alertdialog"
       aria-modal="true"

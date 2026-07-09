@@ -7,6 +7,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react'
 import { useDeveloperMode } from '../../hooks/useDeveloperMode'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { usePreferences } from '../../settings/preferences-context'
 import { PREFERENCES_DEFAULTS, type Preferences } from '../../settings/preferences'
 import { useSettingsModal, type SettingsSectionId } from '../../settings/settings-modal-context'
@@ -49,6 +50,7 @@ export function SettingsModal() {
   const { isOpen, initialSection, close } = useSettingsModal()
   const { prefs, save } = usePreferences()
   const { enabled: devMode } = useDeveloperMode()
+  const trapRef = useFocusTrap<HTMLDivElement>(isOpen)
 
   // Draft + active section reset each time the modal transitions to open.
   // The baseline is snapshotted at open time so dirtiness reflects the user's
@@ -134,6 +136,7 @@ export function SettingsModal() {
       aria-hidden={!isOpen}
     >
       <div
+        ref={trapRef}
         className={`settings-modal${isOpen ? ' is-open' : ''}`}
         role="dialog"
         aria-modal="true"

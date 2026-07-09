@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useAgents, useQueues, useSkills, useWork } from '../../api/data-hooks'
 import { useDetailDrawer, type DetailTarget } from '../../detail/detail-drawer-context'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { AppIcon } from '../ds'
 import { AgentDetail } from './AgentDetail'
 import { QueueDetail } from './QueueDetail'
@@ -15,6 +16,7 @@ export function DetailDrawer() {
   const work = useWork()
 
   const open = detail !== null
+  const trapRef = useFocusTrap<HTMLElement>(open)
   // Retain the last target while closing so content doesn't blank out mid-animation.
   // Adjust derived state during render (React's recommended pattern) rather than
   // in an effect, so closing keeps the previous content until the slide-out ends.
@@ -65,6 +67,7 @@ export function DetailDrawer() {
         aria-hidden="true"
       />
       <aside
+        ref={trapRef}
         className={`detail-drawer${open ? ' is-open' : ''}`}
         role="dialog"
         aria-modal="true"
