@@ -50,8 +50,7 @@ export function hourTicks(windowStart: number, windowEnd: number): HourTick[] {
   return ticks
 }
 
-/** Rounds [minMs, maxMs] out to whole-hour bounds, with a small pad, so the
-    axis breathes and starts/ends on clean hour marks. */
+/** Rounds [minMs, maxMs] out to whole-hour bounds so the axis starts/ends on clean hour marks. */
 export function hourWindow(
   minMs: number,
   maxMs: number,
