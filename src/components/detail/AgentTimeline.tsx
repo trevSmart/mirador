@@ -35,7 +35,7 @@ function startOfDayMs(dayISO: string): number {
 const MAX_WORK_LANES = 6
 
 const hhmm = (ms: number) =>
-  new Date(ms).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+  new Date(ms).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })
 
 function rangeTitle(start: string, end: string | null, openEndMs: number): string {
   const startMs = Date.parse(start)
