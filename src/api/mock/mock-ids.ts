@@ -82,6 +82,18 @@ export function mockServiceResourceSkillId(agentSeq: number, assignmentIndex: nu
   return mockSfId('0C6', agentSeq * 100 + assignmentIndex + 1)
 }
 
+/**
+ * The backing SObject id for a work item of a given channel, so the drawer's
+ * record-detail lookup resolves in mock mode. Cases (cas/email) → 500…,
+ * messaging (chat/wa) → 0Mw…; voice has no status-bearing record here → null.
+ * Deterministic in `seq` so the same work item always maps to the same record.
+ */
+export function mockRecordIdForChannel(channelKey: string, seq: number): string | null {
+  if (channelKey === 'cas' || channelKey === 'email') return mockSfId('500', seq)
+  if (channelKey === 'chat' || channelKey === 'wa') return mockSfId('0Mw', seq)
+  return null
+}
+
 /** Numeric suffix from mock agent key "a0" → 0, "a41" → 41. */
 export function mockAgentSeq(agentKey: MockAgentKey): number {
   return Number.parseInt(agentKey.slice(1), 10)

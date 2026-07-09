@@ -16,6 +16,7 @@ import {
   MOCK_SKILL,
   MOCK_SKILL_TYPE,
   mockAgentSeq,
+  mockRecordIdForChannel,
   mockServiceResourceSkillId,
   mockWorkItemId,
   type MockAgentKey,
@@ -643,9 +644,11 @@ function agentSkillRows(spec: AgentSpec): AgentSkill[] {
 }
 
 function buildAgent(spec: AgentSpec): Agent {
-  const workItems: AgentWorkItem[] = spec.work.map((w, wi) => ({
-    id: mockWorkItemId(agentSeqWorkBase(spec.id) + wi),
-    recordId: null,
+  const workItems: AgentWorkItem[] = spec.work.map((w, wi) => {
+    const seq = agentSeqWorkBase(spec.id) + wi
+    return {
+    id: mockWorkItemId(seq),
+    recordId: mockRecordIdForChannel(w.channelKey, seq),
     label: w.subject,
     subject: w.subject,
     channel: null,
