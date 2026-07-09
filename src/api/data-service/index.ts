@@ -16,6 +16,10 @@ export { createBatchLoader } from './batch-loader'
 export { useSourceClient, type SourceId, type SourceClientMap } from './sources'
 export { recordDetailResource } from './resources/record-detail'
 export {
+  agentTimelineResource,
+  type AgentTimelineParams,
+} from './resources/agent-timeline'
+export {
   agentResource,
   queueResource,
   skillResource,

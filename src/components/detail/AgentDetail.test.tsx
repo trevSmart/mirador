@@ -35,6 +35,11 @@ vi.mock('../../hooks/useSalesforcePhoto', () => ({
   useSalesforcePhoto: () => null,
 }))
 
+// Stub the timeline so this suite stays focused on the detail/tab behaviour.
+vi.mock('./AgentTimeline', () => ({
+  AgentTimeline: () => <div data-testid="agent-timeline-stub" />,
+}))
+
 import { AgentDetail } from './AgentDetail'
 
 // JSDOM no implementa matchMedia; CapacityBar el consulta per reduced-motion.
@@ -149,6 +154,17 @@ describe('AgentDetail — secció Skills', () => {
     expect(screen.getByText('Facturació')).toBeInTheDocument()
     expect(screen.queryByTitle(/treu/i)).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Nivell')).not.toBeInTheDocument()
+  })
+
+  it('la pestanya Cronologia mostra la timeline i amaga les seccions de detall', () => {
+    render(<AgentDetail agent={makeAgent()} />)
+    // Per defecte, vista de detall.
+    expect(screen.getByText('Canals')).toBeInTheDocument()
+    expect(screen.queryByTestId('agent-timeline-stub')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('tab', { name: /cronologia/i }))
+    expect(screen.getByTestId('agent-timeline-stub')).toBeInTheDocument()
+    expect(screen.queryByText('Canals')).not.toBeInTheDocument()
   })
 
   it('assignar des de la palette crida mutate amb la nova skill', () => {

@@ -487,8 +487,7 @@ public with sharing class MiradorAgentService {
      * 'offline' (fail-safe): never report an unknown status as available, which
      * would hide an agent who is actually unreachable.
      */
-    @TestVisible
-    private static String mapPresenceStatus(String developerName, String masterLabel) {
+    public static String mapPresenceStatus(String developerName, String masterLabel) {
         String classified = classifyPresence(developerName);
         if (classified == null) {
             classified = classifyPresence(masterLabel);

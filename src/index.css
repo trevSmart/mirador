@@ -4374,6 +4374,219 @@ textarea,
   color: var(--text-muted);
 }
 
+/* Agent detail sub-tabs (Detall / Cronologia) — a segmented control. */
+.dd-tabs {
+  display: flex;
+  gap: 3px;
+  margin: 0 0 var(--sp-5);
+  padding: 3px;
+  background: var(--surface-well);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+}
+
+.dd-tab {
+  flex: 1;
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  border-radius: var(--r-xs);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.dd-tab:hover {
+  color: var(--text-strong);
+}
+
+.dd-tab[aria-selected='true'] {
+  background: var(--surface-card);
+  color: var(--text-strong);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* Agent timeline — horizontal Gantt: hour axis on top, presence + work lanes. */
+.dd-tl {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.dd-tl__axis,
+.dd-tl__lane {
+  display: flex;
+  align-items: stretch;
+  gap: var(--sp-2);
+}
+
+.dd-tl__gutter {
+  flex: 0 0 64px;
+  align-self: center;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+}
+
+.dd-tl__track {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 28px;
+  border-radius: var(--r-xs);
+}
+
+.dd-tl__lane .dd-tl__track {
+  background: var(--surface-well);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+}
+
+.dd-tl__track--axis {
+  height: 14px;
+  overflow: visible;
+}
+
+.dd-tl__track--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dd-tl__none {
+  position: relative;
+  z-index: 2;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.dd-tl__overflow {
+  margin-left: calc(64px + var(--sp-2));
+  padding-top: var(--sp-1);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.dd-tl__carry {
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.dd-tl__carry-title {
+  display: block;
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+}
+
+.dd-tl__carry-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.dd-tl__carry-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  max-width: 100%;
+  padding: 3px var(--sp-2) 3px 3px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-xs);
+  background: var(--surface-card);
+  font-size: var(--fs-xs);
+  color: var(--text-body);
+}
+
+.dd-tl__carry-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dd-tl__tick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.dd-tl__grid {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-subtle);
+  z-index: 0;
+}
+
+.dd-tl__now {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: var(--status-alert);
+  z-index: 3;
+}
+
+.dd-tl__band {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--sp-2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.dd-tl__band-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dd-tl__bar {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 5px;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.dd-tl__bar[data-ongoing='true'] {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.dd-tl__bar-label {
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .dd-stats {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

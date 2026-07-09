@@ -5,6 +5,7 @@ import type { WireSpacePlan } from '../space/space-plan-model'
 import type {
   AgentScope,
   AgentSkillsResponse,
+  AgentTimelineResponse,
   AgentsResponse,
   ApiErrorBody,
   Capabilities,
@@ -37,6 +38,8 @@ export interface MiradorClient {
   getCapabilities: () => Promise<Capabilities>
   getAgents: (scope?: AgentScope) => Promise<AgentsResponse>
   getAgentSkills: (userId: string) => Promise<AgentSkillsResponse>
+  /** One agent's activity for a day (YYYY-MM-DD): presence bands + work bars. */
+  getAgentTimeline: (userId: string, day: string) => Promise<AgentTimelineResponse>
   updateAgentSkills: (
     userId: string,
     body: UpdateSkillsRequest,
@@ -148,6 +151,10 @@ export function createMiradorClient(getSession: SessionGetter): MiradorClient {
       request<AgentsResponse>(`/agents?scope=${encodeURIComponent(scope)}`),
     getAgentSkills: (userId) =>
       request<AgentSkillsResponse>(`/agents/${encodeURIComponent(userId)}/skills`),
+    getAgentTimeline: (userId, day) =>
+      request<AgentTimelineResponse>(
+        `/agents/${encodeURIComponent(userId)}/timeline?day=${encodeURIComponent(day)}`,
+      ),
     updateAgentSkills: (userId, body) =>
       request<UpdateSkillsResponse>(`/agents/${encodeURIComponent(userId)}/skills`, {
         method: 'PUT',

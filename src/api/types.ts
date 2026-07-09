@@ -176,3 +176,40 @@ export interface RecordDetailsRequest {
 export interface RecordDetailsResponse {
   records: RecordDetail[]
 }
+
+/** One time span on the agent timeline. `end === null` means still ongoing
+    (the band/bar extends to "now"). Timestamps are ISO 8601, matching Apex. */
+export interface TimelineSegment {
+  id: string
+  start: string
+  end: string | null
+  label: string
+}
+
+/** A presence-status band. Designed to map from UserServicePresence
+    (StatusStartDate → start, StatusEndDate → end). `status` is our coarse
+    category (drives the band color); `presenceLabel` is the org's real label. */
+export interface PresenceSegment extends TimelineSegment {
+  status: PresenceStatus
+  presenceLabel: string
+}
+
+/** A work bar (AgentWork): RequestDateTime → start, CloseDateTime → end. */
+export interface WorkSegment extends TimelineSegment {
+  channelKey: ChannelKey
+  recordId: string | null
+  queue: string | null
+}
+
+/** One agent's activity for a single day: presence bands + work bars. */
+export interface AgentTimeline {
+  agentId: string
+  /** ISO date (YYYY-MM-DD) the timeline covers. */
+  day: string
+  presence: PresenceSegment[]
+  work: WorkSegment[]
+}
+
+export interface AgentTimelineResponse {
+  timeline: AgentTimeline
+}

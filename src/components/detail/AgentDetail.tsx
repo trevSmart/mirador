@@ -10,8 +10,11 @@ import { agentInitials, channelLabel, formatMinutes } from '../../utils/format'
 import { resolveWorkItemIcon } from '../../utils/salesforce-object-icon'
 import { AppIcon, Button, CapacityBar, FadeValue, Ring, SfIcon, useToast } from '../ds'
 import { StatusBadge } from '../StatusBadge'
+import { AgentTimeline } from './AgentTimeline'
 import { DetailRow, DrawerActions, DrawerSection, EmptyHint, Stat, StatGrid } from './parts'
 import { SkillAssignPalette } from './SkillAssignPalette'
+
+type AgentTab = 'detail' | 'timeline'
 
 const STATUS_COLOR: Record<PresenceStatus, string> = {
   online: 'var(--status-ok)',
@@ -34,6 +37,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
   const queueIds = [...new Set(agent.queueIds)]
   const canEdit = caps?.canChangeSkills === true
   const [adding, setAdding] = useState(false)
+  const [tab, setTab] = useState<AgentTab>('detail')
 
   function runChange(changes: AgentSkillChange[], successMsg: string) {
     mutation.mutate(
@@ -86,6 +90,33 @@ export function AgentDetail({ agent }: { agent: Agent }) {
         </div>
       ) : null}
 
+      <div className="dd-tabs" role="tablist" aria-label="Vista de l'agent">
+        <button
+          type="button"
+          className="dd-tab"
+          role="tab"
+          aria-selected={tab === 'detail'}
+          onClick={() => setTab('detail')}
+        >
+          Detall
+        </button>
+        <button
+          type="button"
+          className="dd-tab"
+          role="tab"
+          aria-selected={tab === 'timeline'}
+          onClick={() => setTab('timeline')}
+        >
+          Cronologia
+        </button>
+      </div>
+
+      {tab === 'timeline' ? (
+        <DrawerSection title="Cronologia d'avui">
+          <AgentTimeline agent={agent} />
+        </DrawerSection>
+      ) : (
+        <>
       <DrawerSection title="Resum">
         <CapacityBar used={agent.used} max={agent.max} color={capacityColor(agent)} />
         <StatGrid>
@@ -220,6 +251,8 @@ export function AgentDetail({ agent }: { agent: Agent }) {
           </div>
         )}
       </DrawerSection>
+        </>
+      )}
     </>
   )
 }
