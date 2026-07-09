@@ -1622,14 +1622,104 @@ textarea,
 }
 
 /* ── Entity rows ── */
-.skill-group + .skill-group {
+.skill-group + .skill-group,
+.work-group + .work-group {
   margin-top: var(--sp-10);
 }
 
-.skill-group__count {
+.skill-group__count,
+.work-group__count {
   font-size: var(--fs-xs);
   color: var(--text-muted);
   white-space: nowrap;
+}
+
+/* The group header doubles as a full-width collapse toggle — strip the native
+   button chrome and keep the existing header layout. */
+.work-group__toggle {
+  width: 100%;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.work-group__toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+  border-radius: 8px;
+}
+
+.work-group__chevron {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.work-group__chevron--open {
+  transform: rotate(90deg);
+}
+
+/* Collapse/expand the card grid — the apex-log-viewer accordion pattern: an
+   outer grid animating grid-template-rows 0fr↔1fr, plus an inner layer that
+   fades opacity and grows its padding. The inner clips overflow while growing
+   or shrinking; once fully open (`is-visible`, set after the grid transition
+   ends) overflow returns to visible so card shadows and hover-lift aren't cut. */
+.work-group__toggle {
+  margin-bottom: 0;
+}
+
+.work-group__expand {
+  display: grid;
+  grid-template-rows: 0fr;
+  min-width: 0;
+  transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.work-group__expand.is-open {
+  grid-template-rows: 1fr;
+}
+
+.work-group__expand-inner {
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  padding-top: 0;
+  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    padding-top 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.work-group__expand.is-open > .work-group__expand-inner {
+  opacity: 1;
+  padding-top: var(--sp-4);
+}
+
+.work-group__expand-inner.is-visible {
+  overflow: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .work-group__expand,
+  .work-group__expand-inner,
+  .work-group__chevron {
+    transition-duration: 0.01ms;
+  }
+}
+
+/* Shrink the shared AgentAvatar to sit on the group header line, alongside the
+   x-small object icons used by the other grouping criteria. */
+.work-group__avatar {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.work-group__avatar .agent-avatar {
+  width: 22px;
+  height: 22px;
+  font-size: var(--fs-2xs);
 }
 
 /* Indent the grid so each group's skills sit beneath, and to the right of, its title. */
@@ -1659,16 +1749,28 @@ textarea,
 .agent-row,
 .queue-row,
 .skill-row,
+/* Work cards pack into a grid so many fit at once, mirroring the agent grid. */
+.work-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+
 .work-row {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
+  border-radius: 14px;
   background: var(--surface-card);
-  padding: var(--sp-4);
+  padding: 12px 14px;
   box-shadow: var(--shadow);
-  transition: box-shadow var(--dur-base) var(--ease), border-color var(--dur-base) var(--ease);
+  transition: box-shadow var(--dur-base) var(--ease), border-color var(--dur-base) var(--ease),
+    transform var(--dur-base) var(--ease);
+}
+
+.work-row:hover {
+  transform: translateY(-1px);
 }
 
 .agent-row:hover,

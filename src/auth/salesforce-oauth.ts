@@ -56,15 +56,21 @@ export function buildAuthorizeUrl(
   return `${config.sfLoginUrl.replace(/\/$/, '')}/services/oauth2/authorize?${params}`
 }
 
-export function buildLogoutUrl(config: PublicOAuthConfig): string {
+export function buildLogoutUrl(instanceUrl: string): string {
   // /secur/logout.jsp (not /services/oauth2/logout, which 404s unless an org
   // explicitly enables OIDC single logout) is the classic endpoint that
   // universally ends the browser's Salesforce session. Without retURL it
   // redirects to the salesforce.com marketing site; retURL=/ sends the user
   // back to the login form on the same host instead, so they land somewhere
   // useful to pick the right org/account.
+  //
+  // It MUST hit the org's My Domain host (the session's instanceUrl), because
+  // that is where the Salesforce session cookie lives. Hitting sfLoginUrl
+  // (login.salesforce.com) instead ends a session that isn't the one keeping
+  // the user logged in, so auto-login silently re-authenticates through the
+  // still-alive My Domain session.
   const params = new URLSearchParams({ retURL: '/' })
-  return `${config.sfLoginUrl.replace(/\/$/, '')}/secur/logout.jsp?${params}`
+  return `${instanceUrl.replace(/\/$/, '')}/secur/logout.jsp?${params}`
 }
 
 function sessionFromTokenResponse(data: TokenResponse, previous?: OAuthSession): OAuthSession {
@@ -294,16 +300,18 @@ export async function fetchUserInfo(session: OAuthSession): Promise<SalesforceUs
   return (await response.json()) as SalesforceUserInfo
 }
 
-export function logout(config?: PublicOAuthConfig): void {
+export function logout(session: OAuthSession | null): void {
+  const instanceUrl = session?.instanceUrl
   clearOAuthSession()
   localStorage.removeItem(PKCE_STATE_KEY)
   localStorage.removeItem(PKCE_VERIFIER_KEY)
   // A local-only logout leaves the Salesforce browser session intact, so the
-  // next login silently reuses it and can loop back onto the wrong org. When we
-  // know the login host, bounce through Salesforce's logout endpoint to drop
-  // that session too; otherwise fall back to a plain in-app reset.
-  if (config && isSalesforceConfigured(config)) {
-    window.location.assign(buildLogoutUrl(config))
+  // next auto-login silently reuses it and lands the user right back where they
+  // were. When we know the org's My Domain host (the session's instanceUrl),
+  // bounce through Salesforce's logout endpoint to drop that session too;
+  // otherwise fall back to a plain in-app reset.
+  if (instanceUrl) {
+    window.location.assign(buildLogoutUrl(instanceUrl))
     return
   }
   window.location.assign('/')

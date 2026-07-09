@@ -196,13 +196,67 @@ function sortWorkByAge(work: WorkItem[]): WorkItem[] {
   return [...work].sort((left, right) => right.ageSec - left.ageSec)
 }
 
-export function partitionWorkByStatus(work: WorkItem[]): {
-  assigned: WorkItem[]
-  queued: WorkItem[]
-} {
-  const sorted = sortWorkByAge(work)
-  return {
-    assigned: sorted.filter((item) => item.status === 'assigned'),
-    queued: sorted.filter((item) => item.status === 'queued'),
+const UNGROUPED_KEY = '__ungrouped__'
+
+/** Criteria the work panel can group its cards by. */
+export type WorkGroupBy = 'queue' | 'agent' | 'channel' | 'status'
+
+export interface WorkGroup {
+  /** Grouping value (queueId, agentId, channelKey, status), or null for the fallback bucket. */
+  key: string | null
+  items: WorkItem[]
+  counts: WorkStatusCounts
+  oldestAgeSec: number
+}
+
+function workGroupKey(item: WorkItem, groupBy: WorkGroupBy): string | null {
+  switch (groupBy) {
+    case 'queue':
+      return item.queueId
+    case 'agent':
+      return item.agentId
+    case 'channel':
+      return item.channelKey
+    default:
+      return item.status
   }
+}
+
+/**
+ * Group work items by the chosen criterion. Items within each group go
+ * oldest-first (the urgent end); groups themselves are ordered by their oldest
+ * item so whatever has been waiting longest surfaces first. Items with no value
+ * for the criterion (e.g. an unassigned item grouped by agent) collapse into a
+ * trailing null-key group.
+ */
+export function groupWork(work: WorkItem[], groupBy: WorkGroupBy): WorkGroup[] {
+  const byKey = new Map<string, WorkItem[]>()
+  for (const item of work) {
+    const key = workGroupKey(item, groupBy) ?? UNGROUPED_KEY
+    const bucket = byKey.get(key)
+    if (bucket) {
+      bucket.push(item)
+    } else {
+      byKey.set(key, [item])
+    }
+  }
+
+  const groups: WorkGroup[] = [...byKey.entries()].map(([key, groupItems]) => {
+    const items = sortWorkByAge(groupItems)
+    return {
+      key: key === UNGROUPED_KEY ? null : key,
+      items,
+      counts: countWorkByStatus(items),
+      oldestAgeSec: items[0]?.ageSec ?? 0,
+    }
+  })
+
+  return groups.sort((left, right) => {
+    const leftFallback = left.key === null
+    const rightFallback = right.key === null
+    if (leftFallback !== rightFallback) {
+      return leftFallback ? 1 : -1
+    }
+    return right.oldestAgeSec - left.oldestAgeSec
+  })
 }

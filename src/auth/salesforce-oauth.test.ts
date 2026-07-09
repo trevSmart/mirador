@@ -46,14 +46,19 @@ describe('buildLogoutUrl', () => {
   // when an org explicitly enables single logout, and 404s otherwise. The
   // classic /secur/logout.jsp endpoint universally ends the browser session
   // and is what actually breaks the "stuck on the wrong org" loop.
-  it('points at the classic Salesforce logout page of the login host', () => {
-    expect(buildLogoutUrl(config)).toBe(
-      'https://login.salesforce.com/secur/logout.jsp?retURL=%2F',
+  //
+  // Crucially it must target the org's My Domain host — the session's
+  // instanceUrl — because that is where the Salesforce browser session cookie
+  // lives. Hitting login.salesforce.com instead leaves the My Domain session
+  // alive and the next auto-login silently re-authenticates through it.
+  it('points at the classic Salesforce logout page of the instance host', () => {
+    expect(buildLogoutUrl('https://x.my.salesforce.com')).toBe(
+      'https://x.my.salesforce.com/secur/logout.jsp?retURL=%2F',
     )
   })
 
-  it('does not double up the slash when the login url has a trailing slash', () => {
-    expect(buildLogoutUrl({ ...config, sfLoginUrl: 'https://x.my.salesforce.com/' })).toBe(
+  it('does not double up the slash when the instance url has a trailing slash', () => {
+    expect(buildLogoutUrl('https://x.my.salesforce.com/')).toBe(
       'https://x.my.salesforce.com/secur/logout.jsp?retURL=%2F',
     )
   })
