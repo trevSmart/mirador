@@ -1,4 +1,4 @@
-import type { ChannelKey, PresenceStatus, WorkStatus } from '../api/types'
+import type { ChannelKey, PresenceStatus, RecordDetail, WorkStatus } from '../api/types'
 
 const CHANNEL_LABELS: Record<ChannelKey, string> = {
   veu: 'Veu',
@@ -130,6 +130,19 @@ export function formatDateTime(iso: string | null | undefined): string {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(date)
+}
+
+export function recordStatusLabel(
+  detail: Pick<RecordDetail, 'recordStatus' | 'recordClosed'>,
+): string | null {
+  if (detail.recordClosed) return 'Tancat'
+  return detail.recordStatus ?? null
+}
+
+export function recordStatusTone(
+  detail: Pick<RecordDetail, 'recordStatus' | 'recordClosed'>,
+): 'neutral' | 'ok' {
+  return detail.recordClosed ? 'neutral' : 'ok'
 }
 
 export function agentInitials(name: string): string {
