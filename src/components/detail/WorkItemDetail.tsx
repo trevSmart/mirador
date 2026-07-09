@@ -5,7 +5,14 @@ import type { WorkItem } from '../../api/types'
 import { useAuth } from '../../auth/auth-context'
 import { useDetailDrawer } from '../../detail/detail-drawer-context'
 import { colorFromRecordId } from '../../utils/color-from-string'
-import { channelLabel, formatDateTime, formatSeconds, workStatusLabel } from '../../utils/format'
+import {
+  channelLabel,
+  formatDateTime,
+  formatSeconds,
+  recordStatusLabel,
+  recordStatusTone,
+  workStatusLabel,
+} from '../../utils/format'
 import { objectLabel, resolveWorkItemIcon } from '../../utils/salesforce-object-icon'
 import { AppIcon, Badge, FadeValue, SfIcon } from '../ds'
 import { DetailRow, DrawerActions, DrawerSection, EmptyHint, MiniAgentRow, Stat, StatGrid } from './parts'
@@ -36,6 +43,7 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
   // concurrent opens coalesce into a single /records/details call.
   const recordQuery = useEntity(recordDetailResource, item.workItemId)
   const detail = recordQuery.data ?? null
+  const recordStatus = detail ? recordStatusLabel(detail) : null
   const isLoading = recordQuery.isLoading
   const error =
     recordQuery.isError && recordQuery.data === undefined
@@ -54,6 +62,9 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
           </h2>
           <span className="dd-head__sub">{objectLabel(item)}</span>
           <Badge tone="neutral">{workStatusLabel(item.status)}</Badge>
+          {recordStatus ? (
+            <Badge tone={recordStatusTone(detail!)}>{recordStatus}</Badge>
+          ) : null}
         </div>
       </header>
 
@@ -77,6 +88,7 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
         <StatGrid>
           <Stat label="Canal" value={channelLabel(item.channelKey)} />
           <Stat label="Estat" value={workStatusLabel(item.status)} />
+          {recordStatus ? <Stat label="Estat del registre" value={recordStatus} /> : null}
           <Stat label="Edat" value={<FadeValue value={formatSeconds(item.ageSec)} />} />
           <Stat label="Tipus d'objecte" value={objectLabel(item)} />
         </StatGrid>
