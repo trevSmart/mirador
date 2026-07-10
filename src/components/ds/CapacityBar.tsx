@@ -115,7 +115,7 @@ export function CapacityBar({
           </b>
         </div>
       )}
-      <div style={{ height: 5, borderRadius: 6, background: 'var(--surface-well)', overflow: 'hidden', display: 'flex', gap: 2 }}>
+      <div style={{ height: 4, borderRadius: 6, background: 'var(--surface-card)', overflow: 'hidden', display: 'flex', gap: 2 }}>
         {Array.from({ length: max }).map((_, i) => {
           const fill = Math.min(1, Math.max(0, displayUsed - i))
           return (
@@ -126,6 +126,10 @@ export function CapacityBar({
                 height: '100%',
                 borderRadius: 2,
                 overflow: 'hidden',
+                // Each slot carries its own track fill so the inter-segment
+                // gaps stay visible even when the whole bar is empty — the gap
+                // shows the lighter card colour behind, the slot the well.
+                background: 'var(--surface-well)',
               }}
             >
               <span

@@ -75,6 +75,9 @@ export function StatusPill({
       style={{
         display: 'inline-flex',
         alignItems: 'center',
+        // In a flex row, min-width:auto resolves to the label's min-content and
+        // the pill refuses to shrink — cap the floor at just the dot instead.
+        minWidth: compact ? 26 : 30,
         maxWidth: compact ? 120 : 140,
         gap: compact ? 4 : 5,
         fontFamily: 'var(--font-body)',
