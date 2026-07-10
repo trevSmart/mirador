@@ -59,8 +59,8 @@ export function MiradorTab({
   const panelType = getPanelTypeFromComponent(panel?.view.contentComponent)
   const closable = panelType ? isPanelClosable(panelType) : true
   const pinned = panel ? isPanelPinned(panel) : false
-  // Un tab fixat no mostra la X (com als navegadors): es tanca via el menú
-  // contextual després d'alliberar-lo, i és immune als tancaments massius.
+  // Un tab fixat no mostra la X (com als navegadors): es pot tancar via el menú
+  // contextual, i és immune als tancaments massius.
   const effectiveHideClose = hideClose || !closable || pinned
   const detailParams = isDetailPanelComponent(panel?.view.contentComponent)
     ? parseDetailPanelParams(panel?.params)
