@@ -2010,6 +2010,12 @@ textarea,
   /* color: color-mix(in oklab, var(--text-muted) 88%, var(--text-body)); */
 }
 
+.agent-row__meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .agent-row__status-hover {
   display: inline-flex;
   flex-shrink: 0;

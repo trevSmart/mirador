@@ -48,11 +48,11 @@ export function StatusPill({
           alignItems: 'center',
           alignSelf: 'center',
           width: 'fit-content',
+          maxWidth: 160,
           gap: 5,
           flexShrink: 0,
-          whiteSpace: 'nowrap',
           fontFamily: 'var(--font-body)',
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: 600,
           padding: '3px 9px',
           borderRadius: 'var(--r-pill)',
@@ -62,8 +62,10 @@ export function StatusPill({
           ...style,
         }}
       >
-        <i style={{ width: 6, height: 6, borderRadius: '50%', background: c }} />
-        {text}
+        <i style={{ flexShrink: 0, width: 6, height: 6, borderRadius: '50%', background: c }} />
+        <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {text}
+        </span>
       </span>
     )
   }
@@ -73,9 +75,10 @@ export function StatusPill({
       style={{
         display: 'inline-flex',
         alignItems: 'center',
+        maxWidth: compact ? 120 : 140,
         gap: compact ? 4 : 5,
         fontFamily: 'var(--font-body)',
-        fontSize: compact ? 9 : 10.5,
+        fontSize: compact ? 10 : 11,
         fontWeight: 600,
         padding: compact ? '3px 8px' : '5px 10px',
         borderRadius: 'var(--r-pill)',
@@ -87,13 +90,16 @@ export function StatusPill({
     >
       <i
         style={{
+          flexShrink: 0,
           width: compact ? 5 : 6,
           height: compact ? 5 : 6,
           borderRadius: '50%',
           background: c,
         }}
       />
-      {text}
+      <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {text}
+      </span>
     </span>
   )
 }
