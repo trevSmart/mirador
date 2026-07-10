@@ -2018,7 +2018,13 @@ textarea,
 
 .agent-row__status-hover {
   display: inline-flex;
-  flex-shrink: 0;
+  /* Shrink factor is weighted by flex-basis, and the name's basis dwarfs the
+     badge's — a huge factor is needed for the badge to actually yield first.
+     The explicit min-width overrides the automatic minimum (which resolves to
+     the label's min-content and would block shrinking); it stops at the dot.
+     No overflow:hidden here — it would clip the tooltip. */
+  flex-shrink: 999;
+  min-width: 30px;
   position: relative;
 }
 
