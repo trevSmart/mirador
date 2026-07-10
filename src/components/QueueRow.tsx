@@ -1,5 +1,6 @@
 import type { Queue } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
+import { useCardActivation } from '../hooks/useCardActivation'
 import { colorFromRecordId } from '../utils/color-from-string'
 import { formatSeconds } from '../utils/format'
 import { FadeValue, MetricPill, SfIcon } from './ds'
@@ -14,15 +15,7 @@ export function QueueRow({ queue }: QueueRowProps) {
   return (
     <article
       className="queue-row queue-row--clickable"
-      role="button"
-      tabIndex={0}
-      onClick={() => openQueue(queue.id)}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          openQueue(queue.id)
-        }
-      }}
+      {...useCardActivation(() => openQueue(queue.id))}
     >
       <div className="queue-row__main">
         <SfIcon name="queue" sldsSize="medium" bg={colorFromRecordId(queue.id)} />

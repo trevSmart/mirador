@@ -1,6 +1,6 @@
-import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
 import type { WorkItem } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
+import { useCardActivation } from '../hooks/useCardActivation'
 import { colorFromRecordId } from '../utils/color-from-string'
 import { channelLabel, formatSeconds, workStatusLabel } from '../utils/format'
 import { resolveWorkItemIcon } from '../utils/salesforce-object-icon'
@@ -15,20 +15,11 @@ export function WorkRow({ item, agentName }: WorkRowProps) {
   const icon = resolveWorkItemIcon(item)
   const tint = colorFromRecordId(item.id)
   const { openWork } = useDetailDrawer()
-  const target = () => openWork(item.id)
 
   return (
     <article
       className="work-row work-row--clickable"
-      role="button"
-      tabIndex={0}
-      onClick={target}
-      onKeyDown={(event: ReactKeyboardEvent) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          target()
-        }
-      }}
+      {...useCardActivation(() => openWork(item.id))}
     >
       <div className="work-row__main">
         <SfIcon sprite={icon.sprite} symbol={icon.symbol} size={28} bg={tint} />

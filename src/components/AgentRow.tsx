@@ -1,19 +1,13 @@
 import { useState } from 'react'
-import type { Agent, ChannelKey, PresenceStatus } from '../api/types'
+import type { Agent, ChannelKey } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
+import { useCardActivation } from '../hooks/useCardActivation'
 import { useSalesforcePhoto } from '../hooks/useSalesforcePhoto'
 import { capacityColor } from '../utils/agent-stats'
 import { colorFromRecordId, textColorFromRecordId } from '../utils/color-from-string'
 import { agentInitials, formatMinutes } from '../utils/format'
 import { CapacityBar, FadeValue, MetricPill, Ring, SfIcon } from './ds'
 import { StatusBadge } from './StatusBadge'
-
-const STATUS_COLOR: Record<PresenceStatus, string> = {
-  online: 'var(--status-ok)',
-  busy: 'var(--status-alert)',
-  away: 'var(--status-watch)',
-  offline: 'var(--text-disabled)',
-}
 
 const CHANNELS: ChannelKey[] = ['veu', 'chat', 'wa', 'cas']
 
@@ -79,22 +73,11 @@ interface AgentRowProps {
 export function AgentRow({ agent, showSkills = false }: AgentRowProps) {
   const queueCount = agent.queueIds.length
   const skillNames = agent.skills.map((skill) => skill.name).slice(0, 3)
-  const color = STATUS_COLOR[agent.status]
+  const color = capacityColor(agent)
   const { openAgent } = useDetailDrawer()
 
   return (
-    <article
-      className="agent-row agent-row--clickable"
-      role="button"
-      tabIndex={0}
-      onClick={() => openAgent(agent.id)}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          openAgent(agent.id)
-        }
-      }}
-    >
+    <article className="agent-row agent-row--clickable" {...useCardActivation(() => openAgent(agent.id))}>
       <div className="agent-row__main">
         <AgentRing agent={agent} color={color} />
         <div className="agent-row__info">

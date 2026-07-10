@@ -70,8 +70,8 @@
   --mi-ok-soft: rgba(21, 160, 106, .10);
   --mi-watch: #D9981F;
   --mi-watch-soft: rgba(217, 152, 31, .12);
-  --mi-alert: #E05641;
-  --mi-alert-soft: rgba(224, 86, 65, .10);
+  --mi-alert: #D06A45;
+  --mi-alert-soft: rgba(208, 106, 69, .10);
 
   /* ── Team / queue hues ──────────────────────────────── */
   --mi-team-atencio: #6A5BE8;
@@ -1994,11 +1994,6 @@ textarea,
   font-weight: var(--fw-semibold);
   color: var(--text-strong);
   text-decoration: none;
-}
-
-.agent-row__name:hover {
-  color: var(--accent);
-  text-decoration: underline;
 }
 
 .agent-row__meta,

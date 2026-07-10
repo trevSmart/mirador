@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useCapabilities, useQueues, useSkills } from '../../api/data-hooks'
 import { useUpdateAgentSkills } from '../../api/skill-mutations'
-import type { Agent, AgentSkillChange, ChannelKey, PresenceStatus } from '../../api/types'
+import type { Agent, AgentSkillChange, ChannelKey } from '../../api/types'
 import { useDetailDrawer } from '../../detail/detail-drawer-context'
 import { useSalesforcePhoto } from '../../hooks/useSalesforcePhoto'
 import { colorFromRecordId, textColorFromRecordId } from '../../utils/color-from-string'
@@ -16,13 +16,6 @@ import { SkillAssignPalette } from './SkillAssignPalette'
 
 type AgentTab = 'detail' | 'timeline'
 
-const STATUS_COLOR: Record<PresenceStatus, string> = {
-  online: 'var(--status-ok)',
-  busy: 'var(--status-alert)',
-  away: 'var(--status-watch)',
-  offline: 'var(--text-disabled)',
-}
-
 const CHANNELS: ChannelKey[] = ['veu', 'chat', 'email', 'wa', 'cas']
 
 export function AgentDetail({ agent }: { agent: Agent }) {
@@ -33,7 +26,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
   const toast = useToast()
   const { openQueue, openWork } = useDetailDrawer()
   const photo = useSalesforcePhoto(agent.photo)
-  const color = STATUS_COLOR[agent.status]
+  const color = capacityColor(agent)
   const queueIds = [...new Set(agent.queueIds)]
   const canEdit = caps?.canChangeSkills === true
   const [adding, setAdding] = useState(false)
