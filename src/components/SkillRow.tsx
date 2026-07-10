@@ -1,5 +1,6 @@
 import type { Skill } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
+import { useCardActivation } from '../hooks/useCardActivation'
 import { colorFromRecordId } from '../utils/color-from-string'
 import { FadeValue, MetricPill, SfIcon } from './ds'
 
@@ -13,15 +14,7 @@ export function SkillRow({ skill }: SkillRowProps) {
   return (
     <article
       className="skill-row skill-row--clickable"
-      role="button"
-      tabIndex={0}
-      onClick={() => openSkill(skill.id)}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          openSkill(skill.id)
-        }
-      }}
+      {...useCardActivation(() => openSkill(skill.id))}
     >
       <div className="skill-row__main">
         <SfIcon name="skill" sldsSize="medium" bg={colorFromRecordId(skill.id)} />

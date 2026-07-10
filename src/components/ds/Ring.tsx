@@ -73,14 +73,14 @@ export function Ring({
       }}
     >
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--surface-well)" strokeWidth="3.5" />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--surface-well)" strokeWidth="2.5" />
         <circle
           cx={size / 2}
           cy={size / 2}
           r={r}
           fill="none"
           stroke={color}
-          strokeWidth="3.5"
+          strokeWidth="2.5"
           strokeLinecap="round"
           strokeDasharray={c}
           strokeDashoffset={c * (1 - shownF)}
