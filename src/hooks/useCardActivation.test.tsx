@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { useCardActivation } from './useCardActivation'
 
-function Harness({ onActivate }: { onActivate: () => void }) {
+function Harness({ onActivate }: { onActivate: (newTab: boolean) => void }) {
   return (
     <article {...useCardActivation(onActivate)}>
       <span>contingut seleccionable</span>
@@ -40,6 +40,19 @@ describe('useCardActivation', () => {
     fireEvent.click(screen.getByRole('button'))
 
     expect(onActivate).not.toHaveBeenCalled()
+  })
+
+  it('demana pestanya nova (newTab) amb Cmd o Ctrl + clic', () => {
+    const onActivate = vi.fn()
+    mockSelection(true)
+    render(<Harness onActivate={onActivate} />)
+
+    const el = screen.getByRole('button')
+    fireEvent.click(el)
+    fireEvent.click(el, { metaKey: true })
+    fireEvent.click(el, { ctrlKey: true })
+
+    expect(onActivate.mock.calls).toEqual([[false], [true], [true]])
   })
 
   it('activa amb Enter i amb Espai', () => {

@@ -1,6 +1,7 @@
 import { useCallback, useRef, useSyncExternalStore } from 'react'
 import type { IDockviewDefaultTabProps } from 'dockview-react'
 import { getPanelTypeFromComponent, isPanelClosable } from '../panels/panel-actions'
+import { isPanelPinned } from '../panels/pin-actions'
 import { parseDetailPanelParams, isDetailPanelComponent } from '../detail/detail-panel'
 import { DetailTabIcon } from '../components/detail/DetailTabIcon'
 import { PanelIcon } from '../panels/PanelIcon'
@@ -9,6 +10,14 @@ import { AppIcon } from '../components/ds/AppIcon'
 
 function TabCloseButton() {
   return <AppIcon name="close" size={11} />
+}
+
+function TabPinIndicator() {
+  return (
+    <span className="mirador-tab__pin" aria-label="Tab fixat">
+      <AppIcon name="pinned" size={11} />
+    </span>
+  )
 }
 
 export function MiradorTab({
@@ -49,7 +58,10 @@ export function MiradorTab({
   const panel = containerApi.panels.find((item) => item.id === api.id)
   const panelType = getPanelTypeFromComponent(panel?.view.contentComponent)
   const closable = panelType ? isPanelClosable(panelType) : true
-  const effectiveHideClose = hideClose || !closable
+  const pinned = panel ? isPanelPinned(panel) : false
+  // Un tab fixat no mostra la X (com als navegadors): es tanca via el menú
+  // contextual després d'alliberar-lo, i és immune als tancaments massius.
+  const effectiveHideClose = hideClose || !closable || pinned
   const detailParams = isDetailPanelComponent(panel?.view.contentComponent)
     ? parseDetailPanelParams(panel?.params)
     : null
@@ -154,6 +166,8 @@ export function MiradorTab({
         >
           <TabCloseButton />
         </div>
+      ) : pinned ? (
+        <TabPinIndicator />
       ) : null}
     </div>
   )

@@ -1,6 +1,5 @@
 import type { Skill } from '../api/types'
-import { useDetailDrawer } from '../detail/detail-drawer-context'
-import { useCardActivation } from '../hooks/useCardActivation'
+import { useDetailActivation } from '../detail/useDetailActivation'
 import { colorFromRecordId } from '../utils/color-from-string'
 import { FadeValue, MetricPill, SfIcon } from './ds'
 
@@ -9,13 +8,10 @@ interface SkillRowProps {
 }
 
 export function SkillRow({ skill }: SkillRowProps) {
-  const { openSkill } = useDetailDrawer()
+  const activation = useDetailActivation({ kind: 'skill', id: skill.id })
 
   return (
-    <article
-      className="skill-row skill-row--clickable"
-      {...useCardActivation(() => openSkill(skill.id))}
-    >
+    <article className="skill-row skill-row--clickable" {...activation}>
       <div className="skill-row__main">
         <SfIcon name="skill" sldsSize="medium" bg={colorFromRecordId(skill.id)} />
         <div className="skill-row__body">

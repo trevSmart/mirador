@@ -12,15 +12,35 @@ import {
   removePanelFromTabGroup,
 } from './tab-groups'
 import { getPanelTypeFromComponent, isPanelClosable } from '../panels/panel-actions'
-import type { DockviewGroupPanel, IDockviewPanel } from 'dockview-react'
+import {
+  enforcePinnedOrder,
+  isPanelPinned,
+  setPanelPinned,
+} from '../panels/pin-actions'
+import { saveDockviewLayout } from './layout-storage'
+import type { DockviewApi, DockviewGroupPanel, IDockviewPanel } from 'dockview-react'
 
 function isClosablePanel(panel: IDockviewPanel): boolean {
   const type = getPanelTypeFromComponent(panel.view.contentComponent)
   return type ? isPanelClosable(type) : true
 }
 
+// Els tabs fixats són immunes als tancaments massius ("Tancar les altres",
+// "Tancar totes"): només compten com a tancables els que no ho estan.
+function isBulkClosablePanel(panel: IDockviewPanel): boolean {
+  return isClosablePanel(panel) && !isPanelPinned(panel)
+}
+
 function closeClosablePanels(panels: readonly IDockviewPanel[]): void {
-  panels.filter(isClosablePanel).forEach((entry) => entry.api.close())
+  panels.filter(isBulkClosablePanel).forEach((entry) => entry.api.close())
+}
+
+// El canvi de params (pinned) no dispara onDidLayoutChange, així que després de
+// fixar/alliberar cal reordenar i desar el layout explícitament.
+function togglePinned(api: DockviewApi, panel: IDockviewPanel, pinned: boolean): void {
+  setPanelPinned(panel, pinned)
+  enforcePinnedOrder(api)
+  saveDockviewLayout(api)
 }
 
 function mergeAllPanelsIntoGroup(
@@ -51,18 +71,26 @@ export function getMiradorTabContextMenuItems(
   const tabGroups = api.getTabGroups({ groupId })
 
   const closable = isClosablePanel(panel)
+  const pinned = isPanelPinned(panel)
   const hasOtherClosablePanels = group.panels.some(
-    (entry) => entry !== panel && isClosablePanel(entry),
+    (entry) => entry !== panel && isBulkClosablePanel(entry),
   )
-  const hasClosablePanels = group.panels.some(isClosablePanel)
+  const hasClosablePanels = group.panels.some(isBulkClosablePanel)
 
   const items: MiradorTabContextMenuItem[] = []
 
   if (closable) {
-    items.push({
-      label: 'Tancar',
-      action: () => panel.api.close(),
-    })
+    items.push(
+      {
+        label: pinned ? 'Alliberar tab' : 'Fixar tab',
+        action: () => togglePinned(api, panel, !pinned),
+      },
+      'separator',
+      {
+        label: 'Tancar',
+        action: () => panel.api.close(),
+      },
+    )
   }
 
   if (hasOtherClosablePanels) {

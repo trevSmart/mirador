@@ -20,6 +20,7 @@ import { miradorDockviewTheme } from '../dockview/theme'
 import { DetailPanel } from '../panels/DetailPanel'
 import { PANEL_COMPONENTS, getPanelDefinition, type PanelType } from '../panels/registry'
 import { ensureHomePanel, getOpenPanelTypes } from '../panels/panel-actions'
+import { enforcePinnedOrder } from '../panels/pin-actions'
 
 interface DockviewShellHandle {
   addPanel: (type: PanelType) => void
@@ -51,6 +52,9 @@ export function DockviewShell({ ref }: DockviewShellProps) {
   const layoutDisposableRef = useRef<{ dispose: () => void } | null>(null)
   const navigatorDisposableRef = useRef<{ dispose: () => void } | null>(null)
   const panelDisposablesRef = useRef<{ dispose: () => void }[]>([])
+  // Evita la reentrada: enforcePinnedOrder mou panells, cosa que torna a
+  // disparar onDidLayoutChange; sense la guarda seria una recursió.
+  const enforcingOrderRef = useRef(false)
   const [openTypes, setOpenTypes] = useState<PanelType[]>(['home'])
   const { registerApi } = useDockviewHost()
 
@@ -129,8 +133,17 @@ export function DockviewShell({ ref }: DockviewShellProps) {
 
     layoutDisposableRef.current?.dispose()
     layoutDisposableRef.current = event.api.onDidLayoutChange(() => {
+      if (!enforcingOrderRef.current) {
+        enforcingOrderRef.current = true
+        enforcePinnedOrder(event.api)
+        enforcingOrderRef.current = false
+      }
       saveDockviewLayout(event.api)
     })
+
+    // Aplica l'ordre (fixats a l'esquerra) al layout carregat de disc abans de
+    // subscriure res, per si es va desar amb un ordre inconsistent.
+    enforcePinnedOrder(event.api)
   }
 
   return (
