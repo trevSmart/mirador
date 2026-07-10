@@ -36,6 +36,7 @@ export type AppIconName =
   | 'new_window'
   | 'notification'
   | 'open_folder'
+  | 'pinned'
   | 'redo'
   | 'refresh'
   | 'rotate-ccw'
@@ -88,6 +89,7 @@ export const APP_ICON_NAMES: readonly AppIconName[] = [
   'new_window',
   'notification',
   'open_folder',
+  'pinned',
   'redo',
   'refresh',
   'rotate-ccw',

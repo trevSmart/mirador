@@ -1168,6 +1168,16 @@ textarea,
   font-size: 8px;
 }
 
+/* Indicador de tab fixat: ocupa el lloc de la X (que els tabs fixats no
+   mostren) amb un glyph de pin discret i no interactiu. */
+.mirador-tab__pin {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-left: 2px;
+  color: var(--text-subtle, var(--text-body));
+  opacity: 0.7;
+}
+
 .dockview-container .dv-tab {
   transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
   /* Default theme padding is 0.25rem 0.5rem (8px sides), which leaves the icon

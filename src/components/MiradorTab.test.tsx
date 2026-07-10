@@ -29,10 +29,14 @@ function createFakePanelApi(initialTitle: string) {
   }
 }
 
-function renderTab(api: ReturnType<typeof createFakePanelApi>, before?: React.ReactNode) {
+function renderTab(
+  api: ReturnType<typeof createFakePanelApi>,
+  before?: React.ReactNode,
+  panels: unknown[] = [],
+) {
   const props = {
     api,
-    containerApi: { panels: [] },
+    containerApi: { panels },
   } as unknown as IDockviewDefaultTabProps
   return render(
     <>
@@ -40,6 +44,10 @@ function renderTab(api: ReturnType<typeof createFakePanelApi>, before?: React.Re
       <MiradorTab {...props} />
     </>,
   )
+}
+
+function fakePanel(id: string, params: Record<string, unknown>) {
+  return { id, view: { contentComponent: 'agents' }, params }
 }
 
 describe('MiradorTab', () => {
@@ -64,5 +72,19 @@ describe('MiradorTab', () => {
     renderTab(api, <TitleStomper />)
     expect(screen.getByText('Email incidència crítica')).toBeInTheDocument()
     expect(screen.queryByText('Treball')).toBeNull()
+  })
+
+  it('un tab fixat amaga la X i mostra l’indicador de pin', () => {
+    const api = createFakePanelApi('Agents')
+    renderTab(api, undefined, [fakePanel(api.id, { pinned: true })])
+    expect(screen.queryByLabelText('Tab fixat')).toBeInTheDocument()
+    expect(screen.queryByText('Agents')).toBeInTheDocument()
+  })
+
+  it('un tab no fixat mostra la X i cap indicador de pin', () => {
+    const api = createFakePanelApi('Agents')
+    const { container } = renderTab(api, undefined, [fakePanel(api.id, {})])
+    expect(screen.queryByLabelText('Tab fixat')).toBeNull()
+    expect(container.querySelector('.dv-default-tab-action')).not.toBeNull()
   })
 })

@@ -1,6 +1,5 @@
 import type { Agent } from '../api/types'
-import { useDetailDrawer } from '../detail/detail-drawer-context'
-import { useCardActivation } from '../hooks/useCardActivation'
+import { useDetailActivation } from '../detail/useDetailActivation'
 import { capacityColor } from '../utils/agent-stats'
 import { formatMinutes } from '../utils/format'
 import { AgentRing } from './AgentRow'
@@ -8,11 +7,11 @@ import { CapacityBar } from './ds'
 import { StatusBadge } from './StatusBadge'
 
 export function AgentCard({ agent }: { agent: Agent }) {
-  const { openAgent } = useDetailDrawer()
+  const activation = useDetailActivation({ kind: 'agent', id: agent.id })
   const color = capacityColor(agent)
 
   return (
-    <article className="agent-card" {...useCardActivation(() => openAgent(agent.id))}>
+    <article className="agent-card" {...activation}>
       <div className="agent-row__main">
         <AgentRing agent={agent} color={color} />
         <div className="agent-row__info">

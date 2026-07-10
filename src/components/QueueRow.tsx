@@ -1,6 +1,5 @@
 import type { Queue } from '../api/types'
-import { useDetailDrawer } from '../detail/detail-drawer-context'
-import { useCardActivation } from '../hooks/useCardActivation'
+import { useDetailActivation } from '../detail/useDetailActivation'
 import { colorFromRecordId } from '../utils/color-from-string'
 import { formatSeconds } from '../utils/format'
 import { FadeValue, MetricPill, SfIcon } from './ds'
@@ -10,13 +9,10 @@ interface QueueRowProps {
 }
 
 export function QueueRow({ queue }: QueueRowProps) {
-  const { openQueue } = useDetailDrawer()
+  const activation = useDetailActivation({ kind: 'queue', id: queue.id })
 
   return (
-    <article
-      className="queue-row queue-row--clickable"
-      {...useCardActivation(() => openQueue(queue.id))}
-    >
+    <article className="queue-row queue-row--clickable" {...activation}>
       <div className="queue-row__main">
         <SfIcon name="queue" sldsSize="medium" bg={colorFromRecordId(queue.id)} />
         <div className="queue-row__body">

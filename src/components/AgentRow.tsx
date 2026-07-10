@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import type { Agent, ChannelKey } from '../api/types'
-import { useDetailDrawer } from '../detail/detail-drawer-context'
-import { useCardActivation } from '../hooks/useCardActivation'
+import { useDetailActivation } from '../detail/useDetailActivation'
 import { useSalesforcePhoto } from '../hooks/useSalesforcePhoto'
 import { capacityColor } from '../utils/agent-stats'
 import { colorFromRecordId, textColorFromRecordId } from '../utils/color-from-string'
@@ -74,10 +73,10 @@ export function AgentRow({ agent, showSkills = false }: AgentRowProps) {
   const queueCount = agent.queueIds.length
   const skillNames = agent.skills.map((skill) => skill.name).slice(0, 3)
   const color = capacityColor(agent)
-  const { openAgent } = useDetailDrawer()
+  const activation = useDetailActivation({ kind: 'agent', id: agent.id })
 
   return (
-    <article className="agent-row agent-row--clickable" {...useCardActivation(() => openAgent(agent.id))}>
+    <article className="agent-row agent-row--clickable" {...activation}>
       <div className="agent-row__main">
         <AgentRing agent={agent} color={color} />
         <div className="agent-row__info">
