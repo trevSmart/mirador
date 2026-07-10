@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 
 interface RingProps {
   used?: number
@@ -38,9 +38,18 @@ export function Ring({
   // frame so the browser always interpolates old → new (a plain re-render can
   // collapse both values into a single paint, skipping the transition). A
   // double rAF is required — a single rAF runs before paint, so the old value
-  // is never committed and the change still collapses. Starts from 0 on mount.
-  const [shownF, setShownF] = useState(0)
+  // is never committed and the change still collapses.
+  //
+  // On the FIRST paint we render straight at the real fill: there is no prior
+  // value on screen, so a 0 → f sweep would be a spurious intro animation. The
+  // rAF hand-off only runs on subsequent changes.
+  const [shownF, setShownF] = useState(f)
+  const mounted = useRef(false)
   useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true
+      return
+    }
     let inner = 0
     const outer = requestAnimationFrame(() => {
       inner = requestAnimationFrame(() => setShownF(f))

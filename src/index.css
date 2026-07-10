@@ -1978,12 +1978,18 @@ textarea,
 
 .agent-row__title {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: var(--sp-2);
+  min-width: 0;
 }
 
 .agent-row__name {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: calc(var(--fs-body) + 1px);
   font-weight: var(--fw-semibold);
   color: var(--text-strong);
@@ -2006,6 +2012,7 @@ textarea,
 
 .agent-row__status-hover {
   display: inline-flex;
+  flex-shrink: 0;
   position: relative;
 }
 

@@ -42,9 +42,19 @@ export function CapacityBar({
 
   // displayUsed is a continuous 0..max value: segment i's fill is
   // clamp(displayUsed - i, 0, 1). A single animation drives it edge-to-edge.
-  const [displayUsed, setDisplayUsed] = useState(0)
-  const posRef = useRef(0)
+  //
+  // First paint renders straight at the target: there is no prior value on
+  // screen, so a 0 → target sweep would be a spurious intro animation. The
+  // rAF frontier only sweeps on subsequent value changes.
+  const [displayUsed, setDisplayUsed] = useState(targetUsed)
+  const posRef = useRef(targetUsed)
+  const mounted = useRef(false)
   useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true
+      posRef.current = targetUsed
+      return
+    }
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const from = posRef.current
     const to = targetUsed
@@ -105,7 +115,7 @@ export function CapacityBar({
           </b>
         </div>
       )}
-      <div style={{ height: 6, borderRadius: 6, background: 'var(--surface-well)', overflow: 'hidden', display: 'flex', gap: 2 }}>
+      <div style={{ height: 5, borderRadius: 6, background: 'var(--surface-well)', overflow: 'hidden', display: 'flex', gap: 2 }}>
         {Array.from({ length: max }).map((_, i) => {
           const fill = Math.min(1, Math.max(0, displayUsed - i))
           return (
