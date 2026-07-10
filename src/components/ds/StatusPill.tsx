@@ -26,7 +26,7 @@ interface StatusPillProps {
 /**
  * StatusPill — micro pill with a leading dot.
  * Pass a presence key (online/busy/away/offline) or a custom color+label.
- * `soft` renders a larger, sentence-case badge; otherwise it's an uppercase micro pill.
+ * `soft` renders a larger badge; otherwise it's a smaller micro pill.
  */
 export function StatusPill({
   status = 'online',
@@ -77,9 +77,7 @@ export function StatusPill({
         fontFamily: 'var(--font-body)',
         fontSize: compact ? 9 : 10.5,
         fontWeight: 600,
-        letterSpacing: '.03em',
-        textTransform: 'uppercase',
-        padding: compact ? '1px 5px' : '3px 8px',
+        padding: compact ? '3px 8px' : '5px 10px',
         borderRadius: 'var(--r-pill)',
         color: c,
         background: `color-mix(in srgb, ${c} 12%, transparent)`,
