@@ -144,7 +144,7 @@ export function MiradorTab({
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerLeave}
       onClick={handleClick}
-      className="dv-default-tab"
+      className={pinned ? 'dv-default-tab mirador-tab--pinned' : 'dv-default-tab'}
     >
       <span className="dv-default-tab-content mirador-tab__content">
         {detailParams ? (

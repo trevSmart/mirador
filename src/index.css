@@ -1235,6 +1235,28 @@ textarea,
   opacity: 0;
 }
 
+/* Frontera fixats ↔ no fixats: la primera pestanya no fixada que segueix una de
+   fixada mostra un divisor més marcat (més alt, més gruixut i amb contrast) i un
+   buit extra, perquè les dues zones es distingeixin d'un cop d'ull. Guanya per
+   especificitat sobre el hairline base i el seu amagat en hover. */
+.dockview-container
+  .dv-tabs-container
+  > .dv-tab:has(.mirador-tab--pinned)
+  + .dv-tab:not(:has(.mirador-tab--pinned)) {
+  margin-left: 13px;
+}
+.dockview-container
+  .dv-tabs-container
+  > .dv-tab:has(.mirador-tab--pinned)
+  + .dv-tab:not(:has(.mirador-tab--pinned))::before {
+  left: -7px;
+  width: 2px;
+  height: 22px;
+  border-radius: 1px;
+  background: var(--border-strong, var(--border-subtle));
+  opacity: 1;
+}
+
 /* The active tab's own pill still owns its left edge, so its own rule stays
    hidden — but it should show a matching rule on its right edge, and the
    tab right after it keeps its rule instead of being swallowed by the pill. */
