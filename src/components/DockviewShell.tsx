@@ -141,8 +141,8 @@ export function DockviewShell({ ref }: DockviewShellProps) {
       saveDockviewLayout(event.api)
     })
 
-    // Aplica l'ordre (fixats a l'esquerra) al layout carregat de disc abans de
-    // subscriure res, per si es va desar amb un ordre inconsistent.
+    // Normalitza l'ordre (fixats a l'esquerra) del layout carregat de disc, per si
+    // es va desar amb un ordre inconsistent.
     enforcePinnedOrder(event.api)
   }
 
