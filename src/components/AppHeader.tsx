@@ -60,7 +60,14 @@ export function AppHeader() {
   return (
     <header className="app-header">
       <div className="app-header__left">
-        <img className="app-header__logo" src={miradorLogo} alt="Mirador" />
+        <img
+          className="app-header__logo"
+          src={miradorLogo}
+          alt="Mirador"
+          width={542}
+          height={168}
+          fetchPriority="high"
+        />
         {isMockMode ? (
           <span className="app-header__status" title="Dades simulades (mock)">
             Simulació
