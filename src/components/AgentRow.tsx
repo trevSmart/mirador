@@ -74,6 +74,7 @@ export function AgentRow({ agent, showSkills = false }: AgentRowProps) {
   const queueCount = agent.queueIds.length
   const skillNames = agent.skills.map((skill) => skill.name).slice(0, 3)
   const color = capacityColor(agent)
+  const channels = [...CHANNELS].sort((a, b) => (agent.chans[b] ?? 0) - (agent.chans[a] ?? 0))
   const { openAgent } = useDetailDrawer()
 
   return (
@@ -104,7 +105,7 @@ export function AgentRow({ agent, showSkills = false }: AgentRowProps) {
       <CapacityBar used={agent.used} max={agent.max} color={capacityColor(agent)} />
 
       <div className="agent-row__channels">
-        {CHANNELS.map((channel) => {
+        {channels.map((channel) => {
           const count = agent.chans[channel] ?? 0
           const active = count > 0
           return (
@@ -113,7 +114,7 @@ export function AgentRow({ agent, showSkills = false }: AgentRowProps) {
               className="agent-row__channel"
               data-active={active ? 'true' : 'false'}
             >
-              <SfIcon channel={channel} sldsSize="small" />
+              <SfIcon channel={channel} size={18} />
               <FadeValue className="agent-row__channel-count" value={count} />
             </div>
           )

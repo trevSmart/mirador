@@ -107,6 +107,7 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
               <DetailRow
                 leading={<SfIcon name="queue" sldsSize="small" recordId={queue.id} />}
                 title={queue.name}
+                recordId={queue.id}
                 meta="Cua"
                 onClick={() => openQueue(queue.id)}
               />
