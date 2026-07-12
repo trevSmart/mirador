@@ -5,9 +5,9 @@ import { useCardActivation } from '../hooks/useCardActivation'
 import { useSalesforcePhoto } from '../hooks/useSalesforcePhoto'
 import { capacityColor } from '../utils/agent-stats'
 import { colorFromRecordId, textColorFromRecordId } from '../utils/color-from-string'
-import { agentInitials, formatMinutes } from '../utils/format'
+import { agentInitials } from '../utils/format'
 import { CapacityBar, FadeValue, MetricPill, Ring, SfIcon } from './ds'
-import { StatusBadge } from './StatusBadge'
+import { AgentPresenceBadge } from './AgentPresenceBadge'
 
 const CHANNELS: ChannelKey[] = ['veu', 'chat', 'wa', 'cas']
 
@@ -84,19 +84,7 @@ export function AgentRow({ agent, showSkills = false }: AgentRowProps) {
         <div className="agent-row__info">
           <div className="agent-row__title">
             <span className="agent-row__name">{agent.name}</span>
-            <span
-              className="agent-row__status-hover"
-              data-tooltip={agent.loginMin > 0 ? `${formatMinutes(agent.loginMin)} en estat actual` : undefined}
-            >
-              <StatusBadge
-                status={agent.status}
-                label={agent.presenceStatusLabel}
-                compact
-              />
-              {agent.loginMin > 0 && (
-                <span className="visually-hidden">{`${formatMinutes(agent.loginMin)} en estat actual`}</span>
-              )}
-            </span>
+            <AgentPresenceBadge agent={agent} />
           </div>
           <p className="agent-row__meta">{agent.role}</p>
         </div>
