@@ -1,6 +1,10 @@
-import { recordDetailResource, useEntity } from '../../api/data-service'
+import {
+  agentResource,
+  queueResource,
+  recordDetailResource,
+  useEntity,
+} from '../../api/data-service'
 import { MiradorApiError } from '../../api/mirador-client'
-import { useAgents, useQueues } from '../../api/data-hooks'
 import type { WorkItem } from '../../api/types'
 import { useAuth } from '../../auth/auth-context'
 import { useDetailDrawer } from '../../detail/detail-drawer-context'
@@ -22,8 +26,6 @@ import { DetailRow, DrawerActions, DrawerSection, EmptyHint, MiniAgentRow, Stat,
    A type-specific endpoint per SObject (VoiceCall, Case, …) will enrich this
    later — see the placeholder section below. */
 export function WorkItemDetail({ item }: { item: WorkItem }) {
-  const agents = useAgents()
-  const queues = useQueues()
   const { openAgent, openQueue } = useDetailDrawer()
   const { session } = useAuth()
 
@@ -35,8 +37,11 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
       : null
 
   const icon = resolveWorkItemIcon(item)
-  const agent = item.agentId ? agents.find((a) => a.id === item.agentId) : undefined
-  const queue = item.queueId ? queues.find((q) => q.id === item.queueId) : undefined
+  // L'agent i la cua relacionats surten de la caché per-id (ja primada pel
+  // snapshot): així aquest detall no es re-renderitza quan canvia qualsevol
+  // altre agent, només el seu.
+  const agent = useEntity(agentResource, item.agentId ?? null).data ?? undefined
+  const queue = useEntity(queueResource, item.queueId ?? null).data ?? undefined
 
   // Reads through the Data Service cache: reopening the same work item (or two
   // items sharing a record) reuses the cached detail instead of refetching, and

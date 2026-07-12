@@ -120,4 +120,57 @@ describe('primeSnapshot', () => {
     // backed by this cache never needs it.
     expect(getSnapshot).not.toHaveBeenCalled()
   })
+
+  it('nulls out cached records that are no longer in the snapshot', () => {
+    const queryClient = new QueryClient()
+    const withAgent: SnapshotResponse = {
+      ...emptySnapshot(),
+      agents: [{ id: 'a1' } as SnapshotResponse['agents'][number]],
+    }
+
+    primeSnapshot(queryClient, withAgent)
+    expect(
+      queryClient.getQueryData(entityKey('salesforce', 'agent', 'a1')),
+    ).toEqual({ id: 'a1' })
+
+    // The agent drops out of the feed (went offline, or left the scope): a
+    // reader must see "not found", not the last-known copy.
+    primeSnapshot(queryClient, emptySnapshot())
+    expect(
+      queryClient.getQueryData(entityKey('salesforce', 'agent', 'a1')),
+    ).toBeNull()
+  })
+
+  it('leaves other entity types alone when pruning', () => {
+    const queryClient = new QueryClient()
+    queryClient.setQueryData(entityKey('salesforce', 'recordDetail', 'a1'), {
+      id: 'a1',
+    })
+
+    // Same id, different entity: pruning agents must not touch it.
+    primeSnapshot(queryClient, emptySnapshot())
+
+    expect(
+      queryClient.getQueryData(entityKey('salesforce', 'recordDetail', 'a1')),
+    ).toEqual({ id: 'a1' })
+  })
+
+  it('does not evict the cache entry, so a mounted reader will not refetch', () => {
+    const queryClient = new QueryClient()
+    primeSnapshot(queryClient, {
+      ...emptySnapshot(),
+      agents: [{ id: 'a1' } as SnapshotResponse['agents'][number]],
+    })
+
+    primeSnapshot(queryClient, emptySnapshot())
+
+    // Written as null rather than removed: removing it would make an observer
+    // refetch through the cold-cache fallback (scope `all`), which would find an
+    // offline agent again and re-prune on the next poll — refetching forever.
+    const entry = queryClient
+      .getQueryCache()
+      .find({ queryKey: entityKey('salesforce', 'agent', 'a1') })
+    expect(entry).toBeDefined()
+    expect(entry?.state.data).toBeNull()
+  })
 })

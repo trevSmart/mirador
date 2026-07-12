@@ -7,12 +7,12 @@
    The context + useDetailDrawer hook live in ./detail-drawer-context (kept out
    of this component file so Fast Refresh works). */
 
+import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { devLog } from '../dev/dev-log'
-import { useAgents, useQueues, useSkills, useWork } from '../api/data-hooks'
 import { appNavigator } from '../navigation/app-navigator'
 import { recordDetailOpen } from '../utils/detail-recent-store'
-import { resolveDetailTitle } from './resolve-detail-meta'
+import { readDetailTitle } from './resolve-detail-meta'
 import {
   DetailDrawerContext,
   type DetailDrawerContextValue,
@@ -36,10 +36,11 @@ export function DetailDrawerProvider({ children }: { children: ReactNode }) {
 
   // Registra l'estat obert al registre de modals (obert quan detail !== null)
   useRegisterModal('detail-drawer', detail !== null)
-  const agents = useAgents()
-  const queues = useQueues()
-  const skills = useSkills()
-  const work = useWork()
+  // El títol només cal en el moment d'obrir una pestanya, així que el llegim de
+  // la caché dins el callback. Subscriure's aquí a agents/cues/skills/work
+  // re-renderitzaria tota l'app a cada refresc de dades: aquest provider és
+  // l'arrel.
+  const queryClient = useQueryClient()
 
   const open = useCallback(
     (kind: DetailKind, id: string) => {
@@ -76,7 +77,7 @@ export function DetailDrawerProvider({ children }: { children: ReactNode }) {
 
   const openAsTab = useCallback(
     (target: DetailTarget) => {
-      const title = resolveDetailTitle(target, { agents, queues, skills, work })
+      const title = readDetailTitle(queryClient, target)
       devLog.action('detail:open-as-tab', `${target.kind} · ${title}`)
       recordDetailOpen({ kind: target.kind, id: target.id, name: title })
       // Només tanca el drawer si la pestanya s'ha obert de debò: si el
@@ -88,7 +89,7 @@ export function DetailDrawerProvider({ children }: { children: ReactNode }) {
         setForwardStack([])
       }
     },
-    [agents, queues, skills, work],
+    [queryClient],
   )
 
   const value = useMemo<DetailDrawerContextValue>(

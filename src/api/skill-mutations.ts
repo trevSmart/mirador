@@ -3,7 +3,7 @@
    propis `onSuccess`/`onError` a `.mutate(...)`. */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useSourceClient } from './data-service'
+import { snapshotPrefix, useSourceClient } from './data-service'
 import type { AgentSkillChange, UpdateSkillsResponse } from './types'
 
 export interface UpdateAgentSkillsVars {
@@ -28,9 +28,7 @@ export function useUpdateAgentSkills() {
       // Invalidem totes les scopes del snapshot (match per prefix), ja que
       // un canvi de skills afecta tant agents com skills. Retornem la promesa
       // perquè react-query esperi la invalidació abans de resoldre la mutació.
-      return queryClient.invalidateQueries({
-        queryKey: ['salesforce', 'snapshot'],
-      })
+      return queryClient.invalidateQueries({ queryKey: snapshotPrefix() })
     },
   })
 }
