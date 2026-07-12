@@ -178,7 +178,7 @@ export function SettingsModal() {
             className="settings-modal__reset"
             onClick={handleReset}
           >
-            Restaura els valors per defecte
+            Valors per defecte
           </Button>
           <Button variant="ghost" onClick={requestClose}>
             Cancel·la

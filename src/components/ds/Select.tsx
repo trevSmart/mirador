@@ -1,5 +1,6 @@
 import { type KeyboardEvent, useEffect, useId, useRef, useState } from 'react'
 import { syncDropdownPanel } from '../../utils/sync-dropdown-panel'
+import { AppIcon } from './AppIcon'
 
 export type SelectOption<T extends string | number> = { value: T; label: string }
 
@@ -172,7 +173,7 @@ export function Select<T extends string | number>({
         onKeyDown={onKeyDown}
       >
         <span className="ds-select__value">{selected?.label ?? ''}</span>
-        <span className="ds-select__caret" aria-hidden="true">▾</span>
+        <AppIcon name="down" size={10} className="ds-select__caret" />
       </button>
       <div
         ref={dropRef}
