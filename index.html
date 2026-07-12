@@ -11,7 +11,31 @@
     <link rel="stylesheet" href="/slds/icons.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mirador</title>
+    <script>
+      // Tema abans del primer paint (evita el flaix clar en sessions fosques).
+      // Mateixa resolució que settings/theme.ts: light | dark | system.
+      ;(function () {
+        var theme = 'light'
+        try {
+          var raw = localStorage.getItem('mirador.preferences.v1')
+          var pref = raw ? JSON.parse(raw).theme : 'system'
+          if (pref !== 'light' && pref !== 'dark') pref = 'system'
+          theme = pref === 'system'
+            ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+            : pref
+        } catch (e) { /* localStorage inaccessible → clar */ }
+        document.documentElement.setAttribute('data-theme', theme)
+      })()
+    </script>
     <style>
+      html {
+        color-scheme: light;
+      }
+
+      html[data-theme='dark'] {
+        color-scheme: dark;
+      }
+
       #app-splash,
       #app-splash *,
       #app-splash *::before,
@@ -95,6 +119,21 @@
           animation: none;
           opacity: 0.55;
         }
+      }
+
+      /* Splash en fosc — valors sincronitzats amb el bloc
+         :root[data-theme='dark'] d'index.css (que encara no ha carregat). */
+      html[data-theme='dark'] #app-splash {
+        background: #141319;
+        background-image: radial-gradient(1100px 600px at 75% -15%, rgba(63, 169, 222, 0.06), transparent 60%);
+      }
+
+      html[data-theme='dark'] .app-splash__status {
+        color: #a6a2b1;
+      }
+
+      html[data-theme='dark'] .app-splash__dots span {
+        color: #3fa9de;
       }
     </style>
   </head>

@@ -12,7 +12,7 @@ const TONES: Record<BadgeTone, ToneDef> = {
   accent: { bg: 'var(--accent-tint)', fg: 'var(--accent)' },
   ok: { bg: 'var(--mi-ok-soft)', fg: 'var(--status-ok)' },
   watch: { bg: 'var(--mi-watch-soft)', fg: 'var(--status-watch)' },
-  alert: { bg: 'var(--status-alert)', fg: '#fff' },
+  alert: { bg: 'var(--status-alert)', fg: 'var(--on-status)' },
 }
 
 interface BadgeProps {

@@ -8,6 +8,7 @@ import { SPACE_CANVAS_TINTS, type SpaceCanvasTint } from './space-canvas-wash'
 
 export type SpaceViewMode = '2d' | '3d'
 export type Lang = 'ca' | 'es' | 'en'
+export type ThemePreference = 'light' | 'dark' | 'system'
 
 export interface Preferences {
   /** Override data source to mock mode regardless of server config. */
@@ -29,6 +30,12 @@ export interface Preferences {
    * "show all offline service reps" behavior.
    */
   showOfflineAgents: boolean
+
+  /**
+   * Colour theme: explicit light/dark, or follow the OS appearance.
+   * Resolved and applied as `data-theme` on <html> — see settings/theme.ts.
+   */
+  theme: ThemePreference
 
   /**
    * Tint a record's Salesforce object icon with the colour derived from its id.
@@ -66,6 +73,7 @@ export const PREFERENCES_DEFAULTS: Preferences = {
   alertPct: 30,
   showOfflineAgents: true,
 
+  theme: 'system',
   tintRecordIcons: true,
   defaultSpaceView: '3d',
   showAvatars: true,
@@ -113,6 +121,7 @@ function sanitizePreferences(raw: Partial<Preferences> | null | undefined): Pref
     alertPct: clampInt(p.alertPct, d.alertPct, 5, 100),
     showOfflineAgents: asBool(p.showOfflineAgents, d.showOfflineAgents),
 
+    theme: oneOf(p.theme, ['light', 'dark', 'system'], d.theme),
     tintRecordIcons: asBool(p.tintRecordIcons, d.tintRecordIcons),
     defaultSpaceView: oneOf(p.defaultSpaceView, ['2d', '3d'], d.defaultSpaceView),
     showAvatars: asBool(p.showAvatars, d.showAvatars),

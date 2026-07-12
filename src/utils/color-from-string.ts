@@ -46,6 +46,13 @@
  *  Franja exclosa estreta (100–115°): la vora superior del groc continua sent un
  *  oliva-llima terrós tot i la campana de lluminositat. El hue uniforme la salta
  *  (fractionToHue), conservant el groc central (~95°) i la resta del cercle.
+ *
+ *  Mode fosc: el generador NO varia amb el tema, deliberadament. A L≈0.72–0.86
+ *  els colors generats contrasten encara més sobre el canvas fosc (#141319,
+ *  L≈0.2) que sobre el blanc, i que un registre conservi el "seu" color entre
+ *  temes és una feature d'identitat. El color del text d'inicials tampoc depèn
+ *  del tema: es tria pel fons GENERAT via --mi-av-fg-on-dark/light (vegeu
+ *  textColorFromString), tokens que no canvien al bloc fosc d'index.css.
  */
 
 /** Lluminositat OKLCH base — pes visual i contrast amb el blanc constants. */

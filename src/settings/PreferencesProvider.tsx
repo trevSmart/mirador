@@ -8,6 +8,8 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { devLog } from '../dev/dev-log'
 import { PreferencesContext, type PreferencesContextValue } from './preferences-context'
 import { buildSpaceCanvasWash } from './space-canvas-wash'
+import { applyTheme, resolveTheme, systemDarkQuery } from './theme'
+import { useResolvedTheme } from './use-resolved-theme'
 import {
   loadPreferences,
   PREFERENCES_EVENT,
@@ -33,11 +35,23 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
+    const mq = systemDarkQuery()
+    const apply = () => applyTheme(resolveTheme(prefs.theme, mq?.matches ?? false))
+    apply()
+    if (prefs.theme === 'system' && mq) {
+      mq.addEventListener('change', apply)
+      return () => mq.removeEventListener('change', apply)
+    }
+  }, [prefs.theme])
+
+  const resolvedTheme = useResolvedTheme()
+
+  useEffect(() => {
     document.documentElement.style.setProperty(
       '--fv-canvas-wash',
-      buildSpaceCanvasWash(prefs.spaceCanvasTint),
+      buildSpaceCanvasWash(prefs.spaceCanvasTint, resolvedTheme),
     )
-  }, [prefs.spaceCanvasTint])
+  }, [prefs.spaceCanvasTint, resolvedTheme])
 
   const save = useCallback((next: Preferences) => {
     devLog.action('settings:save', next)

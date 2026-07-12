@@ -5,6 +5,7 @@
 
 import { useAuth } from '../../auth/auth-context'
 import { useDataStatus } from '../../api/data-hooks'
+import { resolveTheme, systemDarkQuery } from '../../settings/theme'
 import { clearLocalData } from '../../utils/clear-local-data'
 import { Button } from '../ds/Button'
 import {
@@ -12,6 +13,7 @@ import {
   type SpaceViewMode,
   type Lang,
   type Preferences,
+  type ThemePreference,
 } from '../../settings/preferences'
 import {
   NumberField,
@@ -297,6 +299,22 @@ export function AparencaSection({ draft, patch }: SectionProps) {
     <>
       <SettingsGroup label="Visualització">
         <SettingsRow
+          title="Tema"
+          hint="Clar, fosc o segons l'aparença del sistema"
+          control={
+            <SelectField<ThemePreference>
+              label="Tema"
+              value={draft.theme}
+              onChange={(v) => patch({ theme: v })}
+              options={[
+                { value: 'system', label: 'Segons el sistema' },
+                { value: 'light', label: 'Clar' },
+                { value: 'dark', label: 'Fosc' },
+              ]}
+            />
+          }
+        />
+        <SettingsRow
           title="Tenyeix les icones dels registres"
           hint="Aplica el color del registre a la icona i al nom. Si es desactiva, la icona manté el color oficial de Salesforce i només el nom queda acolorit."
           control={
@@ -314,6 +332,7 @@ export function AparencaSection({ draft, patch }: SectionProps) {
             <TintSwatchField
               value={draft.spaceCanvasTint}
               onChange={(v) => patch({ spaceCanvasTint: v })}
+              theme={resolveTheme(draft.theme, systemDarkQuery()?.matches ?? false)}
             />
           }
         />

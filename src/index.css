@@ -29,6 +29,8 @@
    alert). Each team keeps its own hue.
    ════════════════════════════════════════════════════════════ */
 :root {
+  color-scheme: light;
+
   /* ── Base palette ───────────────────────────────────── */
   --mi-bg: rgba(251, 250, 248, 0.8);
   /* app canvas — warm paper */
@@ -105,6 +107,8 @@
   --surface-raised: var(--mi-bg-tint);
   --surface-card: var(--mi-surface);
   --surface-well: #F7F6F3;
+  /* Tiles del plànol de planta (fv) — un pèl més càlid que el well. */
+  --fv-tile: #F8F7F4;
 
   --text-strong: var(--mi-ink);
   --text-body: var(--mi-dim);
@@ -121,8 +125,12 @@
   --scrollbar-thumb: rgba(27, 25, 36, .28);
   --scrollbar-thumb-hover: rgba(27, 25, 36, .42);
 
-  --accent: #0080BE;
-  --accent-soft: rgba(0, 128, 190, .10);
+  --accent: var(--mi-accent);
+  --accent-soft: var(--mi-accent-soft);
+  /* Fons sòlid dels controls brand (botó primari). En clar coincideix amb
+     l'accent; en fosc és un blau més profund perquè el text blanc hi llegeixi
+     (l'accent aclarit del fosc és per a text/enllaços, no per a fills). */
+  --accent-fill: var(--mi-accent);
   --accent-fg: #FFFFFF;
   --accent-tint: var(--mi-accent-soft);
   --accent-line: var(--mi-accent-line);
@@ -131,6 +139,8 @@
   --status-ok: var(--mi-ok);
   --status-watch: var(--mi-watch);
   --status-alert: var(--mi-alert);
+  /* Text sobre un fill de status saturat — blanc en tots dos temes. */
+  --on-status: #FFFFFF;
 
   /* ════════════════════════════════════════════════════
      MIRADOR · TYPOGRAPHY TOKENS
@@ -233,6 +243,7 @@
 
   /* ── Scrim (reusable: dropdowns, modals, toasts) ────── */
   --scrim-bg: rgba(27, 25, 36, .28);
+  --scrim-bg-strong: rgba(27, 25, 36, .42);
   --scrim-blur: var(--blur-scrim);
   --z-scrim: 290;
 
@@ -240,6 +251,81 @@
   --topbar-h: var(--h-topbar);
   --tabbar-h: var(--h-tabbar);
   --chrome-h: calc(var(--topbar-h) + var(--tabbar-h));
+}
+
+/* ════════════════════════════════════════════════════════════
+   MODE FOSC — re-apunta la capa bruta (--mi-*) i els pocs àlies
+   que porten literal propi; tota la resta de l'app hereta via la
+   cadena de tokens. Charcoal càlid, mateixa família de to que la
+   tinta clara (#1B1924). L'atribut el posa settings/theme.ts (i
+   l'script inline d'index.html abans del primer paint).
+   ════════════════════════════════════════════════════════════ */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* ── Base palette ───────────────────────────────────── */
+  /* Opac (el clar és translúcid sobre el canvas blanc del navegador). */
+  --mi-bg: #141319;
+  --mi-bg-tint: #18171E;
+  --mi-surface: #211F2A;
+  --mi-surface-2: #2B2935;
+
+  /* ── Ink ramp (text) ────────────────────────────────── */
+  --mi-ink: #EDECF2;
+  --mi-dim: #A6A2B1;
+  --mi-faint: #7C7887;
+  --mi-off: #5D5966;
+
+  /* ── Hairlines ──────────────────────────────────────── */
+  --mi-line: rgba(237, 236, 242, .09);
+  --mi-line-2: rgba(237, 236, 242, .17);
+
+  /* ── Accent (aclarit per contrast sobre fosc) ───────── */
+  --mi-accent: #3FA9DE;
+  --mi-accent-soft: rgba(63, 169, 222, .14);
+  --mi-accent-line: rgba(63, 169, 222, .42);
+
+  /* ── Semantic status ────────────────────────────────── */
+  --mi-ok: #2FB983;
+  --mi-ok-soft: rgba(47, 185, 131, .16);
+  --mi-watch: #E2A83D;
+  --mi-watch-soft: rgba(226, 168, 61, .16);
+  --mi-alert: #E0805C;
+  --mi-alert-soft: rgba(224, 128, 92, .16);
+
+  /* ── Team / queue hues (aixecats ~10% cap a blanc) ──── */
+  --mi-team-atencio: #796BEA;
+  --mi-team-vendes: #2CAA79;
+  --mi-team-suport: #DDA235;
+  --mi-team-incidencies: #E36754;
+  --mi-team-retencio: #B296FF;
+
+  /* ── Canvas wash ────────────────────────────────────── */
+  --mi-wash: radial-gradient(1100px 600px at 75% -15%, rgba(63, 169, 222, .06), transparent 60%);
+  --fv-canvas-wash:
+    radial-gradient(ellipse 120% 95% at 50% -8%, rgba(255, 255, 255, 0.05) 0%, transparent 58%),
+    radial-gradient(ellipse 90% 80% at 12% 92%, rgba(61, 212, 240, 0.1) 0%, transparent 56%),
+    radial-gradient(ellipse 85% 75% at 88% 18%, rgba(0, 96, 160, 0.1) 0%, transparent 54%),
+    linear-gradient(155deg, rgb(28, 58, 68) 0%, rgb(22, 41, 53) 52%, rgb(16, 34, 52) 100%);
+
+  /* ── Àlies semàntics amb literal propi ──────────────── */
+  --surface-well: #1C1B23;
+  --fv-tile: #1E1D26;
+  --scrollbar-thumb: rgba(237, 236, 242, .28);
+  --scrollbar-thumb-hover: rgba(237, 236, 242, .42);
+  /* Fill de botó primari: blau profund perquè el blanc hi contrasti (5.5:1);
+     l'accent aclarit (#3FA9DE) queda per a text i enllaços. */
+  --accent-fill: #1B6E9E;
+
+  /* ── Effects ────────────────────────────────────────── */
+  --shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 4px 16px rgba(0, 0, 0, .38);
+  --shadow-hover: 0 0 6px rgba(0, 0, 0, .4), 0 0 19px rgba(0, 0, 0, .42);
+  --shadow-lift: 0 8px 30px rgba(0, 0, 0, .5);
+  --shadow-drawer: -30px 0 60px rgba(0, 0, 0, .55);
+
+  /* ── Scrim ──────────────────────────────────────────── */
+  --scrim-bg: rgba(0, 0, 0, .5);
+  --scrim-bg-strong: rgba(0, 0, 0, .6);
 }
 
 /* ── Shared status pulses ─────────────────────────────── */
@@ -342,7 +428,7 @@
   width: 64px;
   display: block;
   object-fit: contain;
-  filter: drop-shadow(0 10px 28px rgba(0, 128, 190, .14));
+  filter: drop-shadow(0 10px 28px color-mix(in srgb, var(--mi-accent) 14%, transparent));
 }
 
 .app-splash__status {
@@ -475,7 +561,7 @@ textarea,
   flex-shrink: 0;
   height: var(--topbar-h);
   padding: 0 var(--sp-8);
-  background: rgba(251, 250, 248, .8);
+  background: var(--surface-canvas);
   backdrop-filter: var(--blur-bar);
   border-bottom: 1px solid var(--border-subtle);
 }
@@ -564,9 +650,9 @@ textarea,
 }
 
 .app-header__button--icon:hover {
-  /* Header background is near-white, so a translucent dark overlay reads as a
+  /* Header background is near-white, so a translucent ink overlay reads as a
      highlight where --surface-raised would be invisible. */
-  background: rgba(27, 25, 36, 0.06);
+  background: color-mix(in srgb, var(--mi-ink) 6%, transparent);
   color: var(--text-strong);
 }
 
@@ -681,7 +767,7 @@ textarea,
 
 .qsearch input:focus {
   width: 260px;
-  border-color: rgba(0, 128, 190, .4);
+  border-color: color-mix(in srgb, var(--mi-accent) 40%, transparent);
   box-shadow: var(--ring-focus);
 }
 
@@ -807,7 +893,7 @@ textarea,
   font-family: var(--font-display);
   font-size: 11px;
   font-weight: var(--fw-semibold);
-  color: #fff;
+  color: var(--mi-av-fg-on-dark);
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -844,16 +930,6 @@ textarea,
   width: 100%;
   height: 100%;
   display: block;
-}
-
-.qsearch-item .si-badge {
-  font-size: 10px;
-  font-weight: var(--fw-semibold);
-  letter-spacing: .03em;
-  text-transform: uppercase;
-  padding: 2px 7px;
-  border-radius: var(--r-pill);
-  flex-shrink: 0;
 }
 
 .qsearch-item .si-kbd {
@@ -1006,7 +1082,7 @@ textarea,
      --mi-accent, so it reads far less intense. The fill is too light for white
      text, so the selected tab uses dark text (--text-strong) like the others
      and is distinguished by its blue tint alone. */
-  --dv-selected-tab-bg: rgba(0, 128, 190, 0.1);
+  --dv-selected-tab-bg: var(--accent-soft);
   --dv-activegroup-visiblepanel-tab-background-color: var(--dv-selected-tab-bg);
   --dv-activegroup-hiddenpanel-tab-background-color: var(--surface-well);
   --dv-inactivegroup-visiblepanel-tab-background-color: var(--dv-selected-tab-bg);
@@ -1026,7 +1102,7 @@ textarea,
   --dv-tab-border-radius: var(--r-sm);
   --dv-tab-margin: 1px 2px 0;
   --dv-floating-group-border: 1px solid var(--border-subtle);
-  --tab-hover-bg: rgba(27, 25, 36, .04);
+  --tab-hover-bg: color-mix(in srgb, var(--mi-ink) 4%, transparent);
 }
 
 .dockview-container > div {
@@ -1054,6 +1130,14 @@ textarea,
   --dv-inactivegroup-visiblepanel-tab-color: var(--accent);
   --dv-activegroup-hiddenpanel-tab-color: var(--text-strong);
   --dv-inactivegroup-hiddenpanel-tab-color: var(--text-strong);
+  /* light-spaced hardcodeja #f9f9fa / white / #f6f5f9 al seu node arrel (més
+     profund que .dockview-container), així que allà guanyen la resolució de
+     var(). Re-apunta'ls a tokens perquè el mode fosc els segueixi. */
+  --dv-activegroup-hiddenpanel-tab-background-color: var(--surface-well);
+  --dv-inactivegroup-hiddenpanel-tab-background-color: var(--surface-well);
+  --dv-tabs-and-actions-container-background-color: var(--surface-raised);
+  --dv-group-view-background-color: var(--surface-raised);
+  --dv-scrollbar-background-color: var(--scrollbar-thumb);
   --dv-tab-font-size: var(--fs-sm);
   --dv-tabs-and-actions-container-font-size: var(--fs-sm);
   /* light-spaced forces a 44px tab-strip height on its own theme root, overriding
@@ -2059,10 +2143,10 @@ textarea,
   font-weight: var(--fw-medium);
   line-height: 1.4;
   color: var(--text-strong);
-  background: rgba(255, 255, 255, 0.7);
+  background: color-mix(in srgb, var(--mi-surface) 70%, transparent);
   backdrop-filter: blur(12px) saturate(1.15);
   -webkit-backdrop-filter: blur(12px) saturate(1.15);
-  border: 1px solid rgba(255, 255, 255, 0.78);
+  border: 1px solid color-mix(in srgb, var(--mi-surface) 78%, transparent);
   box-shadow: var(--shadow-tip);
   border-radius: var(--r-sm);
   padding: 6px 10px;
@@ -2077,9 +2161,9 @@ textarea,
   transform: translateX(-50%) translateY(4px) rotate(45deg);
   width: 8px;
   height: 8px;
-  background: rgba(255, 255, 255, 0.7);
-  border-right: 1px solid rgba(255, 255, 255, 0.78);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.78);
+  background: color-mix(in srgb, var(--mi-surface) 70%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--mi-surface) 78%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--mi-surface) 78%, transparent);
   border-radius: 0 0 2px;
 }
 
@@ -2668,7 +2752,7 @@ textarea,
   /* Cos de la card de l'editor (la vora i l'ombra són de .fe-editor), amb el
      lleu rentat radial de l'stage de l'exploració. */
   background:
-    radial-gradient(700px 380px at 50% 0%, rgba(0, 128, 190, 0.03), transparent 62%),
+    radial-gradient(700px 380px at 50% 0%, color-mix(in srgb, var(--mi-accent) 3%, transparent), transparent 62%),
     var(--surface-card);
 }
 
@@ -3085,7 +3169,7 @@ textarea,
 .fe-ghost--noop {
   border: 1.5px dashed var(--text-disabled);
   border-radius: 3px;
-  background: rgba(183, 179, 192, 0.1);
+  background: color-mix(in srgb, var(--mi-off) 10%, transparent);
 }
 
 .fe-ghost--noop.fe-ghost--edge {
@@ -3829,7 +3913,7 @@ textarea,
   border: none;
   border-radius: 999px;
   background: var(--accent);
-  box-shadow: 0 0 0 1px rgba(27, 25, 36, 0.08);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--mi-ink) 8%, transparent);
 }
 
 .fv-zoom__slider input[type='range']::-moz-range-track {
@@ -3845,7 +3929,7 @@ textarea,
   border: none;
   border-radius: 999px;
   background: var(--accent);
-  box-shadow: 0 0 0 1px rgba(27, 25, 36, 0.08);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--mi-ink) 8%, transparent);
 }
 
 .fv-zoom__slider input[type='range']:focus-visible::-webkit-slider-thumb {
@@ -3984,9 +4068,9 @@ textarea,
   position: absolute;
   display: grid;
   place-items: center;
-  background-color: #f8f7f4;
+  background-color: var(--fv-tile);
   /* Very subtle tile separators — present, but barely there. */
-  box-shadow: inset 0 0 0 1px rgba(27, 25, 36, 0.035);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mi-ink) 3.5%, transparent);
 }
 
 .fv-seat {
@@ -4111,11 +4195,11 @@ textarea,
   color: var(--text-primary);
   /* Glass treatment ported verbatim from the mirador space tooltip. */
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.7);
+  background: color-mix(in srgb, var(--mi-surface) 70%, transparent);
   backdrop-filter: blur(12px) saturate(1.15);
   -webkit-backdrop-filter: blur(12px) saturate(1.15);
-  border: 1px solid rgba(255, 255, 255, 0.78);
-  box-shadow: 0 10px 28px rgba(27, 25, 36, 0.1);
+  border: 1px solid color-mix(in srgb, var(--mi-surface) 78%, transparent);
+  box-shadow: var(--shadow-lift);
   pointer-events: none;
 }
 
@@ -4254,7 +4338,7 @@ textarea,
    inline stroke="currentColor" presentation attributes. Shade/highlight
    overlays (.fv3d-noedge) are skipped so strokes don't stack. */
 .fv3d-seat polygon:not(.fv3d-noedge) {
-  stroke: #1b1924;
+  stroke: var(--mi-ink);
   stroke-opacity: 0.04;
   stroke-width: 0.5px;
   stroke-linejoin: round;
@@ -4264,7 +4348,7 @@ textarea,
    near-black. Shade/highlight overlays (.fv3d-noedge) are skipped so strokes
    don't stack and read as fully opaque. */
 .fv3d-seat:hover polygon:not(.fv3d-noedge) {
-  stroke: #1b1924;
+  stroke: var(--mi-ink);
   stroke-opacity: 0.55;
   stroke-width: 1.1px;
   stroke-linejoin: round;
@@ -4463,7 +4547,7 @@ textarea,
   position: fixed;
   inset: 0;
   z-index: 300;
-  background: rgba(27, 25, 36, 0.28);
+  background: var(--scrim-bg);
   backdrop-filter: blur(1px);
   -webkit-backdrop-filter: blur(1px);
   opacity: 0;
@@ -5381,7 +5465,7 @@ textarea,
   display: grid;
   place-items: center;
   padding: var(--sp-6);
-  background: rgba(27, 25, 36, 0.24);
+  background: var(--scrim-bg);
   backdrop-filter: blur(4px);
   opacity: 0;
   visibility: hidden;
@@ -6114,14 +6198,14 @@ textarea,
 }
 
 .status-screen__btn--primary {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--accent-fg);
-  border-color: var(--accent);
+  border-color: var(--accent-fill);
 }
 
 .status-screen__btn--primary:hover {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
   filter: brightness(0.95);
 }
 
@@ -6153,14 +6237,14 @@ textarea,
 }
 
 .error-fallback__btn--primary {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--accent-fg);
-  border-color: var(--accent);
+  border-color: var(--accent-fill);
 }
 
 .error-fallback__btn--primary:hover {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
   filter: brightness(0.95);
 }
 
@@ -6173,7 +6257,7 @@ textarea,
   align-items: center;
   justify-content: center;
   padding: var(--sp-8);
-  background: rgba(27, 25, 36, 0.42);
+  background: var(--scrim-bg-strong);
   backdrop-filter: var(--blur-glass);
 }
 
@@ -6240,19 +6324,43 @@ textarea,
    canvas, white cards, SLDS blue bars, system sans).
    ─────────────────────────────────────────────────────────────────────── */
 
-.panel-shell--wallboard {
-  padding: 0;
-  background: #f3f3f3;
-}
-
+.panel-shell--wallboard,
 .wb {
   --wb-blue: #1b96ff;
   --wb-blue-strong: #0176d3;
+  --wb-canvas: #f3f3f3;
+  --wb-surface: #fff;
+  --wb-hover: #f3f3f3;
   --wb-border: #c9c7c5;
   --wb-border-soft: #e5e5e5;
+  --wb-track: #e5e5e5;
   --wb-text: #181818;
   --wb-text-muted: #747474;
+  --wb-on-blue: #fff;
   --wb-grid: #ecebea;
+}
+
+/* Rèplica SLDS també en fosc: mateixa estructura, canvas Lightning fosc.
+   Els blaus SLDS es mantenen (marca). */
+[data-theme='dark'] .panel-shell--wallboard,
+[data-theme='dark'] .wb {
+  --wb-canvas: #1a1a1e;
+  --wb-surface: #242428;
+  --wb-hover: #2e2e33;
+  --wb-border: #4a4a4f;
+  --wb-border-soft: #38383d;
+  --wb-track: #3a3a3f;
+  --wb-text: #e5e5e5;
+  --wb-text-muted: #9a9a9f;
+  --wb-grid: #2e2e33;
+}
+
+.panel-shell--wallboard {
+  padding: 0;
+  background: var(--wb-canvas);
+}
+
+.wb {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Salesforce Sans',
     Arial, sans-serif;
   color: var(--wb-text);
@@ -6282,13 +6390,13 @@ textarea,
   padding: 0 8px;
   border: 1px solid var(--wb-border);
   border-radius: 4px;
-  background: #fff;
+  background: var(--wb-surface);
   cursor: pointer;
   transition: background 0.1s ease;
 }
 
 .wb__control:hover {
-  background: #f3f3f3;
+  background: var(--wb-hover);
 }
 
 /* Card grid — 3 columns at the standard wallboard width, collapsing down. */
@@ -6316,7 +6424,7 @@ textarea,
   display: flex;
   flex-direction: column;
   min-height: 340px;
-  background: #fff;
+  background: var(--wb-surface);
   border: 1px solid var(--wb-border-soft);
   border-radius: 8px;
   box-shadow: 0 2px 2px rgba(0, 0, 0, 0.04);
@@ -6369,7 +6477,7 @@ textarea,
   font-size: 11px;
   font-weight: 600;
   color: var(--wb-text-muted);
-  background: #fff;
+  background: var(--wb-surface);
 }
 
 /* "Pròximament" tag — shared with Settings modal rows (.settings-row--soon). */
@@ -6402,12 +6510,12 @@ textarea,
   height: 28px;
   border: 1px solid var(--wb-border);
   border-radius: 4px;
-  background: #fff;
+  background: var(--wb-surface);
   cursor: pointer;
 }
 
 .wb-card__menu:hover {
-  background: #f3f3f3;
+  background: var(--wb-hover);
 }
 
 .wb-card__body {
@@ -6615,7 +6723,7 @@ textarea,
 .wb-hbar__value {
   font-size: 11px;
   font-weight: 600;
-  color: #fff;
+  color: var(--wb-on-blue);
   padding-right: 6px;
   font-variant-numeric: tabular-nums;
 }
@@ -6639,7 +6747,7 @@ textarea,
 
 .wb-donut__track {
   fill: none;
-  stroke: #e5e5e5;
+  stroke: var(--wb-track);
 }
 
 .wb-donut__arc {
@@ -6677,7 +6785,7 @@ textarea,
 }
 
 .wb-donut__swatch--free {
-  background: #e5e5e5;
+  background: var(--wb-track);
 }
 
 /* ── Big stats ─────────────────────────────────────────────────────────── */

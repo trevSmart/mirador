@@ -1,6 +1,10 @@
 /* Space canvas background wash — subtle dual-tone gradient behind room renders.
    Each preset pairs two hues (e.g. green → lilac); buildSpaceCanvasWash() layers
-   corner radials plus a linear blend so the shift reads without overpowering. */
+   corner radials plus a linear blend so the shift reads without overpowering.
+   The hue pairs are shared by both themes; only the base they are mixed toward
+   changes (near-white in light, the dark canvas ink in dark). */
+
+import type { ResolvedTheme } from './theme'
 
 export type SpaceCanvasTint = 'none' | 'blue' | 'teal' | 'neutral' | 'warm' | 'violet'
 
@@ -54,39 +58,51 @@ function rgbString([r, g, b]: [number, number, number]): string {
   return `rgb(${r}, ${g}, ${b})`
 }
 
-function lightenRgb(rgb: [number, number, number], whiteRatio: number): string {
+/** Base each hue is mixed toward: near-white paper (light) / canvas ink (dark). */
+const WASH_BASE: Record<ResolvedTheme, [number, number, number]> = {
+  light: [255, 255, 255],
+  dark: [20, 19, 25], // #141319 — keep in sync with --mi-bg dark in index.css
+}
+
+function towardBase(rgb: [number, number, number], base: [number, number, number], ratio: number): string {
   const [r, g, b] = rgb
-  const t = Math.min(1, Math.max(0, whiteRatio))
+  const [br, bg, bb] = base
+  const t = Math.min(1, Math.max(0, ratio))
   return rgbString([
-    Math.round(r + (255 - r) * t),
-    Math.round(g + (255 - g) * t),
-    Math.round(b + (255 - b) * t),
+    Math.round(r + (br - r) * t),
+    Math.round(g + (bg - g) * t),
+    Math.round(b + (bb - b) * t),
   ])
 }
 
-function tintFrom(hex: string, whiteRatio: number): string {
+function tintFrom(hex: string, base: [number, number, number], ratio: number): string {
   const rgb = parseHex(hex)
   if (!rgb) return '#eceef1'
-  return lightenRgb(rgb, whiteRatio)
+  return towardBase(rgb, base, ratio)
 }
 
-function blendTint(a: string, b: string, blendT: number, whiteRatio: number): string {
-  return lightenRgb(mixColors(a, b, blendT), whiteRatio)
+function blendTint(a: string, b: string, blendT: number, base: [number, number, number], ratio: number): string {
+  return towardBase(mixColors(a, b, blendT), base, ratio)
 }
 
 /** Build the full --fv-canvas-wash value for a given dual-tone preset. */
-export function buildSpaceCanvasWash(tint: SpaceCanvasTint): string {
+export function buildSpaceCanvasWash(tint: SpaceCanvasTint, theme: ResolvedTheme = 'light'): string {
   if (tint === 'none') return NO_CANVAS_FILL
   const { primary, secondary } = TINT_PAIRS[tint]
   const [r1, g1, b1] = parseHex(primary)!
   const [r2, g2, b2] = parseHex(secondary)!
 
-  const baseStart = tintFrom(secondary, 0.83)
-  const baseMid = blendTint(secondary, primary, 0.5, 0.86)
-  const baseEnd = tintFrom(primary, 0.83)
+  const base = WASH_BASE[theme]
+  const ratio = theme === 'dark' ? 0.8 : 0.83
+  const midRatio = theme === 'dark' ? 0.84 : 0.86
+  const sheenAlpha = theme === 'dark' ? 0.05 : 0.12
+
+  const baseStart = tintFrom(secondary, base, ratio)
+  const baseMid = blendTint(secondary, primary, 0.5, base, midRatio)
+  const baseEnd = tintFrom(primary, base, ratio)
 
   return [
-    'radial-gradient(ellipse 120% 95% at 50% -8%, rgba(255, 255, 255, 0.12) 0%, transparent 58%)',
+    `radial-gradient(ellipse 120% 95% at 50% -8%, rgba(255, 255, 255, ${sheenAlpha}) 0%, transparent 58%)`,
     `radial-gradient(ellipse 90% 80% at 12% 92%, rgba(${r2}, ${g2}, ${b2}, 0.1) 0%, transparent 56%)`,
     `radial-gradient(ellipse 85% 75% at 88% 18%, rgba(${r1}, ${g1}, ${b1}, 0.1) 0%, transparent 54%)`,
     `linear-gradient(155deg, ${baseStart} 0%, ${baseMid} 52%, ${baseEnd} 100%)`,
