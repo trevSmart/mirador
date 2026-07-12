@@ -37,9 +37,16 @@ export function primeEntities<S extends SourceId, TParams, TData>(
 export function pruneEntities<S extends SourceId, TParams, TData>(
   queryClient: QueryClient,
   resource: EntityResource<S, TParams, TData | null>,
-  keep: Iterable<string>,
+  keep: Iterable<TParams>,
 ): void {
-  const kept = new Set(keep)
+  // Normalitzem amb el mateix `keyOf` que va construir les claus cachejades: si
+  // comparéssim els params crus, la poda només seria correcta per als resources
+  // amb un `keyOf` identitat, i esborraria entrades vàlides per a la resta.
+  const kept = new Set<string>()
+  for (const params of keep) {
+    kept.add(resource.keyOf(params))
+  }
+
   const cached = queryClient
     .getQueryCache()
     .findAll({ queryKey: entityListKey(resource.source, resource.entity) })
