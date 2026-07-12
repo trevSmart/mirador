@@ -6,6 +6,7 @@ export type AppIconName =
   | 'add'
   | 'apex'
   | 'area'
+  | 'arrow-left'
   | 'arrow-right'
   | 'brush'
   | 'builder'
@@ -58,6 +59,7 @@ export const APP_ICON_NAMES: readonly AppIconName[] = [
   'add',
   'apex',
   'area',
+  'arrow-left',
   'arrow-right',
   'brush',
   'builder',

@@ -4563,6 +4563,24 @@ textarea,
   }
 }
 
+/* Going back the slide reverses (incoming from the left, outgoing drifting
+   right) so the motion itself reads as returning. */
+.detail-drawer__content--leaving.is-back {
+  animation-name: dd-content-out-back;
+}
+
+@keyframes dd-content-out-back {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(12%);
+  }
+}
+
 .detail-drawer__content--nav {
   position: relative;
   z-index: 1;
@@ -4581,6 +4599,20 @@ textarea,
   }
 }
 
+.detail-drawer__content--nav.is-back {
+  animation-name: dd-content-in-back;
+}
+
+@keyframes dd-content-in-back {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
 
   /* Collapse the slide to an instant swap, but keep a non-zero duration so the
@@ -4591,6 +4623,16 @@ textarea,
   }
 
   @keyframes dd-content-in {
+    from {
+      transform: none;
+    }
+
+    to {
+      transform: none;
+    }
+  }
+
+  @keyframes dd-content-in-back {
     from {
       transform: none;
     }
