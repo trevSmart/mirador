@@ -169,6 +169,7 @@ function WindowLightVolume({
   far,
   blurId,
   blend,
+  beam,
 }: {
   id: string
   floor: string
@@ -179,6 +180,7 @@ function WindowLightVolume({
   far: [Point, Point]
   blurId: string
   blend: SpaceView3DPalette['beamBlend']
+  beam: SpaceView3DPalette['beam']
 }) {
   const nx = (near[0][0] + near[1][0]) / 2
   const ny = (near[0][1] + near[1][1]) / 2
@@ -195,21 +197,21 @@ function WindowLightVolume({
            across the whole room. The stops are bunched toward the start (mid at
            28%, fully clear by 62%) to compress the fade into the near zone. */}
         <linearGradient id={floorGrad} x1={nx} y1={ny} x2={fx} y2={fy} gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="rgba(150,178,214,0.07)" />
-          <stop offset="16%" stopColor="rgba(178,200,228,0.022)" />
-          <stop offset="38%" stopColor="rgba(220,232,245,0)" />
+          <stop offset="0%" stopColor={beam.floor[0]} />
+          <stop offset="16%" stopColor={beam.floor[1]} />
+          <stop offset="38%" stopColor={beam.floor[2]} />
         </linearGradient>
         {/* Translucent ceiling of the shaft, fading on the same fast curve. */}
         <linearGradient id={capGrad} x1={nx} y1={ny} x2={fx} y2={fy} gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="rgba(160,186,220,0.095)" />
-          <stop offset="18%" stopColor="rgba(196,214,234,0.03)" />
-          <stop offset="40%" stopColor="rgba(232,240,248,0)" />
+          <stop offset="0%" stopColor={beam.cap[0]} />
+          <stop offset="18%" stopColor={beam.cap[1]} />
+          <stop offset="40%" stopColor={beam.cap[2]} />
         </linearGradient>
         {/* Side walls: a touch denser so the wedge edges read as volume. */}
         <linearGradient id={sideGrad} x1={nx} y1={ny} x2={fx} y2={fy} gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="rgba(154,182,218,0.08)" />
-          <stop offset="18%" stopColor="rgba(188,208,232,0.028)" />
-          <stop offset="40%" stopColor="rgba(226,236,246,0)" />
+          <stop offset="0%" stopColor={beam.side[0]} />
+          <stop offset="18%" stopColor={beam.side[1]} />
+          <stop offset="40%" stopColor={beam.side[2]} />
         </linearGradient>
       </defs>
       <polygon points={cap} fill={`url(#${capGrad})`} />
@@ -733,7 +735,7 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
       const [g0, g1, t0, t1] = edge === 'N' ? backRightOpeningEdge(x, y, basis) : backLeftOpeningEdge(x, y, basis)
       const pane = openingQuad(g0, g1, t0, t1, 'window')
       const vol = windowBeamVolume(pane, basis, SUN_X, SUN_Y, SUN_LENGTH, SUN_SPREAD, SUN_TOP_REACH)
-      sunbeams.push(<WindowLightVolume key={`beam-${key}-${edge}`} id={`${svgIdPrefix}-beam-${c}-${r}-${edge}`} blurId={beamBlurId} blend={pal.beamBlend} {...vol} />)
+      sunbeams.push(<WindowLightVolume key={`beam-${key}-${edge}`} id={`${svgIdPrefix}-beam-${c}-${r}-${edge}`} blurId={beamBlurId} blend={pal.beamBlend} beam={pal.beam} {...vol} />)
     }
 
     for (const d of dividersByKey.get(key) ?? []) {
