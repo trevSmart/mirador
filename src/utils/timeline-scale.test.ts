@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { hourTicks, hourWindow, msToPercent, segmentBox } from './timeline-scale'
 
 const HOUR = 3_600_000
@@ -91,6 +91,48 @@ describe('hourWindow', () => {
     // Same regression as the hourTicks local-hour test: in +5:30/+5:45 zones,
     // epoch-hour rounding lands the window bounds on local :30/:45.
     const w = hourWindow(base + 8 * HOUR + 20 * 60_000, base + 11 * HOUR + 5 * 60_000)
+    expect(new Date(w.start).getMinutes()).toBe(0)
+    expect(new Date(w.end).getMinutes()).toBe(0)
+  })
+})
+
+// In whole-hour-offset zones (UTC on CI, Europe/Madrid locally) local midnight
+// IS a whole epoch hour, so the local-hour tests above would also pass with
+// the old epoch-hour rounding. This block pins a +5:30 zone so the regression
+// stays guarded on any runner. Node invalidates the Date timezone cache when
+// process.env.TZ changes, and the first test asserts that actually happened.
+describe('local-hour rounding under a non-whole-hour UTC offset', () => {
+  const originalTZ = process.env.TZ
+
+  beforeAll(() => {
+    process.env.TZ = 'Asia/Kolkata'
+  })
+
+  afterAll(() => {
+    if (originalTZ === undefined) delete process.env.TZ
+    else process.env.TZ = originalTZ
+  })
+
+  it('the runtime honours the pinned timezone (guard is effective)', () => {
+    expect(new Date(2026, 6, 9).getTimezoneOffset()).toBe(-330)
+  })
+
+  it('hourTicks stays on local whole hours', () => {
+    const kolkataBase = new Date(2026, 6, 9, 0, 0, 0, 0).getTime()
+    const ticks = hourTicks(kolkataBase + 8 * HOUR + 10 * 60_000, kolkataBase + 11 * HOUR)
+    expect(ticks.map((t) => t.label)).toEqual(['9:00', '10:00', '11:00'])
+    for (const tick of ticks) {
+      const d = new Date(tick.ms)
+      expect(d.getMinutes()).toBe(0)
+      expect(tick.label).toBe(`${d.getHours()}:00`)
+    }
+  })
+
+  it('hourWindow bounds stay on local whole hours', () => {
+    const kolkataBase = new Date(2026, 6, 9, 0, 0, 0, 0).getTime()
+    const w = hourWindow(kolkataBase + 8 * HOUR + 20 * 60_000, kolkataBase + 11 * HOUR + 5 * 60_000)
+    expect(w.start).toBe(kolkataBase + 8 * HOUR)
+    expect(w.end).toBe(kolkataBase + 12 * HOUR)
     expect(new Date(w.start).getMinutes()).toBe(0)
     expect(new Date(w.end).getMinutes()).toBe(0)
   })
