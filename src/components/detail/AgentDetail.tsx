@@ -31,6 +31,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
   // Només les cues d'aquest agent, cadascuna una entrada de caché pròpia ja
   // primada pel snapshot: no cal subscriure's a la col·lecció sencera de cues.
   const queues = useEntities(queueResource, queueIds).map((query) => query.data)
+  const channels = [...CHANNELS].sort((a, b) => (agent.chans[b] ?? 0) - (agent.chans[a] ?? 0))
   const canEdit = caps?.canChangeSkills === true
   const [adding, setAdding] = useState(false)
   const [tab, setTab] = useState<AgentTab>('detail')
@@ -122,10 +123,11 @@ export function AgentDetail({ agent }: { agent: Agent }) {
 
       <DrawerSection title="Canals">
         <div className="dd-channels">
-          {CHANNELS.map((ch) => (
+          {channels.map((ch) => (
             <div key={ch} className="dd-channel" data-active={(agent.chans[ch] ?? 0) > 0 ? 'true' : 'false'}>
-              <SfIcon channel={ch} sldsSize="x-small" />
-              <FadeValue value={agent.chans[ch] ?? 0} />
+              <SfIcon channel={ch} size={20} />
+              <span className="dd-channel__label">{channelLabel(ch)}</span>
+              <FadeValue className="dd-channel__count" value={agent.chans[ch] ?? 0} />
             </div>
           ))}
         </div>
@@ -141,8 +143,9 @@ export function AgentDetail({ agent }: { agent: Agent }) {
               return (
                 <DetailRow
                   key={skill.id}
-                  leading={<SfIcon name="skill" size={28} recordId={skill.id} />}
+                  leading={<SfIcon name="skill" size={28} recordId={skillId ?? skill.id} />}
                   title={skill.name}
+                  recordId={skillId ?? skill.id}
                   meta={[skill.type, skill.level != null ? `Nivell ${skill.level}` : null]
                     .filter(Boolean)
                     .join(' · ')}
@@ -208,6 +211,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
                   key={queue.id}
                   leading={<SfIcon name="queue" size={28} recordId={queue.id} />}
                   title={queue.name}
+                  recordId={queue.id}
                   meta={
                     <>
                       <FadeValue value={queue.backlog} /> backlog · <FadeValue value={queue.online} /> en línia
@@ -236,6 +240,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
                   key={item.id}
                   leading={<SfIcon sprite={icon.sprite} symbol={icon.symbol} size={28} recordId={item.id} />}
                   title={item.subject || item.label}
+                  recordId={item.id}
                   meta={meta}
                   onClick={() => openWork(item.id)}
                 />

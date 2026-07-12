@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { Agent } from '../../api/types'
 import { devLog } from '../../dev/dev-log'
+import { colorFromRecordId } from '../../utils/color-from-string'
 import { AgentAvatar } from '../AgentRow'
 import { AppIcon } from '../ds/AppIcon'
 import type { AppIconName } from '../ds/app-icon-names.generated'
@@ -78,12 +79,15 @@ export function EmptyHint({ children }: { children: ReactNode }) {
 export function DetailRow({
   leading,
   title,
+  recordId,
   meta,
   trailing,
   onClick,
 }: {
   leading: ReactNode
   title: ReactNode
+  /** ID del registre: acoloreix el nom amb el color derivat, com a les llistes. */
+  recordId?: string | null
   meta?: ReactNode
   trailing?: ReactNode
   onClick?: () => void
@@ -92,7 +96,12 @@ export function DetailRow({
     <>
       {leading}
       <span className="dd-row__body">
-        <span className="dd-row__name">{title}</span>
+        <span
+          className="dd-row__name"
+          style={recordId ? { color: colorFromRecordId(recordId) } : undefined}
+        >
+          {title}
+        </span>
         {meta ? <span className="dd-row__meta">{meta}</span> : null}
       </span>
       {trailing}

@@ -65,6 +65,7 @@ export function QueueDetail({ queue }: { queue: Queue }) {
                   key={item.id}
                   leading={<SfIcon sprite={icon.sprite} symbol={icon.symbol} sldsSize="small" recordId={item.id} />}
                   title={item.subject}
+                  recordId={item.id}
                   meta={
                     <>
                       {channelLabel(item.channelKey)} · <FadeValue value={formatSeconds(item.ageSec)} />
