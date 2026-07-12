@@ -11,6 +11,8 @@ export interface DetailTarget {
   id: string
 }
 
+export type DetailNavDirection = 'forward' | 'back'
+
 export interface DetailDrawerContextValue {
   detail: DetailTarget | null
   openAgent: (id: string) => void
@@ -19,6 +21,12 @@ export interface DetailDrawerContextValue {
   openWork: (id: string) => void
   openAsTab: (target: DetailTarget) => void
   close: () => void
+  back: () => void
+  canGoBack: boolean
+  forward: () => void
+  canGoForward: boolean
+  /** Direcció de l'última navegació, per orientar l'animació de transició. */
+  navDirection: DetailNavDirection
 }
 
 export const DetailDrawerContext = createContext<DetailDrawerContextValue | null>(null)

@@ -10,7 +10,8 @@ import { SkillDetail } from './SkillDetail'
 import { WorkItemDetail } from './WorkItemDetail'
 
 export function DetailDrawer() {
-  const { detail, close, openAsTab } = useDetailDrawer()
+  const { detail, close, openAsTab, back, canGoBack, forward, canGoForward, navDirection } =
+    useDetailDrawer()
   const agents = useAgents()
   const queues = useQueues()
   const skills = useSkills()
@@ -56,11 +57,27 @@ export function DetailDrawer() {
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') close()
+      if (event.key === 'Escape') {
+        close()
+        return
+      }
+      if (!open) return
+      // Arrow keys walk the drilldown history, but never while typing in a field.
+      const target = event.target as HTMLElement | null
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) {
+        return
+      }
+      if (event.key === 'ArrowLeft' && canGoBack) {
+        event.preventDefault()
+        back()
+      } else if (event.key === 'ArrowRight' && canGoForward) {
+        event.preventDefault()
+        forward()
+      }
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [close])
+  }, [close, open, back, canGoBack, forward, canGoForward])
 
   function renderContent(target: DetailTarget | null): ReactNode {
     if (target?.kind === 'agent') {
@@ -97,6 +114,17 @@ export function DetailDrawer() {
         inert={!open}
       >
         <div className="detail-drawer__toolbar">
+          {canGoBack && (
+            <button
+              type="button"
+              className="detail-drawer__icon-btn"
+              onClick={back}
+              aria-label="Torna al detall anterior"
+              title="Torna al detall anterior"
+            >
+              <AppIcon name="arrow-left" size={16} />
+            </button>
+          )}
           <button
             type="button"
             className="detail-drawer__icon-btn"
@@ -113,13 +141,21 @@ export function DetailDrawer() {
         </div>
         <div className="detail-drawer__scroll" ref={setScrollEl}>
           {leaving && (
-            <div key={`${leaving.kind}:${leaving.id}`} className="detail-drawer__content--leaving" aria-hidden="true">
+            <div
+              key={`${leaving.kind}:${leaving.id}`}
+              className={`detail-drawer__content--leaving${navDirection === 'back' ? ' is-back' : ''}`}
+              aria-hidden="true"
+            >
               {renderContent(leaving)}
             </div>
           )}
           <div
             key={shown ? `${shown.kind}:${shown.id}` : 'empty'}
-            className={leaving ? 'detail-drawer__content--nav' : undefined}
+            className={
+              leaving
+                ? `detail-drawer__content--nav${navDirection === 'back' ? ' is-back' : ''}`
+                : undefined
+            }
             onAnimationEnd={(e) => {
               if (e.target === e.currentTarget) setLeaving(null)
             }}

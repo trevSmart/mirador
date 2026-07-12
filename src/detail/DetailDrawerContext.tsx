@@ -17,12 +17,22 @@ import {
   DetailDrawerContext,
   type DetailDrawerContextValue,
   type DetailKind,
+  type DetailNavDirection,
   type DetailTarget,
 } from './detail-drawer-context'
 import { useRegisterModal } from '../modals/useRegisterModal'
 
 export function DetailDrawerProvider({ children }: { children: ReactNode }) {
   const [detail, setDetail] = useState<DetailTarget | null>(null)
+  // Drilldown history, browser-style: every open while the drawer is already
+  // showing another record pushes the outgoing target onto `stack`; going back
+  // moves the current one onto `forwardStack` so it can be revisited, and any
+  // fresh open discards the forward branch.
+  const [stack, setStack] = useState<DetailTarget[]>([])
+  const [forwardStack, setForwardStack] = useState<DetailTarget[]>([])
+  // Cap on va l'última navegació: el drawer orienta el cross-slide amb això
+  // (enrere llisca en direcció contrària perquè es llegeixi com a retorn).
+  const [navDirection, setNavDirection] = useState<DetailNavDirection>('forward')
 
   // Registra l'estat obert al registre de modals (obert quan detail !== null)
   useRegisterModal('detail-drawer', detail !== null)
@@ -31,11 +41,38 @@ export function DetailDrawerProvider({ children }: { children: ReactNode }) {
   const skills = useSkills()
   const work = useWork()
 
-  const open = useCallback((kind: DetailKind, id: string) => {
-    devLog.action('detail:open', `${kind} ${id}`)
-    recordDetailOpen({ kind, id })
-    setDetail({ kind, id })
-  }, [])
+  const open = useCallback(
+    (kind: DetailKind, id: string) => {
+      if (detail && detail.kind === kind && detail.id === id) return
+      devLog.action('detail:open', `${kind} ${id}`)
+      recordDetailOpen({ kind, id })
+      if (detail) setStack((prev) => [...prev, detail])
+      setForwardStack([])
+      setNavDirection('forward')
+      setDetail({ kind, id })
+    },
+    [detail],
+  )
+
+  const back = useCallback(() => {
+    const target = stack[stack.length - 1]
+    if (!target || !detail) return
+    devLog.action('detail:back', `${target.kind} ${target.id}`)
+    setStack((prev) => prev.slice(0, -1))
+    setForwardStack((prev) => [...prev, detail])
+    setNavDirection('back')
+    setDetail(target)
+  }, [stack, detail])
+
+  const forward = useCallback(() => {
+    const target = forwardStack[forwardStack.length - 1]
+    if (!target || !detail) return
+    devLog.action('detail:forward', `${target.kind} ${target.id}`)
+    setForwardStack((prev) => prev.slice(0, -1))
+    setStack((prev) => [...prev, detail])
+    setNavDirection('forward')
+    setDetail(target)
+  }, [forwardStack, detail])
 
   const openAsTab = useCallback(
     (target: DetailTarget) => {
@@ -47,6 +84,8 @@ export function DetailDrawerProvider({ children }: { children: ReactNode }) {
       // mantenim el drawer perquè l'usuari no perdi el context.
       if (appNavigator.openDetail(target, title)) {
         setDetail(null)
+        setStack([])
+        setForwardStack([])
       }
     },
     [agents, queues, skills, work],
@@ -60,9 +99,18 @@ export function DetailDrawerProvider({ children }: { children: ReactNode }) {
       openSkill: (id) => open('skill', id),
       openWork: (id) => open('work', id),
       openAsTab,
-      close: () => setDetail(null),
+      close: () => {
+        setDetail(null)
+        setStack([])
+        setForwardStack([])
+      },
+      back,
+      canGoBack: stack.length > 0,
+      forward,
+      canGoForward: forwardStack.length > 0,
+      navDirection,
     }),
-    [detail, open, openAsTab],
+    [detail, open, openAsTab, back, stack, forward, forwardStack, navDirection],
   )
 
   return <DetailDrawerContext.Provider value={value}>{children}</DetailDrawerContext.Provider>
