@@ -57,11 +57,14 @@ export function DetailDrawer() {
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
+      // A closed drawer answers to nothing: close() rebuilds the history arrays,
+      // so reacting to Escape here would rerender every consumer on any stray
+      // Escape in the app (dismissing another modal, say).
+      if (!open) return
       if (event.key === 'Escape') {
         close()
         return
       }
-      if (!open) return
       // Arrow keys walk the drilldown history, but never while typing in a field.
       const target = event.target as HTMLElement | null
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) {
