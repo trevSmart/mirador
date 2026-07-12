@@ -59,6 +59,20 @@ describe('hourTicks', () => {
   it('returns [] for an empty window', () => {
     expect(hourTicks(base + HOUR, base)).toEqual([])
   })
+
+  it('places every tick on a local whole hour and labels it with that hour', () => {
+    // Regression for non-whole-hour UTC offsets (e.g. Asia/Kolkata, +5:30):
+    // ticks must sit on local wall-clock hours, not whole epoch (UTC) hours,
+    // and the ":00" label must describe the tick's actual local time.
+    const ticks = hourTicks(base + 8 * HOUR + 10 * 60_000, base + 11 * HOUR)
+    expect(ticks.map((t) => t.label)).toEqual(['9:00', '10:00', '11:00'])
+    for (const tick of ticks) {
+      const d = new Date(tick.ms)
+      expect(d.getMinutes()).toBe(0)
+      expect(d.getSeconds()).toBe(0)
+      expect(tick.label).toBe(`${d.getHours()}:00`)
+    }
+  })
 })
 
 describe('hourWindow', () => {
@@ -71,5 +85,13 @@ describe('hourWindow', () => {
   it('guarantees a non-empty span', () => {
     const w = hourWindow(base, base)
     expect(w.end).toBe(w.start + HOUR)
+  })
+
+  it('rounds to local wall-clock hours regardless of UTC offset', () => {
+    // Same regression as the hourTicks local-hour test: in +5:30/+5:45 zones,
+    // epoch-hour rounding lands the window bounds on local :30/:45.
+    const w = hourWindow(base + 8 * HOUR + 20 * 60_000, base + 11 * HOUR + 5 * 60_000)
+    expect(new Date(w.start).getMinutes()).toBe(0)
+    expect(new Date(w.end).getMinutes()).toBe(0)
   })
 })

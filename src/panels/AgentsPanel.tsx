@@ -22,16 +22,20 @@ export function AgentsPanel({ params }: IDockviewPanelProps) {
 
   // A presence filter can arrive from the Home ("Veure tots"). Default to the
   // full roster when opened directly (via tab / add-panel menu).
-  const incomingFilter = parseAgentsPanelParams(params)?.presenceFilter ?? null
-  const [filter, setFilter] = useState<AgentPresenceFilter>(incomingFilter ?? ALL_FILTER)
+  const incoming = parseAgentsPanelParams(params)
+  const [filter, setFilter] = useState<AgentPresenceFilter>(
+    incoming?.presenceFilter ?? ALL_FILTER,
+  )
 
-  // Re-clicking the Home link on a different chip calls updateParameters, which
-  // re-renders us with a new params value — adopt it durant el render (patró
-  // convergent) en comptes d'un efecte, comparant amb el valor anterior.
-  const [prevIncomingFilter, setPrevIncomingFilter] = useState(incomingFilter)
-  if (incomingFilter && incomingFilter !== prevIncomingFilter) {
-    setPrevIncomingFilter(incomingFilter)
-    setFilter(incomingFilter)
+  // Re-clicking the Home link calls updateParameters, which re-renders us with
+  // a new params value — adopt it durant el render (patró convergent) en
+  // comptes d'un efecte. Keyed on the revision the sender bumps on every push
+  // (not on the filter value): re-sending the same filter after the user
+  // changed it locally must still win.
+  const [prevRevision, setPrevRevision] = useState(incoming?.revision)
+  if (incoming && incoming.revision !== prevRevision) {
+    setPrevRevision(incoming.revision)
+    setFilter(incoming.presenceFilter)
   }
 
   const connectedAgents = useMemo(() => getConnectedAgents(agents), [agents])

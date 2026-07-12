@@ -22,10 +22,14 @@ export function useSpacePlanData(): SpacePlanDataState {
 
   useEffect(() => {
     let cancelled = false
+    // Latest-wins sequencing: rapid saves fire overlapping loads, and an older
+    // response resolving last must not overwrite a newer plan.
+    let latestRequestId = 0
 
     const reload = () => {
+      const requestId = ++latestRequestId
       void loadSpacePlan(client, isMockMode).then((next) => {
-        if (cancelled) return
+        if (cancelled || requestId !== latestRequestId) return
         setData(next)
         setLoaded(true)
       })

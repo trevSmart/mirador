@@ -144,7 +144,24 @@ export function isSalesforceConfigured(config: PublicOAuthConfig): boolean {
   return Boolean(config.sfClientId)
 }
 
-async function refreshAccessSession(
+function refreshAccessSession(session: OAuthSession): Promise<OAuthSession> {
+  // Deduplicate concurrent refreshes (same pattern as pendingOAuthCallback):
+  // with refresh-token rotation, parallel refresh_token grants mean only the
+  // first wins and every loser gets invalid_grant → spurious logout.
+  if (pendingSessionRefresh) {
+    return pendingSessionRefresh
+  }
+
+  pendingSessionRefresh = performSessionRefresh(session).finally(() => {
+    pendingSessionRefresh = null
+  })
+
+  return pendingSessionRefresh
+}
+
+let pendingSessionRefresh: Promise<OAuthSession> | null = null
+
+async function performSessionRefresh(
   session: OAuthSession,
 ): Promise<OAuthSession> {
   if (!session.refreshToken) {
@@ -173,8 +190,14 @@ export async function getValidAccessSession(): Promise<OAuthSession | null> {
   try {
     session = await refreshAccessSession(session)
     return isSessionValid(session) ? session : null
-  } catch {
-    clearOAuthSession()
+  } catch (error) {
+    // Only a definitive OAuth rejection (e.g. invalid_grant) means the
+    // refresh token is dead. A transient network failure says nothing about
+    // it, so keep the stored session for the next attempt instead of forcing
+    // a re-login.
+    if (error instanceof OAuthError) {
+      clearOAuthSession()
+    }
     return null
   }
 }
@@ -189,8 +212,12 @@ export async function recoverAccessSession(): Promise<OAuthSession | null> {
   try {
     const refreshed = await refreshAccessSession(session)
     return isSessionValid(refreshed) ? refreshed : null
-  } catch {
-    clearOAuthSession()
+  } catch (error) {
+    // Same as getValidAccessSession: only clear on a definitive OAuth
+    // rejection, never on a transient network failure.
+    if (error instanceof OAuthError) {
+      clearOAuthSession()
+    }
     return null
   }
 }
@@ -286,8 +313,13 @@ async function completeOAuthCallback(): Promise<OAuthSession> {
 }
 
 export async function fetchUserInfo(session: OAuthSession): Promise<SalesforceUserInfo> {
+  // The org's userinfo endpoint has no CORS allowlist entry for this app, so a
+  // direct browser call is blocked. Go through the same-origin server proxy
+  // instead (like the token and photo proxies), which forwards the request to
+  // the instance host.
+  const host = new URL(session.instanceUrl).host
   const response = await fetch(
-    `${session.instanceUrl.replace(/\/$/, '')}/services/oauth2/userinfo`,
+    `/api/oauth/userinfo?host=${encodeURIComponent(host)}`,
     {
       headers: { Authorization: `Bearer ${session.accessToken}` },
     },

@@ -3,6 +3,12 @@ import { PANEL_COMPONENTS, getPanelDefinition, type PanelType } from './registry
 
 let panelCounter = 0
 
+// Every params push carries a fresh revision so the receiving panel can adopt
+// it even when the values repeat (e.g. re-clicking "Veure tots" on Home after
+// changing the local filter). Seeded with Date.now() so a revision persisted
+// in a saved layout from a previous session is never reissued.
+let paramsRevision = Date.now()
+
 export function getPanelTypeFromComponent(component: string | undefined): PanelType | null {
   if (!component) {
     return null
@@ -45,7 +51,8 @@ export function addPanelByType(
   )
   if (existing) {
     if (params) {
-      existing.api.updateParameters(params)
+      paramsRevision += 1
+      existing.api.updateParameters({ ...params, revision: paramsRevision })
     }
     existing.api.setActive()
     return

@@ -32,7 +32,12 @@ export function Ring({
 }: RingProps) {
   const r = (size - 6) / 2
   const c = 2 * Math.PI * r
-  const f = max ? used / max : 0
+  const f = max ? Math.min(1, Math.max(0, used / max)) : 0
+
+  // Photo URL that failed to load: hide the <img> via state (never detach the
+  // node ourselves — React owns it). Comparing against `photo` means a new URL
+  // retries automatically.
+  const [failedSrc, setFailedSrc] = useState<string | null>(null)
 
   // Animate the arc on data change: hold the previous fill for one painted
   // frame so the browser always interpolates old → new (a plain re-render can
@@ -104,15 +109,13 @@ export function Ring({
         }}
       >
         <span>{initials}</span>
-        {photo && (
+        {photo && photo !== failedSrc && (
           <img
             src={photo}
             alt=""
             loading="lazy"
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-            onError={(e) => {
-              e.currentTarget.remove()
-            }}
+            onError={() => setFailedSrc(photo)}
           />
         )}
       </div>

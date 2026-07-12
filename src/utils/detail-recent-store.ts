@@ -32,6 +32,27 @@ export function setDetailRecentResolver(fn: DetailRecentResolver | null): void {
   resolver = fn
 }
 
+// Version + listeners let the UI (GlobalSearch's keyboard list) stay in sync
+// with writes made from anywhere (drawer, rows), not just its own selections.
+let version = 0
+const listeners = new Set<() => void>()
+
+export function getDetailRecentsVersion(): number {
+  return version
+}
+
+export function subscribeDetailRecents(listener: () => void): () => void {
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
+  }
+}
+
+function notifyDetailRecentsChanged(): void {
+  version += 1
+  for (const listener of [...listeners]) listener()
+}
+
 function sanitizeEntry(raw: unknown): DetailRecentEntry | null {
   if (!raw || typeof raw !== 'object') return null
   const entry = raw as Partial<DetailRecentEntry>
@@ -99,4 +120,5 @@ export function recordDetailOpen(config: {
   const next = loadEntries().filter((entry) => `${entry.kind}:${entry.id}` !== key)
   next.unshift({ ...snapshot, viewedAt: Date.now() })
   saveEntries(next)
+  notifyDetailRecentsChanged()
 }

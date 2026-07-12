@@ -38,25 +38,41 @@ export function segmentBox(
   return { left, width: Math.max(0, right - left) }
 }
 
+/** Latest LOCAL whole hour ≤ ms. Epoch-modulo rounding would give UTC hours,
+    which drift from the wall clock in zones with non-whole-hour offsets
+    (India +5:30, Nepal +5:45) — hence Date arithmetic instead. */
+function floorToLocalHour(ms: number): number {
+  const d = new Date(ms)
+  d.setMinutes(0, 0, 0)
+  return d.getTime()
+}
+
+/** Earliest LOCAL whole hour ≥ ms. */
+function ceilToLocalHour(ms: number): number {
+  const floored = floorToLocalHour(ms)
+  return floored === ms ? ms : floored + HOUR
+}
+
 /** Hour ticks strictly inside (or on the left edge of) the window. Starts at the
-    first whole hour ≥ windowStart, then every hour up to windowEnd. */
+    first local whole hour ≥ windowStart, then every hour up to windowEnd. */
 export function hourTicks(windowStart: number, windowEnd: number): HourTick[] {
   if (windowEnd <= windowStart) return []
   const ticks: HourTick[] = []
-  const first = Math.ceil(windowStart / HOUR) * HOUR
+  const first = ceilToLocalHour(windowStart)
   for (let ms = first; ms <= windowEnd; ms += HOUR) {
     ticks.push({ ms, label: `${new Date(ms).getHours()}:00` })
   }
   return ticks
 }
 
-/** Rounds [minMs, maxMs] out to whole-hour bounds so the axis starts/ends on clean hour marks. */
+/** Rounds [minMs, maxMs] out to local whole-hour bounds so the axis starts/ends
+    on clean local hour marks. */
 export function hourWindow(
   minMs: number,
   maxMs: number,
 ): { start: number; end: number } {
-  const start = Math.floor(minMs / HOUR) * HOUR
-  const end = Math.ceil(maxMs / HOUR) * HOUR
+  const start = floorToLocalHour(minMs)
+  const end = ceilToLocalHour(maxMs)
   // Guarantee a non-empty span even if everything is within one hour.
   return { start, end: end > start ? end : start + HOUR }
 }

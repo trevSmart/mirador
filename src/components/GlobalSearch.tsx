@@ -5,6 +5,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent,
 } from 'react'
@@ -16,7 +17,9 @@ import { colorFromRecordId, textColorFromRecordId } from '../utils/color-from-st
 import { resolveWorkItemIcon } from '../utils/salesforce-object-icon'
 import {
   getDetailRecents,
+  getDetailRecentsVersion,
   setDetailRecentResolver,
+  subscribeDetailRecents,
   type DetailRecentEntry,
 } from '../utils/detail-recent-store'
 import {
@@ -248,7 +251,10 @@ export function GlobalSearch() {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
   const [activeIdx, setActiveIdx] = useState(-1)
-  const [recentsVersion, setRecentsVersion] = useState(0)
+  // Subscribed version: any write to the recents store (a selection here, but
+  // also details opened from rows or drawer cross-links) re-derives the
+  // keyboard list, keeping it aligned with the rendered list.
+  const recentsVersion = useSyncExternalStore(subscribeDetailRecents, getDetailRecentsVersion)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const dropRef = useRef<HTMLDivElement>(null)
@@ -442,7 +448,6 @@ export function GlobalSearch() {
       } else if (kind === 'skill') {
         openSkill(id)
       }
-      setRecentsVersion((value) => value + 1)
       closePanel(true)
     },
     [agents, closePanel, openAgent, openQueue, openSkill],

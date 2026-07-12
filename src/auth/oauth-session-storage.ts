@@ -6,6 +6,28 @@ const AES_KEY_STORAGE_KEY = 'mirador_oauth_aes_key'
 let cachedSession: OAuthSession | null = null
 let aesKeyPromise: Promise<CryptoKey> | null = null
 
+type OAuthSessionListener = (session: OAuthSession | null) => void
+
+const sessionListeners = new Set<OAuthSessionListener>()
+
+function notifySessionListeners(session: OAuthSession | null): void {
+  for (const listener of sessionListeners) {
+    listener(session)
+  }
+}
+
+/**
+ * Notifies whenever the cached/stored session is replaced or cleared. The
+ * client layer refreshes tokens outside React, so the AuthProvider subscribes
+ * here to keep the context session from going stale. Returns an unsubscribe.
+ */
+export function subscribeOAuthSession(listener: OAuthSessionListener): () => void {
+  sessionListeners.add(listener)
+  return () => {
+    sessionListeners.delete(listener)
+  }
+}
+
 function isPlainSession(value: unknown): value is OAuthSession {
   if (!value || typeof value !== 'object') {
     return false
@@ -110,6 +132,9 @@ export async function initOAuthSessionStorage(): Promise<OAuthSession | null> {
 
 export async function saveOAuthSession(session: OAuthSession): Promise<void> {
   cachedSession = session
+  // Notify before the async encrypt/persist so subscribers see the new
+  // session (and its Bearer token) immediately.
+  notifySessionListeners(session)
   const encrypted = await encryptSession(session)
   localStorage.setItem(SESSION_KEY, encrypted)
 }
@@ -123,6 +148,7 @@ export function clearOAuthSession(): void {
   localStorage.removeItem(SESSION_KEY)
   sessionStorage.removeItem(AES_KEY_STORAGE_KEY)
   aesKeyPromise = null
+  notifySessionListeners(null)
 }
 
 export function isSessionValid(session: OAuthSession | null): session is OAuthSession {

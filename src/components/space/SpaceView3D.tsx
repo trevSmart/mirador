@@ -671,6 +671,15 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
     )
   }
 
+  // Three paint layers, emitted bottom-to-top: `shell` (back walls, slab faces
+  // and floor tiles — everything at or below floor level), then `sunbeams`,
+  // then `body` (upright furniture: dividers and seats/towers). Splitting the
+  // shell from the furniture is what lets the daylight land ON the floor yet
+  // stay UNDER every tower. Each layer keeps the far→near cell order; nothing
+  // in the shell can ever be in front of an upright object (walls only exist
+  // on true back edges and slab faces hang below floor level), so the split
+  // never breaks painter's-algorithm occlusion.
+  const shell: ReactNode[] = []
   const body: ReactNode[] = []
   const sunbeams: ReactNode[] = []
   for (const [c, r] of ordered) {
@@ -678,22 +687,22 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
     const key = `${c},${r}`
 
     if (brVis(c, r)) {
-      body.push(<polygon key={`wbr-${key}`} points={backRightWallVec(x, y, basis)} fill={WALL_FILL} />)
-      body.push(<polygon key={`wbr2-${key}`} points={backRightWallVec(x, y, basis)} fill="rgba(27,25,36,.032)" stroke="rgba(27,25,36,.05)" strokeWidth={0.5} />)
-      body.push(<polygon key={`wbrs-${key}`} points={backRightWallVec(x, y, basis)} fill={`url(#${wallSheenRightId})`} />)
-      body.push(<polygon key={`wbrt-${key}`} points={backRightWallTopVec(x, y, basis)} fill={WALL_FILL} stroke="rgba(27,25,36,.06)" strokeWidth={0.5} />)
-      body.push(<polygon key={`wbrt2-${key}`} points={backRightWallTopVec(x, y, basis)} fill="rgba(255,255,255,.4)" />)
+      shell.push(<polygon key={`wbr-${key}`} points={backRightWallVec(x, y, basis)} fill={WALL_FILL} />)
+      shell.push(<polygon key={`wbr2-${key}`} points={backRightWallVec(x, y, basis)} fill="rgba(27,25,36,.032)" stroke="rgba(27,25,36,.05)" strokeWidth={0.5} />)
+      shell.push(<polygon key={`wbrs-${key}`} points={backRightWallVec(x, y, basis)} fill={`url(#${wallSheenRightId})`} />)
+      shell.push(<polygon key={`wbrt-${key}`} points={backRightWallTopVec(x, y, basis)} fill={WALL_FILL} stroke="rgba(27,25,36,.06)" strokeWidth={0.5} />)
+      shell.push(<polygon key={`wbrt2-${key}`} points={backRightWallTopVec(x, y, basis)} fill="rgba(255,255,255,.4)" />)
       const op = openingPolys(c, r, 'N', x, y)
-      if (op) body.push(op)
+      if (op) shell.push(op)
     }
     if (blVis(c, r)) {
-      body.push(<polygon key={`wbl-${key}`} points={backLeftWallVec(x, y, basis)} fill={WALL_FILL} />)
-      body.push(<polygon key={`wbl2-${key}`} points={backLeftWallVec(x, y, basis)} fill="rgba(27,25,36,.05)" stroke="rgba(27,25,36,.06)" strokeWidth={0.5} />)
-      body.push(<polygon key={`wbls-${key}`} points={backLeftWallVec(x, y, basis)} fill={`url(#${wallSheenLeftId})`} />)
-      body.push(<polygon key={`wblt-${key}`} points={backLeftWallTopVec(x, y, basis)} fill={WALL_FILL} stroke="rgba(27,25,36,.07)" strokeWidth={0.5} />)
-      body.push(<polygon key={`wblt2-${key}`} points={backLeftWallTopVec(x, y, basis)} fill="rgba(255,255,255,.28)" />)
+      shell.push(<polygon key={`wbl-${key}`} points={backLeftWallVec(x, y, basis)} fill={WALL_FILL} />)
+      shell.push(<polygon key={`wbl2-${key}`} points={backLeftWallVec(x, y, basis)} fill="rgba(27,25,36,.05)" stroke="rgba(27,25,36,.06)" strokeWidth={0.5} />)
+      shell.push(<polygon key={`wbls-${key}`} points={backLeftWallVec(x, y, basis)} fill={`url(#${wallSheenLeftId})`} />)
+      shell.push(<polygon key={`wblt-${key}`} points={backLeftWallTopVec(x, y, basis)} fill={WALL_FILL} stroke="rgba(27,25,36,.07)" strokeWidth={0.5} />)
+      shell.push(<polygon key={`wblt2-${key}`} points={backLeftWallTopVec(x, y, basis)} fill="rgba(255,255,255,.28)" />)
       const op = openingPolys(c, r, 'O', x, y)
-      if (op) body.push(op)
+      if (op) shell.push(op)
     }
 
     // Slab-thickness side faces are tinted to match the back wall they run
@@ -701,19 +710,19 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
     // reads as an arris (a shade below its wall), not the same plane.
     // slabRight ‖ back-LEFT wall (vector v); slabLeft ‖ back-RIGHT wall (vector u).
     if (!has(c + 1, r)) {
-      body.push(<polygon key={`rf-${key}`} points={slabRightFaceVec(x, y, basis)} fill={WALL_FILL} />)
-      body.push(<polygon key={`rf2-${key}`} points={slabRightFaceVec(x, y, basis)} fill="rgba(27,25,36,.12)" />)
+      shell.push(<polygon key={`rf-${key}`} points={slabRightFaceVec(x, y, basis)} fill={WALL_FILL} />)
+      shell.push(<polygon key={`rf2-${key}`} points={slabRightFaceVec(x, y, basis)} fill="rgba(27,25,36,.12)" />)
     }
     if (!has(c, r + 1)) {
-      body.push(<polygon key={`lf-${key}`} points={slabLeftFaceVec(x, y, basis)} fill={WALL_FILL} />)
-      body.push(<polygon key={`lf2-${key}`} points={slabLeftFaceVec(x, y, basis)} fill="rgba(27,25,36,.102)" />)
+      shell.push(<polygon key={`lf-${key}`} points={slabLeftFaceVec(x, y, basis)} fill={WALL_FILL} />)
+      shell.push(<polygon key={`lf2-${key}`} points={slabLeftFaceVec(x, y, basis)} fill="rgba(27,25,36,.102)" />)
     }
 
     const tilePoints = diamondPointsVec(x, y, basis, 0)
-    body.push(<polygon key={`t-${key}`} points={tilePoints} fill={(c + r) % 2 === 0 ? SPACE_FILL_A : SPACE_FILL_B} />)
-    body.push(<polygon key={`tg-${key}`} points={tilePoints} fill={`url(#${spaceGrainId})`} opacity={0.5} />)
-    body.push(<polygon key={`ts-${key}`} points={tilePoints} fill={`url(#${spaceSheenId})`} />)
-    body.push(<polygon key={`t2-${key}`} points={tilePoints} fill="none" stroke="rgba(27,25,36,.065)" />)
+    shell.push(<polygon key={`t-${key}`} points={tilePoints} fill={(c + r) % 2 === 0 ? SPACE_FILL_A : SPACE_FILL_B} />)
+    shell.push(<polygon key={`tg-${key}`} points={tilePoints} fill={`url(#${spaceGrainId})`} opacity={0.5} />)
+    shell.push(<polygon key={`ts-${key}`} points={tilePoints} fill={`url(#${spaceSheenId})`} />)
+    shell.push(<polygon key={`t2-${key}`} points={tilePoints} fill="none" stroke="rgba(27,25,36,.065)" />)
 
     // Daylight beams are collected separately and drawn as one layer over the
     // whole space (below seats), so a beam can stretch across several tiles
@@ -802,8 +811,9 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
           <g filter={`url(#${svgIdPrefix}-shadow)`} fill="rgba(27,25,36,.17)">
             {shadows}
           </g>
-          {body}
+          {shell}
           {sunbeams}
+          {body}
           {showAvatars && hoveredAgent && hoverPos ? (
             // key per agent → fresh mount when moving avatar→avatar, so the height
             // hook starts at the final height instead of sliding from the previous.

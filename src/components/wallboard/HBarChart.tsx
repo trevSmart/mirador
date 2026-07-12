@@ -2,6 +2,8 @@
    Statuses" and "Agent Work Status". Renders a top axis with gridlines,
    left-aligned category labels, blue bars, and the value at the bar end. */
 
+import { AXIS_SEGMENTS, axisTicks } from './axis-scale'
+
 interface HBarDatum {
   label: string
   value: number
@@ -11,24 +13,15 @@ interface HBarChartProps {
   data: HBarDatum[]
 }
 
-function axisMax(values: number[]): number {
-  const max = Math.max(0, ...values)
-  if (max <= 5) return 5
-  if (max <= 10) return 10
-  if (max <= 20) return 20
-  if (max <= 100) return Math.ceil(max / 20) * 20
-  return Math.ceil(max / 50) * 50
-}
-
 export function HBarChart({ data }: HBarChartProps) {
   const values = data.map((d) => d.value)
   if (values.every((v) => v === 0)) {
     return <p className="wb-nodata">We can&rsquo;t draw this chart because there&rsquo;s no data.</p>
   }
 
-  const max = axisMax(values)
-  const ticks = 4
-  const tickValues = Array.from({ length: ticks + 1 }, (_, i) => Math.round((max / ticks) * i))
+  const ticks = AXIS_SEGMENTS
+  const tickValues = axisTicks(values)
+  const max = tickValues[tickValues.length - 1]
 
   return (
     <div className="wb-hbar">

@@ -107,12 +107,28 @@ export function DevConsoleProvider({ children }: { children: ReactNode }) {
         setEntries([])
       } else {
         setEntries((prev) => {
-          const next = [...prev, event.entry]
+          /* Dedupe by id (ids are monotonic): a flush pending at mount can
+             deliver entries the useState initializer already picked up. */
+          const lastId = prev.length > 0 ? prev[prev.length - 1].id : 0
+          const fresh = event.entries.filter((e) => e.id > lastId)
+          if (fresh.length === 0) return prev
+          const next = [...prev, ...fresh]
           return next.length > MAX_ENTRIES ? next.slice(next.length - MAX_ENTRIES) : next
         })
       }
     })
-    return unsub
+    /* Re-sync: anything pushed between the useState initializer and this
+       subscription (descendants' renders and mount effects run first) is in
+       the buffer but was never delivered to us. The buffer is the source of
+       truth, so a full replace is always safe. Deferred so setState runs
+       outside the effect body (no-setState-in-effect). */
+    const timer = setTimeout(() => {
+      setEntries(devLog.getEntries())
+    }, 0)
+    return () => {
+      clearTimeout(timer)
+      unsub()
+    }
   }, [])
 
   const show = useCallback(() => {
