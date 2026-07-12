@@ -9,7 +9,7 @@ vi.mock('../api/data-hooks', () => ({
   useWork: () => [],
 }))
 
-const recordDetailOpen = vi.fn()
+const recordDetailOpen = vi.fn<(entry: unknown) => void>()
 vi.mock('../utils/detail-recent-store', () => ({
   recordDetailOpen: (entry: unknown) => recordDetailOpen(entry),
 }))
@@ -18,7 +18,7 @@ vi.mock('../modals/useRegisterModal', () => ({
   useRegisterModal: () => {},
 }))
 
-const openDetail = vi.fn(() => true)
+const openDetail = vi.fn<() => boolean>(() => true)
 vi.mock('../navigation/app-navigator', () => ({
   appNavigator: { openDetail: () => openDetail() },
 }))
