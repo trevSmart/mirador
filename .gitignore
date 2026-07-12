@@ -54,9 +54,6 @@ $RECYCLE.BIN/
 .sf-scan/
 .sf-x/
 .mcp.json
-.playwright-cli/page-2026-07-12T22-23-51-510Z.yml
-.playwright-cli/page-2026-07-12T22-25-25-088Z.yml
-.playwright-cli/page-2026-07-12T22-27-12-729Z.yml
-.playwright-cli/page-2026-07-12T22-29-39-011Z.yml
-.playwright-cli/page-2026-07-12T22-30-46-426Z.yml
-.playwright-cli/page-2026-07-12T22-31-23-740Z.yml
+
+# Playwright CLI snapshots (generated locally during browser automation)
+.playwright-cli/
