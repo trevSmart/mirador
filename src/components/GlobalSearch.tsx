@@ -11,7 +11,7 @@ import {
 } from 'react'
 import { useAgents, useQueues, useSkills } from '../api/data-hooks'
 import { devLog } from '../dev/dev-log'
-import type { Agent, PresenceStatus, Queue, Skill } from '../api/types'
+import type { Agent, Queue, Skill } from '../api/types'
 import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { colorFromRecordId, textColorFromRecordId } from '../utils/color-from-string'
 import { resolveWorkItemIcon } from '../utils/salesforce-object-icon'
@@ -28,27 +28,21 @@ import {
   type SearchItemRef,
   type SearchWorkHit,
 } from '../utils/global-search'
-import { presenceLabel, agentInitials } from '../utils/format'
+import { agentInitials } from '../utils/format'
 import { syncDropdownPanel } from '../utils/sync-dropdown-panel'
 import { useSalesforcePhoto } from '../hooks/useSalesforcePhoto'
 import { AppIcon } from './ds/AppIcon'
 import { SfIcon } from './ds/SfIcon'
+import { StatusBadge } from './StatusBadge'
 
 const CONTENT_TRANSITION_MS = 220
-
-const PRESENCE_COLOR: Record<PresenceStatus, string> = {
-  online: 'var(--status-ok)',
-  busy: 'var(--status-alert)',
-  away: 'var(--status-watch)',
-  offline: 'var(--text-disabled)',
-}
 
 function SearchIcon() {
   return <AppIcon name="search" size={14} />
 }
 
 interface SearchAgentItemProps {
-  agent: Pick<Agent, 'id' | 'name' | 'role' | 'status' | 'photo'>
+  agent: Pick<Agent, 'id' | 'name' | 'role' | 'status' | 'photo' | 'presenceStatusLabel'>
   active: boolean
   onSelect: () => void
 }
@@ -81,7 +75,6 @@ function SearchAgentAvatar({ id, name, photo }: { id: string; name: string; phot
 }
 
 function SearchAgentItem({ agent, active, onSelect }: SearchAgentItemProps) {
-  const statusColor = PRESENCE_COLOR[agent.status]
   return (
     <button
       type="button"
@@ -95,15 +88,7 @@ function SearchAgentItem({ agent, active, onSelect }: SearchAgentItemProps) {
         <div className="si-title">{agent.name}</div>
         <div className="si-meta">{agent.role}</div>
       </span>
-      <span
-        className="si-badge"
-        style={{
-          color: statusColor,
-          background: `color-mix(in srgb, ${statusColor} 12%, transparent)`,
-        }}
-      >
-        {presenceLabel(agent.status)}
-      </span>
+      <StatusBadge status={agent.status} label={agent.presenceStatusLabel} compact />
     </button>
   )
 }
@@ -506,6 +491,7 @@ export function GlobalSearch() {
             <SearchGroup label="Agents">
               {recentAgents.map((entry) => {
                 const resolved = resolveRecentEntry(entry, agents, queues, skills)
+                const fullAgent = agents.find((agent) => agent.id === resolved.id)
                 const currentIdx = idx++
                 return (
                   <SearchAgentItem
@@ -515,7 +501,8 @@ export function GlobalSearch() {
                       name: resolved.title,
                       role: resolved.meta,
                       status: resolved.status ?? 'offline',
-                      photo: agents.find((agent) => agent.id === resolved.id)?.photo ?? null,
+                      photo: fullAgent?.photo ?? null,
+                      presenceStatusLabel: fullAgent?.presenceStatusLabel ?? null,
                     }}
                     active={activeIdx === currentIdx}
                     onSelect={() => handleSelect('agent', resolved.id)}
