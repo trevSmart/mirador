@@ -1,4 +1,5 @@
 import { type KeyboardEvent, useEffect, useRef, useState } from 'react'
+import { AppIcon } from '../ds/AppIcon'
 import { ButtonIcon } from '../ds/ButtonIcon'
 import { syncDropdownPanel } from '../../utils/sync-dropdown-panel'
 import {
@@ -115,9 +116,7 @@ export function SpaceZoomControl({ zoom, onChange, minZoom = SPACE_ZOOM_MIN, max
       >
         <span className="fv-zoom-drop__label">Zoom</span>
         <span className="fv-zoom-drop__value">{label}</span>
-        <span className="fv-zoom-drop__caret" aria-hidden="true">
-          ▾
-        </span>
+        <AppIcon name="down" size={10} className="fv-zoom-drop__caret" />
       </button>
       <div ref={dropRef} className="fv-zoom-drop__panel dropdown-panel" role="dialog" hidden>
         <SpaceZoomSlider zoom={zoom} onChange={onChange} minZoom={minZoom} maxZoom={maxZoom} />

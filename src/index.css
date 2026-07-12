@@ -3773,8 +3773,13 @@ textarea,
 }
 
 .fv-zoom-drop__caret {
-  font-size: 10px;
   color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.fv-zoom-drop__trigger[aria-expanded='true'] .fv-zoom-drop__caret {
+  transform: rotate(180deg);
 }
 
 .fv-zoom-drop__panel {
@@ -5763,9 +5768,17 @@ textarea,
 }
 
 .ds-select__caret {
-  font-size: 10px;
   color: var(--text-muted);
   flex-shrink: 0;
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.ds-select__trigger[aria-expanded='true'] .ds-select__caret {
+  transform: rotate(180deg);
+}
+
+.ds-select__trigger:disabled .ds-select__caret {
+  color: var(--text-disabled);
 }
 
 .ds-select__panel {
