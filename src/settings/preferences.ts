@@ -30,6 +30,13 @@ export interface Preferences {
    */
   showOfflineAgents: boolean
 
+  /**
+   * Tint a record's Salesforce object icon with the colour derived from its id.
+   * When off, the icon keeps the official SLDS object colour and only the record
+   * name stays tinted.
+   */
+  tintRecordIcons: boolean
+
   /** Space panel view to open with. */
   defaultSpaceView: SpaceViewMode
   /** Show agent avatars on the space. */
@@ -59,6 +66,7 @@ export const PREFERENCES_DEFAULTS: Preferences = {
   alertPct: 30,
   showOfflineAgents: true,
 
+  tintRecordIcons: true,
   defaultSpaceView: '3d',
   showAvatars: true,
   animations: true,
@@ -105,6 +113,7 @@ function sanitizePreferences(raw: Partial<Preferences> | null | undefined): Pref
     alertPct: clampInt(p.alertPct, d.alertPct, 5, 100),
     showOfflineAgents: asBool(p.showOfflineAgents, d.showOfflineAgents),
 
+    tintRecordIcons: asBool(p.tintRecordIcons, d.tintRecordIcons),
     defaultSpaceView: oneOf(p.defaultSpaceView, ['2d', '3d'], d.defaultSpaceView),
     showAvatars: asBool(p.showAvatars, d.showAvatars),
     animations: asBool(p.animations, d.animations),

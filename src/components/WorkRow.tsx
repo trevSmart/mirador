@@ -22,7 +22,7 @@ export function WorkRow({ item, agentName }: WorkRowProps) {
       {...useCardActivation(() => openWork(item.id))}
     >
       <div className="work-row__main">
-        <SfIcon sprite={icon.sprite} symbol={icon.symbol} size={28} bg={tint} />
+        <SfIcon sprite={icon.sprite} symbol={icon.symbol} size={28} recordId={item.id} />
         <div className="work-row__body">
           <h3 className="work-row__subject" title={item.subject ?? undefined} style={{ color: tint }}>
             {item.subject}

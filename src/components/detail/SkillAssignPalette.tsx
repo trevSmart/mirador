@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import type { Skill } from '../../api/types'
-import { colorFromRecordId } from '../../utils/color-from-string'
 import { Button, SfIcon } from '../ds'
 import { EmptyHint } from './parts'
 
@@ -62,7 +61,7 @@ export function SkillAssignPalette({ skills, disabled = false, onAssign, onCance
               disabled={disabled}
               onClick={() => onAssign(skill.id, parsedLevel)}
             >
-              <SfIcon name="skill" size={28} bg={colorFromRecordId(skill.id)} />
+              <SfIcon name="skill" size={28} recordId={skill.id} />
               <span className="dd-skill-palette__item-body">
                 <span className="dd-skill-palette__item-name">{skill.name}</span>
                 <span className="dd-skill-palette__item-meta">{skill.type}</span>

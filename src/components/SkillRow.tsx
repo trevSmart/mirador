@@ -17,7 +17,7 @@ export function SkillRow({ skill }: SkillRowProps) {
       {...useCardActivation(() => openSkill(skill.id))}
     >
       <div className="skill-row__main">
-        <SfIcon name="skill" sldsSize="medium" bg={colorFromRecordId(skill.id)} />
+        <SfIcon name="skill" sldsSize="medium" recordId={skill.id} />
         <div className="skill-row__body">
           <h3 className="skill-row__name" title={skill.name} style={{ color: colorFromRecordId(skill.id) }}>
             {skill.name}

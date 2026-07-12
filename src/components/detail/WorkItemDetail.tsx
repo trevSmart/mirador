@@ -55,7 +55,7 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
   return (
     <>
       <header className="dd-head">
-        <SfIcon sprite={icon.sprite} symbol={icon.symbol} size={56} bg={colorFromRecordId(item.id)} />
+        <SfIcon sprite={icon.sprite} symbol={icon.symbol} size={56} recordId={item.id} />
         <div className="dd-head__id">
           <h2 className="dd-head__name" style={{ color: colorFromRecordId(item.id) }}>
             {item.subject}
@@ -100,7 +100,7 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
             {agent ? <MiniAgentRow agent={agent} onClick={() => openAgent(agent.id)} /> : null}
             {queue ? (
               <DetailRow
-                leading={<SfIcon name="queue" sldsSize="small" bg={colorFromRecordId(queue.id)} />}
+                leading={<SfIcon name="queue" sldsSize="small" recordId={queue.id} />}
                 title={queue.name}
                 meta="Cua"
                 onClick={() => openQueue(queue.id)}

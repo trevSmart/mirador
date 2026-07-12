@@ -18,7 +18,7 @@ export function QueueRow({ queue }: QueueRowProps) {
       {...useCardActivation(() => openQueue(queue.id))}
     >
       <div className="queue-row__main">
-        <SfIcon name="queue" sldsSize="medium" bg={colorFromRecordId(queue.id)} />
+        <SfIcon name="queue" sldsSize="medium" recordId={queue.id} />
         <div className="queue-row__body">
           <h3 className="queue-row__name" title={queue.name} style={{ color: colorFromRecordId(queue.id) }}>
             {queue.name}
