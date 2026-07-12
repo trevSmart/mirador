@@ -3,6 +3,8 @@
    bar, and category labels below. Falls back to an SLDS "no data" message
    when every value is zero. */
 
+import { axisTicks } from './axis-scale'
+
 interface VBarDatum {
   label: string
   value: number
@@ -12,24 +14,15 @@ interface VBarChartProps {
   data: VBarDatum[]
 }
 
-/** Nice rounded axis max so gridlines land on whole numbers. */
-function axisMax(values: number[]): number {
-  const max = Math.max(0, ...values)
-  if (max <= 5) return 5
-  if (max <= 10) return 10
-  if (max <= 20) return 20
-  return Math.ceil(max / 10) * 10
-}
-
 export function VBarChart({ data }: VBarChartProps) {
   const values = data.map((d) => d.value)
   if (values.every((v) => v === 0)) {
     return <p className="wb-nodata">We can&rsquo;t draw this chart because there&rsquo;s no data.</p>
   }
 
-  const max = axisMax(values)
-  const ticks = 4
-  const tickValues = Array.from({ length: ticks + 1 }, (_, i) => Math.round((max / ticks) * (ticks - i)))
+  /* Y axis reads top-down: highest tick first. */
+  const tickValues = axisTicks(values).reverse()
+  const max = tickValues[0]
 
   return (
     <div className="wb-vbar">

@@ -1,10 +1,10 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useMemo, useRef, useState } from 'react'
+import type { IDockviewPanelProps } from 'dockview-react'
 import { useAgents, useQueues } from '../api/data-hooks'
 import { AgentAssignPalette } from '../components/space/AgentAssignPalette'
 import { SpaceGrid } from '../components/space/SpaceGrid'
 import { SpaceSidebar } from '../components/space/SpaceSidebar'
 import { SpaceToolbar } from '../components/space/SpaceToolbar'
-import { TOOL_ORDER } from '../components/space/space-tools'
 import { PanelSuspenseFallback } from '../components/PanelSuspenseFallback'
 import { PanelShell } from '../components/PanelState'
 
@@ -13,6 +13,7 @@ const SpaceView3D = lazy(() =>
 )
 import { useSpacePlan } from '../space/useSpacePlan'
 import { useSmoothScroll } from '../hooks/useSmoothScroll'
+import { useSpaceEditorShortcuts } from './useSpaceEditorShortcuts'
 
 /** The editor preview is display-only; seat taps do nothing there. */
 const noop = () => {}
@@ -36,7 +37,7 @@ function loadSplit(): number {
   return DEFAULT_SPLIT
 }
 
-export function SpaceEditorPanel() {
+export function SpaceEditorPanel({ api }: IDockviewPanelProps) {
   const agents = useAgents()
   const queues = useQueues()
   const fp = useSpacePlan()
@@ -50,30 +51,9 @@ export function SpaceEditorPanel() {
   const [split, setSplit] = useState<number>(loadSplit)
   const [logoError, setLogoError] = useState<string | null>(null)
 
-  // Keyboard shortcuts while the editor is mounted: 1–7 pick a tool (palette
-  // order), ⌘/Ctrl+Z undoes, ⇧⌘/Ctrl+Z redoes. Ignored while typing.
-  const { setTool, undo, redo } = fp
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
-        return
-      }
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') {
-        event.preventDefault()
-        if (event.shiftKey) redo()
-        else undo()
-        return
-      }
-      if (event.metaKey || event.ctrlKey || event.altKey) return
-      const digit = Number.parseInt(event.key, 10)
-      if (digit >= 1 && digit <= TOOL_ORDER.length) {
-        setTool(TOOL_ORDER[digit - 1])
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [setTool, undo, redo])
+  // Keyboard shortcuts (1–7 tool, ⌘/Ctrl+Z undo, ⇧⌘/Ctrl+Z redo), gated on
+  // this panel being the active dockview panel and no modal being open.
+  useSpaceEditorShortcuts(api, fp)
 
   const openImportDialog = useCallback(() => {
     fp.clearImportError()

@@ -1,7 +1,10 @@
 /* Dev-mode activity log engine.
    Fully framework-agnostic: no React, no DOM. Captures console output,
-   unhandled errors, and explicit app-level events. Subscribers are notified
-   synchronously on each new entry or clear. */
+   unhandled errors, and explicit app-level events. Buffer writes are
+   synchronous (entries are never lost) but subscriber notification is
+   deferred to a microtask and coalesced: a console.* call during a React
+   render never triggers a synchronous state update, and a subscriber that
+   logs while being notified can never re-enter the pipeline synchronously. */
 
 export type LogLevel =
   | 'log'
@@ -20,7 +23,7 @@ export interface LogEntry {
 }
 
 type Subscriber = (event: LogEvent) => void
-type LogEvent = { type: 'entry'; entry: LogEntry } | { type: 'clear' }
+type LogEvent = { type: 'append'; entries: LogEntry[] } | { type: 'clear' }
 
 export const MAX_ENTRIES = 500
 const ALWAYS_CAPTURE: ReadonlySet<LogLevel> = new Set(['error'])
@@ -31,6 +34,11 @@ const _subscribers = new Set<Subscriber>()
 let _capturing = false
 let _installed = false
 let _globalInstalled = false
+
+// Notification queue: pushes/clears accumulate here until the next flush.
+let _pendingEntries: LogEntry[] = []
+let _pendingClear = false
+let _flushScheduled = false
 
 // ── Original console refs ────────────────────────────────────────────────────
 
@@ -85,7 +93,29 @@ function push(level: LogLevel, ...args: unknown[]): void {
   if (_buffer.length >= MAX_ENTRIES) _buffer.shift()
   _buffer.push(entry)
 
-  emit({ type: 'entry', entry })
+  _pendingEntries.push(entry)
+  scheduleFlush()
+}
+
+/* Notification is decoupled from the console call. Multiple pushes in the
+   same tick coalesce into a single flush; a push made from inside a
+   notification only schedules the next flush, so the console interceptor
+   never recurses. */
+function scheduleFlush(): void {
+  if (_flushScheduled) return
+  _flushScheduled = true
+  queueMicrotask(flush)
+}
+
+function flush(): void {
+  _flushScheduled = false
+  const clear = _pendingClear
+  const entries = _pendingEntries
+  _pendingClear = false
+  _pendingEntries = []
+
+  if (clear) emit({ type: 'clear' })
+  if (entries.length > 0) emit({ type: 'append', entries })
 }
 
 function emit(event: LogEvent): void {
@@ -186,7 +216,9 @@ export const devLog = {
 
   clear(): void {
     _buffer.length = 0
-    emit({ type: 'clear' })
+    _pendingEntries = [] // superseded: they were cleared before delivery
+    _pendingClear = true
+    scheduleFlush()
   },
 
   subscribe(fn: Subscriber): () => void {

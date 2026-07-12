@@ -18,7 +18,6 @@ export interface AuthContextValue {
   authError: string | null
   login: (options?: { forceAccountSelection?: boolean }) => Promise<void>
   logout: () => void
-  refreshSession: () => Promise<OAuthSession | null>
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)

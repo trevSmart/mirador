@@ -8,7 +8,7 @@ import {
   logout as oauthLogout,
   startLogin,
 } from './salesforce-oauth'
-import { initOAuthSessionStorage } from './oauth-session-storage'
+import { initOAuthSessionStorage, subscribeOAuthSession } from './oauth-session-storage'
 import { MOCK_USER_INFO } from '../api/mock/mock-user'
 import { devLog } from '../dev/dev-log'
 import { isMockMode as isServerMockConfig } from '../config/data-source'
@@ -40,11 +40,11 @@ export function AuthProvider({
   const isServerMockMode = isServerMockConfig(config)
   const isMockMode = isServerMockMode || prefs.mockOverride
 
-  const refreshSession = useCallback(async () => {
-    const nextSession = await getValidAccessSession()
-    setSession(nextSession)
-    return nextSession
-  }, [])
+  // The client layer replaces or clears the stored session outside React
+  // (token refresh in getValidAccessSession, recovery in mirador-client,
+  // logout), so track the storage-level session to keep the context — and
+  // every Bearer token consumers derive from it — from going stale.
+  useEffect(() => subscribeOAuthSession(setSession), [])
 
   useEffect(() => {
     let cancelled = false
@@ -163,7 +163,6 @@ export function AuthProvider({
       authError,
       login,
       logout,
-      refreshSession,
     }),
     [
       authError,
@@ -173,7 +172,6 @@ export function AuthProvider({
       isServerMockMode,
       login,
       logout,
-      refreshSession,
       session,
       userInfo,
     ],

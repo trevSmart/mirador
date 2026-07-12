@@ -3,6 +3,12 @@ import type { AgentPresenceFilter } from '../utils/agent-presence-filter'
 /** Params the Agents panel accepts when opened from another panel. */
 export interface AgentsPanelParams {
   presenceFilter: AgentPresenceFilter
+  /**
+   * Bumped by the sender on every push (see addPanelByType), so re-sending the
+   * same filter value still triggers adoption. Absent on panels created
+   * directly with initial params.
+   */
+  revision?: number
 }
 
 /**
@@ -14,9 +20,9 @@ export function parseAgentsPanelParams(params: unknown): AgentsPanelParams | nul
   if (!params || typeof params !== 'object') {
     return null
   }
-  const { presenceFilter } = params as Partial<AgentsPanelParams>
+  const { presenceFilter, revision } = params as Partial<AgentsPanelParams>
   if (typeof presenceFilter !== 'string' || !presenceFilter) {
     return null
   }
-  return { presenceFilter }
+  return { presenceFilter, revision: typeof revision === 'number' ? revision : undefined }
 }
