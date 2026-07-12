@@ -123,7 +123,7 @@ function SearchQueueItem({ queue, active, onSelect }: SearchQueueItemProps) {
       aria-selected={active}
       onClick={onSelect}
     >
-      <SfIcon name="queue" size={30} radius={8} bg={colorFromRecordId(queue.id)} />
+      <SfIcon name="queue" size={30} radius={8} recordId={queue.id} />
       <span className="si-main">
         <div className="si-title">{queue.name}</div>
         <div className="si-meta">
@@ -150,7 +150,7 @@ function SearchSkillItem({ skill, active, onSelect }: SearchSkillItemProps) {
       aria-selected={active}
       onClick={onSelect}
     >
-      <SfIcon name="skill" size={30} radius={8} bg={colorFromRecordId(skill.id)} />
+      <SfIcon name="skill" size={30} radius={8} recordId={skill.id} />
       <span className="si-main">
         <div className="si-title">{skill.name}</div>
         <div className="si-meta">{skill.agents} qualified agents</div>
@@ -182,7 +182,7 @@ function SearchWorkItemRow({ work, active, onSelect }: SearchWorkItemProps) {
         symbol={icon.symbol}
         size={30}
         radius={8}
-        bg={colorFromRecordId(work.workId)}
+        recordId={work.workId}
       />
       <span className="si-main">
         <div className="si-title">{work.title}</div>

@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
 import type { ChannelKey } from '../../api/types'
+import { useRecordTint } from '../../hooks/useRecordTint'
 import {
   CHANNEL,
   NAMED,
@@ -18,8 +19,10 @@ export type { SfIconName, SfIconSize, SfSprite }
    Color del tile:
    - per defecte, el color OFICIAL SLDS de la icona (classe slds-icon-{sprite}-{símbol}
      del icons.css generat);
-   - per a icones que representen un REGISTRE (queue, skill, work item…), el
-     caller el tinta amb `bg={colorFromRecordId(id)}`.
+   - per a icones que representen un REGISTRE (queue, skill, work item…), el caller
+     passa `recordId={id}` i el tint surt de la preferència `tintRecordIcons`: si
+     l'usuari l'ha desactivada, la icona es queda amb el color oficial SLDS i només
+     el nom del registre continua acolorit.
 
    Per a glyphs monocroms de chrome useu AppIcon. Convenció completa: docs/icons.md */
 
@@ -54,8 +57,14 @@ interface SfIconProps {
   size?: number
   radius?: number
   /**
-   * Tint per REGISTRE (normalment colorFromRecordId). Quan s'indica, s'aplica
-   * inline i anul·la el color oficial SLDS de la classe.
+   * ID del REGISTRE que la icona representa (cua, skill, work item…). El tile es
+   * tinta amb el color derivat de l'ID només si la preferència `tintRecordIcons`
+   * és activa; si no, conserva el color oficial SLDS.
+   */
+  recordId?: string | null
+  /**
+   * Tint explícit, al marge de la preferència. Té prioritat sobre `recordId`.
+   * Reserva'l per a eines de dev o casos on el color no és el d'un registre.
    */
   bg?: string
   style?: CSSProperties
@@ -91,11 +100,14 @@ export function SfIcon({
   sldsSize,
   size,
   radius,
+  recordId,
   bg,
   style = {},
   className,
 }: SfIconProps) {
   const ic = resolve({ name, channel, sprite, symbol })
+  const tint = useRecordTint()
+  const fill = bg ?? tint(recordId)
 
   const href = `/slds/${ic.sprite}.svg#${ic.symbol}`
 
@@ -115,9 +127,9 @@ export function SfIcon({
 
   // Estils inline: només els que el CSS SLDS no cobreix
   const containerStyle: CSSProperties = {}
-  if (bg) {
+  if (fill) {
     // Tint per registre: anul·la el color oficial de la classe
-    containerStyle.backgroundColor = bg
+    containerStyle.backgroundColor = fill
   }
   if (size != null) {
     // Mida numèrica: el tile fa exactament `size` i el glyph hi queda centrat

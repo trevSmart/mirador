@@ -4,7 +4,6 @@ import { FadeValue, SfIcon } from '../components/ds'
 import { PanelState } from '../components/PanelState'
 import { SkillRow } from '../components/SkillRow'
 import { groupSkillsByType, totalSkillBacklog } from '../utils/agent-stats'
-import { colorFromRecordId } from '../utils/color-from-string'
 
 export function SkillsPanel() {
   const skills = useSkills()
@@ -33,7 +32,7 @@ export function SkillsPanel() {
               sprite="standard"
               symbol="skill_entity"
               sldsSize="x-small"
-              bg={group.typeId ? colorFromRecordId(group.typeId) : undefined}
+              recordId={group.typeId}
             />
           }
           title={<h3 className="panel-section__title">{group.type}</h3>}

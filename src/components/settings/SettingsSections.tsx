@@ -297,6 +297,17 @@ export function AparencaSection({ draft, patch }: SectionProps) {
     <>
       <SettingsGroup label="Visualització">
         <SettingsRow
+          title="Tenyeix les icones dels registres"
+          hint="Aplica el color del registre a la icona i al nom. Si es desactiva, la icona manté el color oficial de Salesforce i només el nom queda acolorit."
+          control={
+            <ToggleField
+              label="Tenyeix les icones dels registres"
+              checked={draft.tintRecordIcons}
+              onChange={(v) => patch({ tintRecordIcons: v })}
+            />
+          }
+        />
+        <SettingsRow
           title="Fons de les sales"
           hint="To del gradient darrere els renders de planta"
           control={

@@ -28,8 +28,14 @@ pertany:
   categoria): color oficial SLDS. No passis `bg` — la classe
   `slds-icon-{sprite}-{símbol}` del `icons.css` generat ja el posa.
 - **Icona que representa un REGISTRE** (una cua, un skill, un work item
-  concret): tinta-la amb `bg={colorFromRecordId(record.id)}` perquè cada
-  registre es distingeixi visualment. El mateix id dona sempre el mateix color.
+  concret): passa-li `recordId={record.id}` perquè cada registre es distingeixi
+  visualment. El mateix id dona sempre el mateix color. El tint el decideix
+  `SfIcon` a partir de la preferència `tintRecordIcons` (hook `useRecordTint`):
+  si l'usuari la desactiva, la icona es queda amb el color oficial SLDS i només
+  el NOM del registre continua acolorit amb `colorFromRecordId(record.id)` — el
+  color del nom no depèn mai del toggle.
+- `bg` a `SfIcon` és un override explícit que salta la preferència. Reserva'l per
+  a eines de dev; per a un registre, sempre `recordId`.
 
 ## Afegir una icona de la app
 

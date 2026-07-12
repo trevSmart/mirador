@@ -7,7 +7,6 @@ import { Select, type SelectOption } from '../components/ds/Select'
 import { PanelState } from '../components/PanelState'
 import { WorkRow } from '../components/WorkRow'
 import { countWorkByStatus, groupWork, type WorkGroup, type WorkGroupBy } from '../utils/agent-stats'
-import { colorFromRecordId } from '../utils/color-from-string'
 import { channelLabel, formatSeconds, workStatusLabel } from '../utils/format'
 import type { Agent, ChannelKey, WorkStatus } from '../api/types'
 
@@ -58,7 +57,7 @@ function resolveGroupHeader(group: WorkGroup, groupBy: WorkGroupBy, names: NameL
             className="panel-section__icon"
             name="queue"
             sldsSize="x-small"
-            bg={key ? colorFromRecordId(key) : undefined}
+            recordId={key}
           />
         ),
       }

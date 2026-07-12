@@ -138,7 +138,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
               return (
                 <DetailRow
                   key={skill.id}
-                  leading={<SfIcon name="skill" size={28} bg={colorFromRecordId(skill.id)} />}
+                  leading={<SfIcon name="skill" size={28} recordId={skill.id} />}
                   title={skill.name}
                   meta={[skill.type, skill.level != null ? `Nivell ${skill.level}` : null]
                     .filter(Boolean)
@@ -204,7 +204,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
               return (
                 <DetailRow
                   key={queueId}
-                  leading={<SfIcon name="queue" size={28} bg={colorFromRecordId(queue.id)} />}
+                  leading={<SfIcon name="queue" size={28} recordId={queue.id} />}
                   title={queue.name}
                   meta={
                     <>
@@ -232,7 +232,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
               return (
                 <DetailRow
                   key={item.id}
-                  leading={<SfIcon sprite={icon.sprite} symbol={icon.symbol} size={28} bg={colorFromRecordId(item.id)} />}
+                  leading={<SfIcon sprite={icon.sprite} symbol={icon.symbol} size={28} recordId={item.id} />}
                   title={item.subject || item.label}
                   meta={meta}
                   onClick={() => openWork(item.id)}

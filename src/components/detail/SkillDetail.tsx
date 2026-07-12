@@ -36,7 +36,7 @@ export function SkillDetail({ skill }: { skill: Skill }) {
   return (
     <>
       <header className="dd-head">
-        <SfIcon name="skill" size={56} bg={colorFromRecordId(skill.id)} />
+        <SfIcon name="skill" size={56} recordId={skill.id} />
         <div className="dd-head__id">
           <h2 className="dd-head__name" style={{ color: colorFromRecordId(skill.id) }}>
             {skill.name}
