@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { useAgents, useQueues, useSkills, useWork } from '../../api/data-hooks'
 import { useDetailDrawer, type DetailTarget } from '../../detail/detail-drawer-context'
+import { useDetailEntity, type DetailEntity } from '../../detail/use-detail-entity'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { resetScrollTop, useSmoothScroll } from '../../hooks/useSmoothScroll'
 import { AppIcon } from '../ds'
@@ -12,10 +12,6 @@ import { WorkItemDetail } from './WorkItemDetail'
 export function DetailDrawer() {
   const { detail, close, openAsTab, back, canGoBack, forward, canGoForward, navDirection } =
     useDetailDrawer()
-  const agents = useAgents()
-  const queues = useQueues()
-  const skills = useSkills()
-  const work = useWork()
 
   const open = detail !== null
   const trapRef = useFocusTrap<HTMLElement>(open)
@@ -47,6 +43,12 @@ export function DetailDrawer() {
     setPrevDetail(detail)
     if (detail) setShown(detail)
   }
+
+  // Els dos registres vius de la transició: l'entrant i el sortint, que conviuen
+  // mentre dura el cross-slide. Es resolen aquí (dues crides fixes) perquè
+  // renderContent és una funció plana i no hi pot cridar hooks.
+  const shownEntity = useDetailEntity(shown).entity
+  const leavingEntity = useDetailEntity(leaving).entity
 
   // Reset scroll to the top whenever the drawer opens or navigates to a
   // different record, so stale scroll position from the previous view never
@@ -82,21 +84,19 @@ export function DetailDrawer() {
     return () => document.removeEventListener('keydown', onKey)
   }, [close, open, back, canGoBack, forward, canGoForward])
 
-  function renderContent(target: DetailTarget | null): ReactNode {
-    if (target?.kind === 'agent') {
-      const agent = agents.find((a) => a.id === target.id)
-      if (agent) return <AgentDetail agent={agent} />
-    } else if (target?.kind === 'queue') {
-      const queue = queues.find((q) => q.id === target.id)
-      if (queue) return <QueueDetail queue={queue} />
-    } else if (target?.kind === 'skill') {
-      const skill = skills.find((s) => s.id === target.id)
-      if (skill) return <SkillDetail skill={skill} />
-    } else if (target?.kind === 'work') {
-      const item = work.find((w) => w.id === target.id)
-      if (item) return <WorkItemDetail item={item} />
+  function renderContent(entity: DetailEntity | null): ReactNode {
+    switch (entity?.kind) {
+      case 'agent':
+        return <AgentDetail agent={entity.data} />
+      case 'queue':
+        return <QueueDetail queue={entity.data} />
+      case 'skill':
+        return <SkillDetail skill={entity.data} />
+      case 'work':
+        return <WorkItemDetail item={entity.data} />
+      default:
+        return <p className="dd-empty">No s'ha trobat l'element.</p>
     }
-    return <p className="dd-empty">No s'ha trobat l'element.</p>
   }
 
   return (
@@ -149,7 +149,7 @@ export function DetailDrawer() {
               className={`detail-drawer__content--leaving${navDirection === 'back' ? ' is-back' : ''}`}
               aria-hidden="true"
             >
-              {renderContent(leaving)}
+              {renderContent(leavingEntity)}
             </div>
           )}
           <div
@@ -163,7 +163,7 @@ export function DetailDrawer() {
               if (e.target === e.currentTarget) setLeaving(null)
             }}
           >
-            {renderContent(shown)}
+            {renderContent(shownEntity)}
           </div>
         </div>
       </aside>

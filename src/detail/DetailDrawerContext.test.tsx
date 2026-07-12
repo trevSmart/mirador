@@ -1,13 +1,8 @@
+import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
 import { act, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactNode } from 'react'
-
-vi.mock('../api/data-hooks', () => ({
-  useAgents: () => [],
-  useQueues: () => [],
-  useSkills: () => [],
-  useWork: () => [],
-}))
+import { entityKey, makeQueryClient } from '../api/data-service'
 
 const recordDetailOpen = vi.fn<(entry: unknown) => void>()
 vi.mock('../utils/detail-recent-store', () => ({
@@ -18,16 +13,24 @@ vi.mock('../modals/useRegisterModal', () => ({
   useRegisterModal: () => {},
 }))
 
-const openDetail = vi.fn<() => boolean>(() => true)
+const openDetail = vi.fn<(target: unknown, title: string) => boolean>(() => true)
 vi.mock('../navigation/app-navigator', () => ({
-  appNavigator: { openDetail: () => openDetail() },
+  appNavigator: {
+    openDetail: (target: unknown, title: string) => openDetail(target, title),
+  },
 }))
 
 import { DetailDrawerProvider } from './DetailDrawerContext'
 import { useDetailDrawer } from './detail-drawer-context'
 
+let queryClient: QueryClient
+
 function wrapper({ children }: { children: ReactNode }) {
-  return <DetailDrawerProvider>{children}</DetailDrawerProvider>
+  return (
+    <QueryClientProvider client={queryClient}>
+      <DetailDrawerProvider>{children}</DetailDrawerProvider>
+    </QueryClientProvider>
+  )
 }
 
 function renderDrawer() {
@@ -35,6 +38,7 @@ function renderDrawer() {
 }
 
 beforeEach(() => {
+  queryClient = makeQueryClient()
   recordDetailOpen.mockClear()
   openDetail.mockClear()
   openDetail.mockReturnValue(true)
@@ -183,5 +187,50 @@ describe('DetailDrawerProvider — pila de drilldown', () => {
 
     expect(result.current.detail).toEqual({ kind: 'queue', id: 'q1' })
     expect(result.current.canGoBack).toBe(true)
+  })
+})
+
+describe('DetailDrawerProvider — títol de la pestanya', () => {
+  it('el treu de la caché del Data Service, sense subscriure-s\'hi', () => {
+    queryClient.setQueryData(entityKey('salesforce', 'queue', 'q1'), {
+      id: 'q1',
+      name: 'Suport N1',
+    })
+    const { result } = renderDrawer()
+
+    act(() => result.current.openAsTab({ kind: 'queue', id: 'q1' }))
+
+    expect(openDetail).toHaveBeenCalledWith({ kind: 'queue', id: 'q1' }, 'Suport N1')
+    expect(recordDetailOpen).toHaveBeenCalledWith({
+      kind: 'queue',
+      id: 'q1',
+      name: 'Suport N1',
+    })
+  })
+
+  it('un work item es titula amb el subject, no amb el name', () => {
+    queryClient.setQueryData(entityKey('salesforce', 'workItem', 'w1'), {
+      id: 'w1',
+      subject: 'Factura duplicada',
+    })
+    const { result } = renderDrawer()
+
+    act(() => result.current.openAsTab({ kind: 'work', id: 'w1' }))
+
+    expect(openDetail).toHaveBeenCalledWith(
+      { kind: 'work', id: 'w1' },
+      'Factura duplicada',
+    )
+  })
+
+  it('cau al títol genèric quan el registre no és a la caché', () => {
+    const { result } = renderDrawer()
+
+    act(() => result.current.openAsTab({ kind: 'agent', id: 'a-desconegut' }))
+
+    expect(openDetail).toHaveBeenCalledWith(
+      { kind: 'agent', id: 'a-desconegut' },
+      'Agent',
+    )
   })
 })

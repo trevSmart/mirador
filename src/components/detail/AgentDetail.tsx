@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { useCapabilities, useQueues, useSkills } from '../../api/data-hooks'
+import { useCapabilities, useSkills } from '../../api/data-hooks'
+import { queueResource, useEntities } from '../../api/data-service'
 import { useUpdateAgentSkills } from '../../api/skill-mutations'
 import type { Agent, AgentSkillChange, ChannelKey } from '../../api/types'
 import { useDetailDrawer } from '../../detail/detail-drawer-context'
@@ -19,7 +20,6 @@ type AgentTab = 'detail' | 'timeline'
 const CHANNELS: ChannelKey[] = ['veu', 'chat', 'email', 'wa', 'cas']
 
 export function AgentDetail({ agent }: { agent: Agent }) {
-  const queues = useQueues()
   const catalog = useSkills()
   const caps = useCapabilities()
   const mutation = useUpdateAgentSkills()
@@ -28,6 +28,9 @@ export function AgentDetail({ agent }: { agent: Agent }) {
   const photo = useSalesforcePhoto(agent.photo)
   const color = capacityColor(agent)
   const queueIds = [...new Set(agent.queueIds)]
+  // Només les cues d'aquest agent, cadascuna una entrada de caché pròpia ja
+  // primada pel snapshot: no cal subscriure's a la col·lecció sencera de cues.
+  const queues = useEntities(queueResource, queueIds).map((query) => query.data)
   const canEdit = caps?.canChangeSkills === true
   const [adding, setAdding] = useState(false)
   const [tab, setTab] = useState<AgentTab>('detail')
@@ -198,12 +201,11 @@ export function AgentDetail({ agent }: { agent: Agent }) {
           <EmptyHint>Cap cua assignada.</EmptyHint>
         ) : (
           <div className="dd-list">
-            {queueIds.map((queueId) => {
-              const queue = queues.find((q) => q.id === queueId)
+            {queues.map((queue) => {
               if (!queue) return null
               return (
                 <DetailRow
-                  key={queueId}
+                  key={queue.id}
                   leading={<SfIcon name="queue" size={28} recordId={queue.id} />}
                   title={queue.name}
                   meta={
@@ -211,7 +213,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
                       <FadeValue value={queue.backlog} /> backlog · <FadeValue value={queue.online} /> en línia
                     </>
                   }
-                  onClick={() => openQueue(queueId)}
+                  onClick={() => openQueue(queue.id)}
                 />
               )
             })}

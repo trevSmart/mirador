@@ -3,15 +3,6 @@
   "tags": [
     "-lintignore"
   ],
-  // La capa Data Service (src/api/data-service) és una API pública en migració:
-  // part ja es consumeix (useEntity, recordDetailResource…) i part és bastida
-  // per a consumidors que encara no s'han migrat. La declarem com a entry —la
-  // seva superfície d'exports és pública a propòsit— perquè knip no la marqui
-  // com a codi mort mentre dura la migració. Seguiment: issue #78 (eliminar
-  // aquest override quan la migració estigui completa).
-  "entry": [
-    "src/api/data-service/**/*.{ts,tsx}"
-  ],
   "ignore": [
     "dist/**",
     "docs/**",
