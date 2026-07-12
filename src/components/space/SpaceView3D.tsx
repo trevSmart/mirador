@@ -10,6 +10,8 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { SpaceSeatTooltip } from './SpaceSeatTooltip'
+import { SPACE_VIEW_3D_PALETTES, type SpaceView3DPalette } from './space-view-3d-palette'
+import { useResolvedTheme } from '../../settings/use-resolved-theme'
 import { useTowerHeightScale } from '../../hooks/useTowerHeightScale'
 import { useSalesforcePhoto } from '../../hooks/useSalesforcePhoto'
 import { colorFromRecordId, textColorFromRecordId } from '../../utils/color-from-string'
@@ -58,11 +60,7 @@ import {
 
 const GRID_MAX = 49
 
-const PEDESTAL_COLOR = '#E2DFDA'
 const AVATAR_RING = 'var(--accent-30)'
-const SPACE_FILL_A = '#FDFCFB'
-const SPACE_FILL_B = '#FBFAF8'
-const WALL_FILL = 'rgb(252,251,249)'
 
 // Shared sun direction for every window's light shaft, expressed in cell units
 // (so it scales with the camera). Common direction → all beams stay parallel,
@@ -86,13 +84,8 @@ const BAND_OPACITY = 0.68
 // toward the top, giving the whole shaft a vertical "rising glass" gradient.
 const FACE_OPACITY_BOTTOM = 0.6
 const FACE_OPACITY_TOP = 0.22
-// Lit (right) vs. shaded (left) faces keep a faint dark wash for iso depth.
-const SHADE_LEFT = 'rgba(12,10,22,0.12)'
-const SHADE_RIGHT = 'rgba(12,10,22,0.04)'
-// The agent pedestal is a pale, near-space-coloured slab, so the tower's dark
-// side-shading would read as a heavy grey block. Use much softer washes for it.
-const PEDESTAL_SHADE_LEFT = 'rgba(12,10,22,0.05)'
-const PEDESTAL_SHADE_RIGHT = 'rgba(12,10,22,0.015)'
+// Lit (right) vs. shaded (left) face washes, pedestal slab colour, wall/tile
+// fills and the rest of theme-dependent colours live in space-view-3d-palette.
 const BAND_STROKE_OPACITY = 0.55
 const BAND_STROKE_WIDTH = 0.85
 
@@ -175,6 +168,7 @@ function WindowLightVolume({
   near,
   far,
   blurId,
+  blend,
 }: {
   id: string
   floor: string
@@ -184,6 +178,7 @@ function WindowLightVolume({
   near: [Point, Point]
   far: [Point, Point]
   blurId: string
+  blend: SpaceView3DPalette['beamBlend']
 }) {
   const nx = (near[0][0] + near[1][0]) / 2
   const ny = (near[0][1] + near[1][1]) / 2
@@ -193,7 +188,7 @@ function WindowLightVolume({
   const capGrad = `${id}-cap`
   const sideGrad = `${id}-side`
   return (
-    <g style={{ mixBlendMode: 'multiply' }} filter={`url(#${blurId})`}>
+    <g style={{ mixBlendMode: blend }} filter={`url(#${blurId})`}>
       <defs>
         {/* Pool on the floor: brightest where the light lands near the wall, then
            falls off fast so the beam dies close to the window rather than washing
@@ -325,7 +320,7 @@ function TowerFaceGradient({ id, x, y, h }: { id: string; x: number; y: number; 
 
 /** A solid slab band (base or cap) with real thickness: two side faces + a top
    diamond, all opaque and ringed with a stronger-hue outline. */
-function bandFaces(x: number, y: number, b: IsoBasis, h1: number, h2: number, color: string, shadeLeft = SHADE_LEFT, shadeRight = SHADE_RIGHT) {
+function bandFaces(x: number, y: number, b: IsoBasis, h1: number, h2: number, color: string, pal: SpaceView3DPalette, shadeLeft = pal.shadeLeft, shadeRight = pal.shadeRight) {
   return (
     <g style={{ color }}>
       <polygon points={towerLeftFace(x, y, b, h1, h2)} fill="currentColor" fillOpacity={BAND_OPACITY} stroke="currentColor" strokeOpacity={BAND_STROKE_OPACITY} strokeWidth={BAND_STROKE_WIDTH} strokeLinejoin="round" />
@@ -333,14 +328,14 @@ function bandFaces(x: number, y: number, b: IsoBasis, h1: number, h2: number, co
       <polygon points={towerRightFace(x, y, b, h1, h2)} fill="currentColor" fillOpacity={BAND_OPACITY} stroke="currentColor" strokeOpacity={BAND_STROKE_OPACITY} strokeWidth={BAND_STROKE_WIDTH} strokeLinejoin="round" />
       <polygon className="fv3d-noedge" points={towerRightFace(x, y, b, h1, h2)} fill={shadeRight} />
       <polygon points={diamondPointsVec(x, y, b, h2)} fill="currentColor" fillOpacity={BAND_OPACITY} stroke="currentColor" strokeOpacity={BAND_STROKE_OPACITY} strokeWidth={BAND_STROKE_WIDTH} strokeLinejoin="round" />
-      <polygon className="fv3d-noedge" points={diamondPointsVec(x, y, b, h2)} fill="rgba(255,255,255,0.12)" />
+      <polygon className="fv3d-noedge" points={diamondPointsVec(x, y, b, h2)} fill={pal.capSheen} />
     </g>
   )
 }
 
 /** A glassy shaft segment: just the two side faces, painted with the vertical
    colour gradient (no top — the cap band covers the shaft). */
-function shaftSegmentFaces(x: number, y: number, b: IsoBasis, h1: number, h2: number, h: number, color: string, gradId: string) {
+function shaftSegmentFaces(x: number, y: number, b: IsoBasis, h1: number, h2: number, h: number, color: string, gradId: string, pal: SpaceView3DPalette) {
   const fill = `url(#${gradId})`
   return (
     <g style={{ color }}>
@@ -348,37 +343,37 @@ function shaftSegmentFaces(x: number, y: number, b: IsoBasis, h1: number, h2: nu
         <TowerFaceGradient id={gradId} x={x} y={y} h={h} />
       </defs>
       <polygon points={towerLeftFace(x, y, b, h1, h2)} fill={fill} />
-      <polygon className="fv3d-noedge" points={towerLeftFace(x, y, b, h1, h2)} fill={SHADE_LEFT} />
+      <polygon className="fv3d-noedge" points={towerLeftFace(x, y, b, h1, h2)} fill={pal.shadeLeft} />
       <polygon points={towerRightFace(x, y, b, h1, h2)} fill={fill} />
-      <polygon className="fv3d-noedge" points={towerRightFace(x, y, b, h1, h2)} fill={SHADE_RIGHT} />
+      <polygon className="fv3d-noedge" points={towerRightFace(x, y, b, h1, h2)} fill={pal.shadeRight} />
     </g>
   )
 }
 
-function segmentedTowerFaces(x: number, y: number, b: IsoBasis, h: number, segments: TowerSegment[], idBase: string) {
+function segmentedTowerFaces(x: number, y: number, b: IsoBasis, h: number, segments: TowerSegment[], idBase: string, pal: SpaceView3DPalette) {
   const base = Math.min(BAND_H, h)
   const capH = Math.min(BAND_H, Math.max(0, h - base))
   const shaftTop = h - capH
   const shaftH = Math.max(0, shaftTop - base)
-  const topColor = segments[segments.length - 1]?.color ?? PEDESTAL_COLOR
+  const topColor = segments[segments.length - 1]?.color ?? pal.pedestal
 
   let cursor = base
   const parts: ReactNode[] = []
   for (let i = 0; i < segments.length; i++) {
     const seg = segments[i]
     const top = cursor + shaftH * seg.fraction
-    parts.push(<g key={`${seg.queueId ?? 'unknown'}-${i}`}>{shaftSegmentFaces(x, y, b, cursor, top, h, seg.color, `${idBase}-sg${i}`)}</g>)
+    parts.push(<g key={`${seg.queueId ?? 'unknown'}-${i}`}>{shaftSegmentFaces(x, y, b, cursor, top, h, seg.color, `${idBase}-sg${i}`, pal)}</g>)
     cursor = top
   }
   if (segments.length === 0 && shaftH > 0) {
-    parts.push(<g key="shaft-fallback">{shaftSegmentFaces(x, y, b, base, shaftTop, h, PEDESTAL_COLOR, `${idBase}-sgf`)}</g>)
+    parts.push(<g key="shaft-fallback">{shaftSegmentFaces(x, y, b, base, shaftTop, h, pal.pedestal, `${idBase}-sgf`, pal)}</g>)
   }
 
   return (
     <>
-      <g key="pedestal">{bandFaces(x, y, b, 0, base, PEDESTAL_COLOR, PEDESTAL_SHADE_LEFT, PEDESTAL_SHADE_RIGHT)}</g>
+      <g key="pedestal">{bandFaces(x, y, b, 0, base, pal.pedestal, pal, pal.pedestalShadeLeft, pal.pedestalShadeRight)}</g>
       {parts}
-      {capH > 0 ? <g key="cap">{bandFaces(x, y, b, shaftTop, h, topColor)}</g> : null}
+      {capH > 0 ? <g key="cap">{bandFaces(x, y, b, shaftTop, h, topColor, pal)}</g> : null}
     </>
   )
 }
@@ -404,14 +399,15 @@ interface IsoSeatProps {
   onPointerMove: (agent: Agent, event: ReactPointerEvent<SVGGElement>) => void
   onPointerOut: () => void
   clipPrefix: string
+  pal: SpaceView3DPalette
 }
 
-function IsoSeat({ agent, x, y, b, showAvatars, animations, queuesById, onSelect, onPointerOver, onPointerMove, onPointerOut, clipPrefix }: IsoSeatProps) {
+function IsoSeat({ agent, x, y, b, showAvatars, animations, queuesById, onSelect, onPointerOver, onPointerMove, onPointerOut, clipPrefix, pal }: IsoSeatProps) {
   const saturated = agent.max > 0 && agent.used >= agent.max
   const ratio = agent.max > 0 ? Math.min(1, agent.used / agent.max) : 0
   const segments = agentTowerSegments(agent, queuesById)
   const title = towerTitle(agent, queuesById)
-  const topColor = segments[segments.length - 1]?.color ?? PEDESTAL_COLOR
+  const topColor = segments[segments.length - 1]?.color ?? pal.pedestal
   const targetH = seatHeight(agent)
   const h = useTowerHeightScale(targetH, true)
   const idBase = `${clipPrefix}-${agent.id}`
@@ -426,11 +422,11 @@ function IsoSeat({ agent, x, y, b, showAvatars, animations, queuesById, onSelect
   const body = (
     <>
       {glow}
-      <g key="tower">{segmentedTowerFaces(x, y, b, h, segments, idBase)}</g>
+      <g key="tower">{segmentedTowerFaces(x, y, b, h, segments, idBase, pal)}</g>
       <g className={`fv3d-avatar${showAvatars ? ' fv3d-avatar--on' : ''}`}>
         <AvatarDisc key="avatar" agent={agent} cx={x} cy={avatarCy} r={VEC_TH * 1.05} ring={AVATAR_RING} showPhoto clipPrefix={clipPrefix} />
       </g>
-      {saturated ? <SaturationBeacon x={x} avatarCy={avatarCy} animations={animations} /> : null}
+      {saturated ? <SaturationBeacon x={x} avatarCy={avatarCy} animations={animations} pal={pal} /> : null}
     </>
   )
 
@@ -441,11 +437,11 @@ function IsoSeat({ agent, x, y, b, showAvatars, animations, queuesById, onSelect
   )
 }
 
-function VacantSeat({ x, y }: { x: number; y: number }) {
+function VacantSeat({ x, y, pal }: { x: number; y: number; pal: SpaceView3DPalette }) {
   return (
     <g>
       <title>Seient lliure</title>
-      <ellipse cx={x} cy={y} rx={VEC_TW * 0.42} ry={VEC_TH * 0.42} fill="none" stroke="rgba(27,25,36,.22)" strokeDasharray="3 3" />
+      <ellipse cx={x} cy={y} rx={VEC_TW * 0.42} ry={VEC_TH * 0.42} fill="none" stroke={pal.vacantStroke} strokeDasharray="3 3" />
     </g>
   )
 }
@@ -453,14 +449,14 @@ function VacantSeat({ x, y }: { x: number; y: number }) {
 /** A copy of the hovered seat's avatar, drawn in a top layer so it sits above
     every other avatar/tower regardless of painter order. Recomputes the same
     animated tower height so it lands exactly on the original. */
-function HoverAvatar({ agent, x, y, animations, clipPrefix }: { agent: Agent; x: number; y: number; animations: boolean; clipPrefix: string }) {
+function HoverAvatar({ agent, x, y, animations, clipPrefix, pal }: { agent: Agent; x: number; y: number; animations: boolean; clipPrefix: string; pal: SpaceView3DPalette }) {
   const h = useTowerHeightScale(seatHeight(agent), true)
   const avatarCy = y - h - VEC_TH * 0.62
   const saturated = agent.max > 0 && agent.used >= agent.max
   return (
     <g className="fv3d-avatar-hover" style={{ pointerEvents: 'none' }}>
       <AvatarDisc agent={agent} cx={x} cy={avatarCy} r={VEC_TH * 1.05} ring={AVATAR_RING} showPhoto clipPrefix={clipPrefix} />
-      {saturated ? <SaturationBeacon x={x} avatarCy={avatarCy} animations={animations} /> : null}
+      {saturated ? <SaturationBeacon x={x} avatarCy={avatarCy} animations={animations} pal={pal} /> : null}
     </g>
   )
 }
@@ -468,13 +464,13 @@ function HoverAvatar({ agent, x, y, animations, clipPrefix }: { agent: Agent; x:
 /** El punt vermell de saturació, posicionat sobre la vora del disc de l'avatar
     (lleugerament a la dreta de dalt). S'extreu en un component per poder-lo
     redibuixar idènticament a la capa de hover. */
-function SaturationBeacon({ x, avatarCy, animations }: { x: number; avatarCy: number; animations: boolean }) {
+function SaturationBeacon({ x, avatarCy, animations, pal }: { x: number; avatarCy: number; animations: boolean; pal: SpaceView3DPalette }) {
   const avatarR = VEC_TH * 1.05
   const beaconAngle = (Math.PI / 180) * 38
   const beaconCx = x + avatarR * Math.sin(beaconAngle)
   const beaconCy = avatarCy - avatarR * Math.cos(beaconAngle)
   return (
-    <circle key="beacon" className={animations ? 'fv3d-beacon' : undefined} cx={beaconCx} cy={beaconCy} r={4.5} fill="#E05641" stroke="#fff" strokeWidth={1.5} />
+    <circle key="beacon" className={animations ? 'fv3d-beacon' : undefined} cx={beaconCx} cy={beaconCy} r={4.5} fill={pal.beacon} stroke={pal.beaconStroke} strokeWidth={1.5} />
   )
 }
 
@@ -491,6 +487,7 @@ interface SpaceView3DProps {
 }
 
 export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animations, onSelectAgent, showTooltip = true }: SpaceView3DProps) {
+  const pal = SPACE_VIEW_3D_PALETTES[useResolvedTheme()]
   const [tooltip, setTooltip] = useState<{ agent: Agent; x: number; y: number } | null>(null)
   const [tooltipOpen, setTooltipOpen] = useState(false)
   // Which seat is hovered, so its avatar can be lifted above every other one
@@ -687,20 +684,20 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
     const key = `${c},${r}`
 
     if (brVis(c, r)) {
-      shell.push(<polygon key={`wbr-${key}`} points={backRightWallVec(x, y, basis)} fill={WALL_FILL} />)
-      shell.push(<polygon key={`wbr2-${key}`} points={backRightWallVec(x, y, basis)} fill="rgba(27,25,36,.032)" stroke="rgba(27,25,36,.05)" strokeWidth={0.5} />)
+      shell.push(<polygon key={`wbr-${key}`} points={backRightWallVec(x, y, basis)} fill={pal.wallFill} />)
+      shell.push(<polygon key={`wbr2-${key}`} points={backRightWallVec(x, y, basis)} fill={pal.wall.rightTint} stroke={pal.wall.rightTintStroke} strokeWidth={0.5} />)
       shell.push(<polygon key={`wbrs-${key}`} points={backRightWallVec(x, y, basis)} fill={`url(#${wallSheenRightId})`} />)
-      shell.push(<polygon key={`wbrt-${key}`} points={backRightWallTopVec(x, y, basis)} fill={WALL_FILL} stroke="rgba(27,25,36,.06)" strokeWidth={0.5} />)
-      shell.push(<polygon key={`wbrt2-${key}`} points={backRightWallTopVec(x, y, basis)} fill="rgba(255,255,255,.4)" />)
+      shell.push(<polygon key={`wbrt-${key}`} points={backRightWallTopVec(x, y, basis)} fill={pal.wallFill} stroke={pal.wall.rightTopStroke} strokeWidth={0.5} />)
+      shell.push(<polygon key={`wbrt2-${key}`} points={backRightWallTopVec(x, y, basis)} fill={pal.wall.rightTopSheen} />)
       const op = openingPolys(c, r, 'N', x, y)
       if (op) shell.push(op)
     }
     if (blVis(c, r)) {
-      shell.push(<polygon key={`wbl-${key}`} points={backLeftWallVec(x, y, basis)} fill={WALL_FILL} />)
-      shell.push(<polygon key={`wbl2-${key}`} points={backLeftWallVec(x, y, basis)} fill="rgba(27,25,36,.05)" stroke="rgba(27,25,36,.06)" strokeWidth={0.5} />)
+      shell.push(<polygon key={`wbl-${key}`} points={backLeftWallVec(x, y, basis)} fill={pal.wallFill} />)
+      shell.push(<polygon key={`wbl2-${key}`} points={backLeftWallVec(x, y, basis)} fill={pal.wall.leftTint} stroke={pal.wall.leftTintStroke} strokeWidth={0.5} />)
       shell.push(<polygon key={`wbls-${key}`} points={backLeftWallVec(x, y, basis)} fill={`url(#${wallSheenLeftId})`} />)
-      shell.push(<polygon key={`wblt-${key}`} points={backLeftWallTopVec(x, y, basis)} fill={WALL_FILL} stroke="rgba(27,25,36,.07)" strokeWidth={0.5} />)
-      shell.push(<polygon key={`wblt2-${key}`} points={backLeftWallTopVec(x, y, basis)} fill="rgba(255,255,255,.28)" />)
+      shell.push(<polygon key={`wblt-${key}`} points={backLeftWallTopVec(x, y, basis)} fill={pal.wallFill} stroke={pal.wall.leftTopStroke} strokeWidth={0.5} />)
+      shell.push(<polygon key={`wblt2-${key}`} points={backLeftWallTopVec(x, y, basis)} fill={pal.wall.leftTopSheen} />)
       const op = openingPolys(c, r, 'O', x, y)
       if (op) shell.push(op)
     }
@@ -710,19 +707,19 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
     // reads as an arris (a shade below its wall), not the same plane.
     // slabRight ‖ back-LEFT wall (vector v); slabLeft ‖ back-RIGHT wall (vector u).
     if (!has(c + 1, r)) {
-      shell.push(<polygon key={`rf-${key}`} points={slabRightFaceVec(x, y, basis)} fill={WALL_FILL} />)
-      shell.push(<polygon key={`rf2-${key}`} points={slabRightFaceVec(x, y, basis)} fill="rgba(27,25,36,.12)" />)
+      shell.push(<polygon key={`rf-${key}`} points={slabRightFaceVec(x, y, basis)} fill={pal.wallFill} />)
+      shell.push(<polygon key={`rf2-${key}`} points={slabRightFaceVec(x, y, basis)} fill={pal.slabRightShade} />)
     }
     if (!has(c, r + 1)) {
-      shell.push(<polygon key={`lf-${key}`} points={slabLeftFaceVec(x, y, basis)} fill={WALL_FILL} />)
-      shell.push(<polygon key={`lf2-${key}`} points={slabLeftFaceVec(x, y, basis)} fill="rgba(27,25,36,.102)" />)
+      shell.push(<polygon key={`lf-${key}`} points={slabLeftFaceVec(x, y, basis)} fill={pal.wallFill} />)
+      shell.push(<polygon key={`lf2-${key}`} points={slabLeftFaceVec(x, y, basis)} fill={pal.slabLeftShade} />)
     }
 
     const tilePoints = diamondPointsVec(x, y, basis, 0)
-    shell.push(<polygon key={`t-${key}`} points={tilePoints} fill={(c + r) % 2 === 0 ? SPACE_FILL_A : SPACE_FILL_B} />)
+    shell.push(<polygon key={`t-${key}`} points={tilePoints} fill={(c + r) % 2 === 0 ? pal.spaceFillA : pal.spaceFillB} />)
     shell.push(<polygon key={`tg-${key}`} points={tilePoints} fill={`url(#${spaceGrainId})`} opacity={0.5} />)
     shell.push(<polygon key={`ts-${key}`} points={tilePoints} fill={`url(#${spaceSheenId})`} />)
-    shell.push(<polygon key={`t2-${key}`} points={tilePoints} fill="none" stroke="rgba(27,25,36,.065)" />)
+    shell.push(<polygon key={`t2-${key}`} points={tilePoints} fill="none" stroke={pal.tileStroke} />)
 
     // Daylight beams are collected separately and drawn as one layer over the
     // whole space (below seats), so a beam can stretch across several tiles
@@ -736,11 +733,11 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
       const [g0, g1, t0, t1] = edge === 'N' ? backRightOpeningEdge(x, y, basis) : backLeftOpeningEdge(x, y, basis)
       const pane = openingQuad(g0, g1, t0, t1, 'window')
       const vol = windowBeamVolume(pane, basis, SUN_X, SUN_Y, SUN_LENGTH, SUN_SPREAD, SUN_TOP_REACH)
-      sunbeams.push(<WindowLightVolume key={`beam-${key}-${edge}`} id={`${svgIdPrefix}-beam-${c}-${r}-${edge}`} blurId={beamBlurId} {...vol} />)
+      sunbeams.push(<WindowLightVolume key={`beam-${key}-${edge}`} id={`${svgIdPrefix}-beam-${c}-${r}-${edge}`} blurId={beamBlurId} blend={pal.beamBlend} {...vol} />)
     }
 
     for (const d of dividersByKey.get(key) ?? []) {
-      body.push(<polygon key={`dv-${key}-${d.edge}`} points={dividerFaceVec(x, y, basis, d.edge)} fill="rgba(47,158,143,.30)" stroke="rgba(47,158,143,.75)" strokeWidth={1.2} />)
+      body.push(<polygon key={`dv-${key}-${d.edge}`} points={dividerFaceVec(x, y, basis, d.edge)} fill={pal.dividerFill} stroke={pal.dividerStroke} strokeWidth={1.2} />)
     }
 
     const seat = seatByKey.get(key)
@@ -748,10 +745,10 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
       const agent = seat.agentId ? agentsById.get(seat.agentId) ?? null : null
       if (agent) {
         body.push(
-          <IsoSeat key={`s-${key}`} agent={agent} x={x} y={y} b={basis} showAvatars={showAvatars} animations={animations} queuesById={queuesById} onSelect={onSelectAgent} onPointerOver={handleSeatOver} onPointerMove={handleSeatMove} onPointerOut={handleSeatOut} clipPrefix={svgIdPrefix} />,
+          <IsoSeat key={`s-${key}`} agent={agent} x={x} y={y} b={basis} showAvatars={showAvatars} animations={animations} queuesById={queuesById} onSelect={onSelectAgent} onPointerOver={handleSeatOver} onPointerMove={handleSeatMove} onPointerOut={handleSeatOut} clipPrefix={svgIdPrefix} pal={pal} />,
         )
       } else {
-        body.push(<VacantSeat key={`s-${key}`} x={x} y={y} />)
+        body.push(<VacantSeat key={`s-${key}`} x={x} y={y} pal={pal} />)
       }
     }
   }
@@ -786,29 +783,29 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
             </filter>
             <pattern id={spaceGrainId} width="10" height="10" patternUnits="userSpaceOnUse">
               <rect width="10" height="10" fill="transparent" />
-              <circle cx="2.5" cy="2.5" r="0.35" fill="rgba(27,25,36,0.02)" />
-              <circle cx="7.5" cy="7.5" r="0.3" fill="rgba(27,25,36,0.016)" />
+              <circle cx="2.5" cy="2.5" r="0.35" fill={pal.grainDotA} />
+              <circle cx="7.5" cy="7.5" r="0.3" fill={pal.grainDotB} />
             </pattern>
             <linearGradient id={spaceSheenId} gradientUnits="objectBoundingBox" x1="0.5" y1="0" x2="0.5" y2="1">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.07)" />
-              <stop offset="100%" stopColor="rgba(27,25,36,0.03)" />
+              <stop offset="0%" stopColor={pal.tileSheen.top} />
+              <stop offset="100%" stopColor={pal.tileSheen.bottom} />
             </linearGradient>
             {/* Vertical light wash for the back walls: brighter near the top
                (catches the overhead light) fading to a soft shade at the space.
                The right-facing wall reads a touch lighter than the left, matching
                the space's SHADE_LEFT/RIGHT balance so the two planes separate. */}
             <linearGradient id={wallSheenRightId} gradientUnits="objectBoundingBox" x1="0.5" y1="0" x2="0.5" y2="1">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.05)" />
+              <stop offset="0%" stopColor={pal.wallSheenRight.top} />
               <stop offset="55%" stopColor="rgba(255,255,255,0)" />
-              <stop offset="100%" stopColor="rgba(27,25,36,0.03)" />
+              <stop offset="100%" stopColor={pal.wallSheenRight.bottom} />
             </linearGradient>
             <linearGradient id={wallSheenLeftId} gradientUnits="objectBoundingBox" x1="0.5" y1="0" x2="0.5" y2="1">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.03)" />
+              <stop offset="0%" stopColor={pal.wallSheenLeft.top} />
               <stop offset="55%" stopColor="rgba(255,255,255,0)" />
-              <stop offset="100%" stopColor="rgba(27,25,36,0.05)" />
+              <stop offset="100%" stopColor={pal.wallSheenLeft.bottom} />
             </linearGradient>
           </defs>
-          <g filter={`url(#${svgIdPrefix}-shadow)`} fill="rgba(27,25,36,.17)">
+          <g filter={`url(#${svgIdPrefix}-shadow)`} fill={pal.shadowFill}>
             {shadows}
           </g>
           {shell}
@@ -817,7 +814,7 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
           {showAvatars && hoveredAgent && hoverPos ? (
             // key per agent → fresh mount when moving avatar→avatar, so the height
             // hook starts at the final height instead of sliding from the previous.
-            <HoverAvatar key={hoveredAgent.id} agent={hoveredAgent} x={hoverPos[0]} y={hoverPos[1]} animations={animations} clipPrefix={`${svgIdPrefix}-hover`} />
+            <HoverAvatar key={hoveredAgent.id} agent={hoveredAgent} x={hoverPos[0]} y={hoverPos[1]} animations={animations} clipPrefix={`${svgIdPrefix}-hover`} pal={pal} />
           ) : null}
         </svg>
       </div>

@@ -10,10 +10,10 @@ interface VariantDef {
 }
 
 const VARIANTS: Record<ButtonVariant, VariantDef> = {
-  primary: { background: 'var(--accent)', border: '1px solid var(--accent)', color: 'var(--accent-fg)' },
+  primary: { background: 'var(--accent-fill)', border: '1px solid var(--accent-fill)', color: 'var(--accent-fg)' },
   ghost: { background: 'transparent', border: '1px solid var(--border-subtle)', color: 'var(--text-body)' },
   subtle: { background: 'var(--surface-card)', border: '1px solid var(--border-subtle)', color: 'var(--text-strong)' },
-  danger: { background: 'var(--status-alert)', border: '1px solid var(--status-alert)', color: '#fff' },
+  danger: { background: 'var(--status-alert)', border: '1px solid var(--status-alert)', color: 'var(--on-status)' },
 }
 
 interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'style'> {

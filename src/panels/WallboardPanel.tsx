@@ -65,14 +65,14 @@ export function WallboardPanel() {
         <header className="wb__topbar">
           <div className="wb__controls">
             <button type="button" className="wb__control" aria-label="Time range">
-              <AppIcon name="clock" size={16} style={{ color: '#747474' }} />
-              <AppIcon name="down" size={14} style={{ color: '#747474' }} />
+              <AppIcon name="clock" size={16} style={{ color: 'var(--wb-text-muted)' }} />
+              <AppIcon name="down" size={14} style={{ color: 'var(--wb-text-muted)' }} />
             </button>
             <button type="button" className="wb__control" aria-label="Filter">
-              <AppIcon name="filterList" size={16} style={{ color: '#747474' }} />
+              <AppIcon name="filterList" size={16} style={{ color: 'var(--wb-text-muted)' }} />
             </button>
             <button type="button" className="wb__control" aria-label="Settings">
-              <AppIcon name="settings" size={16} style={{ color: '#747474' }} />
+              <AppIcon name="settings" size={16} style={{ color: 'var(--wb-text-muted)' }} />
             </button>
           </div>
         </header>

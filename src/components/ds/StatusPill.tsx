@@ -13,6 +13,20 @@ const PRESENCE: Record<PresenceStatus, PresenceDef> = {
   offline: { color: 'var(--text-disabled)', label: 'Desconnectat' },
 }
 
+/** Opaque fill so the pill reads the same on cards, rows, and dropdowns. */
+function presenceBackground(color: string): string {
+  return `color-mix(in srgb, ${color} 12%, var(--surface-well))`
+}
+
+const labelStyle = {
+  minWidth: 0,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+  fontSize: 'inherit',
+  color: 'inherit',
+} as const
+
 interface StatusPillProps {
   status?: PresenceStatus
   color?: string
@@ -43,6 +57,7 @@ export function StatusPill({
   if (soft) {
     return (
       <span
+        className="status-pill"
         style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -57,13 +72,13 @@ export function StatusPill({
           padding: '3px 9px',
           borderRadius: 'var(--r-pill)',
           color: c,
-          background: `color-mix(in srgb, ${c} 12%, transparent)`,
+          background: presenceBackground(c),
           lineHeight: 1.2,
           ...style,
         }}
       >
         <i style={{ flexShrink: 0, width: 6, height: 6, borderRadius: '50%', background: c }} />
-        <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span style={labelStyle}>
           {text}
         </span>
       </span>
@@ -72,9 +87,11 @@ export function StatusPill({
 
   return (
     <span
+      className="status-pill"
       style={{
         display: 'inline-flex',
         alignItems: 'center',
+        flexShrink: 0,
         // In a flex row, min-width:auto resolves to the label's min-content and
         // the pill refuses to shrink — cap the floor at just the dot instead.
         minWidth: compact ? 26 : 30,
@@ -86,7 +103,7 @@ export function StatusPill({
         padding: compact ? '3px 8px' : '5px 10px',
         borderRadius: 'var(--r-pill)',
         color: c,
-        background: `color-mix(in srgb, ${c} 12%, transparent)`,
+        background: presenceBackground(c),
         lineHeight: 1.2,
         ...style,
       }}
@@ -100,7 +117,7 @@ export function StatusPill({
           background: c,
         }}
       />
-      <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <span style={labelStyle}>
         {text}
       </span>
     </span>
