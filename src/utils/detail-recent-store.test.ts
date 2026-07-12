@@ -14,6 +14,14 @@ function installResolver() {
   })
 }
 
+/* L'store és a nivell de mòdul: cada subscripció es registra aquí i es
+   desfà a l'afterEach perquè cap listener no es filtri entre tests. */
+const unsubscribes: Array<() => void> = []
+
+function subscribeForTest(listener: () => void): void {
+  unsubscribes.push(subscribeDetailRecents(listener))
+}
+
 describe('detail-recent-store — subscripció', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -22,11 +30,12 @@ describe('detail-recent-store — subscripció', () => {
 
   afterEach(() => {
     setDetailRecentResolver(null)
+    for (const unsubscribe of unsubscribes.splice(0)) unsubscribe()
   })
 
   it('notifica els listeners a cada escriptura', () => {
     const listener = vi.fn()
-    subscribeDetailRecents(listener)
+    subscribeForTest(listener)
 
     recordDetailOpen({ kind: 'agent', id: 'a1' })
     expect(listener).toHaveBeenCalledTimes(1)
@@ -45,7 +54,7 @@ describe('detail-recent-store — subscripció', () => {
 
   it('el listener veu la llista ja actualitzada quan se’l notifica', () => {
     const seen: string[][] = []
-    subscribeDetailRecents(() => {
+    subscribeForTest(() => {
       seen.push(getDetailRecents().map((entry) => entry.id))
     })
 
@@ -69,7 +78,7 @@ describe('detail-recent-store — subscripció', () => {
 
   it('no notifica quan l’escriptura es descarta', () => {
     const listener = vi.fn()
-    subscribeDetailRecents(listener)
+    subscribeForTest(listener)
     const before = getDetailRecentsVersion()
 
     // Kind invàlid: recordDetailOpen no escriu res.
