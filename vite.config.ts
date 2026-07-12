@@ -30,6 +30,9 @@ export default defineConfig(({ mode }) => {
         configureServer(server) {
           server.middlewares.use(createApiMiddleware())
         },
+        configurePreviewServer(server) {
+          server.middlewares.use(createApiMiddleware())
+        },
       },
     ],
     server: {
