@@ -1719,6 +1719,7 @@ textarea,
 }
 
 .home-space {
+  min-width: 0;
   min-height: 0;
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-md);
@@ -1758,8 +1759,12 @@ textarea,
   display: flex;
   flex-direction: column;
   gap: var(--sp-6);
+  min-width: 0;
   min-height: 0;
-  overflow-y: auto;
+  /* Vertical scroll only — tooltip labels on agent cards can nudge scrollWidth
+     a few px past the column; overflow-x must stay hidden so no horizontal bar
+     appears. */
+  overflow: hidden auto;
   /* The scrollbar sits on this column's right edge; pad the content away from it
      so cards don't butt up against the thumb. Bar styling is shared with
      .panel-shell above. */
@@ -2058,6 +2063,10 @@ textarea,
 .agent-row__info {
   min-width: 0;
   flex: 1;
+  /* Tooltip ::before/::after on the status badge are position:absolute but still
+     inflate scrollWidth; clip the x-axis so narrow grid columns don't sprout a
+     horizontal scrollbar. Tooltips open upward, so y stays free. */
+  overflow-x: clip;
 }
 
 .agent-row__title {
