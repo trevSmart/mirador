@@ -1,4 +1,5 @@
 import {
+  memo,
   useCallback,
   useEffect,
   useId,
@@ -10,8 +11,7 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { SpaceSeatTooltip } from './SpaceSeatTooltip'
-import { SPACE_VIEW_3D_PALETTES, type SpaceView3DPalette } from './space-view-3d-palette'
-import { useResolvedTheme } from '../../settings/use-resolved-theme'
+import { SPACE_VIEW_3D_PALETTE, type SpaceView3DPalette } from './space-view-3d-palette'
 import { useTowerHeightScale } from '../../hooks/useTowerHeightScale'
 import { useSalesforcePhoto } from '../../hooks/useSalesforcePhoto'
 import { colorFromRecordId, textColorFromRecordId } from '../../utils/color-from-string'
@@ -61,6 +61,10 @@ import {
 const GRID_MAX = 49
 
 const AVATAR_RING = 'var(--accent-30)'
+
+// Els colors són var(--fv3d-*): el tema els resol en CSS, així que la paleta
+// és una constant de mòdul i el canvi de tema mai re-renderitza aquesta vista.
+const pal = SPACE_VIEW_3D_PALETTE
 
 // Shared sun direction for every window's light shaft, expressed in cell units
 // (so it scales with the camera). Common direction → all beams stay parallel,
@@ -168,7 +172,6 @@ function WindowLightVolume({
   near,
   far,
   blurId,
-  blend,
   beam,
 }: {
   id: string
@@ -179,7 +182,6 @@ function WindowLightVolume({
   near: [Point, Point]
   far: [Point, Point]
   blurId: string
-  blend: SpaceView3DPalette['beamBlend']
   beam: SpaceView3DPalette['beam']
 }) {
   const nx = (near[0][0] + near[1][0]) / 2
@@ -190,7 +192,7 @@ function WindowLightVolume({
   const capGrad = `${id}-cap`
   const sideGrad = `${id}-side`
   return (
-    <g style={{ mixBlendMode: blend }} filter={`url(#${blurId})`}>
+    <g className="fv3d-beam-vol" filter={`url(#${blurId})`}>
       <defs>
         {/* Pool on the floor: brightest where the light lands near the wall, then
            falls off fast so the beam dies close to the window rather than washing
@@ -322,7 +324,7 @@ function TowerFaceGradient({ id, x, y, h }: { id: string; x: number; y: number; 
 
 /** A solid slab band (base or cap) with real thickness: two side faces + a top
    diamond, all opaque and ringed with a stronger-hue outline. */
-function bandFaces(x: number, y: number, b: IsoBasis, h1: number, h2: number, color: string, pal: SpaceView3DPalette, shadeLeft = pal.shadeLeft, shadeRight = pal.shadeRight) {
+function bandFaces(x: number, y: number, b: IsoBasis, h1: number, h2: number, color: string, shadeLeft = pal.shadeLeft, shadeRight = pal.shadeRight) {
   return (
     <g style={{ color }}>
       <polygon points={towerLeftFace(x, y, b, h1, h2)} fill="currentColor" fillOpacity={BAND_OPACITY} stroke="currentColor" strokeOpacity={BAND_STROKE_OPACITY} strokeWidth={BAND_STROKE_WIDTH} strokeLinejoin="round" />
@@ -337,7 +339,7 @@ function bandFaces(x: number, y: number, b: IsoBasis, h1: number, h2: number, co
 
 /** A glassy shaft segment: just the two side faces, painted with the vertical
    colour gradient (no top — the cap band covers the shaft). */
-function shaftSegmentFaces(x: number, y: number, b: IsoBasis, h1: number, h2: number, h: number, color: string, gradId: string, pal: SpaceView3DPalette) {
+function shaftSegmentFaces(x: number, y: number, b: IsoBasis, h1: number, h2: number, h: number, color: string, gradId: string) {
   const fill = `url(#${gradId})`
   return (
     <g style={{ color }}>
@@ -352,7 +354,7 @@ function shaftSegmentFaces(x: number, y: number, b: IsoBasis, h1: number, h2: nu
   )
 }
 
-function segmentedTowerFaces(x: number, y: number, b: IsoBasis, h: number, segments: TowerSegment[], idBase: string, pal: SpaceView3DPalette) {
+function segmentedTowerFaces(x: number, y: number, b: IsoBasis, h: number, segments: TowerSegment[], idBase: string) {
   const base = Math.min(BAND_H, h)
   const capH = Math.min(BAND_H, Math.max(0, h - base))
   const shaftTop = h - capH
@@ -364,18 +366,18 @@ function segmentedTowerFaces(x: number, y: number, b: IsoBasis, h: number, segme
   for (let i = 0; i < segments.length; i++) {
     const seg = segments[i]
     const top = cursor + shaftH * seg.fraction
-    parts.push(<g key={`${seg.queueId ?? 'unknown'}-${i}`}>{shaftSegmentFaces(x, y, b, cursor, top, h, seg.color, `${idBase}-sg${i}`, pal)}</g>)
+    parts.push(<g key={`${seg.queueId ?? 'unknown'}-${i}`}>{shaftSegmentFaces(x, y, b, cursor, top, h, seg.color, `${idBase}-sg${i}`)}</g>)
     cursor = top
   }
   if (segments.length === 0 && shaftH > 0) {
-    parts.push(<g key="shaft-fallback">{shaftSegmentFaces(x, y, b, base, shaftTop, h, pal.pedestal, `${idBase}-sgf`, pal)}</g>)
+    parts.push(<g key="shaft-fallback">{shaftSegmentFaces(x, y, b, base, shaftTop, h, pal.pedestal, `${idBase}-sgf`)}</g>)
   }
 
   return (
     <>
-      <g key="pedestal">{bandFaces(x, y, b, 0, base, pal.pedestal, pal, pal.pedestalShadeLeft, pal.pedestalShadeRight)}</g>
+      <g key="pedestal">{bandFaces(x, y, b, 0, base, pal.pedestal, pal.pedestalShadeLeft, pal.pedestalShadeRight)}</g>
       {parts}
-      {capH > 0 ? <g key="cap">{bandFaces(x, y, b, shaftTop, h, topColor, pal)}</g> : null}
+      {capH > 0 ? <g key="cap">{bandFaces(x, y, b, shaftTop, h, topColor)}</g> : null}
     </>
   )
 }
@@ -401,10 +403,9 @@ interface IsoSeatProps {
   onPointerMove: (agent: Agent, event: ReactPointerEvent<SVGGElement>) => void
   onPointerOut: () => void
   clipPrefix: string
-  pal: SpaceView3DPalette
 }
 
-function IsoSeat({ agent, x, y, b, showAvatars, animations, queuesById, onSelect, onPointerOver, onPointerMove, onPointerOut, clipPrefix, pal }: IsoSeatProps) {
+function IsoSeat({ agent, x, y, b, showAvatars, animations, queuesById, onSelect, onPointerOver, onPointerMove, onPointerOut, clipPrefix }: IsoSeatProps) {
   const saturated = agent.max > 0 && agent.used >= agent.max
   const ratio = agent.max > 0 ? Math.min(1, agent.used / agent.max) : 0
   const segments = agentTowerSegments(agent, queuesById)
@@ -424,11 +425,11 @@ function IsoSeat({ agent, x, y, b, showAvatars, animations, queuesById, onSelect
   const body = (
     <>
       {glow}
-      <g key="tower">{segmentedTowerFaces(x, y, b, h, segments, idBase, pal)}</g>
+      <g key="tower">{segmentedTowerFaces(x, y, b, h, segments, idBase)}</g>
       <g className={`fv3d-avatar${showAvatars ? ' fv3d-avatar--on' : ''}`}>
         <AvatarDisc key="avatar" agent={agent} cx={x} cy={avatarCy} r={VEC_TH * 1.05} ring={AVATAR_RING} showPhoto clipPrefix={clipPrefix} />
       </g>
-      {saturated ? <SaturationBeacon x={x} avatarCy={avatarCy} animations={animations} pal={pal} /> : null}
+      {saturated ? <SaturationBeacon x={x} avatarCy={avatarCy} animations={animations} /> : null}
     </>
   )
 
@@ -439,7 +440,7 @@ function IsoSeat({ agent, x, y, b, showAvatars, animations, queuesById, onSelect
   )
 }
 
-function VacantSeat({ x, y, pal }: { x: number; y: number; pal: SpaceView3DPalette }) {
+function VacantSeat({ x, y }: { x: number; y: number }) {
   return (
     <g>
       <title>Seient lliure</title>
@@ -451,14 +452,14 @@ function VacantSeat({ x, y, pal }: { x: number; y: number; pal: SpaceView3DPalet
 /** A copy of the hovered seat's avatar, drawn in a top layer so it sits above
     every other avatar/tower regardless of painter order. Recomputes the same
     animated tower height so it lands exactly on the original. */
-function HoverAvatar({ agent, x, y, animations, clipPrefix, pal }: { agent: Agent; x: number; y: number; animations: boolean; clipPrefix: string; pal: SpaceView3DPalette }) {
+function HoverAvatar({ agent, x, y, animations, clipPrefix }: { agent: Agent; x: number; y: number; animations: boolean; clipPrefix: string }) {
   const h = useTowerHeightScale(seatHeight(agent), true)
   const avatarCy = y - h - VEC_TH * 0.62
   const saturated = agent.max > 0 && agent.used >= agent.max
   return (
     <g className="fv3d-avatar-hover" style={{ pointerEvents: 'none' }}>
       <AvatarDisc agent={agent} cx={x} cy={avatarCy} r={VEC_TH * 1.05} ring={AVATAR_RING} showPhoto clipPrefix={clipPrefix} />
-      {saturated ? <SaturationBeacon x={x} avatarCy={avatarCy} animations={animations} pal={pal} /> : null}
+      {saturated ? <SaturationBeacon x={x} avatarCy={avatarCy} animations={animations} /> : null}
     </g>
   )
 }
@@ -466,7 +467,7 @@ function HoverAvatar({ agent, x, y, animations, clipPrefix, pal }: { agent: Agen
 /** El punt vermell de saturació, posicionat sobre la vora del disc de l'avatar
     (lleugerament a la dreta de dalt). S'extreu en un component per poder-lo
     redibuixar idènticament a la capa de hover. */
-function SaturationBeacon({ x, avatarCy, animations, pal }: { x: number; avatarCy: number; animations: boolean; pal: SpaceView3DPalette }) {
+function SaturationBeacon({ x, avatarCy, animations }: { x: number; avatarCy: number; animations: boolean }) {
   const avatarR = VEC_TH * 1.05
   const beaconAngle = (Math.PI / 180) * 38
   const beaconCx = x + avatarR * Math.sin(beaconAngle)
@@ -488,8 +489,10 @@ interface SpaceView3DProps {
   showTooltip?: boolean
 }
 
-export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animations, onSelectAgent, showTooltip = true }: SpaceView3DProps) {
-  const pal = SPACE_VIEW_3D_PALETTES[useResolvedTheme()]
+/* memo: el pare (SpacePanel, sidebar de l'editor…) es re-renderitza amb
+   qualsevol canvi de preferències; amb props estables aquest subarbre — el més
+   car de l'app — no s'ha de repetir. */
+export const SpaceView3D = memo(function SpaceView3D({ space, agentsById, queuesById, showAvatars, animations, onSelectAgent, showTooltip = true }: SpaceView3DProps) {
   const [tooltip, setTooltip] = useState<{ agent: Agent; x: number; y: number } | null>(null)
   const [tooltipOpen, setTooltipOpen] = useState(false)
   // Which seat is hovered, so its avatar can be lifted above every other one
@@ -735,7 +738,7 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
       const [g0, g1, t0, t1] = edge === 'N' ? backRightOpeningEdge(x, y, basis) : backLeftOpeningEdge(x, y, basis)
       const pane = openingQuad(g0, g1, t0, t1, 'window')
       const vol = windowBeamVolume(pane, basis, SUN_X, SUN_Y, SUN_LENGTH, SUN_SPREAD, SUN_TOP_REACH)
-      sunbeams.push(<WindowLightVolume key={`beam-${key}-${edge}`} id={`${svgIdPrefix}-beam-${c}-${r}-${edge}`} blurId={beamBlurId} blend={pal.beamBlend} beam={pal.beam} {...vol} />)
+      sunbeams.push(<WindowLightVolume key={`beam-${key}-${edge}`} id={`${svgIdPrefix}-beam-${c}-${r}-${edge}`} blurId={beamBlurId} beam={pal.beam} {...vol} />)
     }
 
     for (const d of dividersByKey.get(key) ?? []) {
@@ -747,10 +750,10 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
       const agent = seat.agentId ? agentsById.get(seat.agentId) ?? null : null
       if (agent) {
         body.push(
-          <IsoSeat key={`s-${key}`} agent={agent} x={x} y={y} b={basis} showAvatars={showAvatars} animations={animations} queuesById={queuesById} onSelect={onSelectAgent} onPointerOver={handleSeatOver} onPointerMove={handleSeatMove} onPointerOut={handleSeatOut} clipPrefix={svgIdPrefix} pal={pal} />,
+          <IsoSeat key={`s-${key}`} agent={agent} x={x} y={y} b={basis} showAvatars={showAvatars} animations={animations} queuesById={queuesById} onSelect={onSelectAgent} onPointerOver={handleSeatOver} onPointerMove={handleSeatMove} onPointerOut={handleSeatOut} clipPrefix={svgIdPrefix} />,
         )
       } else {
-        body.push(<VacantSeat key={`s-${key}`} x={x} y={y} pal={pal} />)
+        body.push(<VacantSeat key={`s-${key}`} x={x} y={y} />)
       }
     }
   }
@@ -816,7 +819,7 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
           {showAvatars && hoveredAgent && hoverPos ? (
             // key per agent → fresh mount when moving avatar→avatar, so the height
             // hook starts at the final height instead of sliding from the previous.
-            <HoverAvatar key={hoveredAgent.id} agent={hoveredAgent} x={hoverPos[0]} y={hoverPos[1]} animations={animations} clipPrefix={`${svgIdPrefix}-hover`} pal={pal} />
+            <HoverAvatar key={hoveredAgent.id} agent={hoveredAgent} x={hoverPos[0]} y={hoverPos[1]} animations={animations} clipPrefix={`${svgIdPrefix}-hover`} />
           ) : null}
         </svg>
       </div>
@@ -828,4 +831,4 @@ export function SpaceView3D({ space, agentsById, queuesById, showAvatars, animat
         : null}
     </>
   )
-}
+})

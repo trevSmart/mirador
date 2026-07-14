@@ -50,9 +50,7 @@ function getProjectVitePids() {
     return [...new Set(output.split('\n').filter(Boolean).map((pid) => Number.parseInt(pid, 10)))]
   } catch {
     return []
-  }
-}
-
+  }dn 
 function killPid(pid) {
   try {
     process.kill(pid, 'SIGTERM')

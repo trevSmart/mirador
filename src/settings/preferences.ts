@@ -1,8 +1,9 @@
 /* User preferences — pure model.
    A single flat object persisted in localStorage. No React here: just the shape,
    the defaults, and load/save with sanitization so a corrupt or partial stored
-   value can never break a consumer. The <SettingsModal> edits a draft copy and
-   calls savePreferences(); usePreferences exposes the live value to the app. */
+   value can never break a consumer. The <SettingsModal> persists each edit
+   immediately via savePreferences(); usePreferences exposes the live value to
+   the app. */
 
 import { SPACE_CANVAS_TINTS, type SpaceCanvasTint } from './space-canvas-wash'
 

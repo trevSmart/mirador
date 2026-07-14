@@ -122,6 +122,16 @@ describe('useGridFlipReorder', () => {
     expect(cardB.parentElement).toBeNull()
   })
 
+  it('still animates a reorder that follows a no-op commit (snapshot refresh is deferred)', () => {
+    const { rerender } = render(<Grid items={['A', 'B']} />)
+    // Same order → the hook skips the synchronous re-measure and defers it.
+    rerender(<Grid items={['A', 'B']} />)
+    // Reorder before the deferred refresh fires: the last good snapshots apply.
+    rerender(<Grid items={['B', 'A']} />)
+    const moveB = animations.find((a) => a.el.textContent === 'B')!
+    expect(moveB.keyframes[0]).toMatchObject({ transform: 'translate(0px, 100px)', opacity: 0.18 })
+  })
+
   it('cancels an in-flight animation before starting a new one on the same element', () => {
     const { rerender } = render(<Grid items={['A', 'B']} />)
     rerender(<Grid items={['B', 'A']} />)

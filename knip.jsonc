@@ -12,6 +12,11 @@
     // de l'app Vite/React/TS que knip analitza.
     "force-app/**"
   ],
+  "ignoreBinaries": [
+    // Utilitats del sistema usades per scripts/stop-server.js (npm run stop).
+    "lsof",
+    "pgrep"
+  ],
   "ignoreDependencies": [
     "@fontsource/inter",
     "@fontsource/jetbrains-mono",

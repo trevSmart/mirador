@@ -21,6 +21,7 @@ export type AppIconName =
   | 'dash'
   | 'database'
   | 'delete'
+  | 'display'
   | 'divider'
   | 'door'
   | 'down'
@@ -33,6 +34,7 @@ export type AppIconName =
   | 'lock'
   | 'logout'
   | 'metrics'
+  | 'moon'
   | 'move'
   | 'new_window'
   | 'notification'
@@ -51,6 +53,7 @@ export type AppIconName =
   | 'status-config'
   | 'status-empty'
   | 'status-error'
+  | 'sun'
   | 'threedots_vertical'
   | 'undo'
   | 'window'
@@ -74,6 +77,7 @@ export const APP_ICON_NAMES: readonly AppIconName[] = [
   'dash',
   'database',
   'delete',
+  'display',
   'divider',
   'door',
   'down',
@@ -86,6 +90,7 @@ export const APP_ICON_NAMES: readonly AppIconName[] = [
   'lock',
   'logout',
   'metrics',
+  'moon',
   'move',
   'new_window',
   'notification',
@@ -104,6 +109,7 @@ export const APP_ICON_NAMES: readonly AppIconName[] = [
   'status-config',
   'status-empty',
   'status-error',
+  'sun',
   'threedots_vertical',
   'undo',
   'window',

@@ -332,6 +332,123 @@
   --tab-inactive-hover-bg: color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
+/* ── Theme switch crossfade ───────────────────────────── */
+/* El canvi de tema s'embolcalla amb una view transition (settings/theme.ts):
+   dos snapshots de pàgina fonent-se al compositor — cap transition per
+   element, cost de recàlcul zero. Només durada i corba; el fallback (API
+   absent o reduced-motion) és el canvi sec de sempre. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 35ms;
+  animation-timing-function: ease-out;
+}
+
+/* ── Paleta SpaceView3D ───────────────────────────────── */
+/* Colors per tema del render 3D, consumits pel SVG via presentation
+   attributes (fill/stroke/stop-color resolen var()). Viure aquí — i no en
+   JS — fa que el canvi de tema sigui cascada CSS pura, sense re-render de
+   React (vegeu space-view-3d-palette.ts). Mateixa intenció de disseny en
+   tots dos temes: les ombres de profunditat enfosqueixen, les arestes passen
+   de tinta a tinta clara i els brillos s'atenuen. */
+:root {
+  --fv3d-pedestal: #E2DFDA;
+  --fv3d-space-fill-a: #FDFCFB;
+  --fv3d-space-fill-b: #FBFAF8;
+  --fv3d-wall-fill: rgb(252, 251, 249);
+  --fv3d-shade-left: rgba(12, 10, 22, 0.12);
+  --fv3d-shade-right: rgba(12, 10, 22, 0.04);
+  --fv3d-pedestal-shade-left: rgba(12, 10, 22, 0.05);
+  --fv3d-pedestal-shade-right: rgba(12, 10, 22, 0.015);
+  --fv3d-cap-sheen: rgba(255, 255, 255, 0.12);
+  --fv3d-vacant-stroke: rgba(27, 25, 36, .22);
+  --fv3d-beacon: #E05641;
+  --fv3d-beacon-stroke: #fff;
+  --fv3d-divider-fill: rgba(47, 158, 143, .30);
+  --fv3d-divider-stroke: rgba(47, 158, 143, .75);
+  --fv3d-wall-right-tint: rgba(27, 25, 36, .032);
+  --fv3d-wall-right-tint-stroke: rgba(27, 25, 36, .05);
+  --fv3d-wall-right-top-stroke: rgba(27, 25, 36, .06);
+  --fv3d-wall-right-top-sheen: rgba(255, 255, 255, .4);
+  --fv3d-wall-left-tint: rgba(27, 25, 36, .05);
+  --fv3d-wall-left-tint-stroke: rgba(27, 25, 36, .06);
+  --fv3d-wall-left-top-stroke: rgba(27, 25, 36, .07);
+  --fv3d-wall-left-top-sheen: rgba(255, 255, 255, .28);
+  --fv3d-slab-right-shade: rgba(27, 25, 36, .12);
+  --fv3d-slab-left-shade: rgba(27, 25, 36, .102);
+  --fv3d-tile-stroke: rgba(27, 25, 36, .065);
+  --fv3d-grain-dot-a: rgba(27, 25, 36, 0.02);
+  --fv3d-grain-dot-b: rgba(27, 25, 36, 0.016);
+  --fv3d-tile-sheen-top: rgba(255, 255, 255, 0.07);
+  --fv3d-tile-sheen-bottom: rgba(27, 25, 36, 0.03);
+  --fv3d-wall-sheen-right-top: rgba(255, 255, 255, 0.05);
+  --fv3d-wall-sheen-right-bottom: rgba(27, 25, 36, 0.03);
+  --fv3d-wall-sheen-left-top: rgba(255, 255, 255, 0.03);
+  --fv3d-wall-sheen-left-bottom: rgba(27, 25, 36, 0.05);
+  --fv3d-shadow-fill: rgba(27, 25, 36, .17);
+  /* Feixos de llum diürna: multiply enfosqueix sobre fons clar. */
+  --fv3d-beam-blend: multiply;
+  --fv3d-beam-floor-0: rgba(150, 178, 214, 0.07);
+  --fv3d-beam-floor-1: rgba(178, 200, 228, 0.022);
+  --fv3d-beam-floor-2: rgba(220, 232, 245, 0);
+  --fv3d-beam-cap-0: rgba(160, 186, 220, 0.095);
+  --fv3d-beam-cap-1: rgba(196, 214, 234, 0.03);
+  --fv3d-beam-cap-2: rgba(232, 240, 248, 0);
+  --fv3d-beam-side-0: rgba(154, 182, 218, 0.08);
+  --fv3d-beam-side-1: rgba(188, 208, 232, 0.028);
+  --fv3d-beam-side-2: rgba(226, 236, 246, 0);
+}
+
+:root[data-theme='dark'] {
+  --fv3d-pedestal: #363440;
+  --fv3d-space-fill-a: #34323C;
+  --fv3d-space-fill-b: #302E38;
+  --fv3d-wall-fill: rgb(56, 54, 64);
+  --fv3d-shade-left: rgba(0, 0, 0, 0.22);
+  --fv3d-shade-right: rgba(0, 0, 0, 0.09);
+  --fv3d-pedestal-shade-left: rgba(0, 0, 0, 0.10);
+  --fv3d-pedestal-shade-right: rgba(0, 0, 0, 0.04);
+  --fv3d-cap-sheen: rgba(255, 255, 255, 0.10);
+  --fv3d-vacant-stroke: rgba(237, 236, 242, .25);
+  --fv3d-wall-right-tint: rgba(0, 0, 0, .09);
+  --fv3d-wall-right-tint-stroke: rgba(237, 236, 242, .07);
+  --fv3d-wall-right-top-stroke: rgba(237, 236, 242, .08);
+  --fv3d-wall-right-top-sheen: rgba(255, 255, 255, .14);
+  --fv3d-wall-left-tint: rgba(0, 0, 0, .12);
+  --fv3d-wall-left-tint-stroke: rgba(237, 236, 242, .08);
+  --fv3d-wall-left-top-stroke: rgba(237, 236, 242, .09);
+  --fv3d-wall-left-top-sheen: rgba(255, 255, 255, .10);
+  --fv3d-slab-right-shade: rgba(0, 0, 0, .22);
+  --fv3d-slab-left-shade: rgba(0, 0, 0, .18);
+  --fv3d-tile-stroke: rgba(237, 236, 242, .09);
+  --fv3d-grain-dot-a: rgba(237, 236, 242, 0.03);
+  --fv3d-grain-dot-b: rgba(237, 236, 242, 0.024);
+  --fv3d-tile-sheen-top: rgba(255, 255, 255, 0.06);
+  --fv3d-tile-sheen-bottom: rgba(0, 0, 0, 0.06);
+  --fv3d-wall-sheen-right-top: rgba(255, 255, 255, 0.055);
+  --fv3d-wall-sheen-right-bottom: rgba(0, 0, 0, 0.07);
+  --fv3d-wall-sheen-left-top: rgba(255, 255, 255, 0.04);
+  --fv3d-wall-sheen-left-bottom: rgba(0, 0, 0, 0.09);
+  --fv3d-shadow-fill: rgba(0, 0, 0, .30);
+  /* Sobre fosc, multiply desapareix: cal screen amb tons càlids d'oficina. */
+  --fv3d-beam-blend: screen;
+  --fv3d-beam-floor-0: rgba(232, 224, 210, 0.065);
+  --fv3d-beam-floor-1: rgba(238, 232, 218, 0.022);
+  --fv3d-beam-floor-2: rgba(245, 240, 232, 0);
+  --fv3d-beam-cap-0: rgba(236, 228, 214, 0.085);
+  --fv3d-beam-cap-1: rgba(242, 236, 222, 0.028);
+  --fv3d-beam-cap-2: rgba(248, 244, 236, 0);
+  --fv3d-beam-side-0: rgba(228, 218, 202, 0.072);
+  --fv3d-beam-side-1: rgba(234, 226, 212, 0.025);
+  --fv3d-beam-side-2: rgba(242, 236, 228, 0);
+}
+
+/* El volum d'un feix de llum (WindowLightVolume). El mode de fusió depèn del
+   tema, així que també és variable — mix-blend-mode no té presentation
+   attribute i per això va per classe. */
+.fv3d-beam-vol {
+  mix-blend-mode: var(--fv3d-beam-blend);
+}
+
 /* ── Shared status pulses ─────────────────────────────── */
 /* Els polsos van sobre un pseudo-element dedicat i animen només transform i
    opacity: una animació infinita de box-shadow no es pot compositar, així que
@@ -1106,6 +1223,10 @@ textarea,
   --dv-tab-border-radius: var(--r-sm);
   --dv-tab-margin: 1px 2px 0;
   --dv-floating-group-border: 1px solid var(--border-subtle);
+  /* Franja de tabs: un 2% de tinta sobre --surface-raised — enfosqueix un pèl
+     en clar i aclareix un pèl en fosc, just per insinuar la separació del
+     header sense trencar la lectura de superfície contínua. */
+  --tabbar-bg: color-mix(in srgb, var(--surface-raised) 98%, var(--mi-ink));
   --tab-hover-bg: color-mix(in srgb, var(--mi-ink) 4%, transparent);
   --tab-inactive-hover-bg: color-mix(in srgb, var(--accent) 6%, transparent);
 }
@@ -1171,6 +1292,7 @@ textarea,
 .app-chrome .dockview-container .dv-groupview > .dv-tabs-and-actions-container {
   padding: 0 var(--sp-4);
   border-bottom: 1px solid var(--border-subtle);
+  background-color: var(--tabbar-bg);
 }
 
 /* The tab strip sits in a flex row alongside a flex-grow void container that
@@ -1367,6 +1489,7 @@ textarea,
     opacity 0.08s var(--ease),
     visibility 0s linear 0.08s;
 }
+
 .app-chrome .dockview-container .dv-tab:hover .dv-default-tab .dv-default-tab-action {
   opacity: 1;
   visibility: visible;
@@ -1385,20 +1508,18 @@ textarea,
   inherits: false;
   initial-value: 0px;
 }
+
 .mirador-tab__label {
   --tab-label-fade: 0px;
-  -webkit-mask-image: linear-gradient(
-    to right,
-    #000 calc(100% - var(--tab-label-fade) * 2),
-    transparent calc(100% - var(--tab-label-fade))
-  );
-  mask-image: linear-gradient(
-    to right,
-    #000 calc(100% - var(--tab-label-fade) * 2),
-    transparent calc(100% - var(--tab-label-fade))
-  );
+  -webkit-mask-image: linear-gradient(to right,
+      #000 calc(100% - var(--tab-label-fade) * 2),
+      transparent calc(100% - var(--tab-label-fade)));
+  mask-image: linear-gradient(to right,
+      #000 calc(100% - var(--tab-label-fade) * 2),
+      transparent calc(100% - var(--tab-label-fade)));
   transition: --tab-label-fade 0.08s var(--ease);
 }
+
 /* Only fade when a close button is actually present (non-closable tabs like
    Home don't render .dv-default-tab-action, so their label stays intact). */
 .dockview-container .dv-tab:hover .dv-default-tab:has(.dv-default-tab-action) .mirador-tab__label {
@@ -1436,8 +1557,19 @@ textarea,
   border-radius: var(--r-pill);
 }
 
-.dv-context-menu {
+/* Dockview pinta el fons del menú amb --dv-activegroup-hiddenpanel-tab-background-color
+   com a fallback, que aquí és transparent (tabs ocultes sense fons) — cal un fons propi
+   o el menú es mescla amb el contingut de sota. S'alinea amb el dropdown-panel compartit.
+   El prefix .dockview-container guanya la regla .dv-context-menu de la llibreria, que
+   s'injecta després d'aquest full amb la mateixa especificitat. */
+.dockview-container .dv-context-menu {
   min-width: 180px;
+  background: var(--dropdown-bg);
+  backdrop-filter: var(--dropdown-blur);
+  -webkit-backdrop-filter: var(--dropdown-blur);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--dropdown-radius);
+  box-shadow: var(--dropdown-shadow);
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1943,6 +2075,7 @@ textarea,
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .collapsible-group__expand,
   .collapsible-group__expand-inner,
   .collapsible-group__chevron {
@@ -2129,8 +2262,7 @@ textarea,
   color: var(--text-strong);
   white-space: nowrap;
   pointer-events: none;
-  transform: translate(-50%, calc(-100% - 6px))
-    translateY(calc(var(--dropdown-offset) * -1));
+  transform: translate(-50%, calc(-100% - 6px)) translateY(calc(var(--dropdown-offset) * -1));
 }
 
 .mi-tooltip.dropdown-panel.is-open {
@@ -3439,8 +3571,7 @@ textarea,
      omnidirectional halo outlines every edge (like a hairline stroke), and a
      softer offset shadow grounds the geometry so it reads at thumbnail size. */
   filter:
-    drop-shadow(0 0 0.5px rgba(12, 10, 22, 0.55))
-    drop-shadow(0 1px 1.5px rgba(12, 10, 22, 0.22));
+    drop-shadow(0 0 0.5px rgba(12, 10, 22, 0.55)) drop-shadow(0 1px 1.5px rgba(12, 10, 22, 0.22));
 }
 
 .fe-space.is-inactive .fe-space__thumb {
@@ -5640,6 +5771,47 @@ textarea,
   min-width: 150px;
 }
 
+/* Segmented pill (SegmentedField) — el llenguatge del fv-toggle 2D/3D del
+   panell Space, amb la tipografia dels controls de settings. */
+.settings-segmented {
+  display: inline-flex;
+  background: var(--surface-well);
+  border-radius: var(--r-md);
+  padding: 2px;
+}
+
+.settings-segmented__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  border: 0;
+  background: transparent;
+  color: var(--text-body);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.settings-segmented__btn.is-active {
+  background: var(--surface-card);
+  color: var(--accent);
+  box-shadow: var(--shadow);
+}
+
+.settings-segmented__btn:disabled {
+  cursor: default;
+  opacity: .6;
+}
+
+.settings-segmented__btn:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+}
+
 .settings-input:focus-visible {
   outline: none;
   border-color: var(--accent);
@@ -7560,6 +7732,7 @@ textarea,
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 /* ── Site level (editor sidebar) ────────────────────────────────────────────
    Added with the Site/logo feature. The sidebar site row mirrors .fe-tree__place
    layout. */
@@ -7673,6 +7846,7 @@ textarea,
     opacity: 0;
     transform: translateY(6px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -7685,4 +7859,6 @@ textarea,
   opacity: 1;
 }
 
-.dev-console__line--error .dev-console__msg { color: #ff6b6b; }
+.dev-console__line--error .dev-console__msg {
+  color: #ff6b6b;
+}

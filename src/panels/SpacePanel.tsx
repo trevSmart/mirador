@@ -121,9 +121,8 @@ export function SpacePanel() {
     return { counts, vacant, total }
   }, [spaces, agentsById])
 
-  const handleSelectAgent = (agent: Agent) => {
-    openAgent(agent.id)
-  }
+  // Estable per no invalidar el memo de SpaceView3D a cada render del panell.
+  const handleSelectAgent = useCallback((agent: Agent) => openAgent(agent.id), [openAgent])
 
   const renderSpaceTile = (space: Space) => (
     <section key={space.id} className="fv-stack__item">
