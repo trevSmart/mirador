@@ -7858,7 +7858,3 @@ textarea,
 .fe-space.is-inactive [aria-pressed] {
   opacity: 1;
 }
-
-.dev-console__line--error .dev-console__msg {
-  color: #ff6b6b;
-}
