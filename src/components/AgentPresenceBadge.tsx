@@ -27,6 +27,7 @@ export function AgentPresenceBadge({ agent, compact = true }: AgentPresenceBadge
       setRowFocused(row.matches(':focus-visible'))
     }
 
+    syncRowFocus()
     row.addEventListener('focusin', syncRowFocus)
     row.addEventListener('focusout', syncRowFocus)
     return () => {

@@ -40,7 +40,7 @@ export function Tooltip({ anchorRef, open, content }: TooltipProps) {
     return undefined
   }, [open, coords])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!coords) return
     closeTimeoutRef.current = syncDropdownPanel(tipRef.current, open, {
       closeTimeoutId: closeTimeoutRef.current,
@@ -51,10 +51,13 @@ export function Tooltip({ anchorRef, open, content }: TooltipProps) {
 
   return createPortal(
     <div
-      ref={tipRef}
+      ref={(el) => {
+        tipRef.current = el
+        if (el) el.hidden = true
+      }}
       className="mi-tooltip dropdown-panel"
       role="tooltip"
-      hidden
+      aria-hidden={!open}
       style={{
         position: 'fixed',
         left: coords.x,
