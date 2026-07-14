@@ -6,6 +6,8 @@
 /* @refresh reset */
 
 import { useId, type ReactNode } from 'react'
+import { AppIcon } from '../ds/AppIcon'
+import type { AppIconName } from '../ds/app-icon-names.generated'
 import { Select } from '../ds/Select'
 
 export { TintSwatchField } from './TintSwatchField'
@@ -75,6 +77,40 @@ export function ToggleField({
       />
       <span className="settings-toggle__track" />
     </label>
+  )
+}
+
+/** A few mutually exclusive options, always visible — the settings variant of
+    the space panel's 2D/3D pill (same plain-buttons + aria-pressed idiom). */
+export function SegmentedField<T extends string>({
+  value,
+  onChange,
+  options,
+  label,
+  disabled = false,
+}: {
+  value: T
+  onChange: (value: T) => void
+  options: Array<{ value: T; label: string; icon?: AppIconName }>
+  label: string
+  disabled?: boolean
+}) {
+  return (
+    <div className="settings-segmented" role="group" aria-label={label}>
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          aria-pressed={value === opt.value}
+          className={`settings-segmented__btn${value === opt.value ? ' is-active' : ''}`}
+          onClick={() => onChange(opt.value)}
+          disabled={disabled}
+        >
+          {opt.icon ? <AppIcon name={opt.icon} size={13} /> : null}
+          {opt.label}
+        </button>
+      ))}
+    </div>
   )
 }
 

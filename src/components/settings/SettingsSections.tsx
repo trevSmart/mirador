@@ -1,6 +1,7 @@
 /* Settings — section bodies.
-   Each section is a controlled view over the draft preferences. `patch` applies
-   a partial update to the draft (the modal holds the draft + dirty state).
+   Each section is a controlled view over the live preferences. `patch` applies
+   a partial update that persists immediately (the modal wires it to save and
+   keeps the open-time baseline for undo).
    The Connexió and Sobre sections are read-only info pulled from auth state. */
 
 import { useAuth } from '../../auth/auth-context'
@@ -17,6 +18,7 @@ import {
 } from '../../settings/preferences'
 import {
   NumberField,
+  SegmentedField,
   SelectField,
   SettingsBadge,
   SettingsGroup,
@@ -28,7 +30,7 @@ import {
 const APP_VERSION = '0.1.0-alpha'
 
 interface SectionProps {
-  draft: Preferences
+  prefs: Preferences
   patch: (partial: Partial<Preferences>) => void
 }
 
@@ -157,7 +159,7 @@ function handleClearAuthToken(logout: () => void) {
   }
 }
 
-export function DadesSection({ draft, patch }: SectionProps) {
+export function DadesSection({ prefs, patch }: SectionProps) {
   const { isServerMockMode } = useAuth()
 
   return (
@@ -169,7 +171,7 @@ export function DadesSection({ draft, patch }: SectionProps) {
           control={
             <ToggleField
               label="Mode de simulació"
-              checked={draft.mockOverride}
+              checked={prefs.mockOverride}
               onChange={(v) => patch({ mockOverride: v })}
               disabled={isServerMockMode}
             />
@@ -184,7 +186,7 @@ export function DadesSection({ draft, patch }: SectionProps) {
           control={
             <SelectField
               label="Interval de refresc"
-              value={draft.refreshInterval}
+              value={prefs.refreshInterval}
               onChange={(v) => patch({ refreshInterval: v })}
               options={REFRESH_OPTIONS.map((s) => ({ value: s, label: refreshLabel(s) }))}
             />
@@ -196,7 +198,7 @@ export function DadesSection({ draft, patch }: SectionProps) {
           control={
             <ToggleField
               label="Refresc automàtic"
-              checked={draft.autoRefresh}
+              checked={prefs.autoRefresh}
               onChange={(v) => patch({ autoRefresh: v })}
             />
           }
@@ -210,7 +212,7 @@ export function DadesSection({ draft, patch }: SectionProps) {
           control={
             <ToggleField
               label="Mostra els agents desconnectats"
-              checked={draft.showOfflineAgents}
+              checked={prefs.showOfflineAgents}
               onChange={(v) => patch({ showOfflineAgents: v })}
             />
           }
@@ -225,7 +227,7 @@ export function DadesSection({ draft, patch }: SectionProps) {
           control={
             <NumberField
               label="Temps màxim d'espera"
-              value={draft.maxWaitSeconds}
+              value={prefs.maxWaitSeconds}
               onChange={(v) => patch({ maxWaitSeconds: v })}
               min={30}
               max={3600}
@@ -241,7 +243,7 @@ export function DadesSection({ draft, patch }: SectionProps) {
           control={
             <NumberField
               label="SLA objectiu"
-              value={draft.slaTarget}
+              value={prefs.slaTarget}
               onChange={(v) => patch({ slaTarget: v })}
               min={50}
               max={100}
@@ -257,7 +259,7 @@ export function DadesSection({ draft, patch }: SectionProps) {
           control={
             <NumberField
               label="Agents en alerta"
-              value={draft.alertPct}
+              value={prefs.alertPct}
               onChange={(v) => patch({ alertPct: v })}
               min={5}
               max={100}
@@ -294,7 +296,7 @@ function handleClearLocalData() {
   window.location.reload()
 }
 
-export function AparencaSection({ draft, patch }: SectionProps) {
+export function AparencaSection({ prefs, patch }: SectionProps) {
   return (
     <>
       <SettingsGroup label="Visualització">
@@ -302,14 +304,14 @@ export function AparencaSection({ draft, patch }: SectionProps) {
           title="Tema"
           hint="Clar, fosc o segons l'aparença del sistema"
           control={
-            <SelectField<ThemePreference>
+            <SegmentedField<ThemePreference>
               label="Tema"
-              value={draft.theme}
+              value={prefs.theme}
               onChange={(v) => patch({ theme: v })}
               options={[
-                { value: 'system', label: 'Segons el sistema' },
-                { value: 'light', label: 'Clar' },
-                { value: 'dark', label: 'Fosc' },
+                { value: 'light', label: 'Clar', icon: 'sun' },
+                { value: 'system', label: 'Sistema', icon: 'display' },
+                { value: 'dark', label: 'Fosc', icon: 'moon' },
               ]}
             />
           }
@@ -320,7 +322,7 @@ export function AparencaSection({ draft, patch }: SectionProps) {
           control={
             <ToggleField
               label="Tenyeix les icones dels registres"
-              checked={draft.tintRecordIcons}
+              checked={prefs.tintRecordIcons}
               onChange={(v) => patch({ tintRecordIcons: v })}
             />
           }
@@ -330,9 +332,9 @@ export function AparencaSection({ draft, patch }: SectionProps) {
           hint="To del gradient darrere els renders de planta"
           control={
             <TintSwatchField
-              value={draft.spaceCanvasTint}
+              value={prefs.spaceCanvasTint}
               onChange={(v) => patch({ spaceCanvasTint: v })}
-              theme={resolveTheme(draft.theme, systemDarkQuery()?.matches ?? false)}
+              theme={resolveTheme(prefs.theme, systemDarkQuery()?.matches ?? false)}
             />
           }
         />
@@ -342,7 +344,7 @@ export function AparencaSection({ draft, patch }: SectionProps) {
           control={
             <SelectField<SpaceViewMode>
               label="Vista de planta per defecte"
-              value={draft.defaultSpaceView}
+              value={prefs.defaultSpaceView}
               onChange={(v) => patch({ defaultSpaceView: v })}
               options={[
                 { value: '2d', label: '2D (planta)' },
@@ -357,7 +359,7 @@ export function AparencaSection({ draft, patch }: SectionProps) {
           control={
             <ToggleField
               label="Animacions 3D"
-              checked={draft.animations}
+              checked={prefs.animations}
               onChange={(v) => patch({ animations: v })}
             />
           }
@@ -371,7 +373,7 @@ export function AparencaSection({ draft, patch }: SectionProps) {
           control={
             <SelectField<Lang>
               label="Idioma de la interfície"
-              value={draft.lang}
+              value={prefs.lang}
               onChange={(v) => patch({ lang: v })}
               options={[
                 { value: 'ca', label: 'Català' },
@@ -387,7 +389,7 @@ export function AparencaSection({ draft, patch }: SectionProps) {
   )
 }
 
-export function NotificacionsSection({ draft, patch }: SectionProps) {
+export function NotificacionsSection({ prefs, patch }: SectionProps) {
   return (
     <SettingsGroup label="Alertes del sistema">
       <SettingsRow
@@ -397,7 +399,7 @@ export function NotificacionsSection({ draft, patch }: SectionProps) {
         control={
           <ToggleField
             label="Notificacions del navegador"
-            checked={draft.browserNotifs}
+            checked={prefs.browserNotifs}
             onChange={(v) => patch({ browserNotifs: v })}
             disabled
           />
@@ -410,7 +412,7 @@ export function NotificacionsSection({ draft, patch }: SectionProps) {
         control={
           <ToggleField
             label="Alerta de cua crítica"
-            checked={draft.queueAlert}
+            checked={prefs.queueAlert}
             onChange={(v) => patch({ queueAlert: v })}
             disabled
           />
@@ -423,7 +425,7 @@ export function NotificacionsSection({ draft, patch }: SectionProps) {
         control={
           <ToggleField
             label="Alerta d'agent desconnectat"
-            checked={draft.agentOfflineAlert}
+            checked={prefs.agentOfflineAlert}
             onChange={(v) => patch({ agentOfflineAlert: v })}
             disabled
           />
@@ -436,7 +438,7 @@ export function NotificacionsSection({ draft, patch }: SectionProps) {
         control={
           <ToggleField
             label="So d'alerta"
-            checked={draft.soundAlert}
+            checked={prefs.soundAlert}
             onChange={(v) => patch({ soundAlert: v })}
             disabled
           />

@@ -1,9 +1,10 @@
 /* Settings modal — shell.
-   Holds a draft copy of the live preferences while open, a section nav, and a
-   dirty-aware close (confirm-on-discard). Save persists the draft via
-   usePreferences().save and closes. The Developer nav item only appears when
-   developer mode is on. Like the detail drawer, derived-from-prop state is
-   adjusted during render rather than in an effect. */
+   Settings apply live: every edit persists immediately via usePreferences().save,
+   so the app reflects changes as they are made. A snapshot of the preferences
+   taken when the modal opens backs the "Desfés els canvis" button, which
+   restores the state that was in force at open time. The Developer nav item
+   only appears when developer mode is on. Like the detail drawer,
+   derived-from-prop state is adjusted during render rather than in an effect. */
 
 import { useEffect, useState, type ReactNode } from 'react'
 import { useDeveloperMode } from '../../hooks/useDeveloperMode'
@@ -52,51 +53,42 @@ export function SettingsModal() {
   const { enabled: devMode } = useDeveloperMode()
   const trapRef = useFocusTrap<HTMLDivElement>(isOpen)
 
-  // Draft + active section reset each time the modal transitions to open.
-  // The baseline is snapshotted at open time so dirtiness reflects the user's
-  // own edits, not external prefs changes (e.g. a cross-tab storage sync).
-  const [draft, setDraft] = useState<Preferences>(prefs)
+  // Baseline + active section reset each time the modal transitions to open.
+  // The baseline is snapshotted at open time so "Desfés els canvis" restores
+  // what was in force when the user started editing.
   const [baseline, setBaseline] = useState<Preferences>(prefs)
   const [section, setSection] = useState<SettingsSectionId>(initialSection)
   const [wasOpen, setWasOpen] = useState(false)
   if (isOpen && !wasOpen) {
     setWasOpen(true)
-    setDraft(prefs)
     setBaseline(prefs)
     setSection(initialSection)
   } else if (!isOpen && wasOpen) {
     setWasOpen(false)
   }
 
-  const dirty = !prefsEqual(draft, baseline)
+  const canUndo = !prefsEqual(prefs, baseline)
 
-  function requestClose() {
-    if (dirty && !window.confirm('Tens canvis sense desar. Tancar igualment?')) return
-    close()
-  }
-
-  // Escape closes (respecting the dirty guard).
+  // Escape closes.
   useEffect(() => {
     if (!isOpen) return
     function onKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') requestClose()
+      if (event.key === 'Escape') close()
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, dirty])
+  }, [isOpen, close])
 
   function patch(partial: Partial<Preferences>) {
-    setDraft((prev) => ({ ...prev, ...partial }))
+    save({ ...prefs, ...partial })
   }
 
-  function handleSave() {
-    save(draft)
-    close()
+  function handleUndo() {
+    save(baseline)
   }
 
   function handleReset() {
-    setDraft({ ...PREFERENCES_DEFAULTS })
+    save({ ...PREFERENCES_DEFAULTS })
   }
 
   // If dev mode turns off while sitting on the Developer section, bounce away.
@@ -111,13 +103,13 @@ export function SettingsModal() {
       body = <ConnexioSection />
       break
     case 'dades':
-      body = <DadesSection draft={draft} patch={patch} />
+      body = <DadesSection prefs={prefs} patch={patch} />
       break
     case 'aparenca':
-      body = <AparencaSection draft={draft} patch={patch} />
+      body = <AparencaSection prefs={prefs} patch={patch} />
       break
     case 'notificacions':
-      body = <NotificacionsSection draft={draft} patch={patch} />
+      body = <NotificacionsSection prefs={prefs} patch={patch} />
       break
     case 'developer':
       body = <DeveloperSection />
@@ -131,7 +123,7 @@ export function SettingsModal() {
     <div
       className={`settings-backdrop${isOpen ? ' is-open' : ''}`}
       onClick={(e) => {
-        if (e.target === e.currentTarget) requestClose()
+        if (e.target === e.currentTarget) close()
       }}
       aria-hidden={!isOpen}
     >
@@ -147,7 +139,7 @@ export function SettingsModal() {
           <button
             type="button"
             className="settings-modal__close"
-            onClick={requestClose}
+            onClick={close}
             aria-label="Tanca la configuració"
           >
             <AppIcon name="close" size={15} />
@@ -180,11 +172,11 @@ export function SettingsModal() {
           >
             Valors per defecte
           </Button>
-          <Button variant="ghost" onClick={requestClose}>
-            Cancel·la
+          <Button variant="ghost" onClick={handleUndo} disabled={!canUndo}>
+            Desfés els canvis
           </Button>
-          <Button variant="primary" onClick={handleSave} disabled={!dirty}>
-            Desa els canvis
+          <Button variant="primary" onClick={close}>
+            Fet
           </Button>
         </footer>
       </div>

@@ -1,14 +1,12 @@
-/* Paleta per tema del render 3D (SpaceView3D).
-   Els atributs de presentació SVG no resolen var(), així que els colors que
-   depenen del tema viuen aquí com a parells LIGHT/DARK amb la mateixa
-   intenció de disseny: les ombres de profunditat continuen enfosquint, les
-   línies d'aresta passen de tinta a tinta clara, i els brillos de llum
-   s'atenuen. Els MATERIALS (vidre de finestra, fusta de porta, feixos de
-   llum) són translúcids i es componen sobre la paret — es comparteixen entre
-   temes dins els subcomponents; els feixos de llum canvien de color i mode de
-   fusió (multiply enfosqueix, sobre fosc cal screen amb tons càlids d'oficina). */
-
-import type { ResolvedTheme } from '../../settings/theme'
+/* Paleta del render 3D (SpaceView3D) — noms de variable, no valors.
+   Els colors per tema viuen com a variables CSS a :root /
+   :root[data-theme='dark'] (index.css, secció «Paleta SpaceView3D»). Els
+   presentation attributes SVG (fill, stroke, stop-color) sí que resolen
+   var(), així que el canvi de tema és cascada CSS pura: cap component s'ha
+   de re-renderitzar. El mode de fusió dels feixos de llum (multiply sobre
+   clar, screen sobre fosc) també és variable (--fv3d-beam-blend), aplicada
+   via la classe .fv3d-beam-vol perquè mix-blend-mode no té presentation
+   attribute. */
 
 export interface SpaceView3DPalette {
   /** Slab del pedestal i fallback de color de torre. */
@@ -58,8 +56,6 @@ export interface SpaceView3DPalette {
   wallSheenLeft: { top: string; bottom: string }
   /** Ombra de contacte del terra (sota el blur). */
   shadowFill: string
-  /** Fusió dels feixos de llum: multiply sobre clar, screen sobre fosc. */
-  beamBlend: 'multiply' | 'screen'
   /** Gradients dels feixos de llum diürna (inici, mig, fi). */
   beam: {
     floor: [string, string, string]
@@ -68,91 +64,43 @@ export interface SpaceView3DPalette {
   }
 }
 
-const LIGHT: SpaceView3DPalette = {
-  pedestal: '#E2DFDA',
-  spaceFillA: '#FDFCFB',
-  spaceFillB: '#FBFAF8',
-  wallFill: 'rgb(252,251,249)',
-  shadeLeft: 'rgba(12,10,22,0.12)',
-  shadeRight: 'rgba(12,10,22,0.04)',
-  pedestalShadeLeft: 'rgba(12,10,22,0.05)',
-  pedestalShadeRight: 'rgba(12,10,22,0.015)',
-  capSheen: 'rgba(255,255,255,0.12)',
-  vacantStroke: 'rgba(27,25,36,.22)',
-  beacon: '#E05641',
-  beaconStroke: '#fff',
-  dividerFill: 'rgba(47,158,143,.30)',
-  dividerStroke: 'rgba(47,158,143,.75)',
+export const SPACE_VIEW_3D_PALETTE: SpaceView3DPalette = {
+  pedestal: 'var(--fv3d-pedestal)',
+  spaceFillA: 'var(--fv3d-space-fill-a)',
+  spaceFillB: 'var(--fv3d-space-fill-b)',
+  wallFill: 'var(--fv3d-wall-fill)',
+  shadeLeft: 'var(--fv3d-shade-left)',
+  shadeRight: 'var(--fv3d-shade-right)',
+  pedestalShadeLeft: 'var(--fv3d-pedestal-shade-left)',
+  pedestalShadeRight: 'var(--fv3d-pedestal-shade-right)',
+  capSheen: 'var(--fv3d-cap-sheen)',
+  vacantStroke: 'var(--fv3d-vacant-stroke)',
+  beacon: 'var(--fv3d-beacon)',
+  beaconStroke: 'var(--fv3d-beacon-stroke)',
+  dividerFill: 'var(--fv3d-divider-fill)',
+  dividerStroke: 'var(--fv3d-divider-stroke)',
   wall: {
-    rightTint: 'rgba(27,25,36,.032)',
-    rightTintStroke: 'rgba(27,25,36,.05)',
-    rightTopStroke: 'rgba(27,25,36,.06)',
-    rightTopSheen: 'rgba(255,255,255,.4)',
-    leftTint: 'rgba(27,25,36,.05)',
-    leftTintStroke: 'rgba(27,25,36,.06)',
-    leftTopStroke: 'rgba(27,25,36,.07)',
-    leftTopSheen: 'rgba(255,255,255,.28)',
+    rightTint: 'var(--fv3d-wall-right-tint)',
+    rightTintStroke: 'var(--fv3d-wall-right-tint-stroke)',
+    rightTopStroke: 'var(--fv3d-wall-right-top-stroke)',
+    rightTopSheen: 'var(--fv3d-wall-right-top-sheen)',
+    leftTint: 'var(--fv3d-wall-left-tint)',
+    leftTintStroke: 'var(--fv3d-wall-left-tint-stroke)',
+    leftTopStroke: 'var(--fv3d-wall-left-top-stroke)',
+    leftTopSheen: 'var(--fv3d-wall-left-top-sheen)',
   },
-  slabRightShade: 'rgba(27,25,36,.12)',
-  slabLeftShade: 'rgba(27,25,36,.102)',
-  tileStroke: 'rgba(27,25,36,.065)',
-  grainDotA: 'rgba(27,25,36,0.02)',
-  grainDotB: 'rgba(27,25,36,0.016)',
-  tileSheen: { top: 'rgba(255,255,255,0.07)', bottom: 'rgba(27,25,36,0.03)' },
-  wallSheenRight: { top: 'rgba(255,255,255,0.05)', bottom: 'rgba(27,25,36,0.03)' },
-  wallSheenLeft: { top: 'rgba(255,255,255,0.03)', bottom: 'rgba(27,25,36,0.05)' },
-  shadowFill: 'rgba(27,25,36,.17)',
-  beamBlend: 'multiply',
+  slabRightShade: 'var(--fv3d-slab-right-shade)',
+  slabLeftShade: 'var(--fv3d-slab-left-shade)',
+  tileStroke: 'var(--fv3d-tile-stroke)',
+  grainDotA: 'var(--fv3d-grain-dot-a)',
+  grainDotB: 'var(--fv3d-grain-dot-b)',
+  tileSheen: { top: 'var(--fv3d-tile-sheen-top)', bottom: 'var(--fv3d-tile-sheen-bottom)' },
+  wallSheenRight: { top: 'var(--fv3d-wall-sheen-right-top)', bottom: 'var(--fv3d-wall-sheen-right-bottom)' },
+  wallSheenLeft: { top: 'var(--fv3d-wall-sheen-left-top)', bottom: 'var(--fv3d-wall-sheen-left-bottom)' },
+  shadowFill: 'var(--fv3d-shadow-fill)',
   beam: {
-    floor: ['rgba(150,178,214,0.07)', 'rgba(178,200,228,0.022)', 'rgba(220,232,245,0)'],
-    cap: ['rgba(160,186,220,0.095)', 'rgba(196,214,234,0.03)', 'rgba(232,240,248,0)'],
-    side: ['rgba(154,182,218,0.08)', 'rgba(188,208,232,0.028)', 'rgba(226,236,246,0)'],
+    floor: ['var(--fv3d-beam-floor-0)', 'var(--fv3d-beam-floor-1)', 'var(--fv3d-beam-floor-2)'],
+    cap: ['var(--fv3d-beam-cap-0)', 'var(--fv3d-beam-cap-1)', 'var(--fv3d-beam-cap-2)'],
+    side: ['var(--fv3d-beam-side-0)', 'var(--fv3d-beam-side-1)', 'var(--fv3d-beam-side-2)'],
   },
-}
-
-const DARK: SpaceView3DPalette = {
-  pedestal: '#363440',
-  spaceFillA: '#34323C',
-  spaceFillB: '#302E38',
-  wallFill: 'rgb(56,54,64)',
-  shadeLeft: 'rgba(0,0,0,0.22)',
-  shadeRight: 'rgba(0,0,0,0.09)',
-  pedestalShadeLeft: 'rgba(0,0,0,0.10)',
-  pedestalShadeRight: 'rgba(0,0,0,0.04)',
-  capSheen: 'rgba(255,255,255,0.10)',
-  vacantStroke: 'rgba(237,236,242,.25)',
-  beacon: '#E05641',
-  beaconStroke: '#fff',
-  dividerFill: 'rgba(47,158,143,.30)',
-  dividerStroke: 'rgba(47,158,143,.75)',
-  wall: {
-    rightTint: 'rgba(0,0,0,.09)',
-    rightTintStroke: 'rgba(237,236,242,.07)',
-    rightTopStroke: 'rgba(237,236,242,.08)',
-    rightTopSheen: 'rgba(255,255,255,.14)',
-    leftTint: 'rgba(0,0,0,.12)',
-    leftTintStroke: 'rgba(237,236,242,.08)',
-    leftTopStroke: 'rgba(237,236,242,.09)',
-    leftTopSheen: 'rgba(255,255,255,.10)',
-  },
-  slabRightShade: 'rgba(0,0,0,.22)',
-  slabLeftShade: 'rgba(0,0,0,.18)',
-  tileStroke: 'rgba(237,236,242,.09)',
-  grainDotA: 'rgba(237,236,242,0.03)',
-  grainDotB: 'rgba(237,236,242,0.024)',
-  tileSheen: { top: 'rgba(255,255,255,0.06)', bottom: 'rgba(0,0,0,0.06)' },
-  wallSheenRight: { top: 'rgba(255,255,255,0.055)', bottom: 'rgba(0,0,0,0.07)' },
-  wallSheenLeft: { top: 'rgba(255,255,255,0.04)', bottom: 'rgba(0,0,0,0.09)' },
-  shadowFill: 'rgba(0,0,0,.30)',
-  beamBlend: 'screen',
-  beam: {
-    floor: ['rgba(232,224,210,0.065)', 'rgba(238,232,218,0.022)', 'rgba(245,240,232,0)'],
-    cap: ['rgba(236,228,214,0.085)', 'rgba(242,236,222,0.028)', 'rgba(248,244,236,0)'],
-    side: ['rgba(228,218,202,0.072)', 'rgba(234,226,212,0.025)', 'rgba(242,236,228,0)'],
-  },
-}
-
-export const SPACE_VIEW_3D_PALETTES: Record<ResolvedTheme, SpaceView3DPalette> = {
-  light: LIGHT,
-  dark: DARK,
 }

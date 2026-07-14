@@ -110,7 +110,9 @@ describe('SpaceView3D daylight beam layering', () => {
 
   it('paints sunbeams above the floor tiles (beams are not buried under the opaque floor)', () => {
     const { container, beam } = renderView()
-    const tiles = container.querySelectorAll('polygon[fill="#FDFCFB"], polygon[fill="#FBFAF8"]')
+    const tiles = container.querySelectorAll(
+      'polygon[fill="var(--fv3d-space-fill-a)"], polygon[fill="var(--fv3d-space-fill-b)"]',
+    )
     expect(tiles.length).toBe(4)
     for (const tile of tiles) {
       expect(paintsAfter(tile, beam)).toBe(true)

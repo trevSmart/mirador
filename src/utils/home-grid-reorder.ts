@@ -134,10 +134,12 @@ export function useGridFlipReorder<T extends HTMLElement>() {
   const running = useRef(new Map<HTMLElement, Animation>())
   const primed = useRef(false)
   const resizeObserver = useRef<ResizeObserver | null>(null)
+  const pendingRefresh = useRef(0)
 
   const attach = useCallback((node: T | null) => {
     resizeObserver.current?.disconnect()
     resizeObserver.current = null
+    cancelAnimationFrame(pendingRefresh.current)
     containerRef.current = node
     snapshots.current.clear()
     running.current.clear()
@@ -157,11 +159,32 @@ export function useGridFlipReorder<T extends HTMLElement>() {
   useLayoutEffect(() => {
     const container = containerRef.current
     if (!container) return
+    cancelAnimationFrame(pendingRefresh.current)
     const prev = snapshots.current
-    const next = new Map<HTMLElement, Snapshot>()
-    for (const child of container.children) {
-      if (child instanceof HTMLElement) next.set(child, measure(child))
+
+    // Same children in the same order → React moved nothing, so there is no
+    // animation to run. Measuring here anyway would force a synchronous reflow
+    // inside the commit (brutal right after a global style invalidation like a
+    // theme switch, where it re-lays-out the whole page). Refresh the
+    // snapshots once the browser has painted instead — reads on clean layout
+    // are near-free — so a later reorder still animates from fresh coords.
+    const children = [...container.children].filter((c): c is HTMLElement => c instanceof HTMLElement)
+    const prevOrder = [...prev.keys()]
+    if (primed.current && children.length === prevOrder.length && children.every((el, i) => el === prevOrder[i])) {
+      pendingRefresh.current = requestAnimationFrame(() => {
+        pendingRefresh.current = requestAnimationFrame(() => {
+          const fresh = new Map<HTMLElement, Snapshot>()
+          for (const el of children) {
+            if (el.isConnected) fresh.set(el, measure(el))
+          }
+          snapshots.current = fresh
+        })
+      })
+      return
     }
+
+    const next = new Map<HTMLElement, Snapshot>()
+    for (const child of children) next.set(child, measure(child))
 
     if (primed.current) {
       for (const [el, last] of prev) {

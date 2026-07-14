@@ -30,6 +30,22 @@ export function applyTheme(theme: ResolvedTheme): void {
   window.dispatchEvent(new Event(THEME_EVENT))
 }
 
+/** Run a theme-changing mutation inside a view-transition crossfade.
+    Compositor-only (two page snapshots fading — no per-element transitions),
+    so it adds no style-recalc cost. Falls back to a plain call where the API
+    is missing or the user prefers reduced motion. The duration lives in
+    index.css (::view-transition-old/new(root)). */
+export function withThemeTransition(mutate: () => void): void {
+  const reducedMotion =
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (reducedMotion || typeof document.startViewTransition !== 'function') {
+    mutate()
+    return
+  }
+  document.startViewTransition(mutate)
+}
+
 export function getAppliedTheme(): ResolvedTheme {
   return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
 }

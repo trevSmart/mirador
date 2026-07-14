@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { devLog } from '../dev/dev-log'
 import { PreferencesContext, type PreferencesContextValue } from './preferences-context'
 import { buildSpaceCanvasWash } from './space-canvas-wash'
-import { applyTheme, resolveTheme, systemDarkQuery } from './theme'
+import { applyTheme, getAppliedTheme, resolveTheme, systemDarkQuery, withThemeTransition } from './theme'
 import { useResolvedTheme } from './use-resolved-theme'
 import {
   loadPreferences,
@@ -22,7 +22,22 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   const [prefs, setPrefs] = useState<Preferences>(loadPreferences)
 
   useEffect(() => {
-    const sync = () => setPrefs(loadPreferences())
+    const sync = () => {
+      const next = loadPreferences()
+      const nextTheme = resolveTheme(next.theme, systemDarkQuery()?.matches ?? false)
+      if (nextTheme === getAppliedTheme()) {
+        setPrefs(next)
+        return
+      }
+      // Theme flip: apply the attribute and the context update in the same
+      // handler so React batches THEME_EVENT subscribers and context consumers
+      // into ONE render (an effect-driven applyTheme would cost a second full
+      // pass), and wrap it in a crossfade that hides the global style recalc.
+      withThemeTransition(() => {
+        applyTheme(nextTheme)
+        setPrefs(next)
+      })
+    }
     const onStorage = (event: StorageEvent) => {
       if (event.key === PREFERENCES_KEY) sync()
     }
@@ -39,8 +54,9 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     const apply = () => applyTheme(resolveTheme(prefs.theme, mq?.matches ?? false))
     apply()
     if (prefs.theme === 'system' && mq) {
-      mq.addEventListener('change', apply)
-      return () => mq.removeEventListener('change', apply)
+      const onSystemChange = () => withThemeTransition(apply)
+      mq.addEventListener('change', onSystemChange)
+      return () => mq.removeEventListener('change', onSystemChange)
     }
   }, [prefs.theme])
 
