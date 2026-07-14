@@ -11,6 +11,9 @@ updates:
         dependency-type: production
       development-dependencies:
         dependency-type: development
+        # typescript-eslint does not support TypeScript 7 yet (peer <6.1.0).
+        exclude-patterns:
+          - "typescript"
 
   - package-ecosystem: github-actions
     directory: /
