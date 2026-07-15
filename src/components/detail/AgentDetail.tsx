@@ -87,10 +87,12 @@ export function AgentDetail({ agent }: { agent: Agent }) {
         </div>
       ) : null}
 
-      <div className="dd-tabs" role="group" aria-label="Vista de l'agent">
+      <div className="dd-tabs" role="tablist" aria-label="Vista de l'agent">
         <button
           type="button"
           className="dd-tab"
+          role="tab"
+          aria-selected={tab === 'detail'}
           aria-pressed={tab === 'detail'}
           onClick={() => setTab('detail')}
         >
@@ -99,6 +101,8 @@ export function AgentDetail({ agent }: { agent: Agent }) {
         <button
           type="button"
           className="dd-tab"
+          role="tab"
+          aria-selected={tab === 'timeline'}
           aria-pressed={tab === 'timeline'}
           onClick={() => setTab('timeline')}
         >
@@ -106,13 +110,15 @@ export function AgentDetail({ agent }: { agent: Agent }) {
         </button>
       </div>
 
-      {tab === 'timeline' ? (
-        <DrawerSection title="Cronologia d'avui">
-          <AgentTimeline agent={agent} />
-        </DrawerSection>
-      ) : (
-        <>
-      <DrawerSection title="Resum">
+      <div className="dd-agent-body">
+        <div
+          className="dd-agent-detail-group"
+          role="tabpanel"
+          aria-label="Detall"
+          data-active={tab === 'detail' ? 'true' : 'false'}
+        >
+          <div className="dd-card-grid dd-card-grid--head">
+      <DrawerSection title="Resum" compact>
         <CapacityBar used={agent.used} max={agent.max} color={capacityColor(agent)} />
         <StatGrid>
           <Stat label="Temps en estat" value={agent.loginMin > 0 ? formatMinutes(agent.loginMin) : '—'} />
@@ -121,7 +127,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
         </StatGrid>
       </DrawerSection>
 
-      <DrawerSection title="Canals">
+      <DrawerSection title="Canals" compact>
         <div className="dd-channels">
           {channels.map((ch) => (
             <div key={ch} className="dd-channel" data-active={(agent.chans[ch] ?? 0) > 0 ? 'true' : 'false'}>
@@ -132,8 +138,10 @@ export function AgentDetail({ agent }: { agent: Agent }) {
           ))}
         </div>
       </DrawerSection>
+          </div>
 
-      <DrawerSection title="Skills">
+          <div className="dd-card-grid dd-card-grid--lists">
+      <DrawerSection title="Skills" compact>
         {agent.skills.length === 0 ? (
           <EmptyHint>Sense skills assignades.</EmptyHint>
         ) : (
@@ -199,7 +207,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
         ) : null}
       </DrawerSection>
 
-      <DrawerSection title="Cues assignades">
+      <DrawerSection title="Cues assignades" compact>
         {queueIds.length === 0 ? (
           <EmptyHint>Cap cua assignada.</EmptyHint>
         ) : (
@@ -225,7 +233,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
         )}
       </DrawerSection>
 
-      <DrawerSection title="Feina activa">
+      <DrawerSection title="Feina activa" compact>
         {agent.work.length === 0 ? (
           <EmptyHint>Sense feina activa.</EmptyHint>
         ) : (
@@ -249,8 +257,20 @@ export function AgentDetail({ agent }: { agent: Agent }) {
           </div>
         )}
       </DrawerSection>
-        </>
-      )}
+          </div>
+        </div>
+
+        <div
+          className="dd-agent-pane dd-agent-pane--timeline"
+          role="tabpanel"
+          aria-label="Cronologia"
+          data-active={tab === 'timeline' ? 'true' : 'false'}
+        >
+          <DrawerSection title="Cronologia d'avui">
+            <AgentTimeline agent={agent} />
+          </DrawerSection>
+        </div>
+      </div>
     </>
   )
 }

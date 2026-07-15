@@ -38,7 +38,8 @@ export function QueueDetail({ queue }: { queue: Queue }) {
         ]}
       />
 
-      <DrawerSection title="Salut de la cua">
+      <div className="dd-card-grid dd-card-grid--lists">
+      <DrawerSection title="Salut de la cua" compact>
         <StatGrid>
           <Stat label="Backlog" value={queue.backlog} tone={queue.backlog > 8 ? 'alert' : undefined} />
           <Stat label="Espera màxima" value={formatSeconds(queue.longest)} tone={queue.longest > 150 ? 'alert' : undefined} />
@@ -53,6 +54,7 @@ export function QueueDetail({ queue }: { queue: Queue }) {
             En espera (<FadeValue value={waiting.length} />)
           </>
         }
+        compact
       >
         {waiting.length === 0 ? (
           <EmptyHint>Res en espera.</EmptyHint>
@@ -85,6 +87,7 @@ export function QueueDetail({ queue }: { queue: Queue }) {
             Agents assignats (<FadeValue value={members.length} />)
           </>
         }
+        compact
       >
         {members.length === 0 ? (
           <EmptyHint>Cap agent assignat.</EmptyHint>
@@ -96,6 +99,7 @@ export function QueueDetail({ queue }: { queue: Queue }) {
           </div>
         )}
       </DrawerSection>
+      </div>
     </>
   )
 }

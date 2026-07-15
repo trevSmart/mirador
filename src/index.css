@@ -1536,7 +1536,142 @@ textarea,
 }
 
 .detail-panel__body {
-  max-width: 960px;
+  width: 100%;
+  max-width: none;
+  container-type: inline-size;
+  container-name: detail-panel;
+}
+
+/* Agent detail: en panells estrets (drawer o tab estret) només es mostra el grup
+   actiu; les pestanyes Detall/Cronologia canvien la vista. */
+.dd-agent-detail-group {
+  display: none;
+  min-width: 0;
+}
+
+.dd-agent-detail-group[data-active='true'] {
+  display: block;
+}
+
+/* Tab de detall estret: head i lists són grids germans — cal gap vertical
+   entre ells quan les cards fan wrap (sinó la 1a fila de lists queda enganxada). */
+.panel-shell--detail .dd-agent-detail-group[data-active='true'] {
+  display: grid;
+  gap: var(--sp-6);
+}
+
+.dd-agent-pane {
+  display: none;
+  min-width: 0;
+}
+
+.dd-agent-pane[data-active='true'] {
+  display: block;
+}
+
+/* Agent detail tab ample: capçalera + cronologia a dalt, llistes a sota en graella. */
+@container detail-panel (min-width: 1000px) {
+  .panel-shell--detail .dd-tabs {
+    display: none;
+  }
+
+  .panel-shell--detail .dd-agent-body {
+    display: grid;
+    /* Resum flexible, Canals estreta (1 columna), Cronologia amb l'espai sobrant. */
+    grid-template-columns: minmax(0, 1fr) minmax(140px, 200px) minmax(0, 2.2fr);
+    grid-template-rows: auto auto;
+    gap: var(--sp-6);
+    align-items: stretch;
+  }
+
+  /* [data-active] iguala l'especificitat de la regla de tab estret (display: grid). */
+  .panel-shell--detail .dd-agent-detail-group[data-active] {
+    display: contents;
+  }
+
+  /* Resum, Canals i Cronologia a la mateixa fila del grid pare → alçada igual. */
+  .panel-shell--detail .dd-card-grid--head .dd-section:nth-child(1) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .panel-shell--detail .dd-card-grid--head .dd-section:nth-child(2) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .panel-shell--detail .dd-card-grid--head .dd-section:nth-child(2) .dd-channels {
+    grid-template-columns: 1fr;
+    gap: var(--sp-1);
+  }
+
+  .panel-shell--detail .dd-agent-pane--timeline .dd-section {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .panel-shell--detail .dd-card-grid--lists {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .panel-shell--detail .dd-card-grid--lists .dd-section {
+    grid-column: auto;
+  }
+}
+
+/* Detail tab (agent, cua, skill, work item): seccions com a targetes en graella
+   responsiva. Al drawer el wrapper és display:contents i tot queda com abans. */
+.dd-card-grid {
+  display: contents;
+}
+
+.panel-shell--detail .dd-card-grid--head,
+.panel-shell--detail .dd-card-grid--lists {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--sp-6);
+  align-items: stretch;
+}
+
+.panel-shell--detail .dd-card-grid .dd-section,
+.panel-shell--detail .dd-agent-pane--timeline .dd-section {
+  margin-bottom: 0;
+  padding: var(--sp-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--surface-card);
+  box-sizing: border-box;
+}
+
+.panel-shell--detail .dd-card-grid .dd-section {
+  grid-column: 1 / -1;
+}
+
+/* Flex només a les llistes: a la fila de capçalera el flex impedia
+   l'estirament del grid i deixava Canals més baixa que Resum/Cronologia. */
+.panel-shell--detail .dd-card-grid--lists .dd-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-shell--detail .dd-card-grid .dd-section--compact {
+  grid-column: auto;
+}
+
+/* Després de les regles base: en tab ample el head es dissol al grid pare. */
+@container detail-panel (min-width: 1000px) {
+  .panel-shell--detail .dd-card-grid--head,
+  .panel-shell--detail .dd-agent-pane--timeline {
+    display: contents;
+  }
+
+  .panel-shell--detail .dd-card-grid--head .dd-section,
+  .panel-shell--detail .dd-agent-pane--timeline .dd-section {
+    display: block;
+    align-self: stretch;
+    min-height: 100%;
+  }
 }
 
 .dv-tab-group-chip {
