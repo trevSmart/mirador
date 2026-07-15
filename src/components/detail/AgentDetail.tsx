@@ -87,12 +87,10 @@ export function AgentDetail({ agent }: { agent: Agent }) {
         </div>
       ) : null}
 
-      <div className="dd-tabs" role="tablist" aria-label="Vista de l'agent">
+      <div className="dd-tabs" role="group" aria-label="Vista de l'agent">
         <button
           type="button"
           className="dd-tab"
-          role="tab"
-          aria-selected={tab === 'detail'}
           aria-pressed={tab === 'detail'}
           onClick={() => setTab('detail')}
         >
@@ -101,8 +99,6 @@ export function AgentDetail({ agent }: { agent: Agent }) {
         <button
           type="button"
           className="dd-tab"
-          role="tab"
-          aria-selected={tab === 'timeline'}
           aria-pressed={tab === 'timeline'}
           onClick={() => setTab('timeline')}
         >
@@ -113,7 +109,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
       <div className="dd-agent-body">
         <div
           className="dd-agent-detail-group"
-          role="tabpanel"
+          role="region"
           aria-label="Detall"
           data-active={tab === 'detail' ? 'true' : 'false'}
         >
@@ -262,7 +258,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
 
         <div
           className="dd-agent-pane dd-agent-pane--timeline"
-          role="tabpanel"
+          role="region"
           aria-label="Cronologia"
           data-active={tab === 'timeline' ? 'true' : 'false'}
         >
