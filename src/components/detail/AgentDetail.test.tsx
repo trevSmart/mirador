@@ -185,8 +185,8 @@ describe('AgentDetail — secció Skills', () => {
 
   it('la pestanya Cronologia mostra la timeline i amaga les seccions de detall', () => {
     renderAgent(makeAgent())
-    const detailPane = screen.getByRole('tabpanel', { name: 'Detall' })
-    const timelinePane = screen.getByRole('tabpanel', { name: 'Cronologia' })
+    const detailPane = screen.getByRole('region', { name: 'Detall' })
+    const timelinePane = screen.getByRole('region', { name: 'Cronologia' })
 
     // Per defecte, vista de detall.
     expect(detailPane).toHaveAttribute('data-active', 'true')
@@ -194,7 +194,7 @@ describe('AgentDetail — secció Skills', () => {
     expect(screen.getByText('Canals')).toBeInTheDocument()
     expect(screen.getByTestId('agent-timeline-stub')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('tab', { name: /cronologia/i }))
+    fireEvent.click(screen.getByRole('button', { name: /cronologia/i }))
     expect(detailPane).toHaveAttribute('data-active', 'false')
     expect(timelinePane).toHaveAttribute('data-active', 'true')
   })
