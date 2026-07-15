@@ -89,7 +89,8 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
         </div>
       ) : null}
 
-      <DrawerSection title="Resum">
+      <div className="dd-card-grid dd-card-grid--lists">
+      <DrawerSection title="Resum" compact>
         <StatGrid>
           <Stat label="Canal" value={channelLabel(item.channelKey)} />
           <Stat label="Estat" value={workStatusLabel(item.status)} />
@@ -99,7 +100,7 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
         </StatGrid>
       </DrawerSection>
 
-      <DrawerSection title="Relacionats">
+      <DrawerSection title="Relacionats" compact>
         {agent || queue ? (
           <div className="dd-list">
             {agent ? <MiniAgentRow agent={agent} onClick={() => openAgent(agent.id)} /> : null}
@@ -118,7 +119,7 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
         )}
       </DrawerSection>
 
-      <DrawerSection title="Detalls">
+      <DrawerSection title="Detalls" compact>
         {!item.workItemId ? (
           <EmptyHint>Sense registre associat.</EmptyHint>
         ) : isLoading ? (
@@ -138,6 +139,7 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
           <EmptyHint>No s&apos;han trobat detalls del registre.</EmptyHint>
         )}
       </DrawerSection>
+      </div>
     </>
   )
 }
