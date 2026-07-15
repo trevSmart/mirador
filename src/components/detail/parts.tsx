@@ -40,9 +40,18 @@ export function DrawerActions({ actions }: { actions: DrawerAction[] }) {
   )
 }
 
-export function DrawerSection({ title, children }: { title: ReactNode; children: ReactNode }) {
+export function DrawerSection({
+  title,
+  children,
+  compact,
+}: {
+  title: ReactNode
+  children: ReactNode
+  /** En el layout de pestanya gran, les seccions compactes poden compartir fila. */
+  compact?: boolean
+}) {
   return (
-    <section className="dd-section">
+    <section className={['dd-section', compact ? 'dd-section--compact' : ''].filter(Boolean).join(' ')}>
       <h4 className="dd-section__title">{title}</h4>
       {children}
     </section>

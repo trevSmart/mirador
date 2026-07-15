@@ -58,6 +58,7 @@ export function SkillDetail({ skill }: { skill: Skill }) {
         ]}
       />
 
+      <div className="dd-card-grid dd-card-grid--lists">
       {assigning && canEdit ? (
         <DrawerSection title="Assigna agents">
           <SkillAgentAssignList
@@ -74,14 +75,14 @@ export function SkillDetail({ skill }: { skill: Skill }) {
         </DrawerSection>
       ) : null}
 
-      <DrawerSection title="Resum">
+      <DrawerSection title="Resum" compact>
         <StatGrid>
           <Stat label="Agents qualificats" value={skill.agents} />
           <Stat label="Backlog" value={skill.backlog} tone={skill.backlog > 4 ? 'alert' : undefined} />
         </StatGrid>
       </DrawerSection>
 
-      <DrawerSection title={`Agents qualificats (${qualified.length})`}>
+      <DrawerSection title={`Agents qualificats (${qualified.length})`} compact>
         {qualified.length === 0 ? (
           <EmptyHint>Cap agent qualificat.</EmptyHint>
         ) : (
@@ -92,6 +93,7 @@ export function SkillDetail({ skill }: { skill: Skill }) {
           </div>
         )}
       </DrawerSection>
+      </div>
     </>
   )
 }
