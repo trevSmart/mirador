@@ -1,6 +1,10 @@
-import { useCallback, useRef, useSyncExternalStore } from 'react'
+import { useCallback, useLayoutEffect, useRef, useSyncExternalStore } from 'react'
 import type { IDockviewDefaultTabProps } from 'dockview-react'
-import { getPanelTypeFromComponent, isPanelClosable } from '../panels/panel-actions'
+import {
+  getPanelTypeFromComponent,
+  isPanelClosable,
+  isPanelDraggable,
+} from '../panels/panel-actions'
 import { parseDetailPanelParams, isDetailPanelComponent } from '../detail/detail-panel'
 import { DetailTabIcon } from '../components/detail/DetailTabIcon'
 import { PanelIcon } from '../panels/PanelIcon'
@@ -49,6 +53,7 @@ export function MiradorTab({
   const panel = containerApi.panels.find((item) => item.id === api.id)
   const panelType = getPanelTypeFromComponent(panel?.view.contentComponent)
   const closable = panelType ? isPanelClosable(panelType) : true
+  const draggable = panelType ? isPanelDraggable(panelType) : true
   const effectiveHideClose = hideClose || !closable
   const detailParams = isDetailPanelComponent(panel?.view.contentComponent)
     ? parseDetailPanelParams(panel?.params)
@@ -72,6 +77,22 @@ export function MiradorTab({
   const onBtnPointerDown = useCallback((event: React.PointerEvent) => {
     event.preventDefault()
   }, [])
+
+  // Home no s'ha de poder ni començar a arrossegar. Dockview marca `draggable`
+  // sobre l'element `.dv-tab` (el pare del nostre contingut); si el desactivem,
+  // el navegador ni tan sols dispara `dragstart`, així que no s'inicia cap
+  // arrossegament ni l'animació de reordenació. Ho fem sobre el node real —no
+  // via React— perquè dockview munta el contingut del tab en un arbre a part.
+  const rootRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    if (draggable) {
+      return
+    }
+    const tabElement = rootRef.current?.closest<HTMLElement>('.dv-tab')
+    if (tabElement) {
+      tabElement.draggable = false
+    }
+  }, [draggable])
 
   const handlePointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
@@ -126,6 +147,7 @@ export function MiradorTab({
 
   return (
     <div
+      ref={rootRef}
       data-testid="dockview-dv-default-tab"
       {...rest}
       onPointerDown={handlePointerDown}

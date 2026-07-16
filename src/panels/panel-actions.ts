@@ -29,6 +29,31 @@ export function isPanelClosable(type: PanelType): boolean {
   return type !== 'home'
 }
 
+// Home queda fixat com a primer tab: no es pot arrossegar ni, per tant,
+// reordenar. Vegeu enforceHomeFirst per la xarxa de seguretat quan un altre
+// tab s'engega abans seu.
+export function isPanelDraggable(type: PanelType): boolean {
+  return type !== 'home'
+}
+
+// Home és sempre el primer tab: l'usuari no ha de poder reordenar-lo. Després
+// de qualsevol moviment de tabs el tornem a l'índex 0 del seu grup si en va
+// sortir. La crida a moveTo torna a emetre l'esdeveniment de moviment, però
+// aleshores Home ja és a l'índex 0 i sortim d'hora, així que no hi ha bucle.
+export function enforceHomeFirst(api: DockviewApi): void {
+  const homePanel = api.panels.find(
+    (panel) => getPanelTypeFromComponent(panel.view.contentComponent) === 'home',
+  )
+  if (!homePanel) {
+    return
+  }
+  const group = homePanel.api.group
+  if (group.panels[0] === homePanel) {
+    return
+  }
+  homePanel.api.moveTo({ group, index: 0, skipSetActive: true })
+}
+
 export function ensureHomePanel(api: DockviewApi): void {
   const hasHome = api.panels.some(
     (panel) => getPanelTypeFromComponent(panel.view.contentComponent) === 'home',

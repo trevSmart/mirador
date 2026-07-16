@@ -19,7 +19,7 @@ import { devLog } from '../dev/dev-log'
 import { miradorDockviewTheme } from '../dockview/theme'
 import { DetailPanel } from '../panels/DetailPanel'
 import { PANEL_COMPONENTS, getPanelDefinition, type PanelType } from '../panels/registry'
-import { ensureHomePanel, getOpenPanelTypes } from '../panels/panel-actions'
+import { enforceHomeFirst, ensureHomePanel, getOpenPanelTypes } from '../panels/panel-actions'
 
 interface DockviewShellHandle {
   addPanel: (type: PanelType) => void
@@ -102,6 +102,7 @@ export function DockviewShell({ ref }: DockviewShellProps) {
     }
     closeLegacyInsightsPanels(event.api)
     ensureHomePanel(event.api)
+    enforceHomeFirst(event.api)
 
     // Dispose any prior subscriptions so a re-run of onReady (StrictMode
     // double-invoke, remount) doesn't accumulate duplicate handlers.
@@ -118,6 +119,10 @@ export function DockviewShell({ ref }: DockviewShellProps) {
       }),
       event.api.onDidActivePanelChange(({ panel }) => {
         if (panel) devLog.action('panel:activate', panel.title ?? panel.id)
+      }),
+      // Reordenar tabs no ha de poder desplaçar Home de la primera posició.
+      event.api.onDidMovePanel(() => {
+        enforceHomeFirst(event.api)
       }),
     ]
     syncOpenTypes(event.api)

@@ -1408,6 +1408,12 @@ textarea,
   position: relative;
 }
 
+/* Home té draggable desactivat (vegeu MiradorTab): sense afordança d'arrossegar,
+   mostra el cursor per defecte en lloc de qualsevol pista de moviment. */
+.dockview-container .dv-tab[draggable='false'] {
+  cursor: default;
+}
+
 /* The default-tab wrapper must fill the fixed-width tab and let its label
    flex/shrink so the ellipsis applies. */
 .dockview-container .dv-tab .dv-default-tab {
@@ -5009,13 +5015,47 @@ textarea,
 }
 
 .dd-section__title {
-  margin: 0 0 var(--sp-3);
+  margin: 0;
   font-family: var(--font-display);
   font-size: var(--fs-xs);
   font-weight: var(--fw-semibold);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-muted);
+}
+
+/* Section header doubles as a collapse toggle — strip the button chrome and
+   sit the chevron beside the title. The gap below the header comes from the
+   collapsible body's animated padding-top, so the title carries no margin. */
+.dd-section__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dd-section__toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+  border-radius: 6px;
+}
+
+.dd-section__chevron {
+  color: var(--text-muted);
+}
+
+/* Match the drawer's prior title-to-content gap (sp-3), tighter than the panel
+   groups' sp-4. */
+.dd-section .collapsible-group__expand.is-open > .collapsible-group__expand-inner {
+  padding-top: var(--sp-3);
 }
 
 /* Agent detail sub-tabs (Detall / Cronologia) — a segmented control. */
@@ -5570,90 +5610,42 @@ textarea,
   border-color: var(--accent);
 }
 
-/* ── Dev Lab — snapshot de l'aspecte anterior de l'agent-card, només per comparar ── */
-.agent-card-legacy {
+.queue-card {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: var(--sp-3);
   width: 100%;
-  padding: 12px 14px;
+  padding: var(--sp-4);
   border: 1px solid var(--border-subtle);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   background: var(--surface-card);
   box-shadow: var(--shadow);
   cursor: pointer;
   text-align: left;
-  transition: transform 0.22s var(--ease), box-shadow 0.22s var(--ease), border-color 0.22s var(--ease);
+  transition: box-shadow var(--dur-base) var(--ease), border-color var(--dur-base) var(--ease);
 }
 
-.agent-card-legacy:hover {
+.queue-card:hover {
   border-color: var(--border-strong);
-  box-shadow: var(--shadow-lift);
-  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
 }
 
-.agent-card-legacy__avatar-wrap {
-  position: relative;
-  flex-shrink: 0;
+.queue-card:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+  border-color: var(--accent);
 }
 
-.agent-card-legacy__avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--r-full);
-  border: 1px solid var(--accent-30);
-  background: var(--mi-av-bg);
-  color: var(--mi-av-fg);
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
-}
-
-.agent-card-legacy__avatar--photo {
-  object-fit: cover;
-}
-
-.agent-card-legacy__status-dot {
-  position: absolute;
-  bottom: 1px;
-  right: 1px;
-  width: 10px;
-  height: 10px;
-  border-radius: var(--r-full);
-  border: 2px solid var(--surface-card);
-}
-
-.agent-card-legacy__body {
-  flex: 1;
-  min-width: 0;
+/* El contingut del Dev Lab creix més que el panell: li cal el mateix patró
+   de scroll que .panel-shell (dockview no en posa cap per defecte). */
+.dev-lab {
+  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-}
-
-.agent-card-legacy__name {
-  margin: 0;
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
-  color: var(--text-strong);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
-}
-
-.agent-card-legacy__role {
-  margin: 0;
-  font-size: var(--fs-2xs);
-  color: var(--text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
+  padding: var(--sp-8);
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .dev-lab-compare {
@@ -5663,12 +5655,473 @@ textarea,
   margin-bottom: var(--sp-5);
 }
 
+/* Dev Lab (flux ECharts): el chart omple l'alçada restant del panell. */
+.dev-lab-compare--fill {
+  flex: 1;
+  min-height: 0;
+  margin-bottom: 0;
+}
+
+.dev-lab-compare__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-4);
+}
+
+.dev-lab-compare__header .settings-segmented {
+  flex-shrink: 0;
+}
+
 .dev-lab-compare__label {
   font-size: var(--fs-xs);
   font-weight: var(--fw-semibold);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: .03em;
+}
+
+.dev-lab-note {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-2xs);
+  color: var(--text-muted);
+  line-height: 1.5;
+  max-width: 60ch;
+}
+
+.dev-lab-note code {
+  font-family: var(--font-mono, monospace);
+  font-size: .9em;
+  padding: 0 .25em;
+  border-radius: var(--radius-xs, 3px);
+  background: var(--surface-sunken, rgba(128, 128, 128, .12));
+}
+
+/* ── Role hierarchy tree (Dev Lab 2 experiment) ─────────────────────────── */
+.role-tree {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.role-tree__toolbar {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.role-tree__btn {
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+  padding: var(--sp-1) var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 6px);
+  background: transparent;
+  cursor: pointer;
+  transition: color var(--dur-fast, .12s) var(--ease), border-color var(--dur-fast, .12s) var(--ease);
+}
+
+.role-tree__btn:hover {
+  color: var(--text-strong);
+  border-color: var(--border-strong, var(--text-disabled));
+}
+
+.role-tree__children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* Nivells niats: línia de connexió vertical a l'esquerra + sagnat generós. */
+.role-tree__children .role-tree__children {
+  margin-left: 18px;
+  padding-left: var(--sp-4);
+  border-left: 1px solid var(--border);
+}
+
+.role-tree__item {
+  position: relative;
+}
+
+/* Tota la fila és clicable (plega/desplega o obre el detall). */
+.role-tree__row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  transition: background var(--dur-fast, .12s) var(--ease);
+}
+
+.role-tree__row--clickable:hover {
+  background: var(--surface-hover, rgba(128, 128, 128, .08));
+}
+
+.role-tree__row:focus-visible {
+  outline: 2px solid var(--focus-ring, var(--brand, var(--accent)));
+  outline-offset: 1px;
+}
+
+/* Zona del chevron (decoratiu; el clic el gestiona tota la fila). */
+.role-tree__toggle {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+}
+
+/* Chevron rotatori (0→90°), com a .collapsible-group__chevron. */
+.role-tree__chevron {
+  color: var(--text-muted);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.role-tree__chevron--open {
+  transform: rotate(90deg);
+}
+
+/* Collapse/expand dels fills — mateix patró d'accordió que .collapsible-group:
+   un grid que anima grid-template-rows 0fr↔1fr amb un interior que clipa
+   l'overflow mentre s'anima i torna a `visible` un cop obert. */
+.role-tree__expand {
+  display: grid;
+  grid-template-rows: 0fr;
+  min-width: 0;
+  transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.role-tree__expand.is-open {
+  grid-template-rows: 1fr;
+}
+
+.role-tree__expand-inner {
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  padding-top: 0;
+  transition: padding-top 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.role-tree__expand.is-open > .role-tree__expand-inner {
+  padding-top: var(--sp-2);
+}
+
+.role-tree__expand-inner.is-visible {
+  overflow: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .role-tree__chevron,
+  .role-tree__expand {
+    transition-duration: 0.01ms;
+  }
+}
+
+/* Node de grup (arrel / equip): la fila sencera fa de xip amb fons subtil. */
+.role-tree__group-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.role-tree__item--group > .role-tree__row {
+  background: var(--surface-sunken, rgba(128, 128, 128, .06));
+}
+
+.role-tree__item--group > .role-tree__row.role-tree__row--clickable:hover {
+  background: var(--surface-hover, rgba(128, 128, 128, .12));
+}
+
+.role-tree__group-swatch {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm, 6px);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-bold, 700);
+  letter-spacing: -.02em;
+}
+
+.role-tree__group-name {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.role-tree__group-count {
+  flex: 0 0 auto;
+  margin-left: auto;
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--surface-sunken, rgba(128, 128, 128, .12));
+}
+
+/* Node d'agent (només layout; el clic/hover el porta la fila). */
+.role-tree__agent {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Avatar: via dedicada per obrir el detall (para la propagació del clic). */
+.role-tree__avatar {
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-flex;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.role-tree__dot {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+}
+
+.role-tree__agent-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 1px;
+}
+
+.role-tree__agent-name {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.role-tree__role-tag {
+  flex: 0 0 auto;
+  font-size: var(--fs-3xs, 10px);
+  font-weight: var(--fw-semibold);
+  color: var(--brand, var(--accent));
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--brand, var(--accent));
+}
+
+.role-tree__agent-role {
+  font-size: var(--fs-2xs);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Queue flow chart (Dev Lab) ────────────────────────────────────────── */
+.qflow {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-3);
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  overflow: auto;
+  cursor: grab;
+}
+
+.qflow--panning {
+  cursor: grabbing;
+}
+
+.qflow--panning * {
+  user-select: none;
+}
+
+/* Només els polsos (lineDash → stroke-dasharray) es desvaneixen en pan:
+   els connectors estàtics es desplacen amb el scroll. Pausar l'animació evita
+   el salt visible quan el navegador reinicia les keyframes. */
+.qflow--panning .qflow__echarts-canvas svg path[stroke-dasharray] {
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease);
+  animation-play-state: paused !important;
+}
+
+.qflow__echarts-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  align-self: center;
+}
+
+.qflow__echarts-canvas {
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  /* El canvas és només decoratiu: sense hover, tooltip ni cursor pointer
+     d'ECharts. Els events passen al wrapper .qflow (pan) o a la card. */
+  pointer-events: none;
+}
+
+/* Nodes de cua superposats al canvas (QueueFlowCard compacta) */
+.qflow__queues {
+  position: absolute;
+  top: 0;
+  pointer-events: none;
+}
+
+.qflow__queue-card {
+  position: absolute;
+  transform: translateX(-50%);
+  width: 168px;
+  pointer-events: auto;
+}
+
+/* Cues d'origen (trànsit extern): fila superior del chart. */
+.qflow__queue-card--origin .queue-flow-card {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.queue-flow-card {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--sp-4) - 1px);
+  width: 100%;
+  min-width: 0;
+  padding: 6px var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--surface-card);
+  cursor: pointer;
+  text-align: left;
+  transition: box-shadow var(--dur-base) var(--ease), border-color var(--dur-base) var(--ease);
+}
+
+.queue-flow-card:hover {
+  border-color: var(--border-strong);
+}
+
+.queue-flow-card:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+  border-color: var(--accent);
+}
+
+.queue-flow-card__body {
+  min-width: 0;
+  flex: 1;
+}
+
+.queue-flow-card__name {
+  display: block;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.queue-flow-card__meta {
+  display: block;
+  margin-top: 1px;
+  font-size: var(--fs-2xs);
+  line-height: 1.3;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qflow__queue-card .queue-flow-card {
+  height: 52px;
+  box-sizing: border-box;
+}
+
+.qflow__queue-card .queue-flow-card,
+.qflow__agent-card .agent-card {
+  box-shadow: 0 1px 2px rgba(27, 25, 36, 0.03);
+  border-color: color-mix(in srgb, var(--qflow-node-color, var(--border-subtle)) 10%, var(--border-subtle));
+}
+
+.qflow__agent-card .agent-card {
+  height: 76px;
+  box-sizing: border-box;
+}
+
+.qflow__agent-card .agent-row__name {
+  font-size: var(--fs-sm);
+  line-height: 1.25;
+}
+
+.qflow__agent-card .agent-row__meta {
+  margin-top: 1px;
+  font-size: var(--fs-2xs);
+  line-height: 1.3;
+}
+
+.qflow__queue-card .queue-flow-card:hover,
+.qflow__agent-card .agent-card:hover {
+  box-shadow: 0 1px 3px rgba(27, 25, 36, 0.045);
+  border-color: color-mix(in srgb, var(--qflow-node-color, var(--border-strong)) 15%, var(--border-strong));
+}
+
+.qflow__queue-card .queue-flow-card:focus-visible,
+.qflow__agent-card .agent-card:focus-visible {
+  border-color: color-mix(in srgb, var(--qflow-node-color, var(--accent)) 13%, var(--accent));
+}
+
+:root[data-theme='dark'] .qflow__queue-card .queue-flow-card,
+:root[data-theme='dark'] .qflow__agent-card .agent-card {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14);
+}
+
+:root[data-theme='dark'] .qflow__queue-card .queue-flow-card:hover,
+:root[data-theme='dark'] .qflow__agent-card .agent-card:hover {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+/* Nodes de la gent superposats a la part baixa (una AgentCard per agent) */
+.qflow__agents {
+  position: absolute;
+  bottom: 8px;
+  pointer-events: none;
+}
+
+.qflow__agent-card {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  width: 220px;
+  pointer-events: auto;
 }
 
 /* ── Settings modal ────────────────────────────────────────────────────── */
