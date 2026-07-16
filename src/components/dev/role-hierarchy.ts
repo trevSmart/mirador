@@ -47,7 +47,7 @@ export function parseRole(role: string): ParsedRole {
   const parts = role.split('·').map((p) => p.trim())
   const seniority = parts[0] || 'Agent'
   const team = parts.length > 1 && parts[1] ? parts[1] : TEAM_UNKNOWN
-  // Un "Sènior" (o qualsevol nivell diferent d'"Agent") actua com a lead.
+  // Només el nivell "Sènior" actua com a lead (altres prefixes queden com a agents).
   const isLead = seniority.toLocaleLowerCase('ca').startsWith('sènior')
   return { seniority, team, isLead }
 }
