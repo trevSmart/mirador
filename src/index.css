@@ -5888,8 +5888,19 @@ textarea,
   position: relative;
   flex: 0 0 auto;
   display: inline-flex;
+  margin: 0;
+  padding: 0;
+  border: none;
   border-radius: 50%;
+  background: transparent;
   cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.role-tree__avatar:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
 }
 
 .role-tree__dot {

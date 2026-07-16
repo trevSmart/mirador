@@ -8,7 +8,7 @@
    src/components/dev/role-hierarchy.ts.
    ────────────────────────────────────────────────────────────────────────── */
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type SyntheticEvent } from 'react'
 import type { Agent, PresenceStatus } from '../api/types'
 import { useAgents } from '../api/data-hooks'
 import { AgentCard } from '../components/AgentCard'
@@ -21,6 +21,10 @@ import { useDetailDrawer } from '../detail/detail-drawer-context'
 import { useCardActivation } from '../hooks/useCardActivation'
 import { AppIcon, Ring } from '../components/ds'
 import { AgentPresenceBadge } from '../components/AgentPresenceBadge'
+
+/** Mateixa xarxa de seguretat que `useCollapsible`: si `transitionend` no
+    dispara (doble toggle al mateix frame), `animating` no pot quedar enganxat. */
+const SETTLE_FALLBACK_MS = 420
 
 const STATUS_COLOR: Record<PresenceStatus, string> = {
   online: 'var(--status-ok)',
@@ -35,17 +39,28 @@ function AgentRow({ agent, isLead }: { agent: Agent; isLead: boolean }) {
   const { openAgent } = useDetailDrawer()
   const photoSrc = useSalesforcePhoto(agent.photo)
 
+  const openDetail = (event: SyntheticEvent) => {
+    event.stopPropagation()
+    openAgent(agent.id)
+  }
+
   return (
     <div className="role-tree__agent">
-      {/* La fila sencera commuta el plegat; l'avatar és la via per obrir el
-          detall de l'agent (útil sobretot per als leads, on la fila plega). */}
-      <span
+      {/* La fila sencera commuta el plegat; l'avatar és la via accessible per
+          obrir el detall (útil sobretot per als leads, on la fila plega). */}
+      <button
+        type="button"
         className="role-tree__avatar"
-        onClick={(event) => {
-          event.stopPropagation()
-          openAgent(agent.id)
+        onClick={openDetail}
+        onKeyDown={(event) => {
+          // Evita que Enter/Espai també activin el toggle de la fila pare.
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            openDetail(event)
+          }
         }}
         title={`Obre el detall de ${agent.name}`}
+        aria-label={`Obre el detall de ${agent.name}`}
       >
         <Ring
           used={agent.used}
@@ -57,7 +72,7 @@ function AgentRow({ agent, isLead }: { agent: Agent; isLead: boolean }) {
           breathe={agent.status === 'busy'}
         />
         <span className="role-tree__dot" style={{ background: STATUS_COLOR[agent.status] }} aria-hidden="true" />
-      </span>
+      </button>
       <div className="role-tree__agent-body">
         <span className="role-tree__agent-name">
           {agent.name}
@@ -111,15 +126,39 @@ function TreeNode({
   // acabada la transició de grid, perquè els nivells niats no es retallin mentre
   // s'animen.
   const [animating, setAnimating] = useState(false)
+  const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const overflowVisible = !isCollapsed && !animating
   const isAgent = node.kind === 'agent'
+
+  const clearSettleTimer = () => {
+    if (settleTimerRef.current !== null) {
+      clearTimeout(settleTimerRef.current)
+      settleTimerRef.current = null
+    }
+  }
+
+  const markAnimating = () => {
+    setAnimating(true)
+    clearSettleTimer()
+    settleTimerRef.current = setTimeout(() => {
+      settleTimerRef.current = null
+      setAnimating(false)
+    }, SETTLE_FALLBACK_MS)
+  }
+
+  const settle = () => {
+    clearSettleTimer()
+    setAnimating(false)
+  }
+
+  useEffect(() => clearSettleTimer, [])
 
   // Clic a qualsevol punt de la fila: plega/desplega si té fills; si és un
   // agent-fulla (sense subordinats), obre el seu detall.
   const rowAction = hasChildren
     ? () => {
         toggle(node.id)
-        setAnimating(true)
+        markAnimating()
       }
     : () => openAgent(node.agent!.id)
   const activation = useCardActivation(rowAction)
@@ -151,7 +190,7 @@ function TreeNode({
         <div
           className={`role-tree__expand${isCollapsed ? '' : ' is-open'}`}
           onTransitionEnd={(event) => {
-            if (event.propertyName === 'grid-template-rows') setAnimating(false)
+            if (event.propertyName === 'grid-template-rows') settle()
           }}
         >
           <div className={`role-tree__expand-inner${overflowVisible ? ' is-visible' : ''}`}>
