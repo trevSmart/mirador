@@ -47,17 +47,18 @@ export function AgentAvatar({ id, name, photo = null }: AgentAvatarProps) {
 interface AgentRingProps {
   agent: Agent
   color: string
+  size?: number
 }
 
 /** Capacity ring with the agent's resolved photo (or initials) inside. */
-export function AgentRing({ agent, color }: AgentRingProps) {
+export function AgentRing({ agent, color, size = 50 }: AgentRingProps) {
   const photoSrc = useSalesforcePhoto(agent.photo)
   return (
     <Ring
       used={agent.used}
       max={agent.max}
       color={color}
-      size={50}
+      size={size}
       photo={photoSrc}
       initials={agentInitials(agent.name)}
       breathe={agent.status === 'busy'}

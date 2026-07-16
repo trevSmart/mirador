@@ -29,15 +29,27 @@ function createFakePanelApi(initialTitle: string) {
   }
 }
 
-function renderTab(api: ReturnType<typeof createFakePanelApi>, before?: React.ReactNode) {
+function renderTab(
+  api: ReturnType<typeof createFakePanelApi>,
+  before?: React.ReactNode,
+  contentComponent?: string,
+) {
   const props = {
     api,
-    containerApi: { panels: [] },
+    containerApi: {
+      panels: contentComponent
+        ? [{ id: api.id, view: { contentComponent } }]
+        : [],
+    },
   } as unknown as IDockviewDefaultTabProps
+  // Reprodueix l'embolcall `.dv-tab` que dockview posa al voltant del contingut
+  // del tab, amb draggable actiu com fa el backend HTML5 en escriptori.
   return render(
     <>
       {before}
-      <MiradorTab {...props} />
+      <div className="dv-tab" draggable data-testid="dv-tab">
+        <MiradorTab {...props} />
+      </div>
     </>,
   )
 }
@@ -64,5 +76,17 @@ describe('MiradorTab', () => {
     renderTab(api, <TitleStomper />)
     expect(screen.getByText('Email incidència crítica')).toBeInTheDocument()
     expect(screen.queryByText('Treball')).toBeNull()
+  })
+
+  it('disables dragging on the Home tab so it cannot begin a drag', () => {
+    const api = createFakePanelApi('Inici')
+    renderTab(api, undefined, 'home')
+    expect(screen.getByTestId('dv-tab').draggable).toBe(false)
+  })
+
+  it('leaves a regular tab draggable', () => {
+    const api = createFakePanelApi('Agents')
+    renderTab(api, undefined, 'agents')
+    expect(screen.getByTestId('dv-tab').draggable).toBe(true)
   })
 })

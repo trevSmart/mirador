@@ -3,6 +3,7 @@ import type { Agent } from '../../api/types'
 import { devLog } from '../../dev/dev-log'
 import { colorFromRecordId } from '../../utils/color-from-string'
 import { AgentAvatar } from '../AgentRow'
+import { CollapsibleBody, useCollapsible } from '../CollapsibleGroup'
 import { AppIcon } from '../ds/AppIcon'
 import type { AppIconName } from '../ds/app-icon-names.generated'
 import { Button } from '../ds/Button'
@@ -50,10 +51,20 @@ export function DrawerSection({
   /** En el layout de pestanya gran, les seccions compactes poden compartir fila. */
   compact?: boolean
 }) {
+  const { open, animating, toggle, settle } = useCollapsible()
   return (
     <section className={['dd-section', compact ? 'dd-section--compact' : ''].filter(Boolean).join(' ')}>
-      <h4 className="dd-section__title">{title}</h4>
-      {children}
+      <button type="button" className="dd-section__toggle" aria-expanded={open} onClick={toggle}>
+        <AppIcon
+          name="chevronright"
+          size={12}
+          className={`collapsible-group__chevron dd-section__chevron${open ? ' collapsible-group__chevron--open' : ''}`}
+        />
+        <h4 className="dd-section__title">{title}</h4>
+      </button>
+      <CollapsibleBody open={open} animating={animating} onSettled={settle}>
+        {children}
+      </CollapsibleBody>
     </section>
   )
 }

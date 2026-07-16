@@ -194,7 +194,8 @@ describe('AgentDetail — secció Skills', () => {
     expect(screen.getByText('Canals')).toBeInTheDocument()
     expect(screen.getByTestId('agent-timeline-stub')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: /cronologia/i }))
+    // Exact name: the section toggle "Cronologia d'avui" is also a button now.
+    fireEvent.click(screen.getByRole('button', { name: 'Cronologia' }))
     expect(detailPane).toHaveAttribute('data-active', 'false')
     expect(timelinePane).toHaveAttribute('data-active', 'true')
   })
