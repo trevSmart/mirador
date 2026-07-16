@@ -1204,6 +1204,8 @@ export function EChartsQueueFlow({
                   // Gradient en coordenades ABSOLUTES (global): amb
                   // objectBoundingBox, una línia vertical té bbox d'amplada
                   // zero i SVG no la pinta gens.
+                  /* Gradient cap a transparent: la part superior es queda
+                     esvaïda més llarga; l'opacitat només puja a prop del port. */
                   const fade = (alpha: number) => ({
                     type: 'linear',
                     x: 0,
@@ -1213,6 +1215,8 @@ export function EChartsQueueFlow({
                     global: true,
                     colorStops: [
                       { offset: 0, color: withAlpha(color, 0) },
+                      { offset: 0.55, color: withAlpha(color, 0) },
+                      { offset: 0.82, color: withAlpha(color, alpha * 0.35) },
                       { offset: 1, color: withAlpha(color, alpha) },
                     ],
                   })
