@@ -6,12 +6,17 @@ updates:
     schedule:
       interval: daily
     open-pull-requests-limit: 10
+    # typescript-eslint peer is still `>=4.8.4 <6.1.0`; a TS 7 bump
+    # breaks `npm ci` in CI. exclude-patterns only keeps it out of the
+    # group — Dependabot still opens a solo PR — so ignore it entirely.
+    ignore:
+      - dependency-name: "typescript"
+        versions: [">=7"]
     groups:
       production-dependencies:
         dependency-type: production
       development-dependencies:
         dependency-type: development
-        # typescript-eslint does not support TypeScript 7 yet (peer <6.1.0).
         exclude-patterns:
           - "typescript"
 
