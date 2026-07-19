@@ -23,5 +23,11 @@ export function generateOAuthState(): string {
   return toBase64Url(randomBytes(32))
 }
 
+export async function hashOAuthState(state: string): Promise<string> {
+  const data = new TextEncoder().encode(state)
+  const digest = await crypto.subtle.digest('SHA-256', data)
+  return toBase64Url(new Uint8Array(digest))
+}
+
 export const PKCE_VERIFIER_KEY = 'mirador_oauth_pkce_verifier'
 export const PKCE_STATE_KEY = 'mirador_oauth_state'
