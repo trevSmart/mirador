@@ -1,6 +1,5 @@
 /** SVG geometry helpers for the capacity radar (areas / lines views). */
 
-export const SVG_SIZE = 460
 export const CENTER = 230
 export const RADIUS = 164
 
@@ -8,7 +7,7 @@ export function axisAngle(k: number, nQ: number): number {
   return ((-90 + (k * 360) / nQ) * Math.PI) / 180
 }
 
-export function halfSlice(nQ: number): number {
+function halfSlice(nQ: number): number {
   return ((180 / nQ) * Math.PI) / 180
 }
 
@@ -46,7 +45,7 @@ export function fromView(
 /** Clearance between the chart outer ring (100%) and the label block edge. */
 export const LABEL_RING_GAP = 14
 
-export const RADAR_VIEW_PAD = 10
+const RADAR_VIEW_PAD = 10
 
 /** Drawn SVG box / chart diameter — the viewBox pad inflates the disk element. */
 export const RADAR_DISK_SCALE = (RADIUS + RADAR_VIEW_PAD) / RADIUS
@@ -192,7 +191,7 @@ export function fitRadarLayout(
     return b.maxX - b.minX <= availW && b.maxY - b.minY <= availH
   }
 
-  let radius = MIN_CHART_RADIUS
+  let radius: number
   if (fits(maxRadius)) {
     radius = maxRadius
   } else {
@@ -287,7 +286,7 @@ export function dividerEnds(k: number, nQ: number): [number, number, number, num
   return [CENTER, CENTER, x2, y2]
 }
 
-export function readSvgViewBox(svg: SVGSVGElement): {
+function readSvgViewBox(svg: SVGSVGElement): {
   x: number
   y: number
   width: number

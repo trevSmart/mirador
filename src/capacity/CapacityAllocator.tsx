@@ -435,7 +435,7 @@ export function CapacityAllocator({
 
     // Label widths are text metrics: re-fit once webfonts land.
     let live = true
-    document.fonts?.ready.then(() => {
+    void document.fonts?.ready.then(() => {
       if (live) syncChartLayout()
     })
 

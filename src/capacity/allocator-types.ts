@@ -27,13 +27,6 @@ export type AllocatorInput = {
   current: number[]
 }
 
-/** Payload for a future Apply endpoint — not wired in v1. */
-export type ApplyPayload = {
-  windowStart: string
-  allocation: { queueId: string; agents: number }[]
-  baseline: { queueId: string; agents: number }[]
-}
-
 export type AllocatorView = 'areas' | 'lines' | 'sliders'
 
 export type HardRange = readonly [number, number]

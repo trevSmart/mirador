@@ -11,7 +11,7 @@
 import type { DynRange, HardRange, SkillProfile } from './allocator-types'
 
 /** Capacity of agents who can serve at least one queue in `mask`. */
-export function fS(profiles: SkillProfile[], mask: number): number {
+function fS(profiles: SkillProfile[], mask: number): number {
   return profiles.reduce(
     (sum, p) => sum + (p.skills.some((q) => mask & (1 << q)) ? p.cap : 0),
     0,

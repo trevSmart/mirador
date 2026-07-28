@@ -20,7 +20,7 @@
 
 import type { Agent } from '../../api/types'
 
-export type RoleNodeKind = 'root' | 'team' | 'agent'
+type RoleNodeKind = 'root' | 'team' | 'agent'
 
 export interface RoleNode {
   id: string
