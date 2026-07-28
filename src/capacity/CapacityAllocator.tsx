@@ -68,11 +68,6 @@ type ScaleMode = 'norm' | 'abs'
 type Hard = readonly (readonly [number, number])[]
 type Dyn = readonly (readonly [number, number])[]
 
-/** Darker mix of the queue hue — used for hover/drag edge emphasis. */
-function emphasizeQueueColor(hue: string): string {
-  return `color-mix(in srgb, ${hue} 72%, black)`
-}
-
 function sliceTint(hue: string, locked: boolean): string {
   if (locked) return 'color-mix(in srgb, var(--text-disabled) 12%, transparent)'
   return `color-mix(in srgb, ${hue} 12%, transparent)`
@@ -805,17 +800,16 @@ function renderRose({
         key={`edge-${k}`}
         d={arcAt(k, edgePos, nQ)}
         fill="none"
-        className="capacity-allocator__edge"
-        stroke={
-          locked[k] || atZero
-            ? 'var(--text-disabled)'
-            : isActive
-              ? emphasizeQueueColor(hue)
-              : hue
-        }
+        className={`capacity-allocator__edge${isActive ? ' is-active' : ''}`}
+        stroke={locked[k] || atZero ? 'var(--text-disabled)' : undefined}
         strokeWidth={isActive ? 4 : 3}
         strokeLinecap="round"
-        style={{ cursor: sliceCursor(!!locked[k], isDragging) }}
+        style={
+          {
+            '--queue-hue': hue,
+            cursor: sliceCursor(!!locked[k], isDragging),
+          } as CSSProperties
+        }
       />,
     )
     if (atZero || fillPos > 36) {
@@ -875,10 +869,14 @@ function renderSpokes(args: DrawArgs): ReactNode {
         cy={p[1]}
         r={r}
         fill={locked[k] ? 'var(--text-disabled)' : hues[k]}
-        stroke={isActive ? emphasizeQueueColor(hues[k]) : 'var(--surface-canvas)'}
         strokeWidth={isActive ? 3 : 2.5}
         className={`capacity-allocator__vtx${isActive ? ' is-active' : ''}`}
-        style={{ cursor: sliceCursor(!!locked[k], isDragging) }}
+        style={
+          {
+            '--queue-hue': hues[k],
+            cursor: sliceCursor(!!locked[k], isDragging),
+          } as CSSProperties
+        }
       />,
     )
   }

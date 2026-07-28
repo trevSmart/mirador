@@ -8641,6 +8641,19 @@ textarea,
 .capacity-allocator__edge {
   vector-effect: non-scaling-stroke;
   transition: stroke 150ms ease, stroke-width 150ms ease;
+  stroke: var(--queue-hue);
+}
+
+.capacity-allocator__edge.is-active,
+.capacity-allocator__vtx.is-active {
+  /* Light canvas: deepen + saturate so the arc pops against pale fills. */
+  stroke: oklch(from var(--queue-hue) calc(l - 0.08) calc(c * 1.22) h);
+}
+
+:root[data-theme='dark'] .capacity-allocator__edge.is-active,
+:root[data-theme='dark'] .capacity-allocator__vtx.is-active {
+  /* Dark canvas: brighten + saturate — the inverse of light-mode emphasis. */
+  stroke: oklch(from var(--queue-hue) calc(l + 0.06) calc(c * 1.18) h);
 }
 
 .capacity-allocator__rim {
@@ -8651,6 +8664,7 @@ textarea,
   vector-effect: non-scaling-stroke;
   r: calc(7px / var(--svg-scale));
   transition: fill 150ms ease, stroke 150ms ease, stroke-width 150ms ease, r 150ms ease;
+  stroke: var(--surface-canvas);
 }
 
 .capacity-allocator__vtx.is-active {
