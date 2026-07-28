@@ -13,6 +13,7 @@ export type PanelType =
   | 'queues'
   | 'skills'
   | 'work'
+  | 'capacity'
   | 'space'
   | 'spaceEditor'
   | 'devLab'
@@ -39,6 +40,7 @@ export const PANEL_DEFINITIONS: PanelDefinition[] = [
   { type: 'queues',     title: 'Queues',       description: 'Cues i temps d’espera',         icon: { name: 'queue' },                                   component: lazy(() => import('./QueuesPanel').then(m => ({ default: m.QueuesPanel }))) },
   { type: 'skills',     title: 'Skills',       description: 'Competències i assignacions',       icon: { name: 'skill' },                                   component: lazy(() => import('./SkillsPanel').then(m => ({ default: m.SkillsPanel }))) },
   { type: 'work',       title: 'Work',         description: 'Work items en curs',                icon: { name: 'work' },                                    component: lazy(() => import('./WorkPanel').then(m => ({ default: m.WorkPanel }))) },
+  { type: 'capacity',   title: 'Capacity',     description: 'Reallocate agents across queues',   icon: { sprite: 'standard', symbol: 'capacity_plan' },      component: lazy(() => import('./CapacityPanel').then(m => ({ default: m.CapacityPanel }))) },
   { type: 'space',      title: 'Space',        description: 'El teu espai de treball',           icon: { sprite: 'standard', symbol: 'business_unit' },      component: lazy(() => import('./SpacePanel').then(m => ({ default: m.SpacePanel }))) },
   { type: 'spaceEditor', title: 'Space editor', description: 'Dissenya i organitza l’espai', icon: { sprite: 'custom', symbol: 'custom83' },              component: lazy(() => import('./SpaceEditorPanel').then(m => ({ default: m.SpaceEditorPanel }))) },
   { type: 'devLab',     title: 'Dev Lab',      description: 'Experiments de desenvolupament',    icon: { sprite: 'standard', symbol: 'code_playground' },    component: lazy(() => import('./DevLabPanel').then(m => ({ default: m.DevLabPanel }))) },
@@ -53,7 +55,7 @@ export interface PanelMenuGroup {
 
 export const PANEL_MENU_GROUPS: PanelMenuGroup[] = [
   { label: 'Supervise', types: ['home', 'wallboard', 'space'] },
-  { label: 'Track',     types: ['agents', 'queues', 'skills', 'work'] },
+  { label: 'Track',     types: ['agents', 'queues', 'skills', 'work', 'capacity'] },
   { label: 'Customize', types: ['spaceEditor', 'devLab', 'devLab2', 'colorPlayground'] },
 ]
 

@@ -31,7 +31,7 @@ import {
 type QueueDef = { key: MockQueueKey; name: string }
 
 const QUEUE_DEFS: QueueDef[] = [
-  { key: 'ac', name: 'Atenció Client' },
+  { key: 'ac', name: 'Primer nivell' },
   { key: 'in', name: 'Incidències' },
   { key: 've', name: 'Vendes' },
   { key: 'st', name: 'Suport Tècnic' },

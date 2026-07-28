@@ -10,7 +10,7 @@ export function mockSfId(prefix: string, seq: number): string {
 
 /** Omni-Channel queue (Group) — key prefix 00G. */
 export const MOCK_QUEUE = {
-  ac: mockSfId('00G', 1),
+  ac: mockSfId('00G', 6),
   in: mockSfId('00G', 2),
   ve: mockSfId('00G', 3),
   st: mockSfId('00G', 4),
