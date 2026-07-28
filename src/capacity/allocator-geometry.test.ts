@@ -1,24 +1,29 @@
 import { describe, expect, it } from 'vitest'
 import {
+  axisUnit,
   chartAbsMax,
-  CENTER,
   circleIntersectsRect,
+  fitRadarLayout,
   LABEL_RING_GAP,
-  RADAR_VIEW_PAD,
-  computeLabelMargins,
-  labelAnchorDeg,
-  labelAnchorPt,
-  labelBlockSvgBounds,
-  labelDy,
-  labelNameWidth,
+  labelAnchorRadius,
+  labelBoxBounds,
   labelTextAnchor,
   magneticSnapAgents,
   magneticSnapThresholdPx,
   MAGNETIC_SNAP_MAX_PX,
+  radarContentBounds,
   RADIUS,
   fromView,
   toView,
 } from './allocator-geometry'
+
+/** Five queues with plausible measured label-block sizes. */
+function sampleBoxes(nQ = 5) {
+  return Array.from({ length: nQ }, (_, k) => {
+    const [ux, uy] = axisUnit(k, nQ)
+    return { ux, uy, width: 110 + k * 8, height: 56 }
+  })
+}
 
 describe('magneticSnapAgents', () => {
   const px = (agents: number) => agents * 10 // 10 CSS px per agent
@@ -50,41 +55,50 @@ describe('magneticSnapAgents', () => {
   })
 })
 
-describe('labelAnchorPt', () => {
-  const names = ['Incidència', 'Vendes', 'Atenció', 'Retenció', 'Suport']
+describe('labelTextAnchor', () => {
+  it('faces the text outward from the chart center', () => {
+    expect(labelTextAnchor(axisUnit(0, 5)[0])).toBe('middle') // straight up
+    expect(labelTextAnchor(axisUnit(1, 5)[0])).toBe('start') // right side
+    expect(labelTextAnchor(axisUnit(4, 5)[0])).toBe('end') // left side
+  })
+})
 
-  it('keeps label blocks outside the chart disk', () => {
-    const chartR = RADIUS + LABEL_RING_GAP
-    const nQ = names.length
-    for (let k = 0; k < nQ; k++) {
-      const deg = labelAnchorDeg(k, nQ)
-      const anchor = labelTextAnchor(deg)
-      const dy = labelDy(deg)
-      const nameW = labelNameWidth(names[k])
-      const [tx, ty] = labelAnchorPt(k, nQ, nameW, anchor, dy)
-      const bounds = labelBlockSvgBounds(tx, ty, nameW, anchor)
+describe('labelAnchorRadius', () => {
+  it('keeps every label at a comparable distance from the ring', () => {
+    const radii = sampleBoxes().map((b) => labelAnchorRadius(b, RADIUS))
+    for (const r of radii) {
+      expect(r).toBeGreaterThanOrEqual(RADIUS + LABEL_RING_GAP)
+      expect(r).toBeLessThanOrEqual(RADIUS + 2 * LABEL_RING_GAP)
+    }
+  })
 
-      expect(
-        circleIntersectsRect(
-          bounds.minX - CENTER,
-          bounds.minY - CENTER,
-          bounds.maxX - CENTER,
-          bounds.maxY - CENTER,
-          chartR,
-        ),
-      ).toBe(false)
+  it('does not let a label block cut into the chart disk', () => {
+    for (const box of sampleBoxes()) {
+      const b = labelBoxBounds(box, labelAnchorRadius(box, RADIUS))
+      expect(circleIntersectsRect(b.minX, b.minY, b.maxX, b.maxY, RADIUS)).toBe(false)
     }
   })
 })
 
-describe('computeLabelMargins', () => {
-  it('includes label overflow beyond the chart disk on every side', () => {
-    const names = ['Incidència', 'Vendes', 'Atenció', 'Retenció', 'Suport']
-    const m = computeLabelMargins(names)
-    expect(m.left).toBeGreaterThan(RADAR_VIEW_PAD)
-    expect(m.right).toBeGreaterThan(RADAR_VIEW_PAD)
-    expect(m.top).toBeGreaterThan(RADAR_VIEW_PAD)
-    expect(m.bottom).toBeGreaterThan(RADAR_VIEW_PAD)
+describe('fitRadarLayout', () => {
+  it('centers the disk + label content inside the stage', () => {
+    const boxes = sampleBoxes()
+    const { radius, cx, cy } = fitRadarLayout(700, 560, boxes)
+    const b = radarContentBounds(boxes, radius)
+
+    expect(cx + b.minX).toBeCloseTo(700 - (cx + b.maxX), 5)
+    expect(cy + b.minY).toBeCloseTo(560 - (cy + b.maxY), 5)
+  })
+
+  it('shrinks the chart until disk + labels fit the stage', () => {
+    const boxes = sampleBoxes()
+    const tight = fitRadarLayout(420, 380, boxes)
+    const roomy = fitRadarLayout(900, 900, boxes)
+
+    expect(tight.radius).toBeLessThan(roomy.radius)
+    const b = radarContentBounds(boxes, tight.radius)
+    expect(b.maxX - b.minX).toBeLessThanOrEqual(420 + 1e-6)
+    expect(b.maxY - b.minY).toBeLessThanOrEqual(380 + 1e-6)
   })
 })
 

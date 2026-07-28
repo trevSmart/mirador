@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
-/** Matches `--dur-bar` in index.css. */
-const DURATION_MS = 600
+/** Matches `--dur-value` in index.css — the token for "a displayed value changed". */
+const DURATION_MS = 450
 
 function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -17,7 +17,7 @@ function unchanged(a: readonly number[], b: readonly number[]): boolean {
 }
 
 /**
- * Eases a flat numeric vector toward `target` over `--dur-bar`.
+ * Eases a flat numeric vector toward `target` over `--dur-value`.
  *
  * Pack EVERY quantity the rendered geometry derives from into one vector —
  * a screen position is typically `f(value, scale)`, and easing only the value
