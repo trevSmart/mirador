@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { IDockviewPanelProps } from 'dockview-react'
 import { useAgents, useDataStatus, useQueues } from '../api/data-hooks'
 import { CapacityAllocator } from '../capacity/CapacityAllocator'
@@ -15,11 +15,14 @@ export function CapacityPanel({ params }: IDockviewPanelProps) {
 
   const incoming = parseCapacityPanelParams(params)
   const [focusQueueId, setFocusQueueId] = useState(incoming?.focusQueueId)
-  const [prevRevision, setPrevRevision] = useState(incoming?.revision)
-  if (incoming && incoming.revision !== prevRevision) {
-    setPrevRevision(incoming.revision)
-    setFocusQueueId(incoming.focusQueueId)
-  }
+  const lastAdoptedRevision = useRef(incoming?.revision)
+  const incomingRevision = incoming?.revision
+  const incomingFocusQueueId = incoming?.focusQueueId
+  useEffect(() => {
+    if (incomingRevision === lastAdoptedRevision.current) return
+    lastAdoptedRevision.current = incomingRevision
+    setFocusQueueId(incomingFocusQueueId)
+  }, [incomingRevision, incomingFocusQueueId])
 
   const input = useMemo(() => buildAllocatorInput(agents, queues), [agents, queues])
 
@@ -76,15 +79,15 @@ export function CapacityPanel({ params }: IDockviewPanelProps) {
             <span className="capacity-panel__diff">{deltaSummary}</span>
             <div className="capacity-panel__actions">
               <Button variant="ghost" size="sm" onClick={reset}>
-                Reset
+                Restableix
               </Button>
               <Button
                 variant="primary"
                 size="sm"
                 disabled
-                title="Coming soon — queue membership API not wired yet"
+                title="Properament — l'API de membres de cua encara no està connectada"
               >
-                Apply changes
+                Aplica els canvis
               </Button>
             </div>
           </footer>

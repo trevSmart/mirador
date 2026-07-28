@@ -21,7 +21,7 @@ export type SkillProfile = {
 export type AllocatorInput = {
   queues: AllocatorQueue[]
   profiles: SkillProfile[]
-  /** Total agents in scope (online roster). */
+  /** Total agents in scope (online roster with at least one known queue). */
   total: number
   /** Current allocation, parallel to `queues`. Always sums to `total`. */
   current: number[]

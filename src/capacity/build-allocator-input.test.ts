@@ -63,4 +63,20 @@ describe('buildAllocatorInput', () => {
     expect(input.total).toBe(0)
     expect(input.current).toEqual([0])
   })
+
+  it('excludes online agents with no known queue from total while keeping sum(current) === total', () => {
+    const queues = [makeQueue('qA', 'Alpha', 0)]
+    const agents = [
+      makeAgent('known', ['qA']),
+      makeAgent('unknown', ['qUnknown']),
+      makeAgent('empty', []),
+    ]
+
+    const input = buildAllocatorInput(agents, queues)
+    expect(input.total).toBe(1)
+    expect(sum(input.current)).toBe(input.total)
+    expect(input.current).toEqual([1])
+    expect(input.profiles).toHaveLength(1)
+    expect(input.profiles[0].cap).toBe(1)
+  })
 })
