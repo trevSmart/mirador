@@ -131,7 +131,7 @@ export const DEMO_REDIRECTS: DemoQueueRedirect[] = [
   { fromId: DEMO_QUEUE.triatge, toId: DEMO_QUEUE.retencio, count: 6 },
 ]
 
-export const DEMO_FLOW_AGENT = buildDemoFlowAgent(
+const DEMO_FLOW_AGENT = buildDemoFlowAgent(
   NORMAL_COUNTS,
   'Demo · 35 items',
   DEMO_AGENT.flow,
@@ -149,7 +149,7 @@ const NORMAL_COUNTS_2: Record<string, number> = {
   [DEMO_QUEUE.triatge]: 0,
 }
 
-export const DEMO_FLOW_AGENT_2 = buildDemoFlowAgent(
+const DEMO_FLOW_AGENT_2 = buildDemoFlowAgent(
   NORMAL_COUNTS_2,
   'Demo · 29 items',
   DEMO_AGENT.flow2,
@@ -182,7 +182,7 @@ export const DEMO_REDIRECTS_STRESS: DemoQueueRedirect[] = [
   { fromId: DEMO_QUEUE.triatge, toId: DEMO_QUEUE.retencio, count: 20 },
 ]
 
-export const DEMO_FLOW_AGENT_STRESS = buildDemoFlowAgent(
+const DEMO_FLOW_AGENT_STRESS = buildDemoFlowAgent(
   STRESS_COUNTS,
   'Demo stress · 108 items',
   DEMO_AGENT.flow,
@@ -190,7 +190,7 @@ export const DEMO_FLOW_AGENT_STRESS = buildDemoFlowAgent(
   DEMO_WORK_SEQ.flowStress,
 )
 
-export const DEMO_FLOW_AGENT_2_STRESS = buildDemoFlowAgent(
+const DEMO_FLOW_AGENT_2_STRESS = buildDemoFlowAgent(
   STRESS_COUNTS_2,
   'Demo stress · 92 items',
   DEMO_AGENT.flow2,

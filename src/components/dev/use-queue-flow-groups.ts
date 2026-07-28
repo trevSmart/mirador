@@ -9,7 +9,7 @@ import { queueResource, useEntities } from '../../api/data-service'
 import { colorFromRecordId } from '../../utils/color-from-string'
 
 /** Items sense cua (assignació directa) — agrupats sota una clau pròpia. */
-export const DIRECT_KEY = '__direct__'
+const DIRECT_KEY = '__direct__'
 
 /** Node de cua del flux (metadada; els comptes van a part, a `cell`/`qTotal`). */
 export interface FlowChartGroup {
