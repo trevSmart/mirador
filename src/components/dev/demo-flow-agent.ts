@@ -29,7 +29,7 @@ const DEMO_QUEUE = {
 
 const QUEUE_SPECS = [
   { id: DEMO_QUEUE.vendes, name: 'Vendes' },
-  { id: DEMO_QUEUE.atencio, name: 'Atenció Client' },
+  { id: DEMO_QUEUE.atencio, name: 'Atenció al client' },
   { id: DEMO_QUEUE.incidencies, name: 'Incidències' },
   { id: DEMO_QUEUE.retencio, name: 'Retenció' },
   { id: DEMO_QUEUE.triatge, name: 'Triatge' },

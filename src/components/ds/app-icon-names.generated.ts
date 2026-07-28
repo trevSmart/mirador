@@ -10,6 +10,7 @@ export type AppIconName =
   | 'arrow-right'
   | 'brush'
   | 'builder'
+  | 'chart'
   | 'chevrondown'
   | 'chevronright'
   | 'clear'
@@ -19,6 +20,7 @@ export type AppIconName =
   | 'color_swatch'
   | 'copy_to_clipboard'
   | 'dash'
+  | 'data_lake_objects'
   | 'database'
   | 'delete'
   | 'display'
@@ -48,6 +50,7 @@ export type AppIconName =
   | 'seat'
   | 'settings'
   | 'setup'
+  | 'slider'
   | 'sliders'
   | 'space'
   | 'status-config'
@@ -66,6 +69,7 @@ export const APP_ICON_NAMES: readonly AppIconName[] = [
   'arrow-right',
   'brush',
   'builder',
+  'chart',
   'chevrondown',
   'chevronright',
   'clear',
@@ -75,6 +79,7 @@ export const APP_ICON_NAMES: readonly AppIconName[] = [
   'color_swatch',
   'copy_to_clipboard',
   'dash',
+  'data_lake_objects',
   'database',
   'delete',
   'display',
@@ -104,6 +109,7 @@ export const APP_ICON_NAMES: readonly AppIconName[] = [
   'seat',
   'settings',
   'setup',
+  'slider',
   'sliders',
   'space',
   'status-config',
