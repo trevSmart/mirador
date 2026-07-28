@@ -8514,7 +8514,7 @@ textarea,
   gap: 4px;
   padding: 8px 4px 4px;
   width: 100%;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
   max-height: 800px;
 }
@@ -8540,13 +8540,14 @@ textarea,
 
 .capacity-allocator__chart-stage {
   position: relative;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
   overflow: hidden;
   --chart-r: 164px;
   --chart-box: 348px;
   --chart-cx: 50%;
   --chart-cy: 50%;
+  --svg-scale: 1;
 }
 
 /* Sized/positioned from JS: the SVG box is slightly larger than the disk (viewBox pad). */
@@ -8581,6 +8582,7 @@ textarea,
   fill: none;
   stroke: color-mix(in srgb, var(--text-strong) 10%, transparent);
   stroke-width: 1;
+  vector-effect: non-scaling-stroke;
 }
 
 .capacity-allocator__arc-watch {
@@ -8588,6 +8590,7 @@ textarea,
   stroke: var(--status-watch);
   stroke-width: 2;
   opacity: 0.55;
+  vector-effect: non-scaling-stroke;
 }
 
 .capacity-allocator__arc-ok {
@@ -8595,6 +8598,7 @@ textarea,
   stroke: var(--status-ok);
   stroke-width: 2;
   opacity: 0.7;
+  vector-effect: non-scaling-stroke;
 }
 
 .capacity-allocator__dash-floor {
@@ -8602,17 +8606,19 @@ textarea,
   stroke-width: 1.5;
   stroke-dasharray: 3 3;
   opacity: 0.9;
+  vector-effect: non-scaling-stroke;
 }
 
 .capacity-allocator__divider {
   stroke: var(--surface-canvas);
   stroke-width: 4;
   stroke-linecap: butt;
+  vector-effect: non-scaling-stroke;
 }
 
 .capacity-allocator__slice-num {
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: calc(13px / var(--svg-scale));
   font-weight: var(--fw-semibold);
   fill: var(--surface-canvas);
 }
@@ -8622,12 +8628,33 @@ textarea,
   stroke-width: 7;
   stroke-linecap: round;
   opacity: 0.45;
+  vector-effect: non-scaling-stroke;
 }
 
 .capacity-allocator__poly {
   fill: color-mix(in srgb, var(--text-strong) 6%, transparent);
   stroke: color-mix(in srgb, var(--text-strong) 60%, transparent);
   stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.capacity-allocator__edge {
+  vector-effect: non-scaling-stroke;
+  transition: stroke 150ms ease, stroke-width 150ms ease;
+}
+
+.capacity-allocator__rim {
+  vector-effect: non-scaling-stroke;
+}
+
+.capacity-allocator__vtx {
+  vector-effect: non-scaling-stroke;
+  r: calc(7px / var(--svg-scale));
+  transition: fill 150ms ease, stroke 150ms ease, stroke-width 150ms ease, r 150ms ease;
+}
+
+.capacity-allocator__vtx.is-active {
+  r: calc(9px / var(--svg-scale));
 }
 
 /*
