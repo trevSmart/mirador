@@ -29,6 +29,7 @@ import {
   RADAR_DISK_SCALE,
   magneticSnapAgents,
   MAGNETIC_SNAP_MAX_PX,
+  radarContentBounds,
   RADIUS,
   smoothClosed,
   svgCssScale,
@@ -376,6 +377,10 @@ export function CapacityAllocator({
     }
   }
 
+  const onSvgPointerLeave = () => {
+    if (dragIdxRef.current < 0) setHoverIdx(-1)
+  }
+
   const chartViewBox = computeChartViewBox()
 
   const labelNodes = useMemo(
@@ -400,11 +405,12 @@ export function CapacityAllocator({
   useLayoutEffect(() => {
     const stage = chartStageRef.current
     if (!stage) return
+    const allocator = stage.parentElement
+    if (!allocator) return
 
     const syncChartLayout = () => {
-      const availW = stage.clientWidth
-      const availH = stage.clientHeight
-      if (availW <= 0 || availH <= 0) return
+      const availW = allocator.clientWidth
+      if (availW <= 0) return
 
       const els = Array.from(
         stage.querySelectorAll<HTMLElement>('[data-queue-label]'),
@@ -415,12 +421,32 @@ export function CapacityAllocator({
         return { ux, uy, width: el.offsetWidth, height: el.offsetHeight }
       })
 
-      const { radius, cx, cy } = fitRadarLayout(availW, availH, boxes)
+      // Vertical space for the chart only — exclude toolbar, hint, legend and flex gaps.
+      const gapPx = 4
+      let overhead = 0
+      for (const child of allocator.children) {
+        if (child === stage) continue
+        overhead += (child as HTMLElement).offsetHeight
+      }
+      const gaps = Math.max(0, allocator.children.length - 1) * gapPx
+      const chartAvailH = Math.max(0, allocator.clientHeight - overhead - gaps)
+      const effectiveAvailH = chartAvailH > 0 ? chartAvailH : availW * 2
+
+      const { radius } = fitRadarLayout(availW, effectiveAvailH, boxes)
+      const bounds = radarContentBounds(boxes, radius)
+      const contentW = bounds.maxX - bounds.minX
+      const contentH = bounds.maxY - bounds.minY
+      // Stage height matches content exactly — position relative to the stage box,
+      // not the full allocator (which would push labels past the bottom edge).
+      const cx = (availW - contentW) / 2 - bounds.minX
+      const cy = -bounds.minY
 
       stage.style.setProperty('--chart-r', `${radius}px`)
       stage.style.setProperty('--chart-box', `${2 * radius * RADAR_DISK_SCALE}px`)
       stage.style.setProperty('--chart-cx', `${cx}px`)
       stage.style.setProperty('--chart-cy', `${cy}px`)
+      stage.style.setProperty('--svg-scale', `${radius / RADIUS}`)
+      stage.style.height = `${contentH}px`
 
       for (let k = 0; k < boxes.length; k++) {
         const r = labelAnchorRadius(boxes[k], radius)
@@ -431,7 +457,7 @@ export function CapacityAllocator({
 
     syncChartLayout()
     const ro = new ResizeObserver(syncChartLayout)
-    ro.observe(stage)
+    ro.observe(allocator)
 
     // Label widths are text metrics: re-fit once webfonts land.
     let live = true
@@ -511,6 +537,7 @@ export function CapacityAllocator({
               onPointerDown={onSvgPointerDown}
               onPointerMove={onSvgPointerMove}
               onPointerUp={onSvgPointerUp}
+              onPointerLeave={onSvgPointerLeave}
               onPointerCancel={onSvgPointerUp}
             >
               {view === 'areas'
@@ -746,6 +773,7 @@ function renderRose({
             stroke={sliceCeilingStroke(hue, !!locked[k])}
             strokeWidth={1}
             strokeLinecap="round"
+            className="capacity-allocator__rim"
           />,
         )
       }
@@ -777,6 +805,7 @@ function renderRose({
         key={`edge-${k}`}
         d={arcAt(k, edgePos, nQ)}
         fill="none"
+        className="capacity-allocator__edge"
         stroke={
           locked[k] || atZero
             ? 'var(--text-disabled)'
@@ -848,6 +877,7 @@ function renderSpokes(args: DrawArgs): ReactNode {
         fill={locked[k] ? 'var(--text-disabled)' : hues[k]}
         stroke={isActive ? emphasizeQueueColor(hues[k]) : 'var(--surface-canvas)'}
         strokeWidth={isActive ? 3 : 2.5}
+        className={`capacity-allocator__vtx${isActive ? ' is-active' : ''}`}
         style={{ cursor: sliceCursor(!!locked[k], isDragging) }}
       />,
     )
