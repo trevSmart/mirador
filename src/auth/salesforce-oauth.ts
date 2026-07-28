@@ -9,6 +9,7 @@ import {
   generateCodeChallenge,
   generateCodeVerifier,
   generateOAuthState,
+  hashOAuthState,
   PKCE_STATE_KEY,
   PKCE_VERIFIER_KEY,
 } from './pkce'
@@ -236,7 +237,7 @@ export async function startLogin(
   const challenge = await generateCodeChallenge(verifier)
 
   localStorage.setItem(PKCE_VERIFIER_KEY, verifier)
-  localStorage.setItem(PKCE_STATE_KEY, state)
+  localStorage.setItem(PKCE_STATE_KEY, await hashOAuthState(state))
 
   const loginUrl = buildAuthorizeUrl(oauthConfig, {
     challenge,
@@ -283,7 +284,7 @@ async function completeOAuthCallback(): Promise<OAuthSession> {
     throw new OAuthError('Invalid OAuth callback state')
   }
 
-  if (!verifier || state !== storedState) {
+  if (!verifier || (await hashOAuthState(state)) !== storedState) {
     // Discard the stale PKCE material on a mismatched/replayed callback so it
     // can't linger at rest or interfere with a later legitimate login.
     localStorage.removeItem(PKCE_STATE_KEY)
