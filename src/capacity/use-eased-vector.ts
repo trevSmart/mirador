@@ -84,7 +84,7 @@ export function useEasedVector(target: number[], immediate: boolean): number[] {
 
     rafRef.current = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(rafRef.current)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [target, immediate])
 
   return immediate ? target : shown
