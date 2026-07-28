@@ -5,10 +5,11 @@ import type { AllocatorInput, AllocatorQueue, SkillProfile } from './allocator-t
 /**
  * Derive AllocatorInput from the live snapshot.
  *
- * Profiles reflect full queue-eligibility (`agent.queueIds`). Current staffing
- * uses a primary-queue heuristic so each online agent counts exactly once:
- * among the agent's memberships, pick the queue with the highest backlog
- * (name ascending on ties). That keeps `sum(current) === total`.
+ * Profiles reflect queue-eligibility (`agent.queueIds`) for agents that have at
+ * least one known queue. Current staffing uses a primary-queue heuristic so
+ * each counted agent is assigned exactly once: among the agent's memberships,
+ * pick the queue with the highest backlog (name ascending on ties). That keeps
+ * `sum(current) === total`.
  */
 export function buildAllocatorInput(
   agents: Agent[],
@@ -24,7 +25,9 @@ export function buildAllocatorInput(
     hue: colorFromRecordId(q.id),
   }))
 
-  const roster = agents.filter((a) => a.status === 'online')
+  const roster = agents.filter(
+    (a) => a.status === 'online' && a.queueIds.some((id) => queueIndex.has(id)),
+  )
 
   const groups = new Map<string, { skills: number[]; cap: number }>()
   for (const agent of roster) {

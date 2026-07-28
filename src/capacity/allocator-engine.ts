@@ -136,12 +136,13 @@ export function moveTo(
   if (locked[i]) return x.slice()
   const targetInt = Math.max(0, Math.min(total, Math.round(target)))
   let cur = x.slice()
-  let guard = 2000
+  let guard = Math.max(1, total + 1)
   while (cur[i] < targetInt && guard-- > 0) {
     const z = step(cur, i, 1, locked, profiles, total)
     if (!z) break
     cur = z
   }
+  guard = Math.max(1, total + 1)
   while (cur[i] > targetInt && guard-- > 0) {
     const z = step(cur, i, -1, locked, profiles, total)
     if (!z) break
