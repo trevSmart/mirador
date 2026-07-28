@@ -8542,17 +8542,21 @@ textarea,
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   overflow: hidden;
   --chart-r: 164px;
+  --chart-box: 348px;
+  --chart-cx: 50%;
+  --chart-cy: 50%;
 }
 
+/* Sized/positioned from JS: the SVG box is slightly larger than the disk (viewBox pad). */
 .capacity-allocator__chart-disk {
-  width: calc(var(--chart-r) * 2);
-  height: calc(var(--chart-r) * 2);
-  flex: none;
+  position: absolute;
+  left: var(--chart-cx);
+  top: var(--chart-cy);
+  width: var(--chart-box);
+  height: var(--chart-box);
+  transform: translate(-50%, -50%);
 }
 
 .capacity-allocator__labels-overlay {
@@ -8626,26 +8630,29 @@ textarea,
   stroke-width: 1.5;
 }
 
+/*
+ * `left`/`top` land on the anchor point on the label ring (set from JS); the
+ * translate then pushes the block outward by half its own size along the axis,
+ * so its trailing edge sits on that point whatever the angle.
+ */
 .capacity-allocator__label-block {
   position: absolute;
-  left: calc(50% + var(--norm-x) * var(--chart-r));
-  top: calc(50% + var(--norm-y) * var(--chart-r));
+  left: 50%;
+  top: 50%;
+  transform: translate(calc(-50% + var(--ux) * 50%), calc(-50% + var(--uy) * 50%));
   pointer-events: auto;
   max-width: 11rem;
 }
 
 .capacity-allocator__label-block.is-anchor-start {
-  transform: translate(0, -12px);
   text-align: left;
 }
 
 .capacity-allocator__label-block.is-anchor-end {
-  transform: translate(-100%, -12px);
   text-align: right;
 }
 
 .capacity-allocator__label-block.is-anchor-middle {
-  transform: translate(-50%, -12px);
   text-align: center;
 }
 

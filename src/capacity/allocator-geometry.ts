@@ -43,94 +43,51 @@ export function fromView(
   return lo + (pos / 100) * (hi - lo)
 }
 
-/** Clearance between the chart outer ring (100%) and label blocks. */
-export const LABEL_RING_GAP = 10
+/** Clearance between the chart outer ring (100%) and the label block edge. */
+export const LABEL_RING_GAP = 14
 
 export const RADAR_VIEW_PAD = 10
 
-export type LabelTextAnchor = 'middle' | 'start' | 'end'
+/** Drawn SVG box / chart diameter — the viewBox pad inflates the disk element. */
+export const RADAR_DISK_SCALE = (RADIUS + RADAR_VIEW_PAD) / RADIUS
 
-export function labelAnchorDeg(k: number, nQ: number): number {
-  return (((-90 + (k * 360) / nQ) % 360) + 360) % 360
+/** Unit direction of queue k's axis (= mid-angle of its slice), y down. */
+export function axisUnit(k: number, nQ: number): [number, number] {
+  const a = axisAngle(k, nQ)
+  return [Math.cos(a), Math.sin(a)]
 }
 
-export function labelTextAnchor(deg: number): LabelTextAnchor {
-  if (deg > 20 && deg < 160) return 'start'
-  if (deg > 200 && deg < 340) return 'end'
+export type LabelTextAnchor = 'middle' | 'start' | 'end'
+
+/** Text alignment inside the block — outward-facing, so it hugs the ring. */
+export function labelTextAnchor(ux: number): LabelTextAnchor {
+  if (ux > 0.2) return 'start'
+  if (ux < -0.2) return 'end'
   return 'middle'
 }
 
-export function labelDy(deg: number): number {
-  if (deg < 25 || deg > 335) return -6
-  if (deg > 155 && deg < 205) return 5
-  return 0
+/** A measured label block placed along a queue axis. */
+export type LabelBox = {
+  ux: number
+  uy: number
+  width: number
+  height: number
 }
 
-/** Gap from name trailing edge to lock icon center. */
-export const LABEL_LOCK_GAP = 14
-
-/** Lock hit-target / glyph radius. */
-export const LABEL_LOCK_R = 9
-
-/** Matches the heuristic in `buildLabels` for lock placement. */
-export function labelNameWidth(label: string): number {
-  return label.length * 8.5
-}
-
-/** X offset from anchor tx to the name's trailing (right) edge in LTR. */
-export function labelNameTrailingOffset(nameW: number, anchor: LabelTextAnchor): number {
-  return anchor === 'end' ? 0 : anchor === 'start' ? nameW : nameW / 2
-}
-
-/** Lock icon center — always just after the queue name. */
-export function labelLockCenterX(
-  tx: number,
-  nameW: number,
-  anchor: LabelTextAnchor,
-): number {
-  return tx + labelNameTrailingOffset(nameW, anchor) + LABEL_LOCK_GAP
-}
-
-/** HTML label block extent below the name baseline. */
-const LABEL_BLOCK_ABOVE = 12
-const LABEL_BLOCK_BELOW = 38
-/** Lock chip in HTML row: 22px control + 6px gap. */
-const LABEL_LOCK_HTML = 28
-
-function labelCornerOffsets(
-  nameW: number,
-  anchor: LabelTextAnchor,
-): readonly (readonly [number, number])[] {
-  const dl = anchor === 'end' ? -nameW : anchor === 'start' ? 0 : -nameW / 2
-  const dr = labelNameTrailingOffset(nameW, anchor) + LABEL_LOCK_HTML
-  return [
-    [dl, -LABEL_BLOCK_ABOVE],
-    [dr, -LABEL_BLOCK_ABOVE],
-    [dl, LABEL_BLOCK_BELOW],
-    [dr, LABEL_BLOCK_BELOW],
-  ]
-}
-
-function labelBBoxAtR(
-  r: number,
-  cos: number,
-  sin: number,
-  dy: number,
-  corners: readonly (readonly [number, number])[],
-): { minX: number; minY: number; maxX: number; maxY: number } {
-  let minX = Infinity
-  let minY = Infinity
-  let maxX = -Infinity
-  let maxY = -Infinity
-  for (const [dx, dt] of corners) {
-    const x = r * cos + dx
-    const y = r * sin + dy + dt
-    minX = Math.min(minX, x)
-    maxX = Math.max(maxX, x)
-    minY = Math.min(minY, y)
-    maxY = Math.max(maxY, y)
+/**
+ * Label bounds relative to the chart center, for an anchor at distance `r`.
+ * The block is shifted outward by half its own size along the axis, so its
+ * trailing edge lands on the anchor point.
+ */
+export function labelBoxBounds(box: LabelBox, r: number): SvgBounds {
+  const cx = box.ux * (r + box.width / 2)
+  const cy = box.uy * (r + box.height / 2)
+  return {
+    minX: cx - box.width / 2,
+    minY: cy - box.height / 2,
+    maxX: cx + box.width / 2,
+    maxY: cy + box.height / 2,
   }
-  return { minX, minY, maxX, maxY }
 }
 
 /** Chart-center coords: whether a rect overlaps the chart disk. */
@@ -146,41 +103,29 @@ export function circleIntersectsRect(
   return closestX * closestX + closestY * closestY < radius * radius
 }
 
-/** Minimum radial distance so the label block does not overlap the chart disk. */
-function labelMinRadius(
-  nameW: number,
-  anchor: LabelTextAnchor,
-  cos: number,
-  sin: number,
-  dy: number,
+/**
+ * Anchor distance for a label: the ring plus `gap`, nudged out only as far as a
+ * corner-overlapping block needs (diagonal axes), and never past `2 × gap` so
+ * every label stays at a comparable distance from the ring.
+ */
+export function labelAnchorRadius(
+  box: LabelBox,
+  radius: number,
+  gap = LABEL_RING_GAP,
 ): number {
-  const chartR = RADIUS + LABEL_RING_GAP
-  const corners = labelCornerOffsets(nameW, anchor)
-  let r = chartR
-  for (let iter = 0; iter < 48; iter++) {
-    const { minX, minY, maxX, maxY } = labelBBoxAtR(r, cos, sin, dy, corners)
+  const clearR = radius + gap
+  const maxR = clearR + gap
+  let r = clearR
+  for (let iter = 0; iter < 24; iter++) {
+    const { minX, minY, maxX, maxY } = labelBoxBounds(box, r)
     const closestX = Math.max(minX, Math.min(0, maxX))
     const closestY = Math.max(minY, Math.min(0, maxY))
     const dist = Math.hypot(closestX, closestY)
-    if (dist >= chartR) return r
-    r += chartR - dist + 1
+    if (dist >= clearR - 0.5) break
+    r += clearR - dist
+    if (r >= maxR) return maxR
   }
-  return r
-}
-
-/** Anchor point for a queue label — always outside the 100% chart ring. */
-export function labelAnchorPt(
-  k: number,
-  nQ: number,
-  nameW: number,
-  anchor: LabelTextAnchor,
-  dy = 0,
-): [number, number] {
-  const a = axisAngle(k, nQ)
-  const cos = Math.cos(a)
-  const sin = Math.sin(a)
-  const r = labelMinRadius(nameW, anchor, cos, sin, dy)
-  return [CENTER + r * cos, CENTER + r * sin + dy]
+  return Math.min(r, maxR)
 }
 
 export type SvgBounds = {
@@ -190,13 +135,7 @@ export type SvgBounds = {
   maxY: number
 }
 
-export function emptySvgBounds(): SvgBounds {
-  return { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity }
-}
-
-export function mergeSvgBounds(a: SvgBounds, b: SvgBounds): SvgBounds {
-  if (a.minX === Infinity) return b
-  if (b.minX === Infinity) return a
+function mergeSvgBounds(a: SvgBounds, b: SvgBounds): SvgBounds {
   return {
     minX: Math.min(a.minX, b.minX),
     minY: Math.min(a.minY, b.minY),
@@ -205,16 +144,7 @@ export function mergeSvgBounds(a: SvgBounds, b: SvgBounds): SvgBounds {
   }
 }
 
-export function expandSvgBounds(bounds: SvgBounds, x: number, y: number, pad = 0): SvgBounds {
-  return {
-    minX: Math.min(bounds.minX, x - pad),
-    minY: Math.min(bounds.minY, y - pad),
-    maxX: Math.max(bounds.maxX, x + pad),
-    maxY: Math.max(bounds.maxY, y + pad),
-  }
-}
-
-export function chartSvgBounds(): SvgBounds {
+function chartSvgBounds(): SvgBounds {
   return {
     minX: CENTER - RADIUS,
     minY: CENTER - RADIUS,
@@ -223,58 +153,64 @@ export function chartSvgBounds(): SvgBounds {
   }
 }
 
-export function labelBlockSvgBounds(
-  tx: number,
-  ty: number,
-  nameW: number,
-  anchor: LabelTextAnchor,
+/** Everything the stage must fit, relative to the chart center, at radius `r`. */
+export function radarContentBounds(
+  boxes: readonly LabelBox[],
+  radius: number,
+  gap = LABEL_RING_GAP,
 ): SvgBounds {
-  const dl = anchor === 'end' ? -nameW : anchor === 'start' ? 0 : -nameW / 2
-  const dr = labelNameTrailingOffset(nameW, anchor) + LABEL_LOCK_HTML
-  return {
-    minX: tx + dl,
-    minY: ty - LABEL_BLOCK_ABOVE,
-    maxX: tx + dr,
-    maxY: ty + LABEL_BLOCK_BELOW,
+  const disk = radius * RADAR_DISK_SCALE
+  let bounds: SvgBounds = { minX: -disk, minY: -disk, maxX: disk, maxY: disk }
+  for (const box of boxes) {
+    bounds = mergeSvgBounds(bounds, labelBoxBounds(box, labelAnchorRadius(box, radius, gap)))
   }
+  return bounds
 }
 
-export function computeLabelMargins(
-  names: readonly string[],
-  extraPad = RADAR_VIEW_PAD,
-): { left: number; right: number; top: number; bottom: number } {
-  const nQ = names.length
-  if (nQ === 0) {
-    return { left: extraPad, right: extraPad, top: extraPad, bottom: extraPad }
+export type RadarLayout = {
+  radius: number
+  cx: number
+  cy: number
+}
+
+/** Smallest radius the stage is allowed to shrink the chart to. */
+const MIN_CHART_RADIUS = 40
+
+/**
+ * Largest chart radius whose disk + labels fit `availW × availH`, plus the chart
+ * center that keeps the whole content block centered in the stage.
+ */
+export function fitRadarLayout(
+  availW: number,
+  availH: number,
+  boxes: readonly LabelBox[],
+  gap = LABEL_RING_GAP,
+  maxRadius = RADIUS * 1.6,
+): RadarLayout {
+  const fits = (r: number) => {
+    const b = radarContentBounds(boxes, r, gap)
+    return b.maxX - b.minX <= availW && b.maxY - b.minY <= availH
   }
 
-  const chartLeft = CENTER - RADIUS
-  const chartRight = CENTER + RADIUS
-  const chartTop = CENTER - RADIUS
-  const chartBottom = CENTER + RADIUS
-  let left = 0
-  let right = 0
-  let top = 0
-  let bottom = 0
-
-  for (let k = 0; k < nQ; k++) {
-    const nameW = labelNameWidth(names[k])
-    const deg = labelAnchorDeg(k, nQ)
-    const anchor = labelTextAnchor(deg)
-    const dy = labelDy(deg)
-    const [tx, ty] = labelAnchorPt(k, nQ, nameW, anchor, dy)
-    const b = labelBlockSvgBounds(tx, ty, nameW, anchor)
-    left = Math.max(left, chartLeft - b.minX)
-    right = Math.max(right, b.maxX - chartRight)
-    top = Math.max(top, chartTop - b.minY)
-    bottom = Math.max(bottom, b.maxY - chartBottom)
+  let radius = MIN_CHART_RADIUS
+  if (fits(maxRadius)) {
+    radius = maxRadius
+  } else {
+    let lo = MIN_CHART_RADIUS
+    let hi = maxRadius
+    for (let iter = 0; iter < 24; iter++) {
+      const mid = (lo + hi) / 2
+      if (fits(mid)) lo = mid
+      else hi = mid
+    }
+    radius = lo
   }
 
+  const b = radarContentBounds(boxes, radius, gap)
   return {
-    left: left + extraPad,
-    right: right + extraPad,
-    top: top + extraPad,
-    bottom: bottom + extraPad,
+    radius,
+    cx: (availW - (b.maxX - b.minX)) / 2 - b.minX,
+    cy: (availH - (b.maxY - b.minY)) / 2 - b.minY,
   }
 }
 
@@ -284,15 +220,6 @@ export function computeChartViewBox(pad = RADAR_VIEW_PAD): string {
   const minY = b.minY - pad
   const w = b.maxX - b.minX + 2 * pad
   const h = b.maxY - b.minY + 2 * pad
-  return `${minX} ${minY} ${w} ${h}`
-}
-
-export function computeRadarViewBox(content: SvgBounds, pad = RADAR_VIEW_PAD): string {
-  const merged = mergeSvgBounds(chartSvgBounds(), content)
-  const minX = merged.minX - pad
-  const minY = merged.minY - pad
-  const w = merged.maxX - merged.minX + 2 * pad
-  const h = merged.maxY - merged.minY + 2 * pad
   return `${minX} ${minY} ${w} ${h}`
 }
 

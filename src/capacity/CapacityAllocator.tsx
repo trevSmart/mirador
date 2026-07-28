@@ -20,14 +20,13 @@ import {
   clientToSvg,
   CENTER,
   computeChartViewBox,
-  computeLabelMargins,
   dividerEnds,
+  fitRadarLayout,
   fromView,
-  labelAnchorDeg,
-  labelAnchorPt,
-  labelDy,
-  labelNameWidth,
+  axisUnit,
+  labelAnchorRadius,
   labelTextAnchor,
+  RADAR_DISK_SCALE,
   magneticSnapAgents,
   MAGNETIC_SNAP_MAX_PX,
   RADIUS,
@@ -379,11 +378,6 @@ export function CapacityAllocator({
 
   const chartViewBox = computeChartViewBox()
 
-  const labelMargins = useMemo(
-    () => computeLabelMargins(queues.map((q) => q.name)),
-    [queues],
-  )
-
   const labelNodes = useMemo(
     () =>
       buildLabels({
@@ -399,6 +393,10 @@ export function CapacityAllocator({
     [queues, labelValue, locked, hard, nQ, interacting, dragBaseline, toggleLock],
   )
 
+  // Label blocks are HTML at a fixed font size, so their footprint does not scale
+  // with the chart: measure them, then fit the largest disk that still leaves room.
+  const queueNamesKey = useMemo(() => queues.map((q) => q.name).join(' '), [queues])
+
   useLayoutEffect(() => {
     const stage = chartStageRef.current
     if (!stage) return
@@ -408,23 +406,44 @@ export function CapacityAllocator({
       const availH = stage.clientHeight
       if (availW <= 0 || availH <= 0) return
 
-      const totalW = 2 * RADIUS + labelMargins.left + labelMargins.right
-      const totalH = 2 * RADIUS + labelMargins.top + labelMargins.bottom
-      const scale = Math.min(availW / totalW, availH / totalH)
-      const chartR = RADIUS * scale
+      const els = Array.from(
+        stage.querySelectorAll<HTMLElement>('[data-queue-label]'),
+      ).sort((a, b) => Number(a.dataset.queueLabel) - Number(b.dataset.queueLabel))
 
-      stage.style.setProperty('--chart-r', `${chartR}px`)
-      stage.style.paddingTop = `${labelMargins.top * scale}px`
-      stage.style.paddingRight = `${labelMargins.right * scale}px`
-      stage.style.paddingBottom = `${labelMargins.bottom * scale}px`
-      stage.style.paddingLeft = `${labelMargins.left * scale}px`
+      const boxes = els.map((el, k) => {
+        const [ux, uy] = axisUnit(k, els.length)
+        return { ux, uy, width: el.offsetWidth, height: el.offsetHeight }
+      })
+
+      const { radius, cx, cy } = fitRadarLayout(availW, availH, boxes)
+
+      stage.style.setProperty('--chart-r', `${radius}px`)
+      stage.style.setProperty('--chart-box', `${2 * radius * RADAR_DISK_SCALE}px`)
+      stage.style.setProperty('--chart-cx', `${cx}px`)
+      stage.style.setProperty('--chart-cy', `${cy}px`)
+
+      for (let k = 0; k < boxes.length; k++) {
+        const r = labelAnchorRadius(boxes[k], radius)
+        els[k].style.left = `${cx + boxes[k].ux * r}px`
+        els[k].style.top = `${cy + boxes[k].uy * r}px`
+      }
     }
 
     syncChartLayout()
     const ro = new ResizeObserver(syncChartLayout)
     ro.observe(stage)
-    return () => ro.disconnect()
-  }, [view, nQ, labelMargins])
+
+    // Label widths are text metrics: re-fit once webfonts land.
+    let live = true
+    document.fonts?.ready.then(() => {
+      if (live) syncChartLayout()
+    })
+
+    return () => {
+      live = false
+      ro.disconnect()
+    }
+  }, [view, nQ, queueNamesKey])
 
   const hint =
     view === 'sliders'
@@ -858,14 +877,9 @@ function buildLabels({
   const nodes: ReactNode[] = []
 
   for (let k = 0; k < nQ; k++) {
-    const deg = labelAnchorDeg(k, nQ)
-    const anchor = labelTextAnchor(deg)
-    const dy = labelDy(deg)
+    const [ux, uy] = axisUnit(k, nQ)
+    const anchor = labelTextAnchor(ux)
     const label = queues[k].name
-    const nameW = labelNameWidth(label)
-    const [tx, ty] = labelAnchorPt(k, nQ, nameW, anchor, dy)
-    const normX = (tx - CENTER) / RADIUS
-    const normY = (ty - CENTER) / RADIUS
 
     const [hLo, hHi] = hard[k]
     const delta =
@@ -882,10 +896,11 @@ function buildLabels({
       <div
         key={`label-${k}`}
         className={`capacity-allocator__label-block ${anchorClass}`}
+        data-queue-label={k}
         style={
           {
-            '--norm-x': normX,
-            '--norm-y': normY,
+            '--ux': ux,
+            '--uy': uy,
           } as CSSProperties
         }
       >
