@@ -11,8 +11,16 @@ function resolveSfTokenUrl(loginUrl: string): string {
   if (process.env.SF_TOKEN_URL) {
     return process.env.SF_TOKEN_URL.replace(/\/$/, '')
   }
-  if (loginUrl.includes('test.salesforce.com')) {
-    return 'https://test.salesforce.com'
+  try {
+    const { hostname } = new URL(loginUrl)
+    if (
+      hostname === 'test.salesforce.com' ||
+      hostname.endsWith('.test.salesforce.com')
+    ) {
+      return 'https://test.salesforce.com'
+    }
+  } catch {
+    // Invalid URL falls through to production auth host
   }
   return 'https://login.salesforce.com'
 }
