@@ -22,7 +22,8 @@ The repository is a **dual project**:
 
 - **`src/`** — the SPA (TypeScript, React 19, Vite 8). This is where most work happens.
 - **`force-app/`** — the Salesforce DX metadata: Apex classes that implement the
-  REST API, External Client App (ECA) OAuth definitions, skill types.
+  REST API, External Client App (ECA) OAuth definitions, skill types, custom
+  objects for the space plan.
 
 > `README.md` is an **end-user / product-facing** pitch for supervisors — it
 > deliberately carries no architecture, stack, or dev detail. This file (and the
@@ -57,18 +58,21 @@ npm run test         # Vitest unit tests (run once)
 npm run test:watch   # Vitest in watch mode
 npm run knip         # report unused files/exports/deps
 npm run stop         # kill the dev server (scripts/stop-server.js)
+npm run icons:app    # regenerate AppIconName after adding/removing SVG glyphs
+npm run slds:build   # regenerate public/slds/* sprites + icons.css from SLDS package
 ```
 
 Frontend unit tests run on **Vitest** (`npm run test`); test files sit next to the
 code as `*.test.ts(x)` (jsdom env; config in the `test` block of `vite.config.ts`
-plus `vitest.setup.ts`). `jest.config.js` is the Salesforce LWC Jest config and is
-**not** wired to the SPA. Apex has its own tests (`*Test.cls`) run via
-`sf apex run test`. Husky `pre-commit` runs `npm run precommit`, which currently
-just runs `npm run lint`.
+plus `vitest.setup.ts`). Apex has its own tests (`*Test.cls`) — prefer the IBM
+Salesforce Context MCP when available; otherwise `sf apex run test`. Husky
+`pre-commit` runs `npm run precommit`, which currently just runs `npm run lint`.
 
 Verify changes with `npm run lint`, `npm run test`, and `npm run build` (the
 type-check happens in `tsc -b`). Note: `tsc -b` excludes `*.test.ts(x)`, so test
-files are type-checked only by the editor / Vitest, not the build.
+files are type-checked only by the editor / Vitest, not the build. After icon
+SVG or SLDS package changes, also run `npm run icons:app` / `npm run slds:build`
+and commit the generated outputs.
 
 ## Data sources: mock vs. Salesforce
 
@@ -100,20 +104,25 @@ keep short internal keys but must resolve to real Ids at build time.
 The app is composed of nested context providers, outermost first:
 
 ```
-PreferencesProvider          # user settings, persisted to localStorage
-  AuthProvider               # OAuth session + isMockMode
-    MiradorApiProvider       # builds the API client (real or mock)
-      DataServiceProvider    # TanStack Query client: cache, dedup, polling
-        DockviewHostProvider # the panel workspace host
-          DetailDrawerProvider
-            SettingsModalProvider
-              DevConsoleProvider
-                ErrorBoundary -> AppContent (AppHeader + DockviewShell)
+PreferencesProvider            # user settings, persisted to localStorage
+  AuthProvider                 # OAuth session + isMockMode
+    MiradorApiProvider         # builds the API client (real or mock)
+      DataServiceProvider      # TanStack Query client: cache, dedup, polling
+        DockviewHostProvider   # the panel workspace host
+          ModalRegistryProvider  # tracks open modals (blocks global shortcuts)
+            DetailDrawerProvider
+              SettingsModalProvider
+                DevConsoleProvider
+                  GlobalShortcutsProvider  # keyboard shortcuts table
+                    ToastProvider
+                      ErrorBoundary -> AppGate -> AppContent
+                        (AppHeader + DockviewShell + DetailDrawer +
+                         SettingsModal + DevConsole)
 ```
 
-Bootstrap happens in `src/main.tsx`: `bootstrapAuth()` + `preloadPublicConfig()`
-run before React mounts; a splash screen is dismissed afterward
-(`src/bootstrap/dismiss-splash.ts`).
+Bootstrap happens in `src/main.tsx`: `installBfcacheReload()`, then
+`bootstrapAuth()` + `preloadPublicConfig()` before React mounts; a splash screen
+is dismissed afterward (`src/bootstrap/dismiss-splash.ts`).
 
 ### API layer (`src/api/`)
 
@@ -126,6 +135,8 @@ run before React mounts; a splash screen is dismissed afterward
   responses; keep them in sync with `force-app` and `docs/mirador-REST-API.md`.
 - `mock/` — a self-contained fake backend (`mock-client.ts`, `mock-seed.ts`,
   `mock-state.ts`, avatars) implementing the same `MiradorClient` interface.
+- `skill-mutations.ts` — `useUpdateAgentSkills()` (TanStack Mutation); invalidates
+  the snapshot cache on success.
 
 #### Data Service layer (`src/api/data-service/`, `src/api/data-hooks.ts`)
 
@@ -142,19 +153,21 @@ external apps:
 - `sources.ts` — source registry (`SourceClientMap` + `useSourceClient`). A new
   external app = extend the map and add a `case` here.
 - `resource.ts` + `resources/` — per-entity descriptors via `defineResource`:
-  `recordDetailResource` (the work-item backing record) and the snapshot-backed
-  `agent/queue/skill/workItem` resources. `batch-loader.ts` coalesces concurrent
-  id loads into a single request (e.g. one `POST /records/details` for N ids).
+  `recordDetailResource` (the work-item backing record), `agentTimelineResource`,
+  and the snapshot-backed `agent/queue/skill/workItem` resources.
+  `batch-loader.ts` coalesces concurrent id loads into a single request (e.g. one
+  `POST /records/details` for N ids).
 - `use-entity.ts` — `useEntity` / `useEntities` for per-id reads.
 - `data-hooks.ts` — the UI's data entry point: `useAgents` / `useQueues` /
   `useSkills` / `useWork` (typed selectors over **one shared snapshot query**,
   polling via TanStack `refetchInterval` from `prefs.autoRefresh` /
-  `prefs.refreshInterval`) and `useDataStatus` (`{ isLoading, isRefreshing, error,
-  refresh }`). `fetchSnapshot` fetches the snapshot **and** primes the per-entity
-  cache, so per-id `useEntity` reads resolve from cache.
+  `prefs.refreshInterval`; scope `all` | `connected` follows
+  `prefs.showOfflineAgents`) and `useDataStatus` (`{ isLoading, isRefreshing,
+  error, refresh }`). `fetchSnapshot` fetches the snapshot **and** primes the
+  per-entity cache, so per-id `useEntity` reads resolve from cache.
 
-Mutations should `invalidateQueries({ queryKey: snapshotKey })` on success to
-resync the cache (no active write features yet).
+Mutations should invalidate the snapshot (`invalidateQueries` on `snapshotKey` /
+  `snapshotPrefix()`) on success — see `useUpdateAgentSkills` as the pattern.
 
 ### Auth (`src/auth/`)
 
@@ -175,6 +188,7 @@ Registered as a Vite plugin in `vite.config.ts`. Routes:
 
 - `GET /api/config` — public OAuth config + `dataSource` for the SPA.
 - `POST /api/oauth/token` — server-side OAuth token proxy.
+- `/api/oauth/userinfo` — proxies Salesforce userinfo (avoids CORS).
 - `/api/salesforce/photo*` — proxies Salesforce user photos (avoids CORS / leaking
   the access token to image tags).
 
@@ -183,31 +197,62 @@ Env (`.env`, see `.env.example`): `SF_CLIENT_ID`, `SF_LOGIN_URL`,
 
 ### Panels & workspace (`src/panels/`, `src/dockview/`)
 
-- `registry.ts` is the single source of truth for panels. Each `PanelDefinition`
-  has a `type`, `title`, `icon`, and a **lazy-loaded** component wrapped in a
-  per-panel `Suspense` + `ErrorBoundary`. Add a new panel by adding one entry here.
+- `registry.ts` is the single source of truth for menu panels. Each
+  `PanelDefinition` has a `type`, `title`, `icon`, and a **lazy-loaded**
+  component wrapped in a per-panel `Suspense` + `ErrorBoundary`. Add a new panel
+  by adding one entry here (and, if it should appear in the "+" menu, a group in
+  `PANEL_MENU_GROUPS`).
 - Panel types: `home`, `wallboard`, `agents`, `queues`, `skills`, `work`, `space`,
-  `spaceEditor`, and `dev` (**EXPERIMENTAL** — vectorial space projection; the
-  whole feature lives in `src/dev/` and is meant to be deletable as a unit).
+  `spaceEditor`, plus Customize/dev panels `devLab`, `devLab2`, and
+  `colorPlayground` (experimental — safe to remove as a unit with their panel
+  files under `src/panels/` and related `src/components/dev/`).
+- Entity detail can open as a **dockable tab** (`DetailPanel`, component id
+  `detail`) as well as the slide-over drawer — see `src/detail/` and
+  `src/panels/detail-tab-actions.ts`.
 - `src/dockview/` handles layout persistence, tab groups, context menus, theming.
+- `src/navigation/` — `createAppNavigator` is the **only** entry point for opening
+  panels/detail from the app (header, Home grid, shortcuts, drawer). Keeps
+  `location.hash` / Navigation API history in sync (`#agents`,
+  `#detail/agent/<id>`, …).
 
 ### Space view (`src/space/`, `src/components/space/`)
 
 2D/3D isometric "space plan" of the contact center (seats, agents, towers).
 Geometry/projection helpers in `src/space/`; UI in `src/components/space/`.
-`src/dev/` holds an experimental vector-based reimplementation.
+Persisted via Apex `MiradorSpacePlanService` (`GET`/`PUT /space-plan`) against
+custom objects `Space__c` / `Folder__c`.
+
+### Icons
+
+**Read [`docs/icons.md`](docs/icons.md) before adding or changing any icon.** Two
+worlds, no exceptions:
+
+- **Chrome glyphs** (`AppIcon`): one SVG per icon in `src/assets/icons/` — never
+  inline `<svg>` in a component. After add/remove: `npm run icons:app`.
+- **Salesforce object tiles** (`SfIcon`): full sprites in `public/slds/` (generated
+  by `npm run slds:build`, never edit by hand).
+
+Color: object **type** → official SLDS color (no `bg`); concrete **record** →
+`recordId={id}` on `SfIcon` (respects `tintRecordIcons`). No hardcoded icon colors
+elsewhere.
 
 ### Other notable areas
 
-- `src/components/ds/` — the in-house design-system primitives (Button, Badge,
-  Ring, icons via SLDS sprites in `SfIcon.tsx`, etc.). Prefer these over ad-hoc
-  markup.
+- `src/components/ds/` — design-system primitives (Button, Badge, Ring, Toast,
+  `AppIcon`, `SfIcon`, …). Prefer these over ad-hoc markup.
 - `src/components/error/` — error boundaries, the Mirador-styled dev error
   overlay (replaces Vite's default HMR overlay, which is disabled in
   `vite.config.ts`), and Vite error formatting.
 - `src/settings/` — `Preferences` model (flat object in localStorage, sanitized on
   load), providers, and the settings modal.
-- `src/dev/` — developer console (`devLog`) and experimental space work.
+- `src/shortcuts/` — declarative global keyboard shortcuts (`shortcuts.ts`);
+  listener in `GlobalShortcutsProvider`.
+- `src/modals/` — modal open-state registry so shortcuts don't fire while a modal
+  is open.
+- `src/detail/` — detail drawer context, dockable detail-tab helpers, entity
+  resolution.
+- `src/dev/` — developer console (`devLog`, `DevConsole`). Experimental panel
+  UIs live under `src/panels/DevLab*` and `src/components/dev/`, not here.
 - `src/utils/` — pure helpers (formatting, metrics, color, search, health
   insights). Keep these side-effect-free.
 
@@ -216,18 +261,24 @@ Geometry/projection helpers in `src/space/`; UI in `src/components/space/`.
 - `classes/MiradorRestHandler.cls` / `MiradorApi.cls` — the `@RestResource`
   entry point at `/mirador/v1/*`.
 - `classes/Mirador*Service.cls` — domain services (agent, queue, skill, work,
-  snapshot, capability) producing the response shapes in `src/api/types.ts`.
+  snapshot, capability, record details, timeline, space plan, …) producing the
+  response shapes in `src/api/types.ts`.
 - `externalClientApps/` + `extlClntApp*OauthSets/` — ECA OAuth config for the SPA
   login flow.
 - `skilltypes/` — `MiradorLanguage`, `MiradorExpertise` skill types.
+- `objects/` — `Space__c`, `Folder__c` (space plan), plus Case field customizations.
+- `lwc/ownerReassignAction` — Lightning action used from the org UI.
+- `permissionsets/` — Mirador external / agent permission sets.
 - `*Test.cls` — Apex unit tests.
 
 The HTTP contract is documented in [`docs/mirador-REST-API.md`](docs/mirador-REST-API.md);
 auth setup in [`docs/salesforce-authentication.md`](docs/salesforce-authentication.md).
 When you change the API on either side, update both ends **and** that doc.
 
-Common Salesforce CLI commands: `sf project deploy start`,
-`sf project retrieve start`, `sf apex run test`, `sf org open`.
+For Salesforce org operations in Cursor, prefer the **IBM Salesforce Context** MCP
+tools over the Salesforce CLI. Common CLI fallbacks when MCP is unavailable:
+`sf project deploy start`, `sf project retrieve start`, `sf apex run test`,
+`sf org open`.
 
 ## Conventions
 
@@ -236,10 +287,13 @@ Common Salesforce CLI commands: `sf project deploy start`,
 - **Imports:** ESM only (`"type": "module"`). Use the existing relative-import
   style; there are no path aliases.
 - **Styling:** plain CSS (`src/index.css`) + SLDS. No CSS-in-JS framework.
+- **Icons:** see [`docs/icons.md`](docs/icons.md) and the Icons section above.
 - **State:** server/remote data lives in TanStack Query (the Data Service layer);
   read it through `data-hooks.ts` (`useAgents`, `useDataStatus`, …) or `useEntity`,
   never via a bespoke provider. UI/app state uses React context per concern. No
   Redux/Zustand.
+- **Navigation:** open panels/detail only via `createAppNavigator` (or hooks that
+  wrap it) — do not call Dockview APIs ad hoc from random UI.
 - **Lazy loading:** panels are code-split; keep heavy panels lazy.
 - **Errors:** wrap risky UI in the shared `ErrorBoundary`; surface API failures
   through `useDataStatus().error`.
@@ -252,14 +306,15 @@ Common Salesforce CLI commands: `sf project deploy start`,
 
 ## Gotchas
 
-- The dev server **must** be running for `/api/config`, `/api/oauth/token`, and the
-  photo proxy to exist — the SPA can't authenticate from a bare static build.
+- The dev server **must** be running for `/api/config`, `/api/oauth/token`,
+  `/api/oauth/userinfo`, and the photo proxy to exist — the SPA can't authenticate
+  from a bare static build.
 - Real-data mode needs a configured `.env` and an org with the Apex REST deployed;
   use `npm run dev:mock` when you don't have that.
 - `port 3000` is hard-coded for dev, preview, and the OAuth redirect URI — keep
   them aligned.
-- The `dev` panel and `src/dev/` are explicitly experimental and removable; don't
-  build production features on them.
+- `devLab` / `devLab2` / `colorPlayground` and `src/components/dev/` are
+  experimental and removable; don't build production features on them.
 - **The document root must stay `overflow: hidden`** (`html, body, #root` in
   `index.css`). Mirador is a fixed-viewport dashboard — every panel scrolls
   internally and the window must never scroll. If the root is allowed to scroll, at
