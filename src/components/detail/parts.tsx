@@ -71,7 +71,11 @@ export function DrawerSection({
 }
 
 export function StatGrid({ children }: { children: ReactNode }) {
-  return <div className="dd-stats">{children}</div>
+  return (
+    <div className="dd-section dd-section--fields">
+      <div className="dd-stats">{children}</div>
+    </div>
+  )
 }
 
 export function Stat({ label, value, tone }: { label: string; value: ReactNode; tone?: StatTone }) {
@@ -87,8 +91,8 @@ export function Stat({ label, value, tone }: { label: string; value: ReactNode; 
 
   return (
     <div className="dd-stat">
-      {animated}
       <span className="dd-stat__label">{label}</span>
+      {animated}
     </div>
   )
 }

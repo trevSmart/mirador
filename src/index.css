@@ -1640,7 +1640,7 @@ textarea,
   align-items: stretch;
 }
 
-.panel-shell--detail .dd-card-grid .dd-section,
+.panel-shell--detail .dd-card-grid .dd-section:not(.dd-section--fields),
 .panel-shell--detail .dd-agent-pane--timeline .dd-section {
   margin-bottom: 0;
   padding: var(--sp-5);
@@ -1650,18 +1650,18 @@ textarea,
   box-sizing: border-box;
 }
 
-.panel-shell--detail .dd-card-grid .dd-section {
+.panel-shell--detail .dd-card-grid .dd-section:not(.dd-section--fields) {
   grid-column: 1 / -1;
 }
 
 /* Flex només a les llistes: a la fila de capçalera el flex impedia
    l'estirament del grid i deixava Canals més baixa que Resum/Cronologia. */
-.panel-shell--detail .dd-card-grid--lists .dd-section {
+.panel-shell--detail .dd-card-grid--lists .dd-section:not(.dd-section--fields) {
   display: flex;
   flex-direction: column;
 }
 
-.panel-shell--detail .dd-card-grid .dd-section--compact {
+.panel-shell--detail .dd-card-grid .dd-section--compact:not(.dd-section--fields) {
   grid-column: auto;
 }
 
@@ -5365,11 +5365,19 @@ textarea,
   text-overflow: ellipsis;
 }
 
+/* Grup de camps label/valor: targeta dins la secció col·lapsable. */
+.dd-section--fields {
+  margin-top: var(--sp-3);
+  margin-bottom: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  background: var(--surface-card);
+}
+
 .dd-stats {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: var(--sp-2);
-  margin-top: var(--sp-3);
 }
 
 .dd-stat {
@@ -5377,15 +5385,11 @@ textarea,
   flex-direction: column;
   gap: 2px;
   padding: var(--sp-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-sm);
-  background: var(--surface-card);
 }
 
 .dd-stat__value {
-  font-family: var(--font-mono);
-  font-size: calc(var(--fs-body-lg) + var(--mono-fs-nudge));
-  font-weight: 600;
+  font-size: var(--fs-sm);
+  font-weight: 400;
   color: var(--text-strong);
 }
 
