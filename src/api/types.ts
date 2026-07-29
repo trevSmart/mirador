@@ -169,6 +169,9 @@ export interface RecordDetail {
   subject?: string | null
   recordStatus?: string | null
   recordClosed?: boolean | null
+  /** MessagingSession only — UUID for Connect transcript API */
+  conversationIdentifier?: string | null
+  endUserName?: string | null
 }
 
 export interface RecordDetailsRequest {
@@ -177,6 +180,23 @@ export interface RecordDetailsRequest {
 
 export interface RecordDetailsResponse {
   records: RecordDetail[]
+}
+
+export interface MessagingTranscriptEntry {
+  identifier: string
+  messageText: string
+  clientTimestamp: number
+  serverReceivedTimestamp: number
+  senderRole: string
+  senderSubject: string | null
+}
+
+export interface MessagingTranscript {
+  messagingSessionId: string
+  conversationIdentifier: string | null
+  endUserName: string | null
+  sessionStatus: string | null
+  entries: MessagingTranscriptEntry[]
 }
 
 /** One time span on the agent timeline. `end === null` means still ongoing

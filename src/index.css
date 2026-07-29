@@ -5058,6 +5058,72 @@ textarea,
   padding-top: var(--sp-3);
 }
 
+.msg-transcript {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  max-height: min(360px, 40vh);
+  overflow-y: auto;
+  padding: var(--sp-1) 0;
+}
+
+.msg-transcript__row {
+  display: flex;
+}
+
+.msg-transcript__row--end-user {
+  justify-content: flex-start;
+}
+
+.msg-transcript__row--agent {
+  justify-content: flex-end;
+}
+
+.msg-transcript__bubble {
+  max-width: min(100%, 28rem);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-raised);
+}
+
+.msg-transcript__row--agent .msg-transcript__bubble {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+}
+
+.msg-transcript__row--agent .msg-transcript__sender {
+  color: var(--accent);
+}
+
+.msg-transcript__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-1);
+}
+
+.msg-transcript__sender {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+}
+
+.msg-transcript__time {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.msg-transcript__text {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 /* Agent detail sub-tabs (Detall / Cronologia) — a segmented control. */
 .dd-tabs {
   display: flex;

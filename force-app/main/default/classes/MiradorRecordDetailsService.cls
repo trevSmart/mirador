@@ -4,7 +4,7 @@
  * (CreatedDate, LastModifiedDate) for every record, plus a few type-specific
  * fields when the record's type supports them:
  *   - Case            → CaseNumber, Subject, Status, IsClosed
- *   - MessagingSession → Subject
+ *   - MessagingSession → PreviewDetails/Name, ConversationIdentifier, MessagingEndUser.Name
  *
  * The lookup is generic: ids are grouped by SObjectType and queried one SOQL per
  * type. Unknown or non-queryable types simply return the common fields. Specific
@@ -24,6 +24,8 @@ public with sharing class MiradorRecordDetailsService {
         public String subject; // Case / MessagingSession
         public String recordStatus; // Case.Status (i altres tipus amb Status, futur)
         public Boolean recordClosed; // Case.IsClosed
+        public String conversationIdentifier; // MessagingSession → Conversation
+        public String endUserName; // MessagingSession → MessagingEndUser.Name
     }
 
     public class RecordDetailsResponse {
@@ -44,7 +46,11 @@ public with sharing class MiradorRecordDetailsService {
         Map<String, Set<Id>> idsByType = groupIdsByType(recordIds);
 
         for (String apiName : idsByType.keySet()) {
-            response.records.addAll(queryType(apiName, idsByType.get(apiName)));
+            if (apiName == 'MessagingSession') {
+                response.records.addAll(queryMessagingSessions(idsByType.get(apiName)));
+            } else {
+                response.records.addAll(queryType(apiName, idsByType.get(apiName)));
+            }
         }
         return response;
     }
@@ -69,6 +75,38 @@ public with sharing class MiradorRecordDetailsService {
             idsByType.get(apiName).add(recordId);
         }
         return idsByType;
+    }
+
+    private static List<RecordDetailDto> queryMessagingSessions(Set<Id> ids) {
+        List<RecordDetailDto> result = new List<RecordDetailDto>();
+        if (ids == null || ids.isEmpty()) {
+            return result;
+        }
+        if (!Schema.sObjectType.MessagingSession.isAccessible()) {
+            return result;
+        }
+        for (MessagingSession ms : [
+            SELECT Id, CreatedDate, LastModifiedDate, Status, Name, PreviewDetails,
+                   Conversation.ConversationIdentifier,
+                   MessagingEndUser.Name
+            FROM MessagingSession
+            WHERE Id IN :ids
+            WITH SECURITY_ENFORCED
+        ]) {
+            RecordDetailDto dto = new RecordDetailDto();
+            dto.id = String.valueOf(ms.Id);
+            dto.objectApiName = 'MessagingSession';
+            dto.createdDate = ms.CreatedDate;
+            dto.lastModifiedDate = ms.LastModifiedDate;
+            dto.subject = String.isBlank(ms.PreviewDetails) ? ms.Name : ms.PreviewDetails;
+            dto.recordStatus = ms.Status;
+            dto.conversationIdentifier = ms.Conversation == null
+                ? null
+                : ms.Conversation.ConversationIdentifier;
+            dto.endUserName = ms.MessagingEndUser == null ? null : ms.MessagingEndUser.Name;
+            result.add(dto);
+        }
+        return result;
     }
 
     private static List<RecordDetailDto> queryType(String apiName, Set<Id> ids) {

@@ -17,6 +17,8 @@ export { useEntity, useEntities } from './use-entity'
 export { entityKey } from './query-keys'
 export { useSourceClient } from './sources'
 export { recordDetailResource } from './resources/record-detail'
+export { messagingTranscriptResource } from './resources/messaging-transcript'
+export { useMessagingTranscript } from './use-messaging-transcript'
 export { agentTimelineResource } from './resources/agent-timeline'
 export {
   agentResource,

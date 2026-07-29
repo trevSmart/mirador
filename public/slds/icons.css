@@ -63,6 +63,7 @@
 .slds-icon-standard-aggregate { background-color: rgb(27, 150, 255); }
 .slds-icon-standard-aggregation-policy { background-color: rgb(27, 150, 255); }
 .slds-icon-standard-ai-accelerator-card { background-color: rgb(16, 124, 173); }
+.slds-icon-standard-ai-model-generative { background-color: rgb(27, 150, 255); }
 .slds-icon-standard-ai-slack-summary { background-color: rgb(255, 93, 45); }
 .slds-icon-standard-all { background-color: rgb(16, 124, 173); }
 .slds-icon-standard-announcement { background-color: rgb(27, 150, 255); }
@@ -306,6 +307,7 @@
 .slds-icon-standard-impact-strategy { background-color: rgb(6, 165, 154); }
 .slds-icon-standard-impact-strategy-assignment { background-color: rgb(6, 165, 154); }
 .slds-icon-standard-in-app-messaging { background-color: rgb(203, 101, 255); }
+.slds-icon-standard-in-queue-experience { background-color: rgb(3, 45, 96); }
 .slds-icon-standard-inbox { background-color: rgb(16, 124, 173); }
 .slds-icon-standard-incident { background-color: rgb(182, 5, 84); }
 .slds-icon-standard-indicator-assignment { background-color: rgb(3, 45, 96); }
@@ -313,6 +315,7 @@
 .slds-icon-standard-indicator-performance-period { background-color: rgb(3, 45, 96); }
 .slds-icon-standard-indicator-result { background-color: rgb(3, 45, 96); }
 .slds-icon-standard-individual { background-color: rgb(27, 150, 255); }
+.slds-icon-standard-initiate-external-transfer { background-color: rgb(3, 45, 96); }
 .slds-icon-standard-insights { background-color: rgb(203, 101, 255); }
 .slds-icon-standard-inspector-brief { background-color: rgb(59, 167, 85); }
 .slds-icon-standard-instore-locations { background-color: rgb(16, 124, 173); }
@@ -401,6 +404,7 @@
 .slds-icon-standard-orchestrator { background-color: rgb(16, 124, 173); }
 .slds-icon-standard-order-item { background-color: rgb(27, 150, 255); }
 .slds-icon-standard-orders { background-color: rgb(27, 150, 255); }
+.slds-icon-standard-outbound-call { background-color: rgb(3, 45, 96); }
 .slds-icon-standard-outcome { background-color: rgb(255, 93, 45); }
 .slds-icon-standard-outcome-activity { background-color: rgb(6, 165, 154); }
 .slds-icon-standard-outcome-datebound { background-color: rgb(255, 93, 45); }
@@ -527,6 +531,7 @@
 .slds-icon-standard-return-order { background-color: rgb(6, 165, 154); }
 .slds-icon-standard-return-order-line-item { background-color: rgb(6, 165, 154); }
 .slds-icon-standard-reward { background-color: rgb(255, 83, 138); }
+.slds-icon-standard-rfp-record { background-color: rgb(59, 167, 85); }
 .slds-icon-standard-robot { background-color: rgb(47, 44, 183); }
 .slds-icon-standard-rtc-presence { background-color: rgb(6, 165, 154); }
 .slds-icon-standard-sales-cadence { background-color: rgb(16, 124, 173); }
@@ -606,6 +611,7 @@
 .slds-icon-standard-study-related { background-color: rgb(47, 44, 183); }
 .slds-icon-standard-sub-metric { background-color: rgb(92, 92, 92); }
 .slds-icon-standard-submit-for-approval { background-color: rgb(3, 45, 96); }
+.slds-icon-standard-suggested-for-you { background-color: rgb(144, 80, 233); }
 .slds-icon-standard-survey { background-color: rgb(16, 124, 173); }
 .slds-icon-standard-swarm-request { background-color: rgb(255, 83, 138); }
 .slds-icon-standard-swarm-session { background-color: rgb(255, 83, 138); }
@@ -664,6 +670,7 @@
 .slds-icon-standard-visualforce-page { background-color: rgb(255, 93, 45); }
 .slds-icon-standard-visualization { background-color: rgb(27, 150, 255); }
 .slds-icon-standard-voice-call { background-color: rgb(59, 167, 85); }
+.slds-icon-standard-voicemail-drop { background-color: rgb(3, 45, 96); }
 .slds-icon-standard-volume-discounts { background-color: rgb(255, 93, 45); }
 .slds-icon-standard-waits { background-color: rgb(255, 93, 45); }
 .slds-icon-standard-walkthroughs { background-color: rgb(6, 165, 154); }

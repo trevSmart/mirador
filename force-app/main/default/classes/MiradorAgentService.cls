@@ -398,6 +398,15 @@ public with sharing class MiradorAgentService {
                 Case c = ctx.casesById.get(aw.WorkItemId);
                 item.label = 'Case ' + c.CaseNumber;
                 item.subject = c.Subject;
+            } else if (
+                aw.WorkItemId != null
+                && ctx.messagingSessionsById.containsKey(aw.WorkItemId)
+            ) {
+                MessagingSession ms = ctx.messagingSessionsById.get(aw.WorkItemId);
+                item.subject = MiradorWorkService.messagingSubject(
+                    ms, aw.ServiceChannel?.MasterLabel
+                );
+                item.label = item.subject;
             } else {
                 item.label = String.isBlank(item.channel) ? 'Work item' : item.channel;
                 item.subject = null;

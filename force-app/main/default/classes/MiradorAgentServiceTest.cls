@@ -483,11 +483,58 @@ private class MiradorAgentServiceTest {
 
         Map<Id, Case> withSub = new Map<Id, Case>{ caseId => withSubject };
         Map<Id, Case> noSub = new Map<Id, Case>{ caseId => noSubject };
+        Map<Id, MessagingSession> noMessaging = new Map<Id, MessagingSession>();
 
-        System.assertEquals('Broken thing', MiradorWorkService.subjectFor(caseId, withSub, 'Phone'));
-        System.assertEquals('00042', MiradorWorkService.subjectFor(caseId, noSub, 'Phone'));
-        System.assertEquals('Phone', MiradorWorkService.subjectFor(null, new Map<Id, Case>(), 'Phone'));
-        System.assertEquals('Work item', MiradorWorkService.subjectFor(null, new Map<Id, Case>(), null));
+        System.assertEquals(
+            'Broken thing',
+            MiradorWorkService.subjectFor(caseId, withSub, noMessaging, 'Phone')
+        );
+        System.assertEquals(
+            '00042',
+            MiradorWorkService.subjectFor(caseId, noSub, noMessaging, 'Phone')
+        );
+        System.assertEquals(
+            'Phone',
+            MiradorWorkService.subjectFor(null, new Map<Id, Case>(), noMessaging, 'Phone')
+        );
+        System.assertEquals(
+            'Work item',
+            MiradorWorkService.subjectFor(null, new Map<Id, Case>(), noMessaging, null)
+        );
+    }
+
+    @IsTest
+    static void workSubjectForPrefersMessagingNameThenEndUserThenChannel() {
+        Id sessionId = '0Mw000000000001AAA';
+        MessagingSession withName = (MessagingSession) JSON.deserialize(
+            '{"attributes":{"type":"MessagingSession"},"Id":"' + sessionId + '",'
+                + '"Name":"MS-00000006","PreviewDetails":"Guest | Chat",'
+                + '"MessagingEndUser":{"attributes":{"type":"MessagingEndUser"},"Name":"Guest"}}',
+            MessagingSession.class
+        );
+        MessagingSession endUserOnly = (MessagingSession) JSON.deserialize(
+            '{"attributes":{"type":"MessagingSession"},"Id":"' + sessionId + '",'
+                + '"MessagingEndUser":{"attributes":{"type":"MessagingEndUser"},"Name":"Guest"}}',
+            MessagingSession.class
+        );
+
+        Map<Id, Case> noCases = new Map<Id, Case>();
+        System.assertEquals(
+            'MS-00000006',
+            MiradorWorkService.subjectFor(
+                sessionId, noCases, new Map<Id, MessagingSession>{ sessionId => withName }, 'Messaging'
+            )
+        );
+        System.assertEquals(
+            'Guest',
+            MiradorWorkService.subjectFor(
+                sessionId, noCases, new Map<Id, MessagingSession>{ sessionId => endUserOnly }, 'Messaging'
+            )
+        );
+        System.assertEquals(
+            'Messaging',
+            MiradorWorkService.subjectFor(sessionId, noCases, new Map<Id, MessagingSession>(), 'Messaging')
+        );
     }
 
     @IsTest
@@ -523,6 +570,33 @@ private class MiradorAgentServiceTest {
     }
 
     @IsTest
+    static void pendingForWorkSkipsPsrWhenWorkItemAlreadyAssigned() {
+        Datetime nowDt = System.now();
+        Id assignedCaseId = '500000000000001AAA';
+        Id queuedCaseId = '500000000000002AAA';
+        Id userId = '005000000000001AAA';
+        Id queueId = '00G000000000001AAA';
+
+        List<AgentWork> assigned = new List<AgentWork>{
+            buildAgentWork(assignedCaseId, userId, queueId, nowDt)
+        };
+        List<PendingServiceRouting> pending = new List<PendingServiceRouting>{
+            buildPendingRouting(assignedCaseId, queueId, nowDt.addSeconds(-30)),
+            buildPendingRouting(queuedCaseId, queueId, nowDt.addSeconds(-60))
+        };
+        Set<Id> assignedWorkItemIds = new Set<Id>{ assignedCaseId };
+
+        Test.startTest();
+        List<PendingServiceRouting> filtered = MiradorWorkService.pendingForWorkExcludingAssigned(
+            pending, assignedWorkItemIds, 2000
+        );
+        Test.stopTest();
+
+        System.assertEquals(1, filtered.size());
+        System.assertEquals(String.valueOf(queuedCaseId), String.valueOf(filtered[0].WorkItemId));
+    }
+
+    @IsTest
     static void buildAssignedItemsMapsAgentWork() {
         Datetime nowDt = System.now();
         Id caseId = '500000000000001AAA';
@@ -542,7 +616,9 @@ private class MiradorAgentServiceTest {
 
         Test.startTest();
         List<MiradorWorkService.WorkItemDto> items =
-            MiradorWorkService.buildAssignedItems(assigned, caseById, nowDt, iconsByApiName);
+            MiradorWorkService.buildAssignedItems(
+                assigned, caseById, new Map<Id, MessagingSession>(), nowDt, iconsByApiName
+            );
         Test.stopTest();
 
         System.assertEquals(1, items.size());
@@ -571,7 +647,9 @@ private class MiradorAgentServiceTest {
 
         Test.startTest();
         List<MiradorWorkService.WorkItemDto> items =
-            MiradorWorkService.buildQueuedItems(pending, new Map<Id, Case>(), nowDt, iconsByApiName);
+            MiradorWorkService.buildQueuedItems(
+                pending, new Map<Id, Case>(), new Map<Id, MessagingSession>(), nowDt, iconsByApiName
+            );
         Test.stopTest();
 
         System.assertEquals(1, items.size());
@@ -607,6 +685,23 @@ private class MiradorAgentServiceTest {
             'https://example.com/img/icon/t4v35/standard/call.svg', 'VoiceCall'
         );
         System.assertEquals('standard:call', voiceIcon.iconName);
+
+        MiradorObjectIconUtil.IconDescriptor messagingIcon = MiradorObjectIconUtil.fromIconUrl(
+            'https://example.com/img/icon/t4v35/standard/messaging_session.svg',
+            'MessagingSession'
+        );
+        System.assertEquals('standard:messaging_session', messagingIcon.iconName);
+        System.assertEquals('messaging_session', messagingIcon.symbol);
+
+        MiradorObjectIconUtil.IconDescriptor sizedIcon = MiradorObjectIconUtil.fromIconUrl(
+            'https://example.com/img/icon/t4v35/standard/messaging_session_120.png',
+            'MessagingSession'
+        );
+        System.assertEquals(
+            'standard:messaging_session',
+            sizedIcon.iconName,
+            'Trailing _NN size suffixes must be stripped without truncating the symbol'
+        );
     }
 
     @IsTest

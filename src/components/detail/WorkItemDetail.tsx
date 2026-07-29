@@ -19,7 +19,9 @@ import {
 } from '../../utils/format'
 import { objectLabel, resolveWorkItemIcon } from '../../utils/salesforce-object-icon'
 import { AppIcon, Badge, FadeValue, SfIcon } from '../ds'
+import { MessagingTranscript } from './MessagingTranscript'
 import { DetailRow, DrawerActions, DrawerSection, EmptyHint, MiniAgentRow, Stat, StatGrid } from './parts'
+import { isMessagingSession } from '../../utils/messaging'
 
 /* Generic work-item detail. Shows what the global /work snapshot already gives
    us (subject, channel, status, age, backing SObject, related agent/queue).
@@ -139,6 +141,15 @@ export function WorkItemDetail({ item }: { item: WorkItem }) {
           <EmptyHint>No s&apos;han trobat detalls del registre.</EmptyHint>
         )}
       </DrawerSection>
+
+      {isMessagingSession(item) && item.workItemId ? (
+        <MessagingTranscript
+          sessionId={item.workItemId}
+          recordStatus={detail?.recordStatus}
+          conversationIdentifier={detail?.conversationIdentifier}
+          endUserName={detail?.endUserName}
+        />
+      ) : null}
       </div>
     </>
   )

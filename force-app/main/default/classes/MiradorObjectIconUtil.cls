@@ -98,13 +98,24 @@ public with sharing class MiradorObjectIconUtil {
     @TestVisible
     private static String extractSymbol(String url, Integer start) {
         String tail = url.substring(start);
+        Integer slash = tail.indexOf('/');
+        if (slash >= 0) {
+            tail = tail.substring(0, slash);
+        }
+        Integer query = tail.indexOf('?');
+        if (query >= 0) {
+            tail = tail.substring(0, query);
+        }
         Integer dot = tail.indexOf('.');
         if (dot > 0) {
             tail = tail.substring(0, dot);
         }
-        Integer underscore = tail.indexOf('_');
-        if (underscore > 0) {
-            tail = tail.substring(0, underscore);
+        // PNG theme URLs append size suffixes (_60, _120); keep underscores that
+        // belong to the symbol (messaging_session, voice_call, …).
+        Pattern sizeSuffix = Pattern.compile('_\\d+$');
+        Matcher m = sizeSuffix.matcher(tail);
+        if (m.find()) {
+            tail = tail.substring(0, m.start());
         }
         return tail;
     }
