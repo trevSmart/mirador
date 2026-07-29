@@ -1,7 +1,10 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useAgents, useDataStatus, usePresenceStatuses, useQueues } from '../api/data-hooks'
+import { HomeCapacityAllocator } from '../capacity/HomeCapacityAllocator'
 import { AgentRow } from '../components/AgentRow'
+import { CollapsibleBody } from '../components/CollapsibleGroup'
 import { SfIcon, Chip } from '../components/ds'
+import { ButtonIcon } from '../components/ds/ButtonIcon'
 import { Select, type SelectOption } from '../components/ds/Select'
 import { InsightsBanner } from '../components/InsightsBanner'
 import { PanelState } from '../components/PanelState'
@@ -18,6 +21,7 @@ import {
   getConnectedAgents,
 } from '../utils/agent-presence-filter'
 import { useGridFlipReorder } from '../utils/home-grid-reorder'
+import { useCollapsible } from '../hooks/useCollapsible'
 import { useSmoothScroll } from '../hooks/useSmoothScroll'
 
 const SPLIT_KEY = 'mirador.home.split'
@@ -47,6 +51,16 @@ import {
 
 const QUEUE_SORT_STORAGE = 'mirador.home.queueSort'
 const AGENT_SORT_STORAGE = 'mirador.home.agentSort'
+const CAPACITY_STORAGE = 'mirador.home.capacity'
+
+/** Allocator visibility, persisted between sessions (shown by default). */
+function loadCapacityVisible(): boolean {
+  try {
+    return localStorage.getItem(CAPACITY_STORAGE) !== '0'
+  } catch {
+    return true
+  }
+}
 
 const QUEUE_SORT_OPTIONS: SelectOption<QueueSortKey>[] = [
   { value: 'backlog', label: 'Més backlog' },
@@ -122,6 +136,20 @@ export function HomePanel() {
 
   const [queueFilter, setQueueFilter] = useState<QueueFilter>('all')
   const [agentFilter, setAgentFilter] = useState<AgentFilter>(CONNECTED_FILTER)
+
+  // The allocator uses the app-wide collapse animation; only the persisted
+  // preference is ours.
+  const capacity = useCollapsible(!loadCapacityVisible())
+
+  const toggleCapacity = () => {
+    try {
+      // `collapsed` is the state we're leaving, so it doubles as "will be open".
+      localStorage.setItem(CAPACITY_STORAGE, capacity.collapsed ? '1' : '0')
+    } catch {
+      /* ignore */
+    }
+    capacity.toggle()
+  }
 
   const queueFilterCounts = useMemo(
     () => ({
@@ -281,7 +309,34 @@ export function HomePanel() {
                 />
                 <h3 className="panel-section__title">Queues</h3>
               </div>
+              <ButtonIcon
+                className={`panel-section__toggle${capacity.open ? ' is-active' : ''}`}
+                icon="chart"
+                size={14}
+                onClick={toggleCapacity}
+                aria-pressed={capacity.open}
+                aria-label={
+                  capacity.open
+                    ? 'Amaga el repartidor de capacitat'
+                    : 'Mostra el repartidor de capacitat'
+                }
+                title={
+                  capacity.open
+                    ? 'Amaga el repartidor de capacitat'
+                    : 'Mostra el repartidor de capacitat'
+                }
+              />
             </header>
+            <CollapsibleBody
+              open={capacity.open}
+              animating={capacity.animating}
+              onSettled={capacity.settle}
+            >
+              {/* Unmounted once fully collapsed — the allocator keeps a
+                  ResizeObserver alive and re-derives its input on every data
+                  refresh, work nobody sees while it's hidden. */}
+              {(capacity.open || capacity.animating) && <HomeCapacityAllocator />}
+            </CollapsibleBody>
             <div className="panel-section__filters" role="group" aria-label="Filtra les cues">
               <Chip
                 active={queueFilter === 'all'}
