@@ -81,7 +81,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
       {agent.recordUrl ? (
         <div className="dd-actions">
           <a className="dd-action" href={agent.recordUrl} target="_blank" rel="noreferrer">
-            <AppIcon name="new_window" size={15} />
+            <AppIcon name="salesforce1" size={15} />
             Obre a Salesforce
           </a>
         </div>
