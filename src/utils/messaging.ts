@@ -18,7 +18,7 @@ export function isLiveMessagingSession(
   return !TERMINAL_SESSION_STATUSES.has(status)
 }
 
-export function messagingTimestampMs(value: number | null | undefined): Date | null {
+function messagingTimestampMs(value: number | null | undefined): Date | null {
   if (value == null || !Number.isFinite(value)) return null
   return new Date(value)
 }

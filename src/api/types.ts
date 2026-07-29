@@ -182,7 +182,7 @@ export interface RecordDetailsResponse {
   records: RecordDetail[]
 }
 
-export interface MessagingTranscriptEntry {
+interface MessagingTranscriptEntry {
   identifier: string
   messageText: string
   clientTimestamp: number

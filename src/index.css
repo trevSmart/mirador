@@ -1667,6 +1667,7 @@ textarea,
 
 /* Després de les regles base: en tab ample el head es dissol al grid pare. */
 @container detail-panel (min-width: 1000px) {
+
   .panel-shell--detail .dd-card-grid--head,
   .panel-shell--detail .dd-agent-pane--timeline {
     display: contents;
@@ -2099,6 +2100,39 @@ textarea,
   box-shadow: var(--ring-focus);
   border-radius: 6px;
   text-decoration: underline;
+}
+
+/* Icon-only toggle on the section title line (Home ▸ Queues shows/hides the
+   capacity allocator). Pressed state borrows the active-chip colours. */
+.panel-section__toggle {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  background: var(--surface-card);
+  color: var(--text-body);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease);
+}
+
+.panel-section__toggle:hover {
+  border-color: var(--border-strong);
+  color: var(--text-strong);
+}
+
+.panel-section__toggle.is-active {
+  background: var(--accent-tint);
+  border-color: var(--mi-accent-line);
+  color: var(--accent);
+}
+
+.panel-section__toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
 }
 
 .panel-section__sort {
@@ -2773,7 +2807,6 @@ textarea,
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-size: calc(22px + var(--mono-fs-nudge));
-  font-weight: var(--fw-medium);
   letter-spacing: -0.03em;
   line-height: var(--lh-tight);
   white-space: nowrap;
@@ -8527,6 +8560,7 @@ textarea,
 .fe-space.is-inactive [aria-pressed] {
   opacity: 1;
 }
+
 /* ── Capacity allocator panel ─────────────────────────── */
 
 .panel-shell--capacity {
@@ -9011,4 +9045,43 @@ textarea,
 
 .capacity-allocator__slide:disabled::-moz-range-thumb {
   background: var(--text-disabled);
+}
+
+/* ── Capacity allocator on Home (Queues section) ───────── */
+
+/* A rule separates the allocator from the queue filters below. */
+.home-capacity {
+  margin: 0 0 var(--sp-4);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* On Home the allocator is a companion to the queue list, not the main event:
+   cap it at 300px. The height must be explicit — the chart fits itself to the
+   container, so an auto height would let the radar set its own budget. */
+.home-capacity .capacity-allocator {
+  height: 300px;
+  max-height: 300px;
+  padding-top: 0;
+}
+
+/* Every pixel of that budget the body doesn't get is a smaller radar / a queue
+   row less on screen, so at this size the hint and the legend go, and the
+   per-queue radar label drops its range line. */
+.home-capacity .capacity-allocator__hint,
+.home-capacity .capacity-allocator__legend,
+.home-capacity .capacity-allocator__label-range {
+  display: none;
+}
+
+/* More queues than fit scroll rather than overflow the 300px box. */
+.home-capacity .capacity-allocator__rows {
+  margin-top: 0;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.home-capacity__actions {
+  display: flex;
+  justify-content: flex-end;
 }
