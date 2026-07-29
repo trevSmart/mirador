@@ -41,6 +41,29 @@ public with sharing class MiradorRestHandler {
                 writeJson(res, 200, MiradorCapabilityService.getCapabilities());
             } else if (path == '/space-plan') {
                 writeJson(res, 200, MiradorSpacePlanService.getPlan());
+            } else if (path.startsWith('/messaging-sessions/') && path.endsWith('/transcript')) {
+                String sessionIdRaw = path.substring(
+                    '/messaging-sessions/'.length(),
+                    path.length() - '/transcript'.length()
+                );
+                try {
+                    Integer recordLimit = parsePositiveInt(req.params.get('limit'), 1000, 1, 1000);
+                    String direction = req.params.get('direction');
+                    writeJson(
+                        res,
+                        200,
+                        MiradorMessagingTranscriptService.getTranscript(
+                            sessionIdRaw,
+                            req.params.get('conversationIdentifier'),
+                            recordLimit,
+                            direction
+                        )
+                    );
+                } catch (MiradorMessagingTranscriptService.TranscriptException ex) {
+                    String message = ex.getMessage();
+                    Integer statusCode = message == 'Messaging session not found' ? 404 : 400;
+                    writeJson(res, statusCode, new Map<String, Object>{ 'error' => message });
+                }
             } else {
                 writeJson(res, 404, new Map<String, Object>{
                     'error' => 'Not found',
@@ -183,5 +206,23 @@ public with sharing class MiradorRestHandler {
         res.statusCode = statusCode;
         res.addHeader('Content-Type', 'application/json');
         res.responseBody = Blob.valueOf(JSON.serialize(payload));
+    }
+
+    private static Integer parsePositiveInt(String raw, Integer fallback, Integer min, Integer max) {
+        if (String.isBlank(raw)) {
+            return fallback;
+        }
+        try {
+            Integer value = Integer.valueOf(raw);
+            if (value < min) {
+                return min;
+            }
+            if (value > max) {
+                return max;
+            }
+            return value;
+        } catch (Exception ex) {
+            return fallback;
+        }
     }
 }

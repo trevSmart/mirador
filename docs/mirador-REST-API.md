@@ -579,6 +579,52 @@ curl -sS -X PUT \
 | `GET` | `/queues` | Queue metrics |
 | `GET` | `/skills` | Skill catalog |
 | `GET` | `/work` | Assigned + queued work items |
+| `POST` | `/records/details` | Batch record detail lookup (`{ "ids": string[] }`) |
+| `GET` | `/messaging-sessions/{id}/transcript` | Messaging conversation transcript (Connect proxy; optional `?conversationIdentifier=`) |
+
+### `POST /records/details`
+
+Body: `{ "ids": ["500…", "0Mw…"] }`.
+
+Returns common audit fields plus type-specific fields when available:
+
+| Field | Types |
+|-------|-------|
+| `caseNumber`, `subject`, `recordStatus`, `recordClosed` | Case |
+| `subject`, `recordStatus`, `conversationIdentifier`, `endUserName` | MessagingSession |
+
+### `GET /messaging-sessions/{id}/transcript`
+
+Proxies Salesforce Connect REST conversation entries (off-platform message text). Query params:
+
+| Param | Description |
+|-------|-------------|
+| `conversationIdentifier` | Optional UUID from `RecordDetail.conversationIdentifier`; skips SOQL when provided |
+| `limit` | 1–1000, default 1000 |
+| `direction` | `FromStart` or `FromEnd`, default `FromStart` |
+
+Response:
+
+```json
+{
+  "messagingSessionId": "0Mw…",
+  "conversationIdentifier": "f4211943-…",
+  "endUserName": "Guest",
+  "sessionStatus": "Active",
+  "entries": [
+    {
+      "identifier": "…",
+      "messageText": "hola",
+      "clientTimestamp": 1785286661945,
+      "serverReceivedTimestamp": 1785286662084,
+      "senderRole": "EndUser",
+      "senderSubject": "v2/iamessage/…"
+    }
+  ]
+}
+```
+
+Requires Messaging permissions in the org; transcript data is not available via SOQL on `ConversationEntry`.
 
 ---
 

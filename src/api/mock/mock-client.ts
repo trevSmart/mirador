@@ -3,6 +3,7 @@ import type { MiradorClient } from '../mirador-client'
 import type {
   AgentScope,
   AgentsResponse,
+  MessagingTranscript,
   RecordDetail,
   RecordDetailsRequest,
   RecordDetailsResponse,
@@ -54,6 +55,8 @@ function mockRecordDetail(id: string): RecordDetail {
     subject: isMessaging ? 'Sessió de missatgeria (mock)' : null,
     recordStatus: mockRecordStatus(id, isCase, isMessaging),
     recordClosed: isCase || isMessaging ? isMockRecordClosed(id) : null,
+    conversationIdentifier: isMessaging ? `mock-conv-${id.slice(-8)}` : null,
+    endUserName: isMessaging ? 'Visitant (mock)' : null,
   }
 }
 
@@ -78,6 +81,43 @@ function mockRecordStatus(id: string, isCase: boolean, isMessaging: boolean): st
 }
 
 const MOCK_RECORD_EPOCH = Date.UTC(2026, 0, 15, 9, 30)
+
+function mockMessagingTranscript(sessionId: string): MessagingTranscript {
+  const closed = isMockRecordClosed(sessionId)
+  const base = MOCK_RECORD_EPOCH + 120_000
+  return {
+    messagingSessionId: sessionId,
+    conversationIdentifier: `mock-conv-${sessionId.slice(-8)}`,
+    endUserName: 'Visitant (mock)',
+    sessionStatus: closed ? 'Ended' : 'Active',
+    entries: [
+      {
+        identifier: `${sessionId}-1`,
+        messageText: 'bona tarda',
+        clientTimestamp: base,
+        serverReceivedTimestamp: base + 50,
+        senderRole: 'EndUser',
+        senderSubject: 'mock-end-user',
+      },
+      {
+        identifier: `${sessionId}-2`,
+        messageText: 'Hola! En què et puc ajudar?',
+        clientTimestamp: base + 4_000,
+        serverReceivedTimestamp: base + 4_050,
+        senderRole: 'Agent',
+        senderSubject: '005000000000001AAA',
+      },
+      {
+        identifier: `${sessionId}-3`,
+        messageText: 'Tinc un dubte amb la meva comanda',
+        clientTimestamp: base + 9_000,
+        serverReceivedTimestamp: base + 9_040,
+        senderRole: 'EndUser',
+        senderSubject: 'mock-end-user',
+      },
+    ],
+  }
+}
 
 export function createMockMiradorClient(): MiradorClient {
   return {
@@ -134,6 +174,21 @@ export function createMockMiradorClient(): MiradorClient {
       withApiLog('POST', '/records/details', () => ({
         records: body.ids.map(mockRecordDetail),
       } satisfies RecordDetailsResponse)),
+    getMessagingTranscript: (sessionId, opts) =>
+      withApiLog(
+        'GET',
+        `/messaging-sessions/${sessionId}/transcript`,
+        () => {
+          if (!sessionId.startsWith('0Mw')) {
+            throw new Error('Invalid messaging session id')
+          }
+          const transcript = mockMessagingTranscript(sessionId)
+          if (opts?.conversationIdentifier) {
+            transcript.conversationIdentifier = opts.conversationIdentifier
+          }
+          return transcript
+        },
+      ),
     getSpacePlan: () =>
       withApiLog('GET', '/space-plan', async () => {
         const plan = await loadMockSpacePlan()

@@ -7,6 +7,7 @@ public with sharing class MiradorLoadContext {
     public final List<AgentWork> activeAgentWork;
     public final List<PendingServiceRouting> pendingRouting;
     public final Map<Id, Case> casesById;
+    public final Map<Id, MessagingSession> messagingSessionsById;
     public final Map<Id, Group> queuesById;
     public final Datetime loadedAt;
 
@@ -15,6 +16,7 @@ public with sharing class MiradorLoadContext {
         List<AgentWork> activeAgentWork,
         List<PendingServiceRouting> pendingRouting,
         Map<Id, Case> casesById,
+        Map<Id, MessagingSession> messagingSessionsById,
         Map<Id, Group> queuesById,
         Datetime loadedAt
     ) {
@@ -22,6 +24,7 @@ public with sharing class MiradorLoadContext {
         this.activeAgentWork = activeAgentWork;
         this.pendingRouting = pendingRouting;
         this.casesById = casesById;
+        this.messagingSessionsById = messagingSessionsById;
         this.queuesById = queuesById;
         this.loadedAt = loadedAt;
     }
@@ -33,13 +36,19 @@ public with sharing class MiradorLoadContext {
         List<PendingServiceRouting> pending = loadPendingRouting();
 
         Set<Id> caseIds = new Set<Id>();
+        Set<Id> messagingSessionIds = new Set<Id>();
         Set<Id> queueNameIds = new Set<Id>();
-        collectCaseAndQueueIds(agentWork, pending, caseIds, queueNameIds);
+        collectWorkItemAndQueueIds(
+            agentWork, pending, caseIds, messagingSessionIds, queueNameIds
+        );
 
         Map<Id, Case> cases = loadCases(caseIds);
+        Map<Id, MessagingSession> messagingSessions = loadMessagingSessions(messagingSessionIds);
         Map<Id, Group> queues = loadQueueNames(queueNameIds);
 
-        return new MiradorLoadContext(presence, agentWork, pending, cases, queues, nowDt);
+        return new MiradorLoadContext(
+            presence, agentWork, pending, cases, messagingSessions, queues, nowDt
+        );
     }
 
     /** Ids of PSR rows already filtered to IsReadyForRouting = true. */
@@ -48,6 +57,17 @@ public with sharing class MiradorLoadContext {
         for (PendingServiceRouting psr : pendingRouting) {
             if (psr.Id != null) {
                 ids.add(psr.Id);
+            }
+        }
+        return ids;
+    }
+
+    /** Backing records (Case, MessagingSession, …) with active AgentWork. */
+    public Set<Id> assignedWorkItemIds() {
+        Set<Id> ids = new Set<Id>();
+        for (AgentWork aw : activeAgentWork) {
+            if (aw.WorkItemId != null) {
+                ids.add(aw.WorkItemId);
             }
         }
         return ids;
@@ -92,24 +112,37 @@ public with sharing class MiradorLoadContext {
         ];
     }
 
-    private static void collectCaseAndQueueIds(
+    private static void collectWorkItemAndQueueIds(
         List<AgentWork> agentWork,
         List<PendingServiceRouting> pending,
         Set<Id> caseIds,
+        Set<Id> messagingSessionIds,
         Set<Id> queueNameIds
     ) {
         for (AgentWork aw : agentWork) {
-            if (aw.WorkItemId != null && String.valueOf(aw.WorkItemId).startsWith('500')) {
-                caseIds.add(aw.WorkItemId);
-            }
+            addWorkItemId(aw.WorkItemId, caseIds, messagingSessionIds);
             if (aw.OriginalQueueId != null) {
                 queueNameIds.add(aw.OriginalQueueId);
             }
         }
         for (PendingServiceRouting psr : pending) {
-            if (psr.WorkItemId != null && String.valueOf(psr.WorkItemId).startsWith('500')) {
-                caseIds.add(psr.WorkItemId);
-            }
+            addWorkItemId(psr.WorkItemId, caseIds, messagingSessionIds);
+        }
+    }
+
+    private static void addWorkItemId(
+        Id workItemId,
+        Set<Id> caseIds,
+        Set<Id> messagingSessionIds
+    ) {
+        if (workItemId == null) {
+            return;
+        }
+        String raw = String.valueOf(workItemId);
+        if (raw.startsWith('500')) {
+            caseIds.add(workItemId);
+        } else if (raw.startsWith('0Mw')) {
+            messagingSessionIds.add(workItemId);
         }
     }
 
@@ -121,6 +154,20 @@ public with sharing class MiradorLoadContext {
             SELECT Id, CaseNumber, Subject
             FROM Case
             WHERE Id IN :caseIds
+        ]);
+    }
+
+    private static Map<Id, MessagingSession> loadMessagingSessions(Set<Id> sessionIds) {
+        if (sessionIds.isEmpty()) {
+            return new Map<Id, MessagingSession>();
+        }
+        if (!Schema.sObjectType.MessagingSession.isAccessible()) {
+            return new Map<Id, MessagingSession>();
+        }
+        return new Map<Id, MessagingSession>([
+            SELECT Id, Name, PreviewDetails, MessagingEndUser.Name
+            FROM MessagingSession
+            WHERE Id IN :sessionIds
         ]);
     }
 

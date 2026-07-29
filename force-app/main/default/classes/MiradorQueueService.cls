@@ -75,11 +75,16 @@ public with sharing class MiradorQueueService {
         MiradorLoadContext ctx,
         Set<Id> queueIds
     ) {
+        Set<Id> assignedWorkItemIds = ctx.assignedWorkItemIds();
         List<PendingServiceRouting> pending = new List<PendingServiceRouting>();
         for (PendingServiceRouting psr : ctx.pendingRouting) {
-            if (psr.QueueId != null && queueIds.contains(psr.QueueId)) {
-                pending.add(psr);
+            if (psr.QueueId == null || !queueIds.contains(psr.QueueId)) {
+                continue;
             }
+            if (psr.WorkItemId != null && assignedWorkItemIds.contains(psr.WorkItemId)) {
+                continue;
+            }
+            pending.add(psr);
         }
         return aggregateBacklog(pending, ctx.loadedAt);
     }

@@ -9,6 +9,7 @@ import type {
   AgentsResponse,
   ApiErrorBody,
   Capabilities,
+  MessagingTranscript,
   QueuesResponse,
   RecordDetailsRequest,
   RecordDetailsResponse,
@@ -50,6 +51,14 @@ export interface MiradorClient {
   getWork: () => Promise<WorkResponse>
   getSnapshot: (scope?: AgentScope) => Promise<SnapshotResponse>
   getRecordDetails: (body: RecordDetailsRequest) => Promise<RecordDetailsResponse>
+  getMessagingTranscript: (
+    sessionId: string,
+    opts?: {
+      conversationIdentifier?: string | null
+      limit?: number
+      direction?: 'FromStart' | 'FromEnd'
+    },
+  ) => Promise<MessagingTranscript>
   /** Loads the org space plan (v4 wire shape), or null when none exists. */
   getSpacePlan: () => Promise<WireSpacePlan | null>
   /** Full-replace save of the org space plan (v4 wire shape). */
@@ -172,6 +181,23 @@ export function createMiradorClient(getSession: SessionGetter): MiradorClient {
         method: 'POST',
         body: JSON.stringify(body),
       }),
+    getMessagingTranscript: (sessionId, opts) => {
+      const params = new URLSearchParams()
+      if (opts?.conversationIdentifier) {
+        params.set('conversationIdentifier', opts.conversationIdentifier)
+      }
+      if (opts?.limit != null) {
+        params.set('limit', String(opts.limit))
+      }
+      if (opts?.direction) {
+        params.set('direction', opts.direction)
+      }
+      const qs = params.toString()
+      const path = `/messaging-sessions/${encodeURIComponent(sessionId)}/transcript${
+        qs ? `?${qs}` : ''
+      }`
+      return request<MessagingTranscript>(path)
+    },
     getSpacePlan: () => request<WireSpacePlan | null>('/space-plan'),
     saveSpacePlan: async (plan) => {
       await request<{ ok: boolean }>('/space-plan', {
