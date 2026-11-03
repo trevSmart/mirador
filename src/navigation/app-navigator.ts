@@ -9,6 +9,7 @@
    càrrega funciona a tot arreu perquè no necessita l'API. */
 
 import type { DockviewApi, IDockviewPanel } from 'dockview-react'
+import { getLiveDockviewApi } from '../dockview/dockview-api-bridge'
 import type { DetailTarget } from '../detail/detail-drawer-context'
 import { devLog } from '../dev/dev-log'
 import { openDetailTab } from '../panels/detail-tab-actions'
@@ -51,11 +52,12 @@ export function createAppNavigator(deps: AppNavigatorDeps): AppNavigator {
 
   /** Retorna true si s'ha pogut revelar (hi ha dockview connectat). */
   function applyReveal(dest: NavDestination, options?: RevealOptions): boolean {
-    if (!api) return false
+    const activeApi = api ?? getLiveDockviewApi()
+    if (!activeApi) return false
     if (dest.kind === 'panel') {
-      addPanelByType(api, dest.panel, options?.params)
+      addPanelByType(activeApi, dest.panel, options?.params)
     } else {
-      openDetailTab(api, dest.target, options?.titleHint)
+      openDetailTab(activeApi, dest.target, options?.titleHint)
     }
     return true
   }

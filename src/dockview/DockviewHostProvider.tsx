@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { DockviewApi } from 'dockview-react'
 import { DockviewHostContext, type DockviewHostContextValue } from './dockview-host-context'
+import { setLiveDockviewApi } from './dockview-api-bridge'
 
 export function DockviewHostProvider({ children }: { children: ReactNode }) {
   const apiRef = useRef<DockviewApi | null>(null)
@@ -8,6 +9,7 @@ export function DockviewHostProvider({ children }: { children: ReactNode }) {
 
   const registerApi = useCallback((api: DockviewApi) => {
     apiRef.current = api
+    setLiveDockviewApi(api)
     setRevision((value) => value + 1)
   }, [])
 
