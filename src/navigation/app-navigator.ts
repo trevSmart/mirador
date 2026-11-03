@@ -15,11 +15,13 @@ import { openDetailTab } from '../panels/detail-tab-actions'
 import { addPanelByType } from '../panels/panel-actions'
 import type { PanelType } from '../panels/registry'
 import { destinationFromPanel, parseNavHash, serializeNavHash, type NavDestination } from './nav-hash'
+import { getDockviewApi } from '../dockview/dockview-api-ref'
 import { getWindowNavigation } from './window-navigation'
 
 export interface AppNavigatorDeps {
   getNavigation: () => Navigation | undefined
   getLocationHash: () => string
+  getDockviewApi: () => DockviewApi | null
 }
 
 export interface AppNavigator {
@@ -38,7 +40,6 @@ interface NavEntryState {
 }
 
 export function createAppNavigator(deps: AppNavigatorDeps): AppNavigator {
-  let api: DockviewApi | null = null
   /* Guard 1: l'activació ve d'un traverse/deeplink — no tornar a fer push. */
   let applyingHistoryNav = false
   /* Guard 2: el navigate() l'hem disparat nosaltres — no interceptar-lo. */
@@ -51,6 +52,7 @@ export function createAppNavigator(deps: AppNavigatorDeps): AppNavigator {
 
   /** Retorna true si s'ha pogut revelar (hi ha dockview connectat). */
   function applyReveal(dest: NavDestination, options?: RevealOptions): boolean {
+    const api = deps.getDockviewApi()
     if (!api) return false
     if (dest.kind === 'panel') {
       addPanelByType(api, dest.panel, options?.params)
@@ -123,7 +125,6 @@ export function createAppNavigator(deps: AppNavigatorDeps): AppNavigator {
   }
 
   function attach(nextApi: DockviewApi): { dispose(): void } {
-    api = nextApi
     const nav = deps.getNavigation()
 
     /* Deep-link: si la URL de càrrega ja porta un hash navegable, activa'l
@@ -160,9 +161,6 @@ export function createAppNavigator(deps: AppNavigatorDeps): AppNavigator {
       dispose() {
         activePanelDisposable.dispose()
         nav?.removeEventListener('navigate', handleNavigate as EventListener)
-        if (api === nextApi) {
-          api = null
-        }
       },
     }
   }
@@ -183,4 +181,5 @@ export function createAppNavigator(deps: AppNavigatorDeps): AppNavigator {
 export const appNavigator = createAppNavigator({
   getNavigation: getWindowNavigation,
   getLocationHash: () => window.location.hash,
+  getDockviewApi,
 })

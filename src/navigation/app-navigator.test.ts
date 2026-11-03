@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { DockviewApi, IDockviewPanel } from 'dockview-react'
+import { getDockviewApi, setDockviewApi } from '../dockview/dockview-api-ref'
 import { createAppNavigator } from './app-navigator'
 
 /* ── Fake de window.navigation ─────────────────────────────────────────────
@@ -150,10 +151,23 @@ function createNavigator(options?: { navigation?: Navigation; hash?: string }) {
   return createAppNavigator({
     getNavigation: () => options?.navigation,
     getLocationHash: () => options?.hash ?? '',
+    getDockviewApi,
   })
 }
 
+function attachNavigator(
+  navigator: ReturnType<typeof createNavigator>,
+  api: DockviewApi,
+): { dispose(): void } {
+  setDockviewApi(api)
+  return navigator.attach(api)
+}
+
 describe('createAppNavigator', () => {
+  beforeEach(() => {
+    setDockviewApi(null)
+  })
+
   it('does nothing and returns false when opening a panel before attach', () => {
     const navigator = createNavigator()
     expect(navigator.openPanel('agents')).toBe(false)
@@ -164,7 +178,7 @@ describe('createAppNavigator', () => {
     const fakeNav = createFakeNavigation()
     const dock = createFakeDockviewApi()
     const navigator = createNavigator({ navigation: fakeNav.navigation })
-    navigator.attach(dock.api)
+    attachNavigator(navigator, dock.api)
 
     expect(navigator.openPanel('agents')).toBe(true)
     expect(navigator.openDetail({ kind: 'queue', id: 'q1' }, 'Cua')).toBe(true)
@@ -174,7 +188,7 @@ describe('createAppNavigator', () => {
     const fakeNav = createFakeNavigation()
     const dock = createFakeDockviewApi()
     const navigator = createNavigator({ navigation: fakeNav.navigation })
-    navigator.attach(dock.api)
+    attachNavigator(navigator, dock.api)
 
     navigator.openPanel('agents')
 
@@ -188,7 +202,7 @@ describe('createAppNavigator', () => {
     const fakeNav = createFakeNavigation()
     const dock = createFakeDockviewApi()
     const navigator = createNavigator({ navigation: fakeNav.navigation })
-    navigator.attach(dock.api)
+    attachNavigator(navigator, dock.api)
 
     navigator.openPanel('agents')
     navigator.openPanel('agents')
@@ -200,7 +214,7 @@ describe('createAppNavigator', () => {
     const fakeNav = createFakeNavigation()
     const dock = createFakeDockviewApi()
     const navigator = createNavigator({ navigation: fakeNav.navigation })
-    navigator.attach(dock.api)
+    attachNavigator(navigator, dock.api)
 
     navigator.openPanel('agents')
     navigator.openPanel('queues')
@@ -212,7 +226,7 @@ describe('createAppNavigator', () => {
     const fakeNav = createFakeNavigation('https://app.test/#queues')
     const dock = createFakeDockviewApi()
     const navigator = createNavigator({ navigation: fakeNav.navigation, hash: '#queues' })
-    navigator.attach(dock.api)
+    attachNavigator(navigator, dock.api)
 
     expect(dock.getActivePanel()?.view.contentComponent).toBe('queues')
     expect(fakeNav.navigateCalls).toHaveLength(0)
@@ -223,7 +237,7 @@ describe('createAppNavigator', () => {
     const dock = createFakeDockviewApi()
     dock.api.addPanel({ id: 'home-initial', component: 'home', title: 'Home' })
     const navigator = createNavigator({ navigation: fakeNav.navigation })
-    navigator.attach(dock.api)
+    attachNavigator(navigator, dock.api)
 
     expect(fakeNav.navigateCalls).toEqual([
       { url: '#home', options: { history: 'replace', state: { title: 'Home' } } },
@@ -234,7 +248,7 @@ describe('createAppNavigator', () => {
     const fakeNav = createFakeNavigation()
     const dock = createFakeDockviewApi()
     const navigator = createNavigator({ navigation: fakeNav.navigation })
-    navigator.attach(dock.api)
+    attachNavigator(navigator, dock.api)
 
     navigator.openPanel('agents')
     navigator.openPanel('skills')
@@ -251,7 +265,7 @@ describe('createAppNavigator', () => {
     const fakeNav = createFakeNavigation()
     const dock = createFakeDockviewApi()
     const navigator = createNavigator({ navigation: fakeNav.navigation })
-    navigator.attach(dock.api)
+    attachNavigator(navigator, dock.api)
 
     fakeNav.dispatchTraverse('/#detail/agent/a1', { title: 'Alice' })
 
@@ -272,7 +286,7 @@ describe('createAppNavigator', () => {
       params: { kind: 'work', id: 'w1' },
     })
     const navigator = createNavigator({ hash: '#detail/work/w1' })
-    navigator.attach(dock.api)
+    attachNavigator(navigator, dock.api)
 
     expect(dock.getActivePanel()?.title).toBe('Email incidència crítica')
   })
@@ -280,7 +294,7 @@ describe('createAppNavigator', () => {
   it('uses the fallback title when a deep link creates a detail tab from scratch', () => {
     const dock = createFakeDockviewApi()
     const navigator = createNavigator({ hash: '#detail/work/w1' })
-    navigator.attach(dock.api)
+    attachNavigator(navigator, dock.api)
 
     const active = dock.getActivePanel()
     expect(active?.view.contentComponent).toBe('detail')
@@ -291,7 +305,7 @@ describe('createAppNavigator', () => {
     const fakeNav = createFakeNavigation()
     const dock = createFakeDockviewApi()
     const navigator = createNavigator({ navigation: fakeNav.navigation })
-    navigator.attach(dock.api)
+    attachNavigator(navigator, dock.api)
 
     const intercepted = fakeNav.dispatchTraverse('/#no-existeix')
 
@@ -302,7 +316,7 @@ describe('createAppNavigator', () => {
   it('degrades gracefully without the Navigation API', () => {
     const dock = createFakeDockviewApi()
     const navigator = createNavigator({ hash: '#queues' })
-    navigator.attach(dock.api)
+    attachNavigator(navigator, dock.api)
 
     navigator.openPanel('agents')
 
@@ -314,7 +328,7 @@ describe('createAppNavigator', () => {
     const fakeNav = createFakeNavigation()
     const dock = createFakeDockviewApi()
     const navigator = createNavigator({ navigation: fakeNav.navigation })
-    navigator.attach(dock.api)
+    attachNavigator(navigator, dock.api)
 
     navigator.openDetail({ kind: 'queue', id: 'q1' }, 'Cua de suport')
 
@@ -324,14 +338,23 @@ describe('createAppNavigator', () => {
     ])
   })
 
+  it('openPanel after attach dispose still works when dockview api remains registered (StrictMode)', () => {
+    const dock = createFakeDockviewApi()
+    const navigator = createNavigator()
+    const disposable = attachNavigator(navigator, dock.api)
+    disposable.dispose()
+    expect(navigator.openPanel('agents')).toBe(true)
+    expect(dock.panels.map((p) => p.view.contentComponent)).toContain('agents')
+  })
+
   it('re-attach after dispose keeps a single subscription (StrictMode)', () => {
     const fakeNav = createFakeNavigation()
     const dock = createFakeDockviewApi()
     const navigator = createNavigator({ navigation: fakeNav.navigation })
 
-    const first = navigator.attach(dock.api)
+    const first = attachNavigator(navigator, dock.api)
     first.dispose()
-    navigator.attach(dock.api)
+    attachNavigator(navigator, dock.api)
 
     navigator.openPanel('agents')
     expect(fakeNav.navigateCalls).toHaveLength(1)
